@@ -1,0 +1,23 @@
+{
+  "name": "site-tests",
+  "version": "1.0.0",
+  "description": "Doctorfox User Journey Tests",
+  "main": "index.mts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "type": "module",
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "date-fns": "^2.30.0",
+    "dotenv": "^16.3.1",
+    "node-fetch": "^3.3.2",
+    "puppeteer": "^20.7.4",
+    "seedrandom": "^3.0.5",
+    "typescript": "^5.1.6"
+  },
+  "devDependencies": {
+    "@types/seedrandom": "^3.0.8"
+  }
+}
