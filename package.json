@@ -4,20 +4,27 @@
   "description": "Doctorfox User Journey Tests",
   "main": "index.mts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "npx tsc --build",
+    "watch": "npx tsc --watch",
+    "execute": "node ./build/index.mjs"
   },
   "type": "module",
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "date-fns": "^2.30.0",
-    "dotenv": "^16.3.1",
+    "date-fns": "^3.6.0",
+    "dotenv": "^16.4.5",
     "node-fetch": "^3.3.2",
-    "puppeteer": "^20.7.4",
-    "seedrandom": "^3.0.5",
-    "typescript": "^5.1.6"
+    "puppeteer": "^22.11.2",
+    "puppeteer-extra": "^3.3.6",
+    "puppeteer-extra-plugin-recaptcha": "^3.6.8",
+    "puppeteer-extra-plugin-stealth": "^2.11.2",
+    "seedrandom": "^3.0.5"
   },
   "devDependencies": {
-    "@types/seedrandom": "^3.0.8"
+    "@types/seedrandom": "^3.0.8",
+    "typescript": "^5.4.5",
+    "typescript-eslint": "^7.13.1"
   }
 }
