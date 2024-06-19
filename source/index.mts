@@ -56,17 +56,26 @@ const extractTableData = ( $: CheerioAPI, table: Cheerio<AnyNode> ) => {
 
 const parseIndividual = ( $: CheerioAPI ) => {
   const tables = $( "[id='rankTable'] tbody" )
-  console.log( tables.length )
   const data: Record<string,unknown> = {}
   data.long_course = extractTableData( $, $( tables[0] ) )
   data.short_course = extractTableData( $, $( tables[1] ) )
-  console.log( data )
+  return data
+}
+
+const parseRanking = ( $: CheerioAPI ) => {
+  const tables = $( "[id='rankTable'] tbody" )
+  const data: Record<string,unknown> = extractTableData( $, $( tables[0] ) )
+  return data
 }
 
 const pages: PageData = {
   "individual": {
     url: "/individualbest/personal_best.php?back=individualbestname&mode=L&name=Howard&tiref=1660835",
     parser: parseIndividual,
+  },
+  "50m_butterfly_female_sc_11": {
+    url: "/12months/last12.php?Pool=S&Stroke=10&Sex=F&AgeGroup=11&date=31%2F12%2F2024&StartNumber=1&RecordsToView=75&Level=N&TargetNationality=E&TargetRegion=P&TargetCounty=XXXX&TargetClub=XXXX",
+    parser: parseRanking,
   }
 }
 
@@ -85,6 +94,7 @@ const fetchPage = async ( label: string, url: string ) => {
       return content
     }
   } catch( error ) {
+    console.log( error instanceof Error )
     if ( error instanceof Error && ( error as NodeJS.ErrnoException ).code ) {
       const err = error as NodeJS.ErrnoException;
       if ( err.code !== "ENOENT" ) {
@@ -107,18 +117,21 @@ const fetchPage = async ( label: string, url: string ) => {
 }
 
 const fetchPages = async () => {
+  const data: Record<string,unknown> = {}
   for ( const [ label, pageInfo ] of Object.entries( pages ) ) {
     const content = await fetchPage( label, pageInfo.url )
     if ( content ) {
       const $ = cheerio.load( content )
-      await pageInfo.parser( $ )
+      data[label] = await pageInfo.parser( $ )
     }
   }
+  return data
 }
 
 const updateData = async () => {
   try {
-    await fetchPages()
+    const data = await fetchPages()
+    console.log( data )
   } catch ( error ) {
     console.error( "General error", error )
     process.exit( -1 );
