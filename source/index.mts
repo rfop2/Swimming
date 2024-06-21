@@ -4,9 +4,12 @@ import { promises as fs } from "fs"
 import fetch, { FetchError } from "node-fetch"
 import { format, differenceInHours } from "date-fns"
 import cheerio, { Cheerio, CheerioAPI, AnyNode } from "cheerio"
+import Database from "better-sqlite3"
 import seedrandom from "seedrandom"
 
 const debugEnabled = !!( process.env?.DEBUG === "true" ) || false;
+
+const MATCH_NAME = "Eloise Howard"
 
 const rng = seedrandom( "12345" ) // For predictable randomness
 const sleep = ( timeout: number ) => new Promise( r => setTimeout( r, timeout ) );
@@ -18,16 +21,14 @@ const debug = ( ...args: unknown[] ) => {
 }
 
 const now = new Date()
+const today = format( now, "yyyy-MM-dd" )
+
+// Create a local database to persist state
+const db = new Database( "database/records.db" )
+db.pragma( "journal_mode = WAL" );
 
 const CACHE_DIR = "./cache"
 const BASE_URL = "https://www.swimmingresults.org/"
-
-interface PageInfo {
-  url: URL,
-  parser: ( arg1: CheerioAPI ) => unknown,
-}
-
-type PageData = Record<string,PageInfo>
 
 const extractTableData = ( $: CheerioAPI, table: Cheerio<AnyNode> ) => {
   // const data = await page.evaluate( ( tbody: HTMLTableSectionElement ) => {
@@ -63,11 +64,16 @@ const extractTableData = ( $: CheerioAPI, table: Cheerio<AnyNode> ) => {
   return dataObject
 }
 
+type IndividualStats = Array<Record<string,string>>
+
 const parseIndividual = ( $: CheerioAPI ) => {
   const tables = $( "[id='rankTable'] tbody" )
-  const data: Record<string,unknown> = {}
-  data.long_course = extractTableData( $, $( tables[0] ) )
-  data.short_course = extractTableData( $, $( tables[1] ) )
+  const data: IndividualStats = []
+  const longCourse = extractTableData( $, $( tables[0] ) )
+  data.push( ...longCourse.map( row => ( { ...{ course: "long"}, ...row } ) ) )
+  const shortCourse = extractTableData( $, $( tables[1] ) )
+  data.push( ...shortCourse.map( row => ( { ...{ course: "short"}, ...row } ) ) )
+
   return data
 }
 
@@ -82,16 +88,48 @@ interface Ranking {
   }
 }
 
+const timetoSeconds = ( time: string ): number => {
+  // Split the input time string by colons
+  const timeParts = time.split( ":" );
+
+  // Initialize total seconds
+  let totalSeconds = 0;
+
+  if ( timeParts.length === 3 ) {
+    // If format is hours:minutes:seconds.decimal
+    const hours = parseFloat( timeParts[0] );
+    const minutes = parseFloat( timeParts[1] );
+    const seconds = parseFloat( timeParts[2] );
+
+    // Convert to total seconds
+    totalSeconds = hours * 3600 + minutes * 60 + seconds;
+  } else if ( timeParts.length === 2 ) {
+    // If format is minutes:seconds.decimal
+    const minutes = parseFloat( timeParts[0] );
+    const seconds = parseFloat( timeParts[1] );
+
+    // Convert to total seconds
+    totalSeconds = minutes * 60 + seconds;
+  } else if ( timeParts.length === 1 ) {
+    // If only one part, it's already in seconds
+    totalSeconds = parseFloat( timeParts[0] );
+  } else {
+    throw new Error( "Invalid time format" );
+  }
+
+  return totalSeconds;
+}
+
 const parseRanking = ( $: CheerioAPI ) => {
   const tables = $( "[id='rankTable'] tbody" )
   const data: Ranking = {}
   data.table = extractTableData( $, $( tables[0] ) )
   if ( data.table.length ) {
-    const index = data.table.findIndex( row => row.name === "Eloise Howard" )
+    const index = data.table.findIndex( row => row.name === MATCH_NAME )
     if ( index >= 0 ) {
       const rank = Number( data.table[index].rank )
-      const bestTime = Number( data.table[0].time )
-      const refTime = Number( data.table[index].time )
+      const bestTime = timetoSeconds( data.table[0].time )
+      const refTime = timetoSeconds( data.table[index].time )
       const deltaTime = refTime - bestTime
       data.stats = {
         position: index+1,
@@ -157,9 +195,19 @@ const freestyle50mShortParams = {
   Stroke: STROKE.FREESTYLE_50M,
 }
 
+const breaststroke100mShortParams = {
+  Pool: POOLS.SHORT,
+  Stroke: STROKE.BREASTSTROKE_100M,
+}
+
 const butterfly50mShortParams = {
   Pool: POOLS.SHORT,
   Stroke: STROKE.BUTTERFLY_50M,
+}
+
+const backstroke100mShortParams = {
+  Pool: POOLS.SHORT,
+  Stroke: STROKE.BACKSTROKE_100M,
 }
 
 const nationalRankParams = {
@@ -189,41 +237,85 @@ const createUrl = ( base: string, params: Record<string,string> ) => {
   return url
 }
 
-const pages: PageData = {
-  "individual": {
+interface PageInfo {
+  label: string
+  url: URL
+  parser: ( arg1: CheerioAPI ) => IndividualStats | Ranking
+}
+
+type PageData = Array<PageInfo>
+
+const pages: PageData = [
+  {
+    label: "individual",
     url: createUrl( individualBaseUrl, individualParams ),
     parser: parseIndividual,
   },
-  "50m_butterfly_female_sc_11": {
-    url: createUrl( rankBaseUrl, { ...butterfly50mShortParams,  ...globalRankParams, ...nationalRankParams } ),
-    parser: parseRanking,
-  },
-  "50m_butterfly_female_sc_11_sw": {
-    url: createUrl( rankBaseUrl, { ...butterfly50mShortParams, ...globalRankParams, ...regionalRankParams } ),
-    parser: parseRanking,
-  },
-  "50m_butterfly_female_sc_11_glos": {
-    url: createUrl( rankBaseUrl, { ...butterfly50mShortParams, ...globalRankParams, ...countyRankParams } ),
-    parser: parseRanking,
-  },
-  "50m_freestyle_female_sc_11": {
+  {
+    label: "50m_freestyle_female_sc_11",
     url: createUrl( rankBaseUrl, { ...freestyle50mShortParams,  ...globalRankParams, ...nationalRankParams } ),
     parser: parseRanking,
   },
-  "50m_freestyle_female_sc_11_sw": {
+  {
+    label: "50m_freestyle_female_sc_11_sw",
     url: createUrl( rankBaseUrl, { ...freestyle50mShortParams, ...globalRankParams, ...regionalRankParams } ),
     parser: parseRanking,
   },
-  "50m_freestyle_female_sc_11_glos": {
+  {
+    label: "50m_freestyle_female_sc_11_glos",
     url: createUrl( rankBaseUrl, { ...freestyle50mShortParams, ...globalRankParams, ...countyRankParams } ),
     parser: parseRanking,
   },
-}
+  {
+    label: "100m_breaststroke_female_sc_11",
+    url: createUrl( rankBaseUrl, { ...breaststroke100mShortParams,  ...globalRankParams, ...nationalRankParams } ),
+    parser: parseRanking,
+  },
+  {
+    label: "100m_breaststroke_female_sc_11_sw",
+    url: createUrl( rankBaseUrl, { ...breaststroke100mShortParams, ...globalRankParams, ...regionalRankParams } ),
+    parser: parseRanking,
+  },
+  {
+    label: "100m_breaststroke_female_sc_11_glos",
+    url: createUrl( rankBaseUrl, { ...breaststroke100mShortParams, ...globalRankParams, ...countyRankParams } ),
+    parser: parseRanking,
+  },
+  {
+    label: "50m_butterfly_female_sc_11",
+    url: createUrl( rankBaseUrl, { ...butterfly50mShortParams,  ...globalRankParams, ...nationalRankParams } ),
+    parser: parseRanking,
+  },
+  {
+    label: "50m_butterfly_female_sc_11_sw",
+    url: createUrl( rankBaseUrl, { ...butterfly50mShortParams, ...globalRankParams, ...regionalRankParams } ),
+    parser: parseRanking,
+  },
+  {
+    label: "50m_butterfly_female_sc_11_glos",
+    url: createUrl( rankBaseUrl, { ...butterfly50mShortParams, ...globalRankParams, ...countyRankParams } ),
+    parser: parseRanking,
+  },
+  {
+    label: "100m_backstroke_female_sc_11",
+    url: createUrl( rankBaseUrl, { ...backstroke100mShortParams,  ...globalRankParams, ...nationalRankParams } ),
+    parser: parseRanking,
+  },
+  {
+    label: "100m_backstroke_female_sc_11_sw",
+    url: createUrl( rankBaseUrl, { ...backstroke100mShortParams, ...globalRankParams, ...regionalRankParams } ),
+    parser: parseRanking,
+  },
+  {
+    label: "100m_backstroke_female_sc_11_glos",
+    url: createUrl( rankBaseUrl, { ...backstroke100mShortParams, ...globalRankParams, ...countyRankParams } ),
+    parser: parseRanking,
+  },
+]
 
-console.log( pages )
-const fetchPage = async ( label: string, url: URL ) => {
-  const contentFile = CACHE_DIR + "/" + label
-  console.log( `Processing ${label} -> ${url}` )
+const fetchPage = async ( pageInfo: PageInfo ) => {
+  const contentFile = CACHE_DIR + "/" + pageInfo.label
+  console.log( `Processing ${pageInfo.label} -> ${pageInfo.url}` )
   try {
     const stats = await fs.stat( contentFile )
     // Page has been cached
@@ -246,25 +338,25 @@ const fetchPage = async ( label: string, url: URL ) => {
     }
   }
   try {
-    console.log( `Fetching ${url}` )
-    const response = await fetch( url )
+    console.log( `Fetching ${pageInfo.url}` )
+    const response = await fetch( pageInfo.url )
     const content = await response.text()
     await fs.writeFile( contentFile, content )
     return content
   } catch( error ) {
     if ( error instanceof FetchError ) {
-      console.error( `Failed to fetch ${url}: ${error.message}` )
+      console.error( `Failed to fetch ${pageInfo.url}: ${error.message}` )
     }
   }
 }
 
 const fetchPages = async () => {
-  const data: Record<string,unknown> = {}
-  for ( const [ label, pageInfo ] of Object.entries( pages ) ) {
-    const content = await fetchPage( label, pageInfo.url )
+  const data: Record<string,IndividualStats|Ranking> = {}
+  for ( const pageInfo of pages ) {
+    const content = await fetchPage( pageInfo )
     if ( content ) {
       const $ = cheerio.load( content )
-      data[label] = await pageInfo.parser( $ )
+      data[pageInfo.label] = pageInfo.parser( $ )
     }
     sleep( rng() * 10.0 )
   }
@@ -275,6 +367,76 @@ const updateData = async () => {
   try {
     const data = await fetchPages()
     console.log( data )
+    for ( const [ label,dataset ] of Object.entries( data ) ) {
+      if ( label === "individual" ) {
+        const individualStats = dataset as IndividualStats
+        const keys = Object.keys( individualStats[0] )
+        const tableDef = `
+CREATE TABLE IF NOT EXISTS Individual (
+  created DATE DEFAULT CURRENT_TIMESTAMP,
+  ${keys.map( key => ( `${key} TEXT` ) ).join( ",\n" )},
+  UNIQUE(created, course, stroke)
+)
+`
+        const tableCreate = db.prepare( tableDef )
+        tableCreate.run()
+        const saveDef = `
+INSERT OR IGNORE INTO Individual
+  ( created, ${keys.join( ", " )} )
+  VALUES ( ?, ${Array( keys.length ).fill( "?" ).join( ", " )} )
+`
+
+        const saveData = db.prepare( saveDef )
+        for ( const row of individualStats ) {
+          saveData.run( [ today, ...Object.values( row ) ] )
+        }
+      } else {
+        const ranking = dataset as Ranking
+        const keys = Object.keys( ( ranking.table??[] )[0] )
+        const tableDef = `
+CREATE TABLE IF NOT EXISTS Rankings (
+  created DATE DEFAULT CURRENT_TIMESTAMP,
+  label TEXT,
+  ${keys.map( key => ( `${key} TEXT` ) ).join( ",\n" )}
+)
+`
+        const tableCreate = db.prepare( tableDef )
+        tableCreate.run()
+
+        const deleteDef = "DELETE FROM Rankings WHERE created = ? AND label = ?"
+        const deleteRankings = db.prepare( deleteDef )
+        deleteRankings.run( today, label )
+
+        const saveDef = `INSERT INTO Rankings ( created, label, ${keys.join( ", " )} ) VALUES ( ?, ?, ${Array( keys.length ).fill( "?" ).join( ", " )} )`
+        const saveRankings = db.prepare( saveDef )
+        for ( const row of ranking.table??[] ) {
+          saveRankings.run( [ today, label, ...Object.values( row ) ] )
+        }
+
+        if ( ranking.stats ) {
+          const keys = Object.keys( ranking.stats )
+          const tableDef = `
+CREATE TABLE IF NOT EXISTS Performance (
+  created DATE DEFAULT CURRENT_TIMESTAMP,
+  label TEXT,
+  ${keys.map( key => ( `${key} TEXT` ) ).join( ",\n" )},
+  UNIQUE( created, label )
+)
+`
+          const tableCreate = db.prepare( tableDef )
+          tableCreate.run()
+
+          const deleteDef = "DELETE FROM Performance WHERE created = ? AND label = ?"
+          const deleteRankings = db.prepare( deleteDef )
+          deleteRankings.run( today, label )
+
+          const saveDef = `INSERT INTO Performance ( created, label, ${keys.join( ", " )} ) VALUES ( ?, ?, ${Array( keys.length ).fill( "?" ).join( ", " )} )`
+
+          const saveStats = db.prepare( saveDef )
+          saveStats.run( [ today, label, ...Object.values( ranking.stats ) ] )
+        }
+      }
+    }
   } catch ( error ) {
     console.error( "General error", error )
     process.exit( -1 );

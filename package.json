@@ -13,6 +13,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "better-sqlite3": "^11.0.0",
     "cheerio": "^1.0.0-rc.12",
     "date-fns": "^3.6.0",
     "dotenv": "^16.4.5",
@@ -20,6 +21,7 @@
     "seedrandom": "^3.0.5"
   },
   "devDependencies": {
+    "@types/better-sqlite3": "^7.6.10",
     "@types/seedrandom": "^3.0.8",
     "ts-node": "^10.9.2",
     "typescript": "^5.4.5",
