@@ -15,7 +15,6 @@ import {
   rankBaseUrl,
   regionalRankParams,
 } from "./config.js"
-import { createUrl, fetchPage, rng, sleep, timetoSeconds } from "./lib.js"
 import {
   createIndividualSql,
   createPerformanceSql,
@@ -26,13 +25,14 @@ import {
   insertPerformanceSql,
   insertRankingsSql,
 } from "./database.js"
+import { createUrl, fetchPage, timetoSeconds } from "./lib.js"
 
 const now = new Date()
 const today = format( now, "yyyy-MM-dd" )
 
 // Create a local database to persist state
 const db = new Database( "database/records.db" )
-db.pragma( "journal_mode = WAL" );
+db.pragma( "journal_mode = WAL" )
 
 // Create tables, and prepare statements
 const individualTableCreate = db.prepare( createIndividualSql )
@@ -57,7 +57,7 @@ const savePerformance = db.prepare( insertPerformanceSql )
 const extractTableData = ( $: CheerioAPI, table: Cheerio<AnyNode> ) => {
   // const data = await page.evaluate( ( tbody: HTMLTableSectionElement ) => {
   const headers: Array<string> = []
-  const dataObject: Array<Record<string,string>> = []
+  const dataObject: Array<Record<string, string>> = []
 
   let lastRowHeader = ""
   table.find( "tr" ).each( ( rowIndex, rowElement ) => {
@@ -70,7 +70,7 @@ const extractTableData = ( $: CheerioAPI, table: Cheerio<AnyNode> ) => {
     }
 
     const valueCells = row.find( "td" )
-    const rowData: Record<string,string> = {}
+    const rowData: Record<string, string> = {}
     let headerIndex = 0
     for ( const valueCell of valueCells ) {
       let value = $( valueCell ).text().trim()
@@ -103,7 +103,7 @@ const parseIndividual = ( $: CheerioAPI ) => {
       meet: row.meet,
       venue: row.venue,
       licence: row.licence,
-      level: Number( row.level )
+      level: Number( row.level ),
     }
     data.push( courseRow )
   }
@@ -120,7 +120,7 @@ const parseIndividual = ( $: CheerioAPI ) => {
       meet: row.meet,
       venue: row.venue,
       licence: row.licence,
-      level: Number( row.level )
+      level: Number( row.level ),
     }
     data.push( courseRow )
   }
@@ -131,7 +131,7 @@ const parseIndividual = ( $: CheerioAPI ) => {
 const parseRanking = ( $: CheerioAPI ) => {
   const tables = $( "[id='rankTable'] tbody" )
   const data: Ranking = {
-    table: []
+    table: [],
   }
   const table = extractTableData( $, $( tables[0] ) )
   if ( table.length ) {
@@ -147,22 +147,22 @@ const parseRanking = ( $: CheerioAPI ) => {
         level: Number( row.number ),
         date: format( parse( row.date, "dd/MM/yy", now ), "yyyy-MM-dd" ),
         time: timetoSeconds( row.time ),
-        fina: Number( row.fina )
+        fina: Number( row.fina ),
       }
       data.table.push( rankingRow )
     }
-    const index = table.findIndex( row => row.name === MATCH_NAME )
+    const index = table.findIndex( ( row ) => row.name === MATCH_NAME )
     if ( index >= 0 ) {
       const rank = data.table[index].rank
       const bestTime = data.table[0].time
       const refTime = data.table[index].time
       const deltaTime = refTime - bestTime
       data.stats = {
-        position: index+1,
+        position: index + 1,
         rank,
         best: bestTime,
         time: refTime,
-        difference: deltaTime
+        difference: deltaTime,
       }
     }
   }
@@ -529,7 +529,7 @@ const pages: PageData = [
 ]
 
 const fetchPages = async () => {
-  const data: Record<string,IndividualStats|Ranking> = {}
+  const data: Record<string, IndividualStats | Ranking> = {}
   for ( const pageInfo of pages ) {
     const content = await fetchPage( pageInfo )
     if ( content ) {
@@ -544,7 +544,7 @@ const updateData = async () => {
   try {
     const data = await fetchPages()
     console.log( data )
-    for ( const [ label,dataset ] of Object.entries( data ) ) {
+    for ( const [ label, dataset ] of Object.entries( data ) ) {
       if ( label === "individual" ) {
         const individualStats = dataset as IndividualStats
 
@@ -555,7 +555,7 @@ const updateData = async () => {
         const ranking = dataset as Ranking
 
         deleteRankings.run( today, label )
-        for ( const row of ranking.table??[] ) {
+        for ( const row of ranking.table ?? [] ) {
           saveRankings.run( { created: today, label, ...row } )
         }
 
@@ -567,9 +567,9 @@ const updateData = async () => {
     }
   } catch ( error ) {
     console.error( "General error", error )
-    process.exit( -1 );
+    process.exit( -1 )
   }
-}
+};
 
 ( async () => {
   // const getopts = require( "getopts" )
@@ -583,19 +583,24 @@ const updateData = async () => {
   await updateData()
 
   process.exit( 0 )
-} )().catch( error => {
-  console.error( "Caught error...", error );
-  console.trace( error );
-} );
+} )().catch( ( error ) => {
+  console.error( "Caught error...", error )
+  console.trace( error )
+} )
 
-process.on( "uncaughtException", function( err ) {
-  console.log( "Possibly uncaught Exception: "+err );
-  console.trace( err );
-  process.exit( -1 );
-} );
+process.on( "uncaughtException", function ( err ) {
+  console.log( "Possibly uncaught Exception: " + err )
+  console.trace( err )
+  process.exit( -1 )
+} )
 
-process.on( "unhandledRejection", function( reason, p ){
-  console.log( "Possibly Unhandled Rejection at: Promise ", p, " reason: ", reason );
-  console.trace( reason );
-  process.exit( -1 );
-} );
+process.on( "unhandledRejection", function ( reason, p ) {
+  console.log(
+    "Possibly Unhandled Rejection at: Promise ",
+    p,
+    " reason: ",
+    reason,
+  )
+  console.trace( reason )
+  process.exit( -1 )
+} )

@@ -6,7 +6,7 @@ import { Cheerio, CheerioAPI, AnyNode } from "cheerio"
 import seedrandom from "seedrandom"
 import { BASE_URL, CACHE_DIR } from "./config.js"
 
-const debugEnabled = !!( process.env?.DEBUG === "true" ) || false;
+const debugEnabled = !!( process.env?.DEBUG === "true" ) || false
 
 export const debug = ( ...args: unknown[] ) => {
   if ( debugEnabled ) {
@@ -53,34 +53,34 @@ export const extractTableData = ( $: CheerioAPI, table: Cheerio<AnyNode> ) => {
 
 export const timetoSeconds = ( time: string ): number => {
   // Split the input time string by colons
-  const timeParts = time.split( ":" );
+  const timeParts = time.split( ":" )
 
   // Initialize total seconds
-  let totalSeconds = 0;
+  let totalSeconds = 0
 
   if ( timeParts.length === 3 ) {
     // If format is hours:minutes:seconds.decimal
-    const hours = parseFloat( timeParts[0] );
-    const minutes = parseFloat( timeParts[1] );
-    const seconds = parseFloat( timeParts[2] );
+    const hours = parseFloat( timeParts[0] )
+    const minutes = parseFloat( timeParts[1] )
+    const seconds = parseFloat( timeParts[2] )
 
     // Convert to total seconds
-    totalSeconds = hours * 3600 + minutes * 60 + seconds;
+    totalSeconds = hours * 3600 + minutes * 60 + seconds
   } else if ( timeParts.length === 2 ) {
     // If format is minutes:seconds.decimal
-    const minutes = parseFloat( timeParts[0] );
-    const seconds = parseFloat( timeParts[1] );
+    const minutes = parseFloat( timeParts[0] )
+    const seconds = parseFloat( timeParts[1] )
 
     // Convert to total seconds
-    totalSeconds = minutes * 60 + seconds;
+    totalSeconds = minutes * 60 + seconds
   } else if ( timeParts.length === 1 ) {
     // If only one part, it's already in seconds
-    totalSeconds = parseFloat( timeParts[0] );
+    totalSeconds = parseFloat( timeParts[0] )
   } else {
-    throw new Error( "Invalid time format" );
+    throw new Error( "Invalid time format" )
   }
 
-  return totalSeconds;
+  return totalSeconds
 }
 
 export const createUrl = ( base: string, params: Record<string,string> ) => {
@@ -105,12 +105,12 @@ export const fetchPage = async ( pageInfo: PageInfo ) => {
     }
   } catch( error ) {
     if ( error instanceof Error && ( error as NodeJS.ErrnoException ).code ) {
-      const err = error as NodeJS.ErrnoException;
+      const err = error as NodeJS.ErrnoException
       if ( err.code !== "ENOENT" ) {
-        console.error( `Error code: ${err.code} - ${err.message}` );
+        console.error( `Error code: ${err.code} - ${err.message}` )
       }
     } else {
-      console.error( "Unknown error:", error );
+      console.error( "Unknown error:", error )
     }
   }
   try {
