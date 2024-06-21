@@ -50,26 +50,6 @@ export const STROKE = {
   INDIVIDUAL_MEDLEY_400M: "17",
 }
 
-export const freestyle50mShortParams = {
-  Pool: POOLS.SHORT,
-  Stroke: STROKE.FREESTYLE_50M,
-}
-
-export const breaststroke100mShortParams = {
-  Pool: POOLS.SHORT,
-  Stroke: STROKE.BREASTSTROKE_100M,
-}
-
-export const butterfly50mShortParams = {
-  Pool: POOLS.SHORT,
-  Stroke: STROKE.BUTTERFLY_50M,
-}
-
-export const backstroke100mShortParams = {
-  Pool: POOLS.SHORT,
-  Stroke: STROKE.BACKSTROKE_100M,
-}
-
 export const nationalRankParams = {
   TargetRegion: "P",
   Level: "N",
