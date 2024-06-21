@@ -536,7 +536,6 @@ const fetchPages = async () => {
       const $ = cheerio.load( content )
       data[pageInfo.label] = pageInfo.parser( $ )
     }
-    sleep( rng() * 60.0 )
   }
   return data
 }

@@ -15,7 +15,7 @@ export const debug = ( ...args: unknown[] ) => {
 }
 
 export const rng = seedrandom( "12345" ) // For predictable randomness
-export const sleep = ( timeout: number ) => new Promise( r => setTimeout( r, timeout ) );
+export const sleep = ( timeout: number ) => new Promise( r => setTimeout( r, timeout * 1_000 ) )
 
 export const extractTableData = ( $: CheerioAPI, table: Cheerio<AnyNode> ) => {
   // const data = await page.evaluate( ( tbody: HTMLTableSectionElement ) => {
@@ -118,6 +118,7 @@ export const fetchPage = async ( pageInfo: PageInfo ) => {
     const response = await fetch( pageInfo.url )
     const content = await response.text()
     await fs.writeFile( contentFile, content )
+    await sleep( rng() * 15.0 )
     return content
   } catch( error ) {
     if ( error instanceof FetchError ) {
