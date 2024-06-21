@@ -1,32 +1,41 @@
-import globals from "globals";
-import pluginJs from "@eslint/js";
-import tseslint from "typescript-eslint";
-
+import globals from "globals"
+import pluginJs from "@eslint/js"
+import tseslint from "typescript-eslint"
+import stylistic from "@stylistic/eslint-plugin"
 
 export default [
   {
-    languageOptions: {
+    "languageOptions": {
       globals: globals.node
     },
+    "plugins": {
+      "@stylistic": stylistic
+    },
     "rules": {
-      "indent": [ "error", 2 ],
+      "@stylistic/indent": [ "error", 2 ],
       // Allow hanging commas in lists
-      "comma-dangle": [ "error", "only-multiline" ],
+      "@stylistic/comma-dangle": [ "error", "only-multiline" ],
       // Permit comments to have - or * directly after the opening character
-      "spaced-comment": [ "error", "always", { block: { exceptions: [ "-", "*" ] } } ],
+      "@stylistic/spaced-comment": [ "error", "always", { block: { exceptions: [ "-", "*" ] } } ],
       // Turn off the space in brackets rule
       // 'space-in-parens': 'off',
       // Force spaces in brackets
-      "space-in-parens": [ "error", "always" ],
+      "@stylistic/space-in-parens": [ "error", "always" ],
+      "@stylistic/space-infix-ops": "error",
+      "@stylistic/space-unary-ops": "error",
+      "@stylistic/space-before-blocks": [ "error", "always" ],
       // Disable requiring space before function brackets
-      "space-before-function-paren": "off",
+      "@stylistic/space-before-function-paren": "off",
       // Force spaces in array definitions, other than empty ones
-      "array-bracket-spacing": [ "error", "always" ],
+      "@stylistic/array-bracket-spacing": [ "error", "always" ],
       // Use double quotes everywhere unless for quoting purposes
-      "quotes": [ "error", "double", { avoidEscape: true } ],
+      "@stylistic/quotes": [ "error", "double", { avoidEscape: true } ],
       // Allow quoted properties as long as all in an object are the same
-      "quote-props": [ "error", "consistent" ],
-      // Allow console messages for dev. Should remove this to ensure none are deployed to production
+      "@stylistic/quote-props": [ "error", "consistent" ],
+      // Limit line length
+      "@stylistic/max-len": [ "error", { "code": 132 } ],
+      // Remove semi-colons if unnecessary
+      "@stylistic/semi": [ "error", "never" ],
       "no-console": "off",
       "no-unused-vars": "off",
       "@typescript-eslint/no-unused-vars": [
@@ -41,4 +50,4 @@ export default [
   },
   pluginJs.configs.recommended,
   ...tseslint.configs.recommended,
-];
+]
