@@ -118,7 +118,7 @@ export const fetchPage = async ( pageInfo: PageInfo ) => {
     const response = await fetch( pageInfo.url )
     const content = await response.text()
     await fs.writeFile( contentFile, content )
-    await sleep( rng() * 15.0 )
+    await sleep( rng() * 60.0 )
     return content
   } catch( error ) {
     if ( error instanceof FetchError ) {
