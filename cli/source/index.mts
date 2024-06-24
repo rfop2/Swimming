@@ -31,7 +31,7 @@ const now = new Date()
 const today = format( now, "yyyy-MM-dd" )
 
 // Create a local database to persist state
-const db = new Database( "database/records.db" )
+const db = new Database( "../db/records.db" )
 db.pragma( "journal_mode = WAL" )
 
 // Create tables, and prepare statements
