@@ -18,6 +18,7 @@
     "vue-router": "^4.3.3"
   },
   "devDependencies": {
+    "@nuxt/eslint": "^0.3.13",
     "@types/better-sqlite3": "^7.6.10"
   }
 }
