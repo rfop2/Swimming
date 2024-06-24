@@ -1,10 +1,10 @@
 import "dotenv/config"
 import { promises as fs } from "fs"
-import fetch, { FetchError } from "node-fetch"
+import fetch, { FetchError, Headers } from "node-fetch"
 import { differenceInHours } from "date-fns"
 import { Cheerio, CheerioAPI, AnyNode } from "cheerio"
 import seedrandom from "seedrandom"
-import { BASE_URL, CACHE_DIR } from "./config.js"
+import { BASE_URL, CACHE_DIR, MAX_FETCH_INTERVAL, MIN_FETCH_INTERVAL, USER_AGENT } from "./config.js"
 
 const debugEnabled = !!( process.env?.DEBUG === "true" ) || false
 
@@ -115,10 +115,16 @@ export const fetchPage = async ( pageInfo: PageInfo ) => {
   }
   try {
     console.log( `Fetching ${pageInfo.url}` )
-    const response = await fetch( pageInfo.url )
+    const response = await fetch( pageInfo.url, {
+      method: "GET",
+      headers: new Headers( {
+        "User-Agent": USER_AGENT,
+      } )
+    } )
     const content = await response.text()
     await fs.writeFile( contentFile, content )
-    await sleep( rng() * 60.0 )
+    const timeout = MIN_FETCH_INTERVAL + ( rng() * ( MAX_FETCH_INTERVAL - MIN_FETCH_INTERVAL ) )
+    await sleep( timeout )
     return content
   } catch( error ) {
     if ( error instanceof FetchError ) {
