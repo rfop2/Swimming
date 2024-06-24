@@ -1,7 +1,7 @@
 {
-  "name": "site-tests",
+  "name": "swimming-cli",
   "version": "1.0.0",
-  "description": "Doctorfox User Journey Tests",
+  "description": "Swimming Data Fetcher",
   "main": "index.mts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
