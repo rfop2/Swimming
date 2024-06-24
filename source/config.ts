@@ -1,7 +1,7 @@
 export const MATCH_NAME = "Eloise Howard"
 
 export const CACHE_DIR = "./cache"
-export const BASE_URL = "https://www.swimmingresults.org/"
+export const BASE_URL = "https://www.swimmingresults.org"
 
 export const individualBaseUrl = "/individualbest/personal_best.php"
 
