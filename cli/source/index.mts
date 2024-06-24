@@ -543,7 +543,7 @@ const fetchPages = async () => {
 const updateData = async () => {
   try {
     const data = await fetchPages()
-    console.log( data )
+    // console.log( data )
     for ( const [ label, dataset ] of Object.entries( data ) ) {
       if ( label === "individual" ) {
         const individualStats = dataset as IndividualStats
