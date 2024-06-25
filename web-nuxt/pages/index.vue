@@ -1,13 +1,33 @@
 <script setup lang="ts">
-const { data: records } = await useFetch('/api/personal')
-console.log( records )
+  import type { InternalApi } from "nitropack"
+
+  type ApiResponse = InternalApi["/api/personal"]["get"]
+
+  const { data: records } = await useFetch<ApiResponse>( "/api/personal" )
+  console.log( records )
 </script>
 
 <template>
-    <div>
-      <h1>Welcome to the homepage</h1>
-      <AppAlert>
-        This is an auto-imported component
-      </AppAlert>
-    </div>
+  <div class="container lg mx-auto">
+    <h1>Welcome to the homepage</h1>
+    <p>
+      This is an auto-imported component
+      <table>
+        <thead>
+          <tr>
+            <th>Course</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            v-for="row in records"
+            :key="row.stroke"
+          >
+            <td>{{ row.course }}</td>
+            <td>{{ row.stroke }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </p>
+  </div>
 </template>
