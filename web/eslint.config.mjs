@@ -1,8 +1,13 @@
 // @ts-check
 import withNuxt from "./.nuxt/eslint.config.mjs"
 
+import stylisticPlugin from "@stylistic/eslint-plugin"
+
 export default withNuxt( {
   // Your custom configs here
+  plugins: {
+    "@stylistic": stylisticPlugin,
+  },
   rules: {
     "@stylistic/indent": "off",
     "vue/script-indent": [ "error", 2, { baseIndent: 1, switchCase: 1 } ],
@@ -29,6 +34,5 @@ export default withNuxt( {
     // "@stylistic/max-len": [ "error", { "code": 132 } ],
     // Remove semi-colons if unnecessary
     "@stylistic/semi": [ "error", "never" ],
-
   },
 } )
