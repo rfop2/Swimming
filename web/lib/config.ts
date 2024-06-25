@@ -1,7 +1,7 @@
 export const MATCH_NAME = "Eloise Howard"
 
 export const DB_DIR = "./db"
-export const DB_PATH = `${DB_DIR}/Records.db`
+export const DB_PATH = `${DB_DIR}/records.db`
 export const CACHE_DIR = "./cli/cache"
 export const BASE_URL = "https://www.swimmingresults.org"
 
