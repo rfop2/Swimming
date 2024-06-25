@@ -7,19 +7,27 @@
     "dev": "nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare"
+    "postinstall": "nuxt prepare",
+    "build-cli": "npx tsc --build",
+    "watch-cli": "npx tsc --watch -p cli",
+    "fetch": "node ./cli/build/cli/index.mjs"
   },
   "dependencies": {
     "@nuxtjs/tailwindcss": "^6.12.0",
     "better-sqlite3": "^9.6.0",
+    "cheerio": "^1.0.0-rc.12",
     "date-fns": "^3.6.0",
+    "node-fetch": "^3.3.2",
     "nuxt": "^3.12.2",
+    "seedrandom": "^3.0.5",
     "vue": "^3.4.29",
     "vue-router": "^4.3.3"
   },
   "devDependencies": {
     "@nuxt/eslint": "^0.3.13",
     "@stylistic/eslint-plugin": "^2.2.2",
-    "@types/better-sqlite3": "^7.6.10"
+    "@types/better-sqlite3": "^7.6.10",
+    "@types/seedrandom": "^3.0.8",
+    "typescript": "^5.5.2"
   }
 }
