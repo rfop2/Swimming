@@ -12,7 +12,7 @@ export default [
       "@stylistic": stylistic
     },
     "rules": {
-      "@stylistic/indent": [ "error", 2 ],
+      "@stylistic/indent": "off",
       // Allow hanging commas in lists
       "@stylistic/comma-dangle": [ "error", "only-multiline" ],
       // Permit comments to have - or * directly after the opening character
@@ -33,7 +33,7 @@ export default [
       // Allow quoted properties as long as all in an object are the same
       "@stylistic/quote-props": [ "error", "consistent" ],
       // Limit line length
-      "@stylistic/max-len": [ "error", { "code": 132 } ],
+      // "@stylistic/max-len": [ "error", { "code": 132 } ],
       // Remove semi-colons if unnecessary
       "@stylistic/semi": [ "error", "never" ],
       "no-console": "off",
