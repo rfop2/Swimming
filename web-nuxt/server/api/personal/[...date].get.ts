@@ -1,14 +1,15 @@
 import "dotenv/config"
-import { defineEventHandler } from 'h3';
-import Database, { Statement } from "better-sqlite3"
+import { defineEventHandler } from "h3"
+import type { Statement } from "better-sqlite3"
+import Database from "better-sqlite3"
 import { format, addDays, parseISO } from "date-fns"
 
 // Create a local database to persist state
 const db = new Database( "../db/records.db" )
-db.pragma( "journal_mode = WAL" );
+db.pragma( "journal_mode = WAL" )
 
-const selectMaxCreated: Statement<unknown[],{ MaxCreated: string }> = db.prepare( "SELECT MAX(created) AS MaxCreated FROM Individual" )
-const selectRecords: Statement<{ date: string}> = db.prepare( "SELECT * FROM Individual WHERE created = :date" )
+const selectMaxCreated: Statement<unknown[], { MaxCreated: string }> = db.prepare( "SELECT MAX(created) AS MaxCreated FROM Individual" )
+const selectRecords: Statement<{ date: string }, Individual> = db.prepare( "SELECT * FROM Individual WHERE created = :date" )
 
 export default defineEventHandler( async ( event ) => {
   console.log( "Event", event )
@@ -17,7 +18,8 @@ export default defineEventHandler( async ( event ) => {
   const date = getRouterParam( event, "date" )
   if ( date ) {
     bindParams = { date }
-  } else {
+  }
+  else {
     const result = selectMaxCreated.get()
     console.log( "Result", result )
     if ( result?.MaxCreated ) {
@@ -27,4 +29,4 @@ export default defineEventHandler( async ( event ) => {
   const data = selectRecords.all( bindParams )
   console.log( "Data", data )
   return data
-})
+} )
