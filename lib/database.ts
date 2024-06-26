@@ -88,6 +88,11 @@ export const insertRankingsSql =
   :fina
 );`
 
+export interface PerformanceRow extends RankingStats {
+  created: string
+  label: string
+}
+
 export const createPerformanceSql =
 `CREATE TABLE IF NOT EXISTS Performance (
   created DATE DEFAULT CURRENT_TIMESTAMP,
