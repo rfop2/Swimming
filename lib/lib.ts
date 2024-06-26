@@ -16,7 +16,14 @@ export const debug = (...args: unknown[]) => {
 }
 
 export const rng = seedrandom()
+
 export const sleep = (timeout: number) => new Promise(r => setTimeout(r, timeout * 1_000))
+  for ( let i = array.length - 1; i > 0; i-- ) {
+    const j = Math.floor( Math.random() * ( i + 1 ) );
+    [ array[i], array[j] ] = [ array[j], array[i] ]
+  }
+  return array
+}
 
 export const extractTableData = ($: CheerioAPI, table: Cheerio<AnyNode>) => {
   // const data = await page.evaluate( ( tbody: HTMLTableSectionElement ) => {

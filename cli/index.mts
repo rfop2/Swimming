@@ -26,7 +26,7 @@ import {
   insertPerformanceSql,
   insertRankingsSql,
 } from "../lib/database.js"
-import { createUrl, fetchPage, timetoSeconds } from "../lib/lib.js"
+import { createUrl, fetchPage, shuffle, timetoSeconds } from "../lib/lib.js"
 
 const now = new Date()
 const today = format( now, "yyyy-MM-dd" )
@@ -531,7 +531,7 @@ const pages: PageData = [
 
 const fetchPages = async () => {
   const data: Record<string, IndividualStats | Ranking> = {}
-  for ( const pageInfo of pages ) {
+  for ( const pageInfo of shuffle( pages ) ) {
     const content = await fetchPage( pageInfo )
     if ( content ) {
       const $ = cheerio.load( content )
