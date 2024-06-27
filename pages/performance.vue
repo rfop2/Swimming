@@ -83,55 +83,63 @@
 </script>
 
 <template>
-  <table class="table-auto border-collapse border-2 border-slate-300">
-    <caption class="caption-bottom">
-      Performance versus leading times
-    </caption>
-    <thead>
-      <tr>
-        <th rowSpan="2" class="text-right align-bottom p-2 border border-slate-300">Distance</th>
-        <th rowSpan="2" class="align-bottom p-2 border border-slate-300">Stroke</th>
-        <th rowSpan="2" class="align-bottom p-2 border border-slate-300">Course</th>
-        <th colSpan="4" class="p-2 border border-l-2 border-slate-300">County</th>
-        <th colSpan="4" class="p-2 border border-l-2 border-slate-300">Regional</th>
-        <th colSpan="4" class="p-2 border border-l-2 border-slate-300">National</th>
-      </tr>
-      <tr>
-        <th class="text-right p-2 border border-l-2 border-slate-300">Rank</th>
-        <th class="text-right p-2 border border-slate-300">Best</th>
-        <th class="text-right p-2 border border-slate-300">Time</th>
-        <th class="text-right p-2 border border-slate-300">Diff.</th>
-        <th class="text-right p-2 border border-l-2 border-slate-300">Rank</th>
-        <th class="text-right p-2 border border-slate-300">Best</th>
-        <th class="text-right p-2 border border-slate-300">Time</th>
-        <th class="text-right p-2 border border-slate-300">Diff.</th>
-        <th class="text-right p-2 border border-l-2 border-slate-300">Rank</th>
-        <th class="text-right p-2 border border-slate-300">Best</th>
-        <th class="text-right p-2 border border-slate-300">Time</th>
-        <th class="text-right p-2 border border-slate-300">Diff.</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr
-        v-for="row in records"
-        :key="row.key"
-      >
-        <td class="text-right p-2 border border-slate-300">{{ row.distance }}</td>
-        <td class="p-2 border border-slate-300">{{ row.stroke.replace( /_/g, " " ).replace(/\b\w/g, char => char.toUpperCase()) }}</td>
-        <td class="p-2 border border-slate-300">{{ row.course === "lc" ? "Long" : "Short" }}</td>
-        <td class="text-right p-2 border border-l-2 border-slate-300">{{ row.county.rank }}</td>
-        <td class="text-right p-2 border border-slate-300">{{ row.county.best?.toFixed(2) }}</td>
-        <td class="text-right p-2 border border-slate-300">{{ row.county.time?.toFixed(2) }}</td>
-        <td class="text-right p-2 border border-slate-300">{{ row.county.difference?.toFixed(2) }}</td>
-        <td class="text-right p-2 border border-l-2 border-slate-300">{{ row.regional.rank }}</td>
-        <td class="text-right p-2 border border-slate-300">{{ row.regional.best?.toFixed(2) }}</td>
-        <td class="text-right p-2 border border-slate-300">{{ row.regional.time?.toFixed(2) }}</td>
-        <td class="text-right p-2 border border-slate-300">{{ row.regional.difference?.toFixed(2) }}</td>
-        <td class="text-right p-2 border border-l-2 border-slate-300">{{ row.national.rank }}</td>
-        <td class="text-right p-2 border border-slate-300">{{ row.national.best?.toFixed(2) }}</td>
-        <td class="text-right p-2 border border-slate-300">{{ row.national.time?.toFixed(2) }}</td>
-        <td class="text-right p-2 border border-slate-300">{{ row.national.difference?.toFixed(2) }}</td>
-      </tr>
-    </tbody>
-  </table>
+  <div class="px-4 sm:px-6 lg:px-8">
+    <div class="sm:flex sm:items-center">
+      <div class="sm:flex-auto">
+        <h1 class="text-base font-semibold leading-6 text-gray-900">Users</h1>
+        <p class="mt-2 text-sm text-gray-700">Performance in events relative to the event leader if appearing in top 100 rankings.</p>
+      </div>
+    </div>
+    <div class="mt-8 flow-root">
+      <div class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+        <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
+          <table class="min-w-full divide-y divide-gray-300">
+            <thead>
+              <tr class="divide-x divide-gray-200">
+                <th scope="col" rowSpan="2" class="align-bottom px-4 py-3.5 text-right text-sm font-semibold text-gray-900 sm:pl-0">Distance</th>
+                <th scope="col" rowSpan="2" class="align-bottom px-4 py-3.5 text-left text-sm font-semibold text-gray-900">Stroke</th>
+                <th scope="col" rowSpan="2" class="align-bottom px-4 py-3.5 text-left text-sm font-semibold text-gray-900">Course</th>
+                <th scope="col" colSpan="4" class="px-4 py-3.5 text-left text-sm font-semibold text-gray-900">County</th>
+                <th scope="col" colSpan="4" class="px-4 py-3.5 text-left text-sm font-semibold text-gray-900">Regional</th>
+                <th scope="col" colSpan="4" class="py-3.5 pl-4 pr-4 text-left text-sm font-semibold text-gray-900 sm:pr-0">National</th>
+              </tr>
+              <tr class="divide-x divide-gray-200">
+                <th scope="col" class="px-4 py-3.5 text-right text-sm font-semibold text-gray-900 border-l-[1px]">Rank</th>
+                <th scope="col" class="px-4 py-3.5 text-right text-sm font-semibold text-gray-900">Best</th>
+                <th scope="col" class="px-4 py-3.5 text-right text-sm font-semibold text-gray-900">Time</th>
+                <th scope="col" class="px-4 py-3.5 text-right text-sm font-semibold text-gray-900">Diff.</th>
+                <th scope="col" class="px-4 py-3.5 text-right text-sm font-semibold text-gray-900">Rank</th>
+                <th scope="col" class="px-4 py-3.5 text-right text-sm font-semibold text-gray-900">Best</th>
+                <th scope="col" class="px-4 py-3.5 text-right text-sm font-semibold text-gray-900">Time</th>
+                <th scope="col" class="px-4 py-3.5 text-right text-sm font-semibold text-gray-900">Diff.</th>
+                <th scope="col" class="px-4 py-3.5 text-right text-sm font-semibold text-gray-900">Rank</th>
+                <th scope="col" class="px-4 py-3.5 text-right text-sm font-semibold text-gray-900">Best</th>
+                <th scope="col" class="px-4 py-3.5 text-right text-sm font-semibold text-gray-900">Time</th>
+                <th scope="col" class="px-4 py-3.5 text-right text-sm font-semibold text-gray-900">Diff.</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200 bg-white">
+              <tr v-for="row in records" :key="row.key" class="divide-x divide-gray-200">
+                <td class="whitespace-nowrap py-4 pl-4 pr-4 text-right text-sm font-medium text-gray-900 sm:pl-0">{{ row.distance }}</td>
+                <td class="whitespace-nowrap p-4 text-sm text-gray-900">{{ row.stroke.replace( /_/g, " " ).replace(/\b\w/g, char => char.toUpperCase()) }}</td>
+                <td class="whitespace-nowrap p-4 text-sm text-gray-900">{{ row.course === "lc" ? "Long" : "Short" }}</td>
+                <td class="whitespace-nowrap p-4 text-right text-sm text-gray-900">{{ row.county.rank }}</td>
+                <td class="whitespace-nowrap p-4 text-right text-sm text-gray-500">{{ row.county.best?.toFixed(2) }}</td>
+                <td class="whitespace-nowrap p-4 text-right text-sm text-gray-500">{{ row.county.time?.toFixed(2) }}</td>
+                <td class="whitespace-nowrap p-4 text-right text-sm text-gray-500">{{ row.county.difference?.toFixed(2) }}</td>
+                <td class="whitespace-nowrap p-4 text-right text-sm text-gray-900">{{ row.regional.rank }}</td>
+                <td class="whitespace-nowrap p-4 text-right text-sm text-gray-500">{{ row.regional.best?.toFixed(2) }}</td>
+                <td class="whitespace-nowrap p-4 text-right text-sm text-gray-500">{{ row.regional.time?.toFixed(2) }}</td>
+                <td class="whitespace-nowrap p-4 text-right text-sm text-gray-500">{{ row.regional.difference?.toFixed(2) }}</td>
+                <td class="whitespace-nowrap p-4 text-right text-sm text-gray-900">{{ row.national.rank }}</td>
+                <td class="whitespace-nowrap p-4 text-right text-sm text-gray-500">{{ row.national.best?.toFixed(2) }}</td>
+                <td class="whitespace-nowrap p-4 text-right text-sm text-gray-500">{{ row.national.time?.toFixed(2) }}</td>
+                <td class="whitespace-nowrap py-4 pl-4 pr-4 text-right text-sm text-gray-500 sm:pr-0">{{ row.national.difference?.toFixed(2) }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
