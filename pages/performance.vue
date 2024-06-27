@@ -1,5 +1,9 @@
 <script setup lang="ts">
   import type { InternalApi } from "nitropack"
+  import { LinkIcon } from "@heroicons/vue/16/solid"
+  import { pages } from "~/lib/pages"
+
+  const pageLookup = new Map( pages.map( page => ( [ page.label, page.url.toString() ] ) ) )
 
   type ApiResponse = InternalApi["/api/relative"]["get"]
   interface RecordType {
@@ -19,14 +23,14 @@
         const recordsMap = data.reduce( ( recordsMap, record ) => {
           // 100m_backstroke_female_sc_11_glos
           const matches = record.label.match( /(?<distance>\d+m)_(?<stroke>\w+)_female_(?<course>.c)_11(?:_(?<area>\w+))?/ )
-          console.log( matches )
+          // console.log( matches )
           if ( !matches ) {
             throw new Error( `Can't match on '${record.label}'` )
           }
           const groups = matches?.groups ?? {}
           const area = groups.area ? ( groups.area === "glos" ? "county" : "regional" ) : "national"
           const key = `${groups.distance}_${groups.stroke}_${groups.course}`
-          const { position, rank, time, best, difference } = record
+          const { label, position, rank, time, best, difference } = record
           let mergedRecord = recordsMap.get( key )
           if ( !mergedRecord ) {
             mergedRecord = {
@@ -41,22 +45,22 @@
           }
           switch ( area ) {
             case "county" : {
-              mergedRecord.county = { position, rank, time, best, difference }
+              mergedRecord.county = { label, position, rank, time, best, difference }
               break
             }
             case "regional" : {
-              mergedRecord.regional = { position, rank, time, best, difference }
+              mergedRecord.regional = { label, position, rank, time, best, difference }
               break
             }
             case "national" : {
-              mergedRecord.national = { position, rank, time, best, difference }
+              mergedRecord.national = { label, position, rank, time, best, difference }
               break
             }
           }
           recordsMap.set( key, mergedRecord )
           return recordsMap
         }, new Map<string,RecordType>() )
-        console.log( recordsMap )
+        // console.log( recordsMap )
         const recordArray = Array.from( recordsMap.values() )
         recordArray.sort( ( a, b ) => {
           if ( a.course < b.course ) {
@@ -79,7 +83,7 @@
         return recordArray
       },
     } )
-  console.log( records )
+  // console.log( records )
 </script>
 
 <template>
@@ -123,15 +127,36 @@
                 <td class="whitespace-nowrap py-4 pl-4 pr-4 text-right text-sm font-medium text-gray-900 sm:pl-0">{{ row.distance }}</td>
                 <td class="whitespace-nowrap p-4 text-sm text-gray-900">{{ row.stroke.replace( /_/g, " " ).replace(/\b\w/g, char => char.toUpperCase()) }}</td>
                 <td class="whitespace-nowrap p-4 text-sm text-gray-900">{{ row.course === "lc" ? "Long" : "Short" }}</td>
-                <td class="whitespace-nowrap p-4 text-right text-sm text-gray-900">{{ row.county.rank }}</td>
+                <td class="whitespace-nowrap p-4 text-right text-sm text-gray-900">
+                  <span class="inline-flex items-baseline">
+                    {{ row.county.rank }}
+                    <a v-if="row.county.label" target="_blank" rel="noreferrer,nofollow" :href="pageLookup.get(row.county.label)">
+                      <LinkIcon class="size-3 text-gray-900"/>
+                    </a>
+                  </span>
+                </td>
                 <td class="whitespace-nowrap p-4 text-right text-sm text-gray-500">{{ row.county.best?.toFixed(2) }}</td>
                 <td class="whitespace-nowrap p-4 text-right text-sm text-gray-500">{{ row.county.time?.toFixed(2) }}</td>
                 <td class="whitespace-nowrap p-4 text-right text-sm text-gray-500">{{ row.county.difference?.toFixed(2) }}</td>
-                <td class="whitespace-nowrap p-4 text-right text-sm text-gray-900">{{ row.regional.rank }}</td>
+                <td class="whitespace-nowrap p-4 text-right text-sm text-gray-900">
+                  <span class="inline-flex items-baseline">
+                    {{ row.regional.rank }}
+                    <a v-if="row.regional.label" target="_blank" rel="noreferrer,nofollow" :href="pageLookup.get(row.regional.label)">
+                      <LinkIcon class="size-3 text-gray-900"/>
+                    </a>
+                  </span>
+                </td>
                 <td class="whitespace-nowrap p-4 text-right text-sm text-gray-500">{{ row.regional.best?.toFixed(2) }}</td>
                 <td class="whitespace-nowrap p-4 text-right text-sm text-gray-500">{{ row.regional.time?.toFixed(2) }}</td>
                 <td class="whitespace-nowrap p-4 text-right text-sm text-gray-500">{{ row.regional.difference?.toFixed(2) }}</td>
-                <td class="whitespace-nowrap p-4 text-right text-sm text-gray-900">{{ row.national.rank }}</td>
+                <td class="whitespace-nowrap p-4 text-right text-sm text-gray-900">
+                  <span class="inline-flex items-baseline">
+                    {{ row.national.rank }}
+                    <a v-if="row.national.label" target="_blank" rel="noreferrer,nofollow" :href="pageLookup.get(row.national.label)">
+                      <LinkIcon class="size-3 text-gray-900"/>
+                    </a>
+                  </span>
+                </td>
                 <td class="whitespace-nowrap p-4 text-right text-sm text-gray-500">{{ row.national.best?.toFixed(2) }}</td>
                 <td class="whitespace-nowrap p-4 text-right text-sm text-gray-500">{{ row.national.time?.toFixed(2) }}</td>
                 <td class="whitespace-nowrap py-4 pl-4 pr-4 text-right text-sm text-gray-500 sm:pr-0">{{ row.national.difference?.toFixed(2) }}</td>
