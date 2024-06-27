@@ -57,7 +57,26 @@
           return recordsMap
         }, new Map<string,RecordType>() )
         console.log( recordsMap )
-        return Array.from( recordsMap.values() )
+        const recordArray = Array.from( recordsMap.values() )
+        recordArray.sort( ( a, b ) => {
+          if ( a.course < b.course ) {
+            return 1
+          } else if ( a.course > b.course ) {
+            return -1
+          }
+          if ( a.stroke < b.stroke ) {
+            return -1
+          } else if ( a.stroke > b.stroke ) {
+            return 1
+          }
+          if ( a.distance < b.distance ) {
+            return 1
+          } else if ( a.distance > b.distance ) {
+            return -1
+          }
+          return 0
+        } )
+        return recordArray
       },
     } )
   console.log( records )
@@ -74,26 +93,26 @@
         </caption>
         <thead>
           <tr>
-            <th rowSpan="2" class="align-bottom px-2 border border-slate-300">Distance</th>
-            <th rowSpan="2" class="align-bottom px-2 border border-slate-300">Stroke</th>
-            <th rowSpan="2" class="align-bottom px-2 border border-slate-300">Course</th>
-            <th colSpan="4" class="px-2 border border-l-2 border-slate-300">County</th>
-            <th colSpan="4" class="px-2 border border-l-2 border-slate-300">Regional</th>
-            <th colSpan="4" class="px-2 border border-l-2 border-slate-300">National</th>
+            <th rowSpan="2" class="text-right align-bottom p-2 border border-slate-300">Distance</th>
+            <th rowSpan="2" class="align-bottom p-2 border border-slate-300">Stroke</th>
+            <th rowSpan="2" class="align-bottom p-2 border border-slate-300">Course</th>
+            <th colSpan="4" class="p-2 border border-l-2 border-slate-300">County</th>
+            <th colSpan="4" class="p-2 border border-l-2 border-slate-300">Regional</th>
+            <th colSpan="4" class="p-2 border border-l-2 border-slate-300">National</th>
           </tr>
           <tr>
-            <th class="text-right px-2 border border-l-2 border-slate-300">Rank</th>
-            <th class="text-right px-2 border border-slate-300">Best</th>
-            <th class="text-right px-2 border border-slate-300">Time</th>
-            <th class="text-right px-2 border border-slate-300">Diff.</th>
-            <th class="text-right px-2 border border-l-2 border-slate-300">Rank</th>
-            <th class="text-right px-2 border border-slate-300">Best</th>
-            <th class="text-right px-2 border border-slate-300">Time</th>
-            <th class="text-right px-2 border border-slate-300">Diff.</th>
-            <th class="text-right px-2 border border-l-2 border-slate-300">Rank</th>
-            <th class="text-right px-2 border border-slate-300">Best</th>
-            <th class="text-right px-2 border border-slate-300">Time</th>
-            <th class="text-right px-2 border border-slate-300">Diff.</th>
+            <th class="text-right p-2 border border-l-2 border-slate-300">Rank</th>
+            <th class="text-right p-2 border border-slate-300">Best</th>
+            <th class="text-right p-2 border border-slate-300">Time</th>
+            <th class="text-right p-2 border border-slate-300">Diff.</th>
+            <th class="text-right p-2 border border-l-2 border-slate-300">Rank</th>
+            <th class="text-right p-2 border border-slate-300">Best</th>
+            <th class="text-right p-2 border border-slate-300">Time</th>
+            <th class="text-right p-2 border border-slate-300">Diff.</th>
+            <th class="text-right p-2 border border-l-2 border-slate-300">Rank</th>
+            <th class="text-right p-2 border border-slate-300">Best</th>
+            <th class="text-right p-2 border border-slate-300">Time</th>
+            <th class="text-right p-2 border border-slate-300">Diff.</th>
           </tr>
         </thead>
         <tbody>
@@ -101,21 +120,21 @@
             v-for="row in records"
             :key="row.key"
           >
-            <td class="px-2 border border-slate-300">{{ row.distance }}</td>
-            <td class="px-2 border border-slate-300">{{ row.stroke }}</td>
-            <td class="px-2 border border-slate-300">{{ row.course }}</td>
-            <td class="text-right px-2 border border-l-2 border-slate-300">{{ row.county.rank }}</td>
-            <td class="text-right px-2 border border-slate-300">{{ row.county.best?.toFixed(2) }}</td>
-            <td class="text-right px-2 border border-slate-300">{{ row.county.time?.toFixed(2) }}</td>
-            <td class="text-right px-2 border border-slate-300">{{ row.county.difference?.toFixed(2) }}</td>
-            <td class="text-right px-2 border border-l-2 border-slate-300">{{ row.regional.rank }}</td>
-            <td class="text-right px-2 border border-slate-300">{{ row.regional.best?.toFixed(2) }}</td>
-            <td class="text-right px-2 border border-slate-300">{{ row.regional.time?.toFixed(2) }}</td>
-            <td class="text-right px-2 border border-slate-300">{{ row.regional.difference?.toFixed(2) }}</td>
-            <td class="text-right px-2 border border-l-2 border-slate-300">{{ row.national.rank }}</td>
-            <td class="text-right px-2 border border-slate-300">{{ row.national.best?.toFixed(2) }}</td>
-            <td class="text-right px-2 border border-slate-300">{{ row.national.time?.toFixed(2) }}</td>
-            <td class="text-right px-2 border border-slate-300">{{ row.national.difference?.toFixed(2) }}</td>
+            <td class="text-right p-2 border border-slate-300">{{ row.distance }}</td>
+            <td class="p-2 border border-slate-300">{{ row.stroke.replace( /_/g, " " ).replace(/\b\w/g, char => char.toUpperCase()) }}</td>
+            <td class="p-2 border border-slate-300">{{ row.course === "lc" ? "Long" : "Short" }}</td>
+            <td class="text-right p-2 border border-l-2 border-slate-300">{{ row.county.rank }}</td>
+            <td class="text-right p-2 border border-slate-300">{{ row.county.best?.toFixed(2) }}</td>
+            <td class="text-right p-2 border border-slate-300">{{ row.county.time?.toFixed(2) }}</td>
+            <td class="text-right p-2 border border-slate-300">{{ row.county.difference?.toFixed(2) }}</td>
+            <td class="text-right p-2 border border-l-2 border-slate-300">{{ row.regional.rank }}</td>
+            <td class="text-right p-2 border border-slate-300">{{ row.regional.best?.toFixed(2) }}</td>
+            <td class="text-right p-2 border border-slate-300">{{ row.regional.time?.toFixed(2) }}</td>
+            <td class="text-right p-2 border border-slate-300">{{ row.regional.difference?.toFixed(2) }}</td>
+            <td class="text-right p-2 border border-l-2 border-slate-300">{{ row.national.rank }}</td>
+            <td class="text-right p-2 border border-slate-300">{{ row.national.best?.toFixed(2) }}</td>
+            <td class="text-right p-2 border border-slate-300">{{ row.national.time?.toFixed(2) }}</td>
+            <td class="text-right p-2 border border-slate-300">{{ row.national.difference?.toFixed(2) }}</td>
           </tr>
         </tbody>
       </table>
