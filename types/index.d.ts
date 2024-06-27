@@ -44,7 +44,7 @@ interface Ranking {
 interface PageInfo {
   label: string
   url: URL
-  parser: ( arg1: CheerioAPI ) => IndividualStats | Ranking
+  type: "individual" | "ranking"
 }
 
 type PageData = Array<PageInfo>

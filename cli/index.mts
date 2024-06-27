@@ -6,15 +6,6 @@ import Database from "better-sqlite3"
 import {
   DB_PATH,
   MATCH_NAME,
-  STROKE,
-  POOLS,
-  countyRankParams,
-  globalRankParams,
-  individualBaseUrl,
-  individualParams,
-  nationalRankParams,
-  rankBaseUrl,
-  regionalRankParams,
 } from "../lib/config.js"
 import {
   createIndividualSql,
@@ -26,7 +17,8 @@ import {
   insertPerformanceSql,
   insertRankingsSql,
 } from "../lib/database.js"
-import { createUrl, fetchPage, shuffle, timetoSeconds } from "../lib/lib.js"
+import { fetchPage, shuffle, timetoSeconds } from "../lib/lib.js"
+import { pages } from "../lib/pages.js"
 
 const now = new Date()
 const today = format( now, "yyyy-MM-dd" )
@@ -170,364 +162,6 @@ const parseRanking = ( $: CheerioAPI ) => {
   return data
 }
 
-const pages: PageData = [
-  {
-    label: "individual",
-    url: createUrl( individualBaseUrl, individualParams ),
-    parser: parseIndividual,
-  },
-  {
-    label: "50m_freestyle_female_lc_11",
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.FREESTYLE_50M, Pool: POOLS.LONG },
-      ...globalRankParams,
-      ...nationalRankParams,
-    } ),
-    parser: parseRanking,
-  },
-  {
-    label: "50m_freestyle_female_lc_11_sw",
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.FREESTYLE_50M, Pool: POOLS.LONG },
-      ...globalRankParams,
-      ...regionalRankParams,
-    } ),
-    parser: parseRanking,
-  },
-  {
-    label: "50m_freestyle_female_lc_11_glos",
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.FREESTYLE_50M, Pool: POOLS.LONG },
-      ...globalRankParams,
-      ...countyRankParams,
-    } ),
-    parser: parseRanking,
-  },
-  {
-    label: "100m_breaststroke_female_lc_11",
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.BREASTSTROKE_100M, Pool: POOLS.LONG },
-      ...globalRankParams,
-      ...nationalRankParams,
-    } ),
-    parser: parseRanking,
-  },
-  {
-    label: "100m_breaststroke_female_lc_11_sw",
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.BREASTSTROKE_100M, Pool: POOLS.LONG },
-      ...globalRankParams,
-      ...regionalRankParams,
-    } ),
-    parser: parseRanking,
-  },
-  {
-    label: "100m_breaststroke_female_lc_11_glos",
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.BREASTSTROKE_100M, Pool: POOLS.LONG },
-      ...globalRankParams,
-      ...countyRankParams,
-    } ),
-    parser: parseRanking,
-  },
-  {
-    label: "50m_butterfly_female_lc_11",
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.BUTTERFLY_50M, Pool: POOLS.LONG },
-      ...globalRankParams,
-      ...nationalRankParams,
-    } ),
-    parser: parseRanking,
-  },
-  {
-    label: "50m_butterfly_female_lc_11_sw",
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.BUTTERFLY_50M, Pool: POOLS.LONG },
-      ...globalRankParams,
-      ...regionalRankParams,
-    } ),
-    parser: parseRanking,
-  },
-  {
-    label: "50m_butterfly_female_lc_11_glos",
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.BUTTERFLY_50M, Pool: POOLS.LONG },
-      ...globalRankParams,
-      ...countyRankParams,
-    } ),
-    parser: parseRanking,
-  },
-  {
-    label: "100m_backstroke_female_lc_11",
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.BACKSTROKE_100M, Pool: POOLS.LONG },
-      ...globalRankParams,
-      ...nationalRankParams,
-    } ),
-    parser: parseRanking,
-  },
-  {
-    label: "100m_backstroke_female_lc_11_sw",
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.BACKSTROKE_100M, Pool: POOLS.LONG },
-      ...globalRankParams,
-      ...regionalRankParams,
-    } ),
-    parser: parseRanking,
-  },
-  {
-    label: "100m_backstroke_female_lc_11_glos",
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.BACKSTROKE_100M, Pool: POOLS.LONG },
-      ...globalRankParams,
-      ...countyRankParams,
-    } ),
-    parser: parseRanking,
-  },
-  {
-    label: "50m_freestyle_female_sc_11",
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.FREESTYLE_50M, Pool: POOLS.SHORT },
-      ...globalRankParams,
-      ...nationalRankParams,
-    } ),
-    parser: parseRanking,
-  },
-  {
-    label: "50m_freestyle_female_sc_11_sw",
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.FREESTYLE_50M, Pool: POOLS.SHORT },
-      ...globalRankParams,
-      ...regionalRankParams,
-    } ),
-    parser: parseRanking,
-  },
-  {
-    label: "50m_freestyle_female_sc_11_glos",
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.FREESTYLE_50M, Pool: POOLS.SHORT },
-      ...globalRankParams,
-      ...countyRankParams,
-    } ),
-    parser: parseRanking,
-  },
-  {
-    label: "100m_freestyle_female_sc_11",
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.FREESTYLE_100M, Pool: POOLS.SHORT },
-      ...globalRankParams,
-      ...nationalRankParams,
-    } ),
-    parser: parseRanking,
-  },
-  {
-    label: "100m_freestyle_female_sc_11_sw",
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.FREESTYLE_100M, Pool: POOLS.SHORT },
-      ...globalRankParams,
-      ...regionalRankParams,
-    } ),
-    parser: parseRanking,
-  },
-  {
-    label: "100m_freestyle_female_sc_11_glos",
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.FREESTYLE_100M, Pool: POOLS.SHORT },
-      ...globalRankParams,
-      ...countyRankParams,
-    } ),
-    parser: parseRanking,
-  },
-  {
-    label: "50m_breaststroke_female_sc_11",
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.BREASTSTROKE_50M, Pool: POOLS.SHORT },
-      ...globalRankParams,
-      ...nationalRankParams,
-    } ),
-    parser: parseRanking,
-  },
-  {
-    label: "50m_breaststroke_female_sc_11_sw",
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.BREASTSTROKE_50M, Pool: POOLS.SHORT },
-      ...globalRankParams,
-      ...regionalRankParams,
-    } ),
-    parser: parseRanking,
-  },
-  {
-    label: "50m_breaststroke_female_sc_11_glos",
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.BREASTSTROKE_50M, Pool: POOLS.SHORT },
-      ...globalRankParams,
-      ...countyRankParams,
-    } ),
-    parser: parseRanking,
-  },
-  {
-    label: "100m_breaststroke_female_sc_11",
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.BREASTSTROKE_100M, Pool: POOLS.SHORT },
-      ...globalRankParams,
-      ...nationalRankParams,
-    } ),
-    parser: parseRanking,
-  },
-  {
-    label: "100m_breaststroke_female_sc_11_sw",
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.BREASTSTROKE_100M, Pool: POOLS.SHORT },
-      ...globalRankParams,
-      ...regionalRankParams,
-    } ),
-    parser: parseRanking,
-  },
-  {
-    label: "100m_breaststroke_female_sc_11_glos",
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.BREASTSTROKE_100M, Pool: POOLS.SHORT },
-      ...globalRankParams,
-      ...countyRankParams,
-    } ),
-    parser: parseRanking,
-  },
-  {
-    label: "50m_butterfly_female_sc_11",
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.BUTTERFLY_50M, Pool: POOLS.SHORT },
-      ...globalRankParams,
-      ...nationalRankParams,
-    } ),
-    parser: parseRanking,
-  },
-  {
-    label: "50m_butterfly_female_sc_11_sw",
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.BUTTERFLY_50M, Pool: POOLS.SHORT },
-      ...globalRankParams,
-      ...regionalRankParams,
-    } ),
-    parser: parseRanking,
-  },
-  {
-    label: "50m_butterfly_female_sc_11_glos",
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.BUTTERFLY_50M, Pool: POOLS.SHORT },
-      ...globalRankParams,
-      ...countyRankParams,
-    } ),
-    parser: parseRanking,
-  },
-  {
-    label: "100m_butterfly_female_sc_11",
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.BUTTERFLY_100M, Pool: POOLS.SHORT },
-      ...globalRankParams,
-      ...nationalRankParams,
-    } ),
-    parser: parseRanking,
-  },
-  {
-    label: "100m_butterfly_female_sc_11_sw",
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.BUTTERFLY_100M, Pool: POOLS.SHORT },
-      ...globalRankParams,
-      ...regionalRankParams,
-    } ),
-    parser: parseRanking,
-  },
-  {
-    label: "100m_butterfly_female_sc_11_glos",
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.BUTTERFLY_100M, Pool: POOLS.SHORT },
-      ...globalRankParams,
-      ...countyRankParams,
-    } ),
-    parser: parseRanking,
-  },
-  {
-    label: "50m_backstroke_female_sc_11",
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.BACKSTROKE_50M, Pool: POOLS.SHORT },
-      ...globalRankParams,
-      ...nationalRankParams,
-    } ),
-    parser: parseRanking,
-  },
-  {
-    label: "50m_backstroke_female_sc_11_sw",
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.BACKSTROKE_50M, Pool: POOLS.SHORT },
-      ...globalRankParams,
-      ...regionalRankParams,
-    } ),
-    parser: parseRanking,
-  },
-  {
-    label: "50m_backstroke_female_sc_11_glos",
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.BACKSTROKE_50M, Pool: POOLS.SHORT },
-      ...globalRankParams,
-      ...countyRankParams,
-    } ),
-    parser: parseRanking,
-  },
-  {
-    label: "100m_backstroke_female_sc_11",
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.BACKSTROKE_100M, Pool: POOLS.SHORT },
-      ...globalRankParams,
-      ...nationalRankParams,
-    } ),
-    parser: parseRanking,
-  },
-  {
-    label: "100m_backstroke_female_sc_11_sw",
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.BACKSTROKE_100M, Pool: POOLS.SHORT },
-      ...globalRankParams,
-      ...regionalRankParams,
-    } ),
-    parser: parseRanking,
-  },
-  {
-    label: "100m_backstroke_female_sc_11_glos",
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.BACKSTROKE_100M, Pool: POOLS.SHORT },
-      ...globalRankParams,
-      ...countyRankParams,
-    } ),
-    parser: parseRanking,
-  },
-  {
-    label: "100m_individual_medley_female_sc_11",
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.INDIVIDUAL_MEDLEY_100M, Pool: POOLS.SHORT },
-      ...globalRankParams,
-      ...nationalRankParams,
-    } ),
-    parser: parseRanking,
-  },
-  {
-    label: "100m_individual_medley_female_sc_11_sw",
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.INDIVIDUAL_MEDLEY_100M, Pool: POOLS.SHORT },
-      ...globalRankParams,
-      ...regionalRankParams,
-    } ),
-    parser: parseRanking,
-  },
-  {
-    label: "100m_individual_medley_female_sc_11_glos",
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.INDIVIDUAL_MEDLEY_100M, Pool: POOLS.SHORT },
-      ...globalRankParams,
-      ...countyRankParams,
-    } ),
-    parser: parseRanking,
-  },
-]
 
 const fetchPages = async () => {
   const data: Record<string, IndividualStats | Ranking> = {}
@@ -535,7 +169,19 @@ const fetchPages = async () => {
     const content = await fetchPage( pageInfo )
     if ( content ) {
       const $ = cheerio.load( content )
-      data[pageInfo.label] = pageInfo.parser( $ )
+      switch ( pageInfo.type ) {
+        case "individual": {
+          data[pageInfo.label] = parseIndividual( $ )
+          break
+        }
+        case "ranking" : {
+          data[pageInfo.label] = parseRanking( $ )
+          break
+        }
+        default : {
+          throw new Error( `Not parser defined for page type ${pageInfo.type}` )
+        }
+      }
     }
   }
   return data

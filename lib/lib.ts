@@ -1,10 +1,13 @@
-import "dotenv/config"
 import { promises as fs } from "fs"
 import fetch, { FetchError, Headers } from "node-fetch"
 import { differenceInHours } from "date-fns"
 import seedrandom from "seedrandom"
-import { BASE_URL, CACHE_DIR, MAX_FETCH_INTERVAL, MIN_FETCH_INTERVAL, USER_AGENT } from "./config.js"
-
+import {
+  CACHE_DIR,
+  MAX_FETCH_INTERVAL,
+  MIN_FETCH_INTERVAL,
+  USER_AGENT,
+} from "./config.js"
 import type { Cheerio, CheerioAPI, AnyNode } from "cheerio"
 
 const debugEnabled = !!( process.env?.DEBUG === "true" ) || false
@@ -90,12 +93,6 @@ export const timetoSeconds = ( time: string ): number => {
   }
 
   return totalSeconds
-}
-
-export const createUrl = ( base: string, params: Record<string, string> ) => {
-  const url = new URL( BASE_URL + base )
-  url.search = new URLSearchParams( params ).toString()
-  return url
 }
 
 export const fetchPage = async ( pageInfo: PageInfo ) => {
