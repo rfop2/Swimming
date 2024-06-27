@@ -5,6 +5,14 @@
 
   const pageLookup = new Map( pages.map( page => ( [ page.label, page.url.toString() ] ) ) )
 
+  const strokeSort: Record<string,number> = {
+    freestyle: 0,
+    breaststroke: 1,
+    butterfly: 2,
+    backstroke: 3,
+    individual_medley: 4
+  }
+
   type ApiResponse = InternalApi["/api/relative"]["get"]
   interface RecordType {
     key: string
@@ -64,13 +72,13 @@
         const recordArray = Array.from( recordsMap.values() )
         recordArray.sort( ( a, b ) => {
           if ( a.course < b.course ) {
-            return 1
+            return -1
           } else if ( a.course > b.course ) {
-            return -1
+            return 1
           }
-          if ( a.stroke < b.stroke ) {
+          if ( strokeSort[a.stroke] < strokeSort[b.stroke] ) {
             return -1
-          } else if ( a.stroke > b.stroke ) {
+          } else if ( strokeSort[a.stroke] > strokeSort[b.stroke] ) {
             return 1
           }
           if ( a.distance < b.distance ) {
@@ -103,9 +111,9 @@
                 <th scope="col" rowSpan="2" class="align-bottom px-4 py-3.5 text-right text-sm font-semibold text-gray-900 sm:pl-0">Distance</th>
                 <th scope="col" rowSpan="2" class="align-bottom px-4 py-3.5 text-left text-sm font-semibold text-gray-900">Stroke</th>
                 <th scope="col" rowSpan="2" class="align-bottom px-4 py-3.5 text-left text-sm font-semibold text-gray-900">Course</th>
-                <th scope="col" colSpan="4" class="px-4 py-3.5 text-left text-sm font-semibold text-gray-900">County</th>
-                <th scope="col" colSpan="4" class="px-4 py-3.5 text-left text-sm font-semibold text-gray-900">Regional</th>
-                <th scope="col" colSpan="4" class="py-3.5 pl-4 pr-4 text-left text-sm font-semibold text-gray-900 sm:pr-0">National</th>
+                <th scope="col" colSpan="4" class="px-4 py-3.5 text-center text-sm font-semibold text-gray-900">County</th>
+                <th scope="col" colSpan="4" class="px-4 py-3.5 text-center text-sm font-semibold text-gray-900">Regional</th>
+                <th scope="col" colSpan="4" class="py-3.5 pl-4 pr-4 text-center text-sm font-semibold text-gray-900 sm:pr-0">National</th>
               </tr>
               <tr class="divide-x divide-gray-200">
                 <th scope="col" class="px-4 py-3.5 text-right text-sm font-semibold text-gray-900 border-l-[1px]">Rank</th>
