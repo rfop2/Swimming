@@ -1,0 +1,13 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "shell",
+			"command": "npm",
+			"args": [ "run", "dev", "--", "--host", "development.home" ],
+			"problemMatcher": [],
+			"label": "npm: dev - development.home",
+			"detail": "nuxt dev - development.home"
+		}
+	]
+}
