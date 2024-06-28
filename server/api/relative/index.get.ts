@@ -11,10 +11,8 @@ db.pragma( "journal_mode = WAL" )
 const selectMaxCreated: Statement<unknown[], { MaxCreated: string }> = db.prepare( "SELECT MAX(created) AS MaxCreated FROM Performance" )
 const selectRecords: Statement<{ date: string }, PerformanceRow> = db.prepare( "SELECT * FROM Performance WHERE created = :date" )
 
-export default defineEventHandler( async ( event ) => {
-  console.log( "Event", event )
+export default defineEventHandler( async ( _event ) => {
   const result = selectMaxCreated.get()
-  console.log( "Result", result )
   if ( !result?.MaxCreated ) {
     throw createError( { status: 404, statusText: "No records found"} )
   }
