@@ -22,13 +22,15 @@ export const individualParams = {
 
 export const rankBaseUrl = "/12months/last12.php"
 
-export const globalRankParams = {
-  Sex: "F",
-  AgeGroup: "11",
-  date: "31/12/2024",
-  StartNumber: "1",
-  RecordsToView: "100",
-  TargetNationality: "E",
+export const NATIONALITY = {
+  BRITISH:  "A",
+  ENGLAND:  "E",
+  SCOTLAND:  "S",
+  WALES:  "W",
+  JERSEY:  "J",
+  GUERNSEY:  "G",
+  ISLE_OF_MAN:  "I",
+  ALL_MEMBERS:  "X",
 }
 
 export const POOLS = {
@@ -56,6 +58,15 @@ export const STROKE = {
   INDIVIDUAL_MEDLEY_150M: "19",
   INDIVIDUAL_MEDLEY_200M: "16",
   INDIVIDUAL_MEDLEY_400M: "17",
+}
+
+export const globalRankParams = {
+  Sex: "F",
+  AgeGroup: "11",
+  date: "31/12/2024",
+  StartNumber: "1",
+  RecordsToView: "100",
+  TargetNationality: NATIONALITY.BRITISH,
 }
 
 export const nationalRankParams = {
