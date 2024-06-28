@@ -16,7 +16,7 @@
         method: "POST",
         body: new FormData( e.target as HTMLFormElement )
       } )
-      await navigateTo( "/" )
+      await navigateTo( "/performance" )
     } catch ( error ) {
       errString.value = ( error as NuxtError<ApiError> ).data?.message ?? null
     }
