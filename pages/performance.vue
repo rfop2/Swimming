@@ -3,6 +3,11 @@
   import { LinkIcon } from "@heroicons/vue/16/solid"
   import { pages } from "~/lib/pages"
 
+  definePageMeta( {
+    layout: "secure",
+    middleware: [ "protected" ]
+  } )
+
   const pageLookup = new Map( pages.map( page => ( [ page.label, page.url.toString() ] ) ) )
 
   const strokeSort: Record<string,number> = {
@@ -31,7 +36,6 @@
         const recordsMap = data.reduce( ( recordsMap, record ) => {
           // 100m_backstroke_female_sc_11_glos
           const matches = record.label.match( /(?<distance>\d+m)_(?<stroke>\w+)_female_(?<course>.c)_11(?:_(?<area>\w+))?/ )
-          // console.log( matches )
           if ( !matches ) {
             throw new Error( `Can't match on '${record.label}'` )
           }

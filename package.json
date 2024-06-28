@@ -15,10 +15,13 @@
   "dependencies": {
     "@headlessui/vue": "^1.7.22",
     "@heroicons/vue": "^2.1.4",
+    "@lucia-auth/adapter-sqlite": "^3.0.1",
+    "@node-rs/argon2": "^1.8.3",
     "@nuxtjs/tailwindcss": "^6.12.0",
     "better-sqlite3": "^9.6.0",
     "cheerio": "^1.0.0-rc.12",
     "date-fns": "^3.6.0",
+    "lucia": "^3.2.0",
     "node-fetch": "^3.3.2",
     "nuxt": "^3.12.2",
     "seedrandom": "^3.0.5",
@@ -28,6 +31,7 @@
   "devDependencies": {
     "@nuxt/eslint": "^0.3.13",
     "@stylistic/eslint-plugin": "^2.2.2",
+    "@tailwindcss/forms": "^0.5.7",
     "@types/better-sqlite3": "^7.6.10",
     "@types/seedrandom": "^3.0.8",
     "typescript": "^5.5.2"
