@@ -5,7 +5,7 @@
 
   definePageMeta( {
     layout: "secure",
-    middleware: [ "protected" ]
+    // middleware: [ "protected" ]
   } )
 
   const pageLookup = new Map( pages.map( page => ( [ page.label, page.url.toString() ] ) ) )
