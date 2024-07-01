@@ -89,3 +89,11 @@ export const countyRankParams = {
   TargetCounty: "GLUW",
   TargetClub: "XXXX",
 }
+
+export const resultsBaseUrl = "/individualbest/personal_best_time_date.php"
+
+export const resultsParams = {
+  // back: "individualbestname",
+  tiref: "1660835",
+  mode: "A",
+}

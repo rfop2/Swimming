@@ -3,6 +3,8 @@ import "dotenv/config"
 import { format, parse } from "date-fns"
 import cheerio, { type Cheerio, type CheerioAPI, type AnyNode } from "cheerio"
 import Database from "better-sqlite3"
+// import { inspect } from "util"
+
 import {
   DB_PATH,
   MATCH_NAME,
@@ -11,11 +13,13 @@ import {
   createIndividualSql,
   createPerformanceSql,
   createRankingsSql,
+  createResultsSql,
   deletePerformanceSql,
   deleteRankingsSql,
   insertIndividualSql,
   insertPerformanceSql,
   insertRankingsSql,
+  insertResultsSql,
 } from "../lib/database.js"
 import { fetchPage, shuffle, timetoSeconds } from "../lib/lib.js"
 import { pages } from "../lib/pages.js"
@@ -46,6 +50,11 @@ performanceTableCreate.run()
 const deletePerformance = db.prepare( deletePerformanceSql )
 
 const savePerformance = db.prepare( insertPerformanceSql )
+
+const resultsTableCreate = db.prepare( createResultsSql )
+resultsTableCreate.run()
+
+const saveResults = db.prepare( insertResultsSql )
 
 const extractTableData = ( $: CheerioAPI, table: Cheerio<AnyNode> ) => {
   // const data = await page.evaluate( ( tbody: HTMLTableSectionElement ) => {
@@ -162,20 +171,56 @@ const parseRanking = ( $: CheerioAPI ) => {
   return data
 }
 
+const parseResults = ( $: CheerioAPI ) => {
+  const tables = $( "[id='rankTable'] tbody" )
+  const data: Results = []
+  const table = extractTableData( $, $( tables[1] ) )
+  if ( table.length ) {
+    // Do any conversions
+    for ( const row of table ) {
+      const resultRow: Result = {
+        time: timetoSeconds( row.time ),
+        wa_pts: Number( row.sc_wa_pts ),
+        round: row.round,
+        date: format( parse( row.date, "dd/MM/yy", now ), "yyyy-MM-dd" ),
+        meet: row.meet,
+        venue: row.venue,
+        club_swam_under: row.club_swam_under,
+        level: Number( row.level ),
+      }
+      data.push( resultRow )
+    }
+  }
+  return data
+}
+
+interface PageData {
+  individual: IndividualStats
+  ranking: Record<string,Ranking>
+  results: Record<string,Results>
+}
 
 const fetchPages = async () => {
-  const data: Record<string, IndividualStats | Ranking> = {}
+  const data: PageData = {
+    individual: [],
+    ranking: {},
+    results: {}
+  }
   for ( const pageInfo of shuffle( pages ) ) {
     const content = await fetchPage( pageInfo )
     if ( content ) {
       const $ = cheerio.load( content )
       switch ( pageInfo.type ) {
         case "individual": {
-          data[pageInfo.label] = parseIndividual( $ )
+          data[pageInfo.type] = parseIndividual( $ )
           break
         }
         case "ranking" : {
-          data[pageInfo.label] = parseRanking( $ )
+          data[pageInfo.type][pageInfo.label] = parseRanking( $ )
+          break
+        }
+        case "results" : {
+          data[pageInfo.type][pageInfo.label] = parseResults( $ )
           break
         }
         default : {
@@ -189,27 +234,25 @@ const fetchPages = async () => {
 
 const updateData = async () => {
   try {
-    const data = await fetchPages()
-    // console.log( data )
-    for ( const [ label, dataset ] of Object.entries( data ) ) {
-      if ( label === "individual" ) {
-        const individualStats = dataset as IndividualStats
+    const pageData = await fetchPages()
+    // console.log( inspect( pageData, { depth: 5 } ) )
 
-        for ( const row of individualStats ) {
-          saveIndividual.run( { created: today, ...row } )
-        }
-      } else {
-        const ranking = dataset as Ranking
-
-        deleteRankings.run( today, label )
-        for ( const row of ranking.table ?? [] ) {
-          saveRankings.run( { created: today, label, ...row } )
-        }
-
-        if ( ranking.stats ) {
-          deletePerformance.run( today, label )
-          savePerformance.run( { created: today, label, ...ranking.stats } )
-        }
+    for ( const row of pageData.individual ) {
+      saveIndividual.run( { created: today, ...row } )
+    }
+    for ( const [ label, ranking ] of Object.entries( pageData.ranking ) ) {
+      deleteRankings.run( today, label )
+      for ( const row of ranking.table ) {
+        saveRankings.run( { created: today, label, ...row } )
+      }
+      if ( ranking.stats ) {
+        deletePerformance.run( today, label )
+        savePerformance.run( { created: today, label, ...ranking.stats } )
+      }
+    }
+    for ( const [ label, results ] of Object.entries( pageData.results ) ) {
+      for ( const result of results ) {
+        saveResults.run( { created: today, label, ...result } )
       }
     }
   } catch ( error ) {

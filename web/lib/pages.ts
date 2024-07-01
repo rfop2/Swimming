@@ -9,6 +9,8 @@ import {
   nationalRankParams,
   rankBaseUrl,
   regionalRankParams,
+  resultsBaseUrl,
+  resultsParams,
 } from "./config.js"
 
 export const createUrl = ( base: string, params: Record<string, string> ) => {
@@ -373,5 +375,109 @@ export const pages: PageData = [
       ...countyRankParams,
     } ),
     type: "ranking"
+  },
+  {
+    label: "50m_freestyle_lc",
+    url: createUrl( resultsBaseUrl, {
+      ...resultsParams,
+      ...{ tstroke: STROKE.FREESTYLE_50M, tcourse: POOLS.LONG },
+    } ),
+    type: "results"
+  },
+  {
+    label: "100m_breaststroke_lc",
+    url: createUrl( resultsBaseUrl, {
+      ...resultsParams,
+      ...{ tstroke: STROKE.BREASTSTROKE_100M, tcourse: POOLS.LONG },
+    } ),
+    type: "results"
+  },
+  {
+    label: "50m_butterfly_lc",
+    url: createUrl( resultsBaseUrl, {
+      ...resultsParams,
+      ...{ tstroke: STROKE.BUTTERFLY_50M, tcourse: POOLS.LONG },
+    } ),
+    type: "results"
+  },
+  {
+    label: "100m_backstroke_lc",
+    url: createUrl( resultsBaseUrl, {
+      ...resultsParams,
+      ...{ tstroke: STROKE.BACKSTROKE_100M, tcourse: POOLS.LONG },
+    } ),
+    type: "results"
+  },
+  {
+    label: "50m_freestyle_sc",
+    url: createUrl( resultsBaseUrl, {
+      ...resultsParams,
+      ...{ tstroke: STROKE.FREESTYLE_50M, tcourse: POOLS.SHORT },
+    } ),
+    type: "results"
+  },
+  {
+    label: "100m_freestyle_sc",
+    url: createUrl( resultsBaseUrl, {
+      ...resultsParams,
+      ...{ tstroke: STROKE.FREESTYLE_100M, tcourse: POOLS.SHORT },
+    } ),
+    type: "results"
+  },
+  {
+    label: "100m_breaststroke_sc",
+    url: createUrl( resultsBaseUrl, {
+      ...resultsParams,
+      ...{ tstroke: STROKE.BREASTSTROKE_100M, tcourse: POOLS.SHORT },
+    } ),
+    type: "results"
+  },
+  {
+    label: "50m_breaststroke_sc",
+    url: createUrl( resultsBaseUrl, {
+      ...resultsParams,
+      ...{ tstroke: STROKE.BREASTSTROKE_50M, tcourse: POOLS.SHORT },
+    } ),
+    type: "results"
+  },
+  {
+    label: "50m_butterfly_sc",
+    url: createUrl( resultsBaseUrl, {
+      ...resultsParams,
+      ...{ tstroke: STROKE.BUTTERFLY_50M, tcourse: POOLS.SHORT },
+    } ),
+    type: "results"
+  },
+  {
+    label: "100m_butterfly_sc",
+    url: createUrl( resultsBaseUrl, {
+      ...resultsParams,
+      ...{ tstroke: STROKE.BUTTERFLY_100M, tcourse: POOLS.SHORT },
+    } ),
+    type: "results"
+  },
+  {
+    label: "50m_backstroke_sc",
+    url: createUrl( resultsBaseUrl, {
+      ...resultsParams,
+      ...{ tstroke: STROKE.BACKSTROKE_50M, tcourse: POOLS.SHORT },
+    } ),
+    type: "results"
+  },
+  {
+    label: "100m_backstroke_sc",
+    url: createUrl( resultsBaseUrl, {
+      ...resultsParams,
+      ...{ tstroke: STROKE.BACKSTROKE_100M, tcourse: POOLS.SHORT },
+    } ),
+    type: "results"
+  },
+  {
+    label: "100m_individual_medley_sc",
+    url: createUrl( resultsBaseUrl, {
+      ...resultsParams,
+      ...{ tstroke: STROKE.INDIVIDUAL_MEDLEY_100M, tcourse: POOLS.SHORT },
+    } ),
+    type: "results"
   },
 ]

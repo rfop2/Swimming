@@ -125,3 +125,43 @@ export const insertPerformanceSql =
   :time,
   :difference
 );`
+
+export const createResultsSql =
+`CREATE TABLE IF NOT EXISTS Results (
+  created DATE DEFAULT CURRENT_TIMESTAMP,
+  label VARCHAR(32),
+  time DECIMAL(8,2),
+  wa_pts INTEGER,
+  round VARCHAR(8),
+  date DATE,
+  meet TEXT,
+  venue TEXT,
+  club_swam_under TEXT,
+  level INTEGER,
+  UNIQUE( label, date, round )
+);`
+
+export const insertResultsSql =
+`INSERT OR IGNORE INTO Results (
+  created,
+  label,
+  time,
+  wa_pts,
+  round,
+  date,
+  meet,
+  venue,
+  club_swam_under,
+  level
+) VALUES (
+  :created,
+  :label,
+  :time,
+  :wa_pts,
+  :round,
+  :date,
+  :meet,
+  :venue,
+  :club_swam_under,
+  :level
+);`

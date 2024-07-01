@@ -41,10 +41,23 @@ interface Ranking {
   stats?: RankingStats
 }
 
+interface Result {
+  time: number
+  wa_pts: number
+  round: string
+  date: string
+  meet: string
+  venue: string
+  club_swam_under: string
+  level: number
+}
+
+type Results = Array<Result>
+
 interface PageInfo {
   label: string
   url: URL
-  type: "individual" | "ranking"
+  type: "individual" | "ranking" | "results"
 }
 
 type PageData = Array<PageInfo>
