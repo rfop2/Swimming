@@ -137,7 +137,7 @@ const parseRanking = ( $: CheerioAPI ) => {
         yob: Number( row.yob ),
         meet_name: row.meet_name,
         venue: row.venue,
-        level: Number( row.number ),
+        level: Number( row.level ),
         date: format( parse( row.date, "dd/MM/yy", now ), "yyyy-MM-dd" ),
         time: timetoSeconds( row.time ),
         fina: Number( row.fina ),
