@@ -4,5 +4,14 @@ export default defineNuxtConfig( {
   modules: [
     "@nuxtjs/tailwindcss",
     "@nuxt/eslint"
-  ]
+  ],
+  hooks: {
+    "pages:extend" ( pages ) {
+      pages.push( {
+        name: "index",
+        path: "/",
+        file: "~/pages/performance"
+      } )
+    }
+  }
 } )
