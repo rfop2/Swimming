@@ -147,9 +147,9 @@
                     </a>
                   </span>
                 </td>
-                <td class="whitespace-nowrap p-4 text-right text-sm text-gray-500">{{ row.county.best?.toFixed(2) }}</td>
+                <td class="whitespace-nowrap p-4 text-right text-sm text-gray-500">{{ row.county.best ? secondsToTime( row.county.best ) : '' }}</td>
                 <td class="whitespace-nowrap p-4 text-right text-sm text-gray-500">{{ row.county.time ? secondsToTime( row.county.time ) : '' }}</td>
-                <td class="whitespace-nowrap p-4 text-right text-sm text-gray-500">{{ row.county.difference?.toFixed(2) }}</td>
+                <td class="whitespace-nowrap p-4 text-right text-sm text-gray-500">{{ row.county.difference ? secondsToTime( row.county.difference ) : '' }}</td>
                 <td class="whitespace-nowrap p-4 text-right text-sm text-gray-900">
                   <span class="inline-flex items-baseline">
                     {{ row.regional.rank }}
@@ -158,9 +158,9 @@
                     </a>
                   </span>
                 </td>
-                <td class="whitespace-nowrap p-4 text-right text-sm text-gray-500">{{ row.regional.best?.toFixed(2) }}</td>
+                <td class="whitespace-nowrap p-4 text-right text-sm text-gray-500">{{ row.regional.best ? secondsToTime( row.regional.best ) : '' }}</td>
                 <td class="whitespace-nowrap p-4 text-right text-sm text-gray-500">{{ row.regional.time ? secondsToTime( row.regional.time ) : '' }}</td>
-                <td class="whitespace-nowrap p-4 text-right text-sm text-gray-500">{{ row.regional.difference?.toFixed(2) }}</td>
+                <td class="whitespace-nowrap p-4 text-right text-sm text-gray-500">{{ row.regional.difference ? secondsToTime( row.regional.difference ) : '' }}</td>
                 <td class="whitespace-nowrap p-4 text-right text-sm text-gray-900">
                   <span class="inline-flex items-baseline">
                     {{ row.national.rank }}
@@ -169,9 +169,9 @@
                     </a>
                   </span>
                 </td>
-                <td class="whitespace-nowrap p-4 text-right text-sm text-gray-500">{{ row.national.best?.toFixed(2) }}</td>
+                <td class="whitespace-nowrap p-4 text-right text-sm text-gray-500">{{ row.national.best ? secondsToTime( row.national.best ) : '' }}</td>
                 <td class="whitespace-nowrap p-4 text-right text-sm text-gray-500">{{ row.national.time ? secondsToTime( row.national.time ) : '' }}</td>
-                <td class="whitespace-nowrap py-4 pl-4 pr-4 text-right text-sm text-gray-500 sm:pr-0">{{ row.national.difference?.toFixed(2) }}</td>
+                <td class="whitespace-nowrap py-4 pl-4 pr-4 text-right text-sm text-gray-500 sm:pr-0">{{ row.national.difference ? secondsToTime( row.national.difference ) : '' }}</td>
               </tr>
             </tbody>
           </table>
