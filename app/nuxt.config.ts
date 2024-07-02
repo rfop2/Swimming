@@ -3,8 +3,14 @@ export default defineNuxtConfig( {
   devtools: { enabled: true },
   modules: [
     "@nuxtjs/tailwindcss",
+    "@primevue/nuxt-module",
     "@nuxt/eslint"
   ],
+  primevue: {
+    options: {
+      unstyled: true,
+    }
+  },
   hooks: {
     "pages:extend" ( pages ) {
       pages.push( {

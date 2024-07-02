@@ -21,12 +21,14 @@
     "lucia": "^3.2.0",
     "node-fetch": "^3.3.2",
     "nuxt": "^3.12.2",
+    "primevue": "^4.0.0-rc.2",
     "seedrandom": "^3.0.5",
     "vue": "^3.4.29",
     "vue-router": "^4.3.3"
   },
   "devDependencies": {
     "@nuxt/eslint": "^0.3.13",
+    "@primevue/nuxt-module": "^4.0.0-rc.2",
     "@stylistic/eslint-plugin": "^2.2.2",
     "@tailwindcss/forms": "^0.5.7",
     "@types/better-sqlite3": "^7.6.10",
