@@ -1,5 +1,6 @@
 import seedrandom from "seedrandom"
 import type { Cheerio, CheerioAPI, AnyNode } from "cheerio"
+import { addMilliseconds, format } from "date-fns"
 
 const debugEnabled = !!( process.env?.DEBUG === "true" ) || false
 
@@ -84,4 +85,20 @@ export const timetoSeconds = ( time: string ): number => {
   }
 
   return totalSeconds
+}
+
+export const secondsToTime = ( seconds: number ): string => {
+  // Calculate the whole seconds and fractional part
+  const wholeSeconds = Math.floor( seconds )
+  const milliseconds = Math.round( ( seconds - wholeSeconds ) * 1000 )
+
+  // Add the given number of milliseconds to the epoch start (1970-01-01T00:00:00Z)
+  const date = addMilliseconds( new Date( 0 ), wholeSeconds * 1000 + milliseconds )
+
+  // Format the date based on the total seconds
+  if ( seconds >= 60 ) {
+    return format( date, "m:ss.SS" )
+  } else {
+    return format( date, "ss.SS" )
+  }
 }
