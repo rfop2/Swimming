@@ -1,8 +1,7 @@
 import { defineEventHandler } from "h3"
 import type { Statement } from "better-sqlite3"
 import Database from "better-sqlite3"
-import { format, addDays, parseISO } from "date-fns"
-import { DB_PATH } from "~/lib/config"
+import { DB_PATH, type Individual } from "lib"
 
 // Create a local database to persist state
 const db = new Database( DB_PATH )

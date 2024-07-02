@@ -1,5 +1,5 @@
 import sqlite from "better-sqlite3"
-import { DB_PATH } from "~/lib/config"
+import { DB_PATH } from "lib"
 
 export const db = sqlite( DB_PATH )
 

@@ -3,7 +3,8 @@ import { hash } from "@node-rs/argon2"
 import { generateId } from "lucia"
 import { webcrypto } from "node:crypto"
 import Database, { SqliteError } from "better-sqlite3"
-import { DB_PATH } from "../lib/config.js"
+
+import { DB_PATH } from "lib"
 
 globalThis.crypto = webcrypto as Crypto
 

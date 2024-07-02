@@ -12,7 +12,7 @@
 				"development.home"
 			],
 			"options": {
-				"cwd": "${workspaceFolder}/web/"
+				"cwd": "${workspaceFolder}/app/"
 			},
 			"problemMatcher": [],
 			"label": "npm: dev - development.home",
