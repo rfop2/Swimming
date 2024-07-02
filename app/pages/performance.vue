@@ -1,7 +1,7 @@
 <script setup lang="ts">
   import type { InternalApi } from "nitropack"
   import { LinkIcon } from "@heroicons/vue/16/solid"
-  import { pages } from "lib"
+  import { pages, secondsToTime } from "lib"
 
   definePageMeta( {
     layout: "secure",
@@ -76,9 +76,9 @@
         const recordArray = Array.from( recordsMap.values() )
         recordArray.sort( ( a, b ) => {
           if ( a.course < b.course ) {
-            return -1
-          } else if ( a.course > b.course ) {
             return 1
+          } else if ( a.course > b.course ) {
+            return -1
           }
           if ( strokeSort[a.stroke] < strokeSort[b.stroke] ) {
             return -1
@@ -148,7 +148,7 @@
                   </span>
                 </td>
                 <td class="whitespace-nowrap p-4 text-right text-sm text-gray-500">{{ row.county.best?.toFixed(2) }}</td>
-                <td class="whitespace-nowrap p-4 text-right text-sm text-gray-500">{{ row.county.time?.toFixed(2) }}</td>
+                <td class="whitespace-nowrap p-4 text-right text-sm text-gray-500">{{ row.county.time ? secondsToTime( row.county.time ) : '' }}</td>
                 <td class="whitespace-nowrap p-4 text-right text-sm text-gray-500">{{ row.county.difference?.toFixed(2) }}</td>
                 <td class="whitespace-nowrap p-4 text-right text-sm text-gray-900">
                   <span class="inline-flex items-baseline">
@@ -159,7 +159,7 @@
                   </span>
                 </td>
                 <td class="whitespace-nowrap p-4 text-right text-sm text-gray-500">{{ row.regional.best?.toFixed(2) }}</td>
-                <td class="whitespace-nowrap p-4 text-right text-sm text-gray-500">{{ row.regional.time?.toFixed(2) }}</td>
+                <td class="whitespace-nowrap p-4 text-right text-sm text-gray-500">{{ row.regional.time ? secondsToTime( row.regional.time ) : '' }}</td>
                 <td class="whitespace-nowrap p-4 text-right text-sm text-gray-500">{{ row.regional.difference?.toFixed(2) }}</td>
                 <td class="whitespace-nowrap p-4 text-right text-sm text-gray-900">
                   <span class="inline-flex items-baseline">
@@ -170,7 +170,7 @@
                   </span>
                 </td>
                 <td class="whitespace-nowrap p-4 text-right text-sm text-gray-500">{{ row.national.best?.toFixed(2) }}</td>
-                <td class="whitespace-nowrap p-4 text-right text-sm text-gray-500">{{ row.national.time?.toFixed(2) }}</td>
+                <td class="whitespace-nowrap p-4 text-right text-sm text-gray-500">{{ row.national.time ? secondsToTime( row.national.time ) : '' }}</td>
                 <td class="whitespace-nowrap py-4 pl-4 pr-4 text-right text-sm text-gray-500 sm:pr-0">{{ row.national.difference?.toFixed(2) }}</td>
               </tr>
             </tbody>
