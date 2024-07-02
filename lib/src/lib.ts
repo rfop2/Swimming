@@ -1,13 +1,4 @@
-import { promises as fs } from "fs"
-import fetch, { FetchError, Headers } from "node-fetch"
-import { differenceInHours } from "date-fns"
 import seedrandom from "seedrandom"
-import {
-  CACHE_DIR,
-  MAX_FETCH_INTERVAL,
-  MIN_FETCH_INTERVAL,
-  USER_AGENT,
-} from "./config.js"
 import type { Cheerio, CheerioAPI, AnyNode } from "cheerio"
 
 const debugEnabled = !!( process.env?.DEBUG === "true" ) || false
@@ -93,49 +84,4 @@ export const timetoSeconds = ( time: string ): number => {
   }
 
   return totalSeconds
-}
-
-export const fetchPage = async ( pageInfo: PageInfo ) => {
-  const contentFile = CACHE_DIR + "/" + pageInfo.label
-  console.log( `Processing ${pageInfo.label} -> ${pageInfo.url}` )
-  try {
-    const stats = await fs.stat( contentFile )
-    // Page has been cached
-    const age = differenceInHours( Date.now(), stats.mtime )
-    console.log( `Cached: ${age}` )
-    if ( age < 12 ) {
-      // Page is new enough
-      console.log( `Reading ${contentFile}` )
-      const content = await fs.readFile( contentFile )
-      return content
-    }
-  } catch ( error ) {
-    if ( error instanceof Error && ( error as NodeJS.ErrnoException ).code ) {
-      const err = error as NodeJS.ErrnoException
-      if ( err.code !== "ENOENT" ) {
-        console.error( `Error code: ${err.code} - ${err.message}` )
-      }
-    } else {
-      console.error( "Unknown error:", error )
-    }
-  }
-  try {
-    console.log( `Fetching ${pageInfo.url}` )
-    const response = await fetch( pageInfo.url, {
-      method: "GET",
-      headers: new Headers( {
-        "User-Agent": USER_AGENT,
-      } )
-    } )
-    const content = await response.text()
-    await fs.writeFile( contentFile, content )
-    const timeout = MIN_FETCH_INTERVAL + ( rng() * ( MAX_FETCH_INTERVAL - MIN_FETCH_INTERVAL ) )
-    console.log( `Sleeping for ${timeout.toFixed( 2 )} seconds` )
-    await sleep( timeout )
-    return content
-  } catch ( error ) {
-    if ( error instanceof FetchError ) {
-      console.error( `Failed to fetch ${pageInfo.url}: ${error.message}` )
-    }
-  }
 }

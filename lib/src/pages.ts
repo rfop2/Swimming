@@ -13,6 +13,8 @@ import {
   resultsParams,
 } from "./config.js"
 
+import { PageData } from "./types.js"
+
 export const createUrl = ( base: string, params: Record<string, string> ) => {
   const url = new URL( BASE_URL + base )
   url.search = new URLSearchParams( params ).toString()

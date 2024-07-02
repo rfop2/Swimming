@@ -1,15 +1,18 @@
 #!/usr/bin/env nodemjs
 import "dotenv/config"
-import { format, parse } from "date-fns"
+import { format, parse, differenceInHours } from "date-fns"
+import { stat, readFile, writeFile } from "fs/promises"
 import cheerio, { type Cheerio, type CheerioAPI, type AnyNode } from "cheerio"
 import Database from "better-sqlite3"
 // import { inspect } from "util"
 
 import {
+  CACHE_DIR,
+  MAX_FETCH_INTERVAL,
+  MIN_FETCH_INTERVAL,
+  USER_AGENT,
   DB_PATH,
   MATCH_NAME,
-} from "../lib/config.js"
-import {
   createIndividualSql,
   createPerformanceSql,
   createRankingsSql,
@@ -20,9 +23,22 @@ import {
   insertPerformanceSql,
   insertRankingsSql,
   insertResultsSql,
-} from "../lib/database.js"
-import { fetchPage, shuffle, timetoSeconds } from "../lib/lib.js"
-import { pages } from "../lib/pages.js"
+  shuffle,
+  timetoSeconds,
+  pages,
+  sleep,
+  rng
+} from "lib"
+
+import type {
+  Individual,
+  IndividualStats,
+  PageInfo,
+  Ranking,
+  RankingRow,
+  Result,
+  Results
+} from "lib"
 
 const now = new Date()
 const today = format( now, "yyyy-MM-dd" )
@@ -198,6 +214,50 @@ interface PageData {
   individual: IndividualStats
   ranking: Record<string,Ranking>
   results: Record<string,Results>
+}
+
+export const fetchPage = async ( pageInfo: PageInfo ) => {
+  const contentFile = CACHE_DIR + "/" + pageInfo.label
+  console.log( `Processing ${pageInfo.label} -> ${pageInfo.url}` )
+  try {
+    const stats = await stat( contentFile )
+    // Page has been cached
+    const age = differenceInHours( Date.now(), stats.mtime )
+    console.log( `Cached: ${age}` )
+    if ( age < 12 ) {
+      // Page is new enough
+      console.log( `Reading ${contentFile}` )
+      const content = await readFile( contentFile )
+      return content
+    }
+  } catch ( error ) {
+    if ( error instanceof Error && ( error as NodeJS.ErrnoException ).code ) {
+      const err = error as NodeJS.ErrnoException
+      if ( err.code !== "ENOENT" ) {
+        console.error( `Error code: ${err.code} - ${err.message}` )
+      }
+    } else {
+      console.error( "Unknown error:", error )
+    }
+  }
+  try {
+    console.log( `Fetching ${pageInfo.url}` )
+    const response = await fetch( pageInfo.url, {
+      method: "GET",
+      headers: new Headers( {
+        "User-Agent": USER_AGENT,
+      } )
+    } )
+    const content = await response.text()
+    await writeFile( contentFile, content )
+    const timeout = MIN_FETCH_INTERVAL + ( rng() * ( MAX_FETCH_INTERVAL - MIN_FETCH_INTERVAL ) )
+    console.log( `Sleeping for ${timeout.toFixed( 2 )} seconds` )
+    await sleep( timeout )
+    return content
+  } catch ( error ) {
+    console.error( `Failed to fetch ${pageInfo.url}`, error )
+    throw error
+  }
 }
 
 const fetchPages = async () => {

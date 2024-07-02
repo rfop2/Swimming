@@ -1,4 +1,4 @@
-interface Individual {
+export interface Individual {
   course: string
   stroke: string
   time: number
@@ -11,9 +11,9 @@ interface Individual {
   level: number
 }
 
-type IndividualStats = Array<Individual>
+export type IndividualStats = Array<Individual>
 
-interface RankingRow {
+export interface RankingRow {
   rank: number
   name: string
   ranked_club: string
@@ -26,9 +26,9 @@ interface RankingRow {
   fina: number
 }
 
-type RankingTable = Array<RankingRow>
+export type RankingTable = Array<RankingRow>
 
-interface RankingStats {
+export interface RankingStats {
   position: number
   rank: number
   best: number
@@ -36,12 +36,12 @@ interface RankingStats {
   difference: number
 }
 
-interface Ranking {
+export interface Ranking {
   table: RankingTable
   stats?: RankingStats
 }
 
-interface Result {
+export interface Result {
   time: number
   wa_pts: number
   round: string
@@ -52,12 +52,12 @@ interface Result {
   level: number
 }
 
-type Results = Array<Result>
+export type Results = Array<Result>
 
-interface PageInfo {
+export interface PageInfo {
   label: string
   url: URL
   type: "individual" | "ranking" | "results"
 }
 
-type PageData = Array<PageInfo>
+export type PageData = Array<PageInfo>

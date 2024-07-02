@@ -1,3 +1,5 @@
+import { RankingStats } from "./types.js"
+
 export const createIndividualSql =
 `CREATE TABLE IF NOT EXISTS Individual (
   created DATE,

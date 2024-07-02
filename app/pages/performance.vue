@@ -1,7 +1,7 @@
 <script setup lang="ts">
   import type { InternalApi } from "nitropack"
   import { LinkIcon } from "@heroicons/vue/16/solid"
-  import { pages } from "~/lib/pages"
+  import { pages } from "lib"
 
   definePageMeta( {
     layout: "secure",

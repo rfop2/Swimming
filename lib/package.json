@@ -1,0 +1,28 @@
+{
+  "name": "lib",
+  "version": "1.0.0",
+  "description": "Shared library files",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "build": "npx tsc",
+    "watch": "npx tsc --watch",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "files": [
+    "dist/**/*"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^20.14.9",
+    "@types/seedrandom": "^3.0.8",
+    "typescript": "^5.5.2"
+  },
+  "dependencies": {
+    "cheerio": "^1.0.0-rc.12",
+    "seedrandom": "^3.0.5",
+    "tslib": "^2.6.3"
+  }
+}
