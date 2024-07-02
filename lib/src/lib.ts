@@ -99,6 +99,6 @@ export const secondsToTime = ( seconds: number ): string => {
   if ( seconds >= 60 ) {
     return format( date, "m:ss.SS" )
   } else {
-    return format( date, "ss.SS" )
+    return format( date, "s.SS" )
   }
 }
