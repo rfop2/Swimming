@@ -11,6 +11,9 @@ export default defineNuxtConfig( {
       unstyled: true,
     }
   },
+  css: [
+    "primeicons/primeicons.css",
+  ],
   hooks: {
     "pages:extend" ( pages ) {
       pages.push( {
