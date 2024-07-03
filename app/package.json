@@ -33,6 +33,7 @@
     "@stylistic/eslint-plugin": "^2.2.2",
     "@tailwindcss/forms": "^0.5.7",
     "@types/better-sqlite3": "^7.6.10",
+    "eslint-plugin-vue": "^9.27.0",
     "typescript": "^5.5.2"
   }
 }
