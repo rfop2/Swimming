@@ -13,6 +13,7 @@ export default defineNuxtConfig( {
   },
   css: [
     "primeicons/primeicons.css",
+    "~/assets/custom.scss"
   ],
   hooks: {
     "pages:extend" ( pages ) {
