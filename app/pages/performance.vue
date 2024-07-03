@@ -72,7 +72,7 @@
           recordsMap.set( key, mergedRecord )
           return recordsMap
         }, new Map<string,RecordType>() )
-        // console.log( recordsMap )
+
         const recordArray = Array.from( recordsMap.values() )
         recordArray.sort( ( a, b ) => {
           if ( a.course < b.course ) {
@@ -95,73 +95,70 @@
         return recordArray
       },
     } )
-  // console.log( records )
-  const formattedRecords = ( records.value || [] ).map( record => ( {
+
+  const flattenedRecords = computed( () => ( records.value || [] ).map( record => ( {
     ...record,
     ...{
-      stroke: record.stroke.replace( /_/g, " " ).replace( /\b\w/g, char => char.toUpperCase() ),
-      course: record.course === "lc" ? "Long" : "Short",
       county_rank: record.county.rank,
-      county_best: record.county.best ? secondsToTime( record.county.best ) : "",
-      county_time: record.county.time ? secondsToTime( record.county.time ) : "",
-      county_diff: record.county.difference ? secondsToTime( record.county.difference ) : "",
+      county_best: record.county.best,
+      county_time: record.county.time,
+      county_diff: record.county.difference,
       regional_rank: record.regional.rank,
-      regional_best: record.regional.best ? secondsToTime( record.regional.best ) : "",
-      regional_time: record.regional.time ? secondsToTime( record.regional.time ) : "",
-      regional_diff: record.regional.difference ? secondsToTime( record.regional.difference ) : "",
+      regional_best: record.regional.best,
+      regional_time: record.regional.time,
+      regional_diff: record.regional.difference,
       national_rank: record.national.rank,
-      national_best: record.national.best ? secondsToTime( record.national.best ) : "",
-      national_time: record.national.time ? secondsToTime( record.national.time ) : "",
-      national_diff: record.national.difference ? secondsToTime( record.national.difference ) : "",
+      national_best: record.national.best,
+      national_time: record.national.time,
+      national_diff: record.national.difference,
     }
-  } ) )
+  } ) ) )
 
-  const sortField = ref<keyof RecordType | null>( null )
-  const sortOrder = ref<number | null>( null )
+  type RecordKey = typeof flattenedRecords["value"][number]
 
-  const sort = ( field: string ) => {
-    console.log( "Sort", field )
-    if ( sortField.value === field ) {
-      if ( sortOrder.value === 1 ) {
-        sortOrder.value = -1
-      } else if ( sortOrder.value === -1 ) {
-        sortField.value = null
-        sortOrder.value = null
+  interface SortMeta {
+    field: keyof RecordKey;
+    order: number;
+  }
+
+  const multiSortMeta = ref<SortMeta[]>( [] )
+
+  const sort = ( field: keyof RecordKey ) => {
+    const existingSortMeta = multiSortMeta.value.find( meta => meta.field === field )
+    if ( existingSortMeta ) {
+      if ( existingSortMeta.order === 1 ) {
+        existingSortMeta.order = -1
       } else {
-        sortOrder.value = 1
+        multiSortMeta.value = multiSortMeta.value.filter( meta => meta.field !== field )
       }
     } else {
-      sortField.value = field as keyof RecordType
-      sortOrder.value = 1
+      multiSortMeta.value.push( { field, order: 1 } )
     }
   }
 
-  const getSortIcon = ( field: string ) => {
-    console.log( "gsi", field, sortField.value, sortOrder.value )
-    if ( sortField.value === field ) {
-      if ( sortOrder.value === 1 ) {
-        return "pi pi-sort-up"
-      } else if ( sortOrder.value === -1 ) {
-        return "pi pi-sort-down"
-      }
+  const getSortIcon = ( field: keyof RecordKey ) => {
+    const sortMeta = multiSortMeta.value.find( meta => meta.field === field )
+    if ( sortMeta ) {
+      return sortMeta.order === 1 ? "pi pi-sort-up" : "pi pi-sort-down"
     }
     return "pi pi-sort"
   }
 
-  const onSort = ( event: { sortField: string; sortOrder: number } ) => {
-    sortField.value = event.sortField as keyof RecordType
-    sortOrder.value = event.sortOrder
-  }
-
-  console.log( sortField.value, sortOrder.value )
-
   const sortedRecords = computed( () => {
-    if ( !sortField.value ) {
+    if ( multiSortMeta.value.length === 0 ) {
       return records.value
     }
-    return [ ...( records.value || [] ) ].sort( ( a, b ) => {
-      const result = a[sortField.value!] > b[sortField.value!] ? 1 : -1
-      return sortOrder.value === 1 ? result : -result
+    return [ ...flattenedRecords.value || [] ].sort( ( a, b ) => {
+      for ( const meta of multiSortMeta.value ) {
+        const field = meta.field as keyof RecordType
+        const valueA = a[field]
+        const valueB = b[field]
+        const result = valueA > valueB ? 1 : valueA < valueB ? -1 : 0
+        if ( result !== 0 ) {
+          return meta.order * result
+        }
+      }
+      return 0
     } )
   } )
 </script>
@@ -177,79 +174,72 @@
     <div class="mt-8 flow-root">
       <div class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
         <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
-          <DataTable
-            :value="sortedRecords"
-            removable-sort
-            table-class="min-w-full divide-y divide-gray-300"
-            :sort-field="sortField"
-            :sort-order="sortOrder"
-            @sort="onSort"
-          >
-              <thead>
-                <tr class="divide-x divide-gray-200">
-                  <th scope="col" rowSpan="2" class="sortable align-bottom px-4 py-3.5 text-right text-sm font-semibold text-gray-900 sm:pl-0" @click="sort('distance')"><span>Dist.</span><i :class="getSortIcon('distance')"/></th>
-                  <th scope="col" rowSpan="2" class="align-bottom px-4 py-3.5 text-left text-sm font-semibold text-gray-900" @click="sort('stroke')">Stroke</th>
-                  <th scope="col" rowSpan="2" class="align-bottom px-4 py-3.5 text-left text-sm font-semibold text-gray-900" @click="sort('course')">Course</th>
-                  <th scope="col" colSpan="4" class="px-4 py-3.5 text-center text-sm font-semibold text-gray-900">County</th>
-                  <th scope="col" colSpan="4" class="px-4 py-3.5 text-center text-sm font-semibold text-gray-900">Regional</th>
-                  <th scope="col" colSpan="4" class="py-3.5 pl-4 pr-4 text-center text-sm font-semibold text-gray-900 sm:pr-0">National</th>
-                </tr>
-                <tr class="divide-x divide-gray-200">
-                  <th scope="col" class="px-4 py-3.5 text-right text-sm font-semibold text-gray-900 border-l-[1px]">Rank</th>
-                  <th scope="col" class="px-4 py-3.5 text-right text-sm font-semibold text-gray-900">Best</th>
-                  <th scope="col" class="px-4 py-3.5 text-right text-sm font-semibold text-gray-900">Time</th>
-                  <th scope="col" class="px-4 py-3.5 text-right text-sm font-semibold text-gray-900">Diff.</th>
-                  <th scope="col" class="px-4 py-3.5 text-right text-sm font-semibold text-gray-900">Rank</th>
-                  <th scope="col" class="px-4 py-3.5 text-right text-sm font-semibold text-gray-900">Best</th>
-                  <th scope="col" class="px-4 py-3.5 text-right text-sm font-semibold text-gray-900">Time</th>
-                  <th scope="col" class="px-4 py-3.5 text-right text-sm font-semibold text-gray-900">Diff.</th>
-                  <th scope="col" class="px-4 py-3.5 text-right text-sm font-semibold text-gray-900">Rank</th>
-                  <th scope="col" class="px-4 py-3.5 text-right text-sm font-semibold text-gray-900">Best</th>
-                  <th scope="col" class="px-4 py-3.5 text-right text-sm font-semibold text-gray-900">Time</th>
-                  <th scope="col" class="px-4 py-3.5 text-right text-sm font-semibold text-gray-900">Diff.</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-gray-200 bg-white">
-                <tr v-for="row in sortedRecords" :key="row.key" class="divide-x divide-gray-200">
-                  <td class="whitespace-nowrap py-4 pl-4 pr-4 text-right text-sm font-medium text-gray-900 sm:pl-0">{{ row.distance }}</td>
-                  <td class="whitespace-nowrap p-4 text-sm text-gray-900">{{ row.stroke.replace( /_/g, " " ).replace(/\b\w/g, char => char.toUpperCase()) }}</td>
-                  <td class="whitespace-nowrap p-4 text-sm text-gray-900">{{ row.course === "lc" ? "Long" : "Short" }}</td>
-                  <td class="whitespace-nowrap p-4 text-right text-sm text-gray-900">
-                    <span class="inline-flex items-baseline">
-                      {{ row.county.rank }}
-                      <a v-if="row.county.label" target="_blank" rel="noreferrer,nofollow" :href="pageLookup.get(row.county.label)">
-                        <LinkIcon class="size-3 text-gray-900"/>
-                      </a>
-                    </span>
-                  </td>
-                  <td class="whitespace-nowrap p-4 text-right text-sm text-gray-500">{{ row.county.best ? secondsToTime( row.county.best ) : '' }}</td>
-                  <td class="whitespace-nowrap p-4 text-right text-sm text-gray-500">{{ row.county.time ? secondsToTime( row.county.time ) : '' }}</td>
-                  <td class="whitespace-nowrap p-4 text-right text-sm text-gray-500">{{ row.county.difference ? secondsToTime( row.county.difference ) : '' }}</td>
-                  <td class="whitespace-nowrap p-4 text-right text-sm text-gray-900">
-                    <span class="inline-flex items-baseline">
-                      {{ row.regional.rank }}
-                      <a v-if="row.regional.label" target="_blank" rel="noreferrer,nofollow" :href="pageLookup.get(row.regional.label)">
-                        <LinkIcon class="size-3 text-gray-900"/>
-                      </a>
-                    </span>
-                  </td>
-                  <td class="whitespace-nowrap p-4 text-right text-sm text-gray-500">{{ row.regional.best ? secondsToTime( row.regional.best ) : '' }}</td>
-                  <td class="whitespace-nowrap p-4 text-right text-sm text-gray-500">{{ row.regional.time ? secondsToTime( row.regional.time ) : '' }}</td>
-                  <td class="whitespace-nowrap p-4 text-right text-sm text-gray-500">{{ row.regional.difference ? secondsToTime( row.regional.difference ) : '' }}</td>
-                  <td class="whitespace-nowrap p-4 text-right text-sm text-gray-900">
-                    <span class="inline-flex items-baseline">
-                      {{ row.national.rank }}
-                      <a v-if="row.national.label" target="_blank" rel="noreferrer,nofollow" :href="pageLookup.get(row.national.label)">
-                        <LinkIcon class="size-3 text-gray-900"/>
-                      </a>
-                    </span>
-                  </td>
-                  <td class="whitespace-nowrap p-4 text-right text-sm text-gray-500">{{ row.national.best ? secondsToTime( row.national.best ) : '' }}</td>
-                  <td class="whitespace-nowrap p-4 text-right text-sm text-gray-500">{{ row.national.time ? secondsToTime( row.national.time ) : '' }}</td>
-                  <td class="whitespace-nowrap py-4 pl-4 pr-4 text-right text-sm text-gray-500 sm:pr-0">{{ row.national.difference ? secondsToTime( row.national.difference ) : '' }}</td>
-                </tr>
-              </tbody>
-          </DataTable>
+          <table class="min-w-full divide-y divide-gray-300">
+            <thead>
+              <tr class="divide-x divide-gray-200">
+                <th scope="col" rowSpan="2" class="sortable whitespace-nowrap align-bottom px-4 py-3.5 text-right text-sm font-semibold text-gray-900 sm:pl-0" @click="sort('distance')"><span>Dist.</span><i :class="getSortIcon('distance')"/></th>
+                <th scope="col" rowSpan="2" class="sortable whitespace-nowrap align-bottom px-4 py-3.5 text-left text-sm font-semibold text-gray-900" @click="sort('stroke')"><span>Stroke</span><i :class="getSortIcon('stroke')"/></th>
+                <th scope="col" rowSpan="2" class="sortable whitespace-nowrap align-bottom px-4 py-3.5 text-left text-sm font-semibold text-gray-900" @click="sort('course')"><span>Course</span><i :class="getSortIcon('course')"/></th>
+                <th scope="col" colSpan="4" class="px-4 py-3.5 text-center text-sm font-semibold text-gray-900">County</th>
+                <th scope="col" colSpan="4" class="px-4 py-3.5 text-center text-sm font-semibold text-gray-900">Regional</th>
+                <th scope="col" colSpan="4" class="py-3.5 pl-4 pr-4 text-center text-sm font-semibold text-gray-900 sm:pr-0">National</th>
+              </tr>
+              <tr class="divide-x divide-gray-200">
+                <th scope="col" class="sortable whitespace-nowrap px-4 py-3.5 text-right text-sm font-semibold text-gray-900 border-l-[1px]" @click="sort('county_rank')"><span>Rank</span><i :class="getSortIcon('county_rank')"/></th>
+                <th scope="col" class="sortable whitespace-nowrap px-4 py-3.5 text-right text-sm font-semibold text-gray-900" @click="sort('county_best')"><span>Lead</span><i :class="getSortIcon('county_best')"/></th>
+                <th scope="col" class="sortable whitespace-nowrap px-4 py-3.5 text-right text-sm font-semibold text-gray-900" @click="sort('county_time')"><span>Time</span><i :class="getSortIcon('county_time')"/></th>
+                <th scope="col" class="sortable whitespace-nowrap px-4 py-3.5 text-right text-sm font-semibold text-gray-900" @click="sort('county_diff')"><span>Diff</span><i :class="getSortIcon('county_diff')"/></th>
+                <th scope="col" class="sortable whitespace-nowrap px-4 py-3.5 text-right text-sm font-semibold text-gray-900" @click="sort('regional_rank')"><span>Rank</span><i :class="getSortIcon('regional_rank')"/></th>
+                <th scope="col" class="sortable whitespace-nowrap px-4 py-3.5 text-right text-sm font-semibold text-gray-900" @click="sort('regional_best')"><span>Lead</span><i :class="getSortIcon('regional_best')"/></th>
+                <th scope="col" class="sortable whitespace-nowrap px-4 py-3.5 text-right text-sm font-semibold text-gray-900" @click="sort('regional_time')"><span>Time</span><i :class="getSortIcon('regional_time')"/></th>
+                <th scope="col" class="sortable whitespace-nowrap px-4 py-3.5 text-right text-sm font-semibold text-gray-900" @click="sort('regional_diff')"><span>Diff</span><i :class="getSortIcon('regional_diff')"/></th>
+                <th scope="col" class="sortable whitespace-nowrap px-4 py-3.5 text-right text-sm font-semibold text-gray-900" @click="sort('national_rank')"><span>Rank</span><i :class="getSortIcon('national_rank')"/></th>
+                <th scope="col" class="sortable whitespace-nowrap px-4 py-3.5 text-right text-sm font-semibold text-gray-900" @click="sort('national_best')"><span>Lead</span><i :class="getSortIcon('national_best')"/></th>
+                <th scope="col" class="sortable whitespace-nowrap px-4 py-3.5 text-right text-sm font-semibold text-gray-900" @click="sort('national_time')"><span>Time</span><i :class="getSortIcon('national_time')"/></th>
+                <th scope="col" class="sortable whitespace-nowrap px-4 py-3.5 text-right text-sm font-semibold text-gray-900" @click="sort('national_diff')"><span>Diff</span><i :class="getSortIcon('national_diff')"/></th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200 bg-white">
+              <tr v-for="row in sortedRecords" :key="row.key" class="divide-x divide-gray-200">
+                <td class="whitespace-nowrap py-4 pl-4 pr-4 text-right text-sm font-medium text-gray-900 sm:pl-0">{{ row.distance }}</td>
+                <td class="whitespace-nowrap p-4 text-sm text-gray-900">{{ row.stroke.replace( /_/g, " " ).replace(/\b\w/g, char => char.toUpperCase()) }}</td>
+                <td class="whitespace-nowrap p-4 text-sm text-gray-900">{{ row.course === "lc" ? "Long" : "Short" }}</td>
+                <td class="whitespace-nowrap p-4 text-right text-sm text-gray-900">
+                  <span class="inline-flex items-baseline">
+                    {{ row.county.rank }}
+                    <a v-if="row.county.label" target="_blank" rel="noreferrer,nofollow" :href="pageLookup.get(row.county.label)">
+                      <LinkIcon class="size-3 text-gray-900"/>
+                    </a>
+                  </span>
+                </td>
+                <td class="whitespace-nowrap p-4 text-right text-sm text-gray-500">{{ row.county.best ? secondsToTime( row.county.best ) : '' }}</td>
+                <td class="whitespace-nowrap p-4 text-right text-sm text-gray-500">{{ row.county.time ? secondsToTime( row.county.time ) : '' }}</td>
+                <td class="whitespace-nowrap p-4 text-right text-sm text-gray-500">{{ row.county.difference ? secondsToTime( row.county.difference ) : '' }}</td>
+                <td class="whitespace-nowrap p-4 text-right text-sm text-gray-900">
+                  <span class="inline-flex items-baseline">
+                    {{ row.regional.rank }}
+                    <a v-if="row.regional.label" target="_blank" rel="noreferrer,nofollow" :href="pageLookup.get(row.regional.label)">
+                      <LinkIcon class="size-3 text-gray-900"/>
+                    </a>
+                  </span>
+                </td>
+                <td class="whitespace-nowrap p-4 text-right text-sm text-gray-500">{{ row.regional.best ? secondsToTime( row.regional.best ) : '' }}</td>
+                <td class="whitespace-nowrap p-4 text-right text-sm text-gray-500">{{ row.regional.time ? secondsToTime( row.regional.time ) : '' }}</td>
+                <td class="whitespace-nowrap p-4 text-right text-sm text-gray-500">{{ row.regional.difference ? secondsToTime( row.regional.difference ) : '' }}</td>
+                <td class="whitespace-nowrap p-4 text-right text-sm text-gray-900">
+                  <span class="inline-flex items-baseline">
+                    {{ row.national.rank }}
+                    <a v-if="row.national.label" target="_blank" rel="noreferrer,nofollow" :href="pageLookup.get(row.national.label)">
+                      <LinkIcon class="size-3 text-gray-900"/>
+                    </a>
+                  </span>
+                </td>
+                <td class="whitespace-nowrap p-4 text-right text-sm text-gray-500">{{ row.national.best ? secondsToTime( row.national.best ) : '' }}</td>
+                <td class="whitespace-nowrap p-4 text-right text-sm text-gray-500">{{ row.national.time ? secondsToTime( row.national.time ) : '' }}</td>
+                <td class="whitespace-nowrap py-4 pl-4 pr-4 text-right text-sm text-gray-500 sm:pr-0">{{ row.national.difference ? secondsToTime( row.national.difference ) : '' }}</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
@@ -333,6 +323,6 @@
 }
 
 .pi-sort, .pi-sort-up, .pi-sort-down {
-  margin-left: 0.5rem;
+  margin-left: 0.25rem;
 }
 </style>
