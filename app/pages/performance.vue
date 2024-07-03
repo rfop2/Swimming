@@ -42,7 +42,7 @@
           const groups = matches?.groups ?? {}
           const area = groups.area ? ( groups.area === "glos" ? "county" : "regional" ) : "national"
           const key = `${groups.distance}_${groups.stroke}_${groups.course}`
-          const { label, position, rank, time, best, difference } = record
+          const { label, position, rank, time, time_date, best, best_date, difference } = record
           let mergedRecord = recordsMap.get( key )
           if ( !mergedRecord ) {
             mergedRecord = {
@@ -57,15 +57,15 @@
           }
           switch ( area ) {
             case "county" : {
-              mergedRecord.county = { label, position, rank, time, best, difference }
+              mergedRecord.county = { label, position, rank, time, time_date, best, best_date, difference }
               break
             }
             case "regional" : {
-              mergedRecord.regional = { label, position, rank, time, best, difference }
+              mergedRecord.regional = { label, position, rank, time, time_date, best, best_date, difference }
               break
             }
             case "national" : {
-              mergedRecord.national = { label, position, rank, time, best, difference }
+              mergedRecord.national = { label, position, rank, time, time_date, best, best_date, difference }
               break
             }
           }
@@ -222,8 +222,8 @@
                     </a>
                   </span>
                 </td>
-                <td class="whitespace-nowrap p-2 text-right text-sm text-gray-500">{{ row.county.best ? secondsToTime( row.county.best ) : '' }}</td>
-                <td class="whitespace-nowrap p-2 text-right text-sm text-gray-500">{{ row.county.time ? secondsToTime( row.county.time ) : '' }}</td>
+                <td class="whitespace-nowrap p-2 text-right text-sm text-gray-500"><span :title="row.county.best_date">{{ row.county.best ? secondsToTime( row.county.best ) : '' }}</span></td>
+                <td class="whitespace-nowrap p-2 text-right text-sm text-gray-500"><span :title="row.county.time_date">{{ row.county.time ? secondsToTime( row.county.time ) : '' }}</span></td>
                 <td class="whitespace-nowrap p-2 text-right text-sm text-gray-500">{{ row.county.difference ? secondsToTime( row.county.difference ) : '' }}</td>
                 <td class="whitespace-nowrap p-2 text-right text-sm text-gray-900">
                   <span class="inline-flex items-baseline">
@@ -233,8 +233,8 @@
                     </a>
                   </span>
                 </td>
-                <td class="whitespace-nowrap p-2 text-right text-sm text-gray-500">{{ row.regional.best ? secondsToTime( row.regional.best ) : '' }}</td>
-                <td class="whitespace-nowrap p-2 text-right text-sm text-gray-500">{{ row.regional.time ? secondsToTime( row.regional.time ) : '' }}</td>
+                <td class="whitespace-nowrap p-2 text-right text-sm text-gray-500"><span :title="row.regional.best_date">{{ row.regional.best ? secondsToTime( row.regional.best ) : '' }}</span></td>
+                <td class="whitespace-nowrap p-2 text-right text-sm text-gray-500"><span :title="row.regional.time_date">{{ row.regional.time ? secondsToTime( row.regional.time ) : '' }}</span></td>
                 <td class="whitespace-nowrap p-2 text-right text-sm text-gray-500">{{ row.regional.difference ? secondsToTime( row.regional.difference ) : '' }}</td>
                 <td class="whitespace-nowrap p-2 text-right text-sm text-gray-900">
                   <span class="inline-flex items-baseline">
@@ -244,8 +244,8 @@
                     </a>
                   </span>
                 </td>
-                <td class="whitespace-nowrap p-2 text-right text-sm text-gray-500">{{ row.national.best ? secondsToTime( row.national.best ) : '' }}</td>
-                <td class="whitespace-nowrap p-2 text-right text-sm text-gray-500">{{ row.national.time ? secondsToTime( row.national.time ) : '' }}</td>
+                <td class="whitespace-nowrap p-2 text-right text-sm text-gray-500"><span :title="row.national.best_date">{{ row.national.best ? secondsToTime( row.national.best ) : '' }}</span></td>
+                <td class="whitespace-nowrap p-2 text-right text-sm text-gray-500"><span :title="row.national.time_date">{{ row.national.time ? secondsToTime( row.national.time ) : '' }}</span></td>
                 <td class="whitespace-nowrap py-2 pl-3 pr-4 text-right text-sm text-gray-500 sm:pr-0">{{ row.national.difference ? secondsToTime( row.national.difference ) : '' }}</td>
               </tr>
             </tbody>

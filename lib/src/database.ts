@@ -102,7 +102,9 @@ export const createPerformanceSql =
   position INT,
   rank INT,
   best DECIMAL(8,2),
+  best_date DATE,
   time DECIMAL(8,2),
+  time_date DATE,
   difference DECIMAL(8,2),
   UNIQUE( created, label )
 );`
@@ -116,7 +118,9 @@ export const insertPerformanceSql =
   position,
   rank,
   best,
+  best_date,
   time,
+  time_date,
   difference
 ) VALUES (
   :created,
@@ -124,7 +128,9 @@ export const insertPerformanceSql =
   :position,
   :rank,
   :best,
+  :best_date,
   :time,
+  :time_date,
   :difference
 );`
 

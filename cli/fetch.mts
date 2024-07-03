@@ -173,13 +173,17 @@ const parseRanking = ( $: CheerioAPI ) => {
     if ( index >= 0 ) {
       const rank = data.table[index].rank
       const bestTime = data.table[0].time
+      const bestDate = data.table[0].date
       const refTime = data.table[index].time
+      const refDate = data.table[index].date
       const deltaTime = refTime - bestTime
       data.stats = {
         position: index + 1,
         rank,
         best: bestTime,
+        best_date: bestDate,
         time: refTime,
+        time_date: refDate,
         difference: deltaTime,
       }
     }

@@ -32,7 +32,9 @@ export interface RankingStats {
   position: number
   rank: number
   best: number
+  best_date: string
   time: number
+  time_date: string
   difference: number
 }
 
