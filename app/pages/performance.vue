@@ -161,14 +161,20 @@
       return 0
     } )
   } )
+
+  const resetSort = () => {
+    multiSortMeta.value = []
+  }
 </script>
 
 <template>
   <div class="px-4 sm:px-6 lg:px-8">
     <div class="sm:flex sm:items-center">
       <div class="sm:flex-auto">
-        <h1 class="text-base font-semibold leading-6 text-gray-900">Users</h1>
-        <p class="mt-2 text-sm text-gray-700">Performance in events relative to the event leader if appearing in top 100 rankings.</p>
+        <h1 class="text-base font-semibold leading-6 text-gray-900">Events</h1>
+        <p class="mt-2 text-sm text-gray-700">Performance in events relative to the event leader if appearing in top 100 rankings.
+          <Button icon="pi pi-undo" aria-label="Reset sort" @click="resetSort" />
+        </p>
       </div>
     </div>
     <div class="mt-8 flow-root">
