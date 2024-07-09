@@ -120,7 +120,7 @@ const parseIndividual = ( $: CheerioAPI ) => {
     const courseRow: Individual = {
       course: "lc",
       stroke: stroke.replace( /\s/g, "_" ).toLowerCase(),
-      distance,
+      distance: `${distance}m`,
       time: timetoSeconds( row.lc_time ),
       converted_time: timetoSeconds( row.converted_to_sc ),
       wa_pts: Number( row.lc_wa_pts ),
@@ -144,7 +144,7 @@ const parseIndividual = ( $: CheerioAPI ) => {
     const courseRow: Individual = {
       course: "sc",
       stroke: stroke.replace( /\s/g, "_" ).toLowerCase(),
-      distance,
+      distance: `${distance}m`,
       time: timetoSeconds( row.sc_time ),
       converted_time: timetoSeconds( row.converted_to_lc ),
       wa_pts: Number( row.sc_wa_pts ),
@@ -327,7 +327,7 @@ const updateData = async () => {
       if ( !matches ) {
         throw new Error( `Can't match ranking on '${label}'` )
       }
-      const { distance = "", stroke = "", course = "", area = "national" } = { ...matches?.groups }
+      const { distance = "", stroke = "", course = "", area = "" } = { ...matches?.groups }
       // const area = groups.area ? ( groups.area === "glos" ? "county" : "regional" ) : "national"
 
       deleteRankings.run( today, course, stroke, distance, area )
@@ -342,7 +342,7 @@ const updateData = async () => {
 
     // Results
     for ( const [ label, results ] of Object.entries( pageData.results ) ) {
-      const matches = label.match( /(?<distance>\d+)m_(?<stroke>\w+)_(?<course>.c)$/ )
+      const matches = label.match( /(?<distance>\d+m)_(?<stroke>\w+)_(?<course>.c)$/ )
       if ( !matches ) {
         throw new Error( `Can't match results on '${label}'` )
       }
