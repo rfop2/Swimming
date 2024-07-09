@@ -43,7 +43,7 @@ db.pragma( "journal_mode = WAL" );
   const userId = generateId( 15 )
 
   try {
-    db.prepare( "INSERT INTO user (id, username, password_hash) VALUES(?, ?, ?)" ).run(
+    db.prepare( "INSERT INTO User (id, username, password_hash) VALUES(?, ?, ?)" ).run(
       userId,
       username,
       passwordHash

@@ -25,7 +25,7 @@ export default eventHandler( async ( event ) => {
     } )
   }
 
-  const existingUser = db.prepare( "SELECT * FROM user WHERE username = ?" ).get( username ) as
+  const existingUser = db.prepare( "SELECT * FROM User WHERE username = ?" ).get( username ) as
     | DatabaseUser
     | undefined
   if ( !existingUser ) {
