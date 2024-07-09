@@ -1,7 +1,7 @@
 <script setup lang="ts">
   import type { InternalApi } from "nitropack"
   import { ArrowUturnLeftIcon, LinkIcon } from "@heroicons/vue/16/solid"
-  import { pages, secondsToTime } from "lib"
+  import { AGE, GENDER, pages, secondsToTime } from "lib"
 
   definePageMeta( {
     layout: "secure",
@@ -19,14 +19,18 @@
   }
 
   type ApiResponse = InternalApi["/api/relative"]["get"]
+  interface AreaDetail extends Partial<ApiResponse[number]> {
+    label: string
+  }
+
   interface RecordType {
     key: string
     course: string
     stroke: string
     distance: string
-    county: Partial<ApiResponse[number]>
-    regional: Partial<ApiResponse[number]>
-    national: Partial<ApiResponse[number]>
+    county: Partial<AreaDetail>
+    regional: Partial<AreaDetail>
+    national: Partial<AreaDetail>
   }
 
   const { data: records } = await useFetch(
@@ -34,37 +38,31 @@
     {
       transform( data: ApiResponse ) : Array<RecordType> {
         const recordsMap = data.reduce( ( recordsMap, record ) => {
-          // 100m_backstroke_female_sc_11_glos
-          const matches = record.label.match( /(?<distance>\d+m)_(?<stroke>\w+)_female_(?<course>.c)_11(?:_(?<area>\w+))?/ )
-          if ( !matches ) {
-            throw new Error( `Can't match on '${record.label}'` )
-          }
-          const groups = matches?.groups ?? {}
-          const area = groups.area ? ( groups.area === "glos" ? "county" : "regional" ) : "national"
-          const key = `${groups.distance}_${groups.stroke}_${groups.course}`
-          const { label, position, rank, time, time_date, best, best_date, difference } = record
+          const { course, stroke, distance, area, position, rank, time, time_date, best, best_date, difference } = record
+          const key = `${distance}_${stroke}_${course}`
           let mergedRecord = recordsMap.get( key )
           if ( !mergedRecord ) {
             mergedRecord = {
               key,
-              course: matches.groups?.course as string,
-              stroke: matches.groups?.stroke as string,
-              distance: matches.groups?.distance as string,
+              course,
+              stroke,
+              distance,
               county: {},
               regional: {},
               national: {},
             }
           }
+          const label = `${distance}_${stroke}_${GENDER}_${course}_${AGE}${area ? `_${area}` : ""}`
           switch ( area ) {
-            case "county" : {
+            case "glos" : {
               mergedRecord.county = { label, position, rank, time, time_date, best, best_date, difference }
               break
             }
-            case "regional" : {
+            case "sw" : {
               mergedRecord.regional = { label, position, rank, time, time_date, best, best_date, difference }
               break
             }
-            case "national" : {
+            default : {
               mergedRecord.national = { label, position, rank, time, time_date, best, best_date, difference }
               break
             }
