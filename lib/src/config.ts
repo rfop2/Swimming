@@ -22,6 +22,10 @@ export const individualParams = {
 
 export const rankBaseUrl = "/12months/last12.php"
 
+export const GENDER = "female"
+
+export const AGE = "11"
+
 export const NATIONALITY = {
   BRITISH:  "A",
   ENGLAND:  "E",
@@ -61,9 +65,9 @@ export const STROKE = {
 }
 
 export const globalRankParams = {
-  Sex: "F",
-  AgeGroup: "11",
-  date: "31/12/2024",
+  Sex: GENDER.substring( 0,1 ).toUpperCase(),
+  AgeGroup: AGE,
+  date: new Date( new Date().getFullYear(), 11, 31 ).toLocaleDateString( "en-GB" ),
   StartNumber: "1",
   RecordsToView: "100",
   TargetNationality: NATIONALITY.BRITISH,
