@@ -1,5 +1,3 @@
-import { endOfYear, format } from "date-fns"
-
 export const MATCH_NAME = "Eloise Howard"
 
 export const DB_DIR = "../db"
@@ -69,7 +67,7 @@ export const STROKE = {
 export const globalRankParams = {
   Sex: GENDER.substring( 0,1 ).toUpperCase(),
   AgeGroup: AGE,
-  date: format( endOfYear( new Date() ), "dd/MM/yyyy" ),
+  date: new Date( new Date().getFullYear(), 11, 31 ).toLocaleDateString( "en-GB" ),
   StartNumber: "1",
   RecordsToView: "100",
   TargetNationality: NATIONALITY.BRITISH,
