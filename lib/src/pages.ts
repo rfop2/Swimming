@@ -1,5 +1,7 @@
 import {
   BASE_URL,
+  GENDER,
+  AGE,
   STROKE,
   POOLS,
   countyRankParams,
@@ -28,7 +30,7 @@ export const pages: PageData = [
     type: "individual"
   },
   {
-    label: "50m_freestyle_female_lc_11",
+    label: `50m_freestyle_${GENDER}_lc_${AGE}`,
     url: createUrl( rankBaseUrl, {
       ...{ Stroke: STROKE.FREESTYLE_50M, Pool: POOLS.LONG },
       ...globalRankParams,
@@ -37,7 +39,7 @@ export const pages: PageData = [
     type: "ranking"
   },
   {
-    label: "50m_freestyle_female_lc_11_sw",
+    label: `50m_freestyle_${GENDER}_lc_${AGE}_sw`,
     url: createUrl( rankBaseUrl, {
       ...{ Stroke: STROKE.FREESTYLE_50M, Pool: POOLS.LONG },
       ...globalRankParams,
@@ -46,7 +48,7 @@ export const pages: PageData = [
     type: "ranking"
   },
   {
-    label: "50m_freestyle_female_lc_11_glos",
+    label: `50m_freestyle_${GENDER}_lc_${AGE}_glos`,
     url: createUrl( rankBaseUrl, {
       ...{ Stroke: STROKE.FREESTYLE_50M, Pool: POOLS.LONG },
       ...globalRankParams,
@@ -55,7 +57,7 @@ export const pages: PageData = [
     type: "ranking"
   },
   {
-    label: "100m_breaststroke_female_lc_11",
+    label: `100m_breaststroke_${GENDER}_lc_${AGE}`,
     url: createUrl( rankBaseUrl, {
       ...{ Stroke: STROKE.BREASTSTROKE_100M, Pool: POOLS.LONG },
       ...globalRankParams,
@@ -64,7 +66,7 @@ export const pages: PageData = [
     type: "ranking"
   },
   {
-    label: "100m_breaststroke_female_lc_11_sw",
+    label: `100m_breaststroke_${GENDER}_lc_${AGE}_sw`,
     url: createUrl( rankBaseUrl, {
       ...{ Stroke: STROKE.BREASTSTROKE_100M, Pool: POOLS.LONG },
       ...globalRankParams,
@@ -73,7 +75,7 @@ export const pages: PageData = [
     type: "ranking"
   },
   {
-    label: "100m_breaststroke_female_lc_11_glos",
+    label: `100m_breaststroke_${GENDER}_lc_${AGE}_glos`,
     url: createUrl( rankBaseUrl, {
       ...{ Stroke: STROKE.BREASTSTROKE_100M, Pool: POOLS.LONG },
       ...globalRankParams,
@@ -82,7 +84,7 @@ export const pages: PageData = [
     type: "ranking"
   },
   {
-    label: "50m_butterfly_female_lc_11",
+    label: `50m_butterfly_${GENDER}_lc_${AGE}`,
     url: createUrl( rankBaseUrl, {
       ...{ Stroke: STROKE.BUTTERFLY_50M, Pool: POOLS.LONG },
       ...globalRankParams,
@@ -91,7 +93,7 @@ export const pages: PageData = [
     type: "ranking"
   },
   {
-    label: "50m_butterfly_female_lc_11_sw",
+    label: `50m_butterfly_${GENDER}_lc_${AGE}_sw`,
     url: createUrl( rankBaseUrl, {
       ...{ Stroke: STROKE.BUTTERFLY_50M, Pool: POOLS.LONG },
       ...globalRankParams,
@@ -100,7 +102,7 @@ export const pages: PageData = [
     type: "ranking"
   },
   {
-    label: "50m_butterfly_female_lc_11_glos",
+    label: `50m_butterfly_${GENDER}_lc_${AGE}_glos`,
     url: createUrl( rankBaseUrl, {
       ...{ Stroke: STROKE.BUTTERFLY_50M, Pool: POOLS.LONG },
       ...globalRankParams,
@@ -109,7 +111,7 @@ export const pages: PageData = [
     type: "ranking"
   },
   {
-    label: "100m_backstroke_female_lc_11",
+    label: `100m_backstroke_${GENDER}_lc_${AGE}`,
     url: createUrl( rankBaseUrl, {
       ...{ Stroke: STROKE.BACKSTROKE_100M, Pool: POOLS.LONG },
       ...globalRankParams,
@@ -118,7 +120,7 @@ export const pages: PageData = [
     type: "ranking"
   },
   {
-    label: "100m_backstroke_female_lc_11_sw",
+    label: `100m_backstroke_${GENDER}_lc_${AGE}_sw`,
     url: createUrl( rankBaseUrl, {
       ...{ Stroke: STROKE.BACKSTROKE_100M, Pool: POOLS.LONG },
       ...globalRankParams,
@@ -127,7 +129,7 @@ export const pages: PageData = [
     type: "ranking"
   },
   {
-    label: "100m_backstroke_female_lc_11_glos",
+    label: `100m_backstroke_${GENDER}_lc_${AGE}_glos`,
     url: createUrl( rankBaseUrl, {
       ...{ Stroke: STROKE.BACKSTROKE_100M, Pool: POOLS.LONG },
       ...globalRankParams,
@@ -136,7 +138,7 @@ export const pages: PageData = [
     type: "ranking"
   },
   {
-    label: "50m_freestyle_female_sc_11",
+    label: `50m_freestyle_${GENDER}_sc_${AGE}`,
     url: createUrl( rankBaseUrl, {
       ...{ Stroke: STROKE.FREESTYLE_50M, Pool: POOLS.SHORT },
       ...globalRankParams,
@@ -145,7 +147,7 @@ export const pages: PageData = [
     type: "ranking"
   },
   {
-    label: "50m_freestyle_female_sc_11_sw",
+    label: `50m_freestyle_${GENDER}_sc_${AGE}_sw`,
     url: createUrl( rankBaseUrl, {
       ...{ Stroke: STROKE.FREESTYLE_50M, Pool: POOLS.SHORT },
       ...globalRankParams,
@@ -154,7 +156,7 @@ export const pages: PageData = [
     type: "ranking"
   },
   {
-    label: "50m_freestyle_female_sc_11_glos",
+    label: `50m_freestyle_${GENDER}_sc_${AGE}_glos`,
     url: createUrl( rankBaseUrl, {
       ...{ Stroke: STROKE.FREESTYLE_50M, Pool: POOLS.SHORT },
       ...globalRankParams,
@@ -163,7 +165,7 @@ export const pages: PageData = [
     type: "ranking"
   },
   {
-    label: "100m_freestyle_female_sc_11",
+    label: `100m_freestyle_${GENDER}_sc_${AGE}`,
     url: createUrl( rankBaseUrl, {
       ...{ Stroke: STROKE.FREESTYLE_100M, Pool: POOLS.SHORT },
       ...globalRankParams,
@@ -172,7 +174,7 @@ export const pages: PageData = [
     type: "ranking"
   },
   {
-    label: "100m_freestyle_female_sc_11_sw",
+    label: `100m_freestyle_${GENDER}_sc_${AGE}_sw`,
     url: createUrl( rankBaseUrl, {
       ...{ Stroke: STROKE.FREESTYLE_100M, Pool: POOLS.SHORT },
       ...globalRankParams,
@@ -181,7 +183,7 @@ export const pages: PageData = [
     type: "ranking"
   },
   {
-    label: "100m_freestyle_female_sc_11_glos",
+    label: `100m_freestyle_${GENDER}_sc_${AGE}_glos`,
     url: createUrl( rankBaseUrl, {
       ...{ Stroke: STROKE.FREESTYLE_100M, Pool: POOLS.SHORT },
       ...globalRankParams,
@@ -190,7 +192,7 @@ export const pages: PageData = [
     type: "ranking"
   },
   {
-    label: "50m_breaststroke_female_sc_11",
+    label: `50m_breaststroke_${GENDER}_sc_${AGE}`,
     url: createUrl( rankBaseUrl, {
       ...{ Stroke: STROKE.BREASTSTROKE_50M, Pool: POOLS.SHORT },
       ...globalRankParams,
@@ -199,7 +201,7 @@ export const pages: PageData = [
     type: "ranking"
   },
   {
-    label: "50m_breaststroke_female_sc_11_sw",
+    label: `50m_breaststroke_${GENDER}_sc_${AGE}_sw`,
     url: createUrl( rankBaseUrl, {
       ...{ Stroke: STROKE.BREASTSTROKE_50M, Pool: POOLS.SHORT },
       ...globalRankParams,
@@ -208,7 +210,7 @@ export const pages: PageData = [
     type: "ranking"
   },
   {
-    label: "50m_breaststroke_female_sc_11_glos",
+    label: `50m_breaststroke_${GENDER}_sc_${AGE}_glos`,
     url: createUrl( rankBaseUrl, {
       ...{ Stroke: STROKE.BREASTSTROKE_50M, Pool: POOLS.SHORT },
       ...globalRankParams,
@@ -217,7 +219,7 @@ export const pages: PageData = [
     type: "ranking"
   },
   {
-    label: "100m_breaststroke_female_sc_11",
+    label: `100m_breaststroke_${GENDER}_sc_${AGE}`,
     url: createUrl( rankBaseUrl, {
       ...{ Stroke: STROKE.BREASTSTROKE_100M, Pool: POOLS.SHORT },
       ...globalRankParams,
@@ -226,7 +228,7 @@ export const pages: PageData = [
     type: "ranking"
   },
   {
-    label: "100m_breaststroke_female_sc_11_sw",
+    label: `100m_breaststroke_${GENDER}_sc_${AGE}_sw`,
     url: createUrl( rankBaseUrl, {
       ...{ Stroke: STROKE.BREASTSTROKE_100M, Pool: POOLS.SHORT },
       ...globalRankParams,
@@ -235,7 +237,7 @@ export const pages: PageData = [
     type: "ranking"
   },
   {
-    label: "100m_breaststroke_female_sc_11_glos",
+    label: `100m_breaststroke_${GENDER}_sc_${AGE}_glos`,
     url: createUrl( rankBaseUrl, {
       ...{ Stroke: STROKE.BREASTSTROKE_100M, Pool: POOLS.SHORT },
       ...globalRankParams,
@@ -244,7 +246,7 @@ export const pages: PageData = [
     type: "ranking"
   },
   {
-    label: "50m_butterfly_female_sc_11",
+    label: `50m_butterfly_${GENDER}_sc_${AGE}`,
     url: createUrl( rankBaseUrl, {
       ...{ Stroke: STROKE.BUTTERFLY_50M, Pool: POOLS.SHORT },
       ...globalRankParams,
@@ -253,7 +255,7 @@ export const pages: PageData = [
     type: "ranking"
   },
   {
-    label: "50m_butterfly_female_sc_11_sw",
+    label: `50m_butterfly_${GENDER}_sc_${AGE}_sw`,
     url: createUrl( rankBaseUrl, {
       ...{ Stroke: STROKE.BUTTERFLY_50M, Pool: POOLS.SHORT },
       ...globalRankParams,
@@ -262,7 +264,7 @@ export const pages: PageData = [
     type: "ranking"
   },
   {
-    label: "50m_butterfly_female_sc_11_glos",
+    label: `50m_butterfly_${GENDER}_sc_${AGE}_glos`,
     url: createUrl( rankBaseUrl, {
       ...{ Stroke: STROKE.BUTTERFLY_50M, Pool: POOLS.SHORT },
       ...globalRankParams,
@@ -271,7 +273,7 @@ export const pages: PageData = [
     type: "ranking"
   },
   {
-    label: "100m_butterfly_female_sc_11",
+    label: `100m_butterfly_${GENDER}_sc_${AGE}`,
     url: createUrl( rankBaseUrl, {
       ...{ Stroke: STROKE.BUTTERFLY_100M, Pool: POOLS.SHORT },
       ...globalRankParams,
@@ -280,7 +282,7 @@ export const pages: PageData = [
     type: "ranking"
   },
   {
-    label: "100m_butterfly_female_sc_11_sw",
+    label: `100m_butterfly_${GENDER}_sc_${AGE}_sw`,
     url: createUrl( rankBaseUrl, {
       ...{ Stroke: STROKE.BUTTERFLY_100M, Pool: POOLS.SHORT },
       ...globalRankParams,
@@ -289,7 +291,7 @@ export const pages: PageData = [
     type: "ranking"
   },
   {
-    label: "100m_butterfly_female_sc_11_glos",
+    label: `100m_butterfly_${GENDER}_sc_${AGE}_glos`,
     url: createUrl( rankBaseUrl, {
       ...{ Stroke: STROKE.BUTTERFLY_100M, Pool: POOLS.SHORT },
       ...globalRankParams,
@@ -298,7 +300,7 @@ export const pages: PageData = [
     type: "ranking"
   },
   {
-    label: "50m_backstroke_female_sc_11",
+    label: `50m_backstroke_${GENDER}_sc_${AGE}`,
     url: createUrl( rankBaseUrl, {
       ...{ Stroke: STROKE.BACKSTROKE_50M, Pool: POOLS.SHORT },
       ...globalRankParams,
@@ -307,7 +309,7 @@ export const pages: PageData = [
     type: "ranking"
   },
   {
-    label: "50m_backstroke_female_sc_11_sw",
+    label: `50m_backstroke_${GENDER}_sc_${AGE}_sw`,
     url: createUrl( rankBaseUrl, {
       ...{ Stroke: STROKE.BACKSTROKE_50M, Pool: POOLS.SHORT },
       ...globalRankParams,
@@ -316,7 +318,7 @@ export const pages: PageData = [
     type: "ranking"
   },
   {
-    label: "50m_backstroke_female_sc_11_glos",
+    label: `50m_backstroke_${GENDER}_sc_${AGE}_glos`,
     url: createUrl( rankBaseUrl, {
       ...{ Stroke: STROKE.BACKSTROKE_50M, Pool: POOLS.SHORT },
       ...globalRankParams,
@@ -325,7 +327,7 @@ export const pages: PageData = [
     type: "ranking"
   },
   {
-    label: "100m_backstroke_female_sc_11",
+    label: `100m_backstroke_${GENDER}_sc_${AGE}`,
     url: createUrl( rankBaseUrl, {
       ...{ Stroke: STROKE.BACKSTROKE_100M, Pool: POOLS.SHORT },
       ...globalRankParams,
@@ -334,7 +336,7 @@ export const pages: PageData = [
     type: "ranking"
   },
   {
-    label: "100m_backstroke_female_sc_11_sw",
+    label: `100m_backstroke_${GENDER}_sc_${AGE}_sw`,
     url: createUrl( rankBaseUrl, {
       ...{ Stroke: STROKE.BACKSTROKE_100M, Pool: POOLS.SHORT },
       ...globalRankParams,
@@ -343,7 +345,7 @@ export const pages: PageData = [
     type: "ranking"
   },
   {
-    label: "100m_backstroke_female_sc_11_glos",
+    label: `100m_backstroke_${GENDER}_sc_${AGE}_glos`,
     url: createUrl( rankBaseUrl, {
       ...{ Stroke: STROKE.BACKSTROKE_100M, Pool: POOLS.SHORT },
       ...globalRankParams,
@@ -352,7 +354,7 @@ export const pages: PageData = [
     type: "ranking"
   },
   {
-    label: "100m_individual_medley_female_sc_11",
+    label: `100m_individual_medley_${GENDER}_sc_${AGE}`,
     url: createUrl( rankBaseUrl, {
       ...{ Stroke: STROKE.INDIVIDUAL_MEDLEY_100M, Pool: POOLS.SHORT },
       ...globalRankParams,
@@ -361,7 +363,7 @@ export const pages: PageData = [
     type: "ranking"
   },
   {
-    label: "100m_individual_medley_female_sc_11_sw",
+    label: `100m_individual_medley_${GENDER}_sc_${AGE}_sw`,
     url: createUrl( rankBaseUrl, {
       ...{ Stroke: STROKE.INDIVIDUAL_MEDLEY_100M, Pool: POOLS.SHORT },
       ...globalRankParams,
@@ -370,7 +372,7 @@ export const pages: PageData = [
     type: "ranking"
   },
   {
-    label: "100m_individual_medley_female_sc_11_glos",
+    label: `100m_individual_medley_${GENDER}_sc_${AGE}_glos`,
     url: createUrl( rankBaseUrl, {
       ...{ Stroke: STROKE.INDIVIDUAL_MEDLEY_100M, Pool: POOLS.SHORT },
       ...globalRankParams,

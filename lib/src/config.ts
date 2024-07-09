@@ -65,8 +65,8 @@ export const STROKE = {
 }
 
 export const globalRankParams = {
-  Sex: "F",
-  AgeGroup: "11",
+  Sex: GENDER.substring( 0,1 ).toUpperCase(),
+  AgeGroup: AGE,
   date: "31/12/2024",
   StartNumber: "1",
   RecordsToView: "100",
