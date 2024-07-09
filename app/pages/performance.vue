@@ -28,6 +28,8 @@
     course: string
     stroke: string
     distance: string
+    time: number
+    time_date: string
     county: Partial<AreaDetail>
     regional: Partial<AreaDetail>
     national: Partial<AreaDetail>
@@ -47,6 +49,8 @@
               course,
               stroke,
               distance,
+              time,
+              time_date,
               county: {},
               regional: {},
               national: {},
@@ -55,15 +59,15 @@
           const label = `${distance}_${stroke}_${GENDER}_${course}_${AGE}${area ? `_${area}` : ""}`
           switch ( area ) {
             case "glos" : {
-              mergedRecord.county = { label, position, rank, time, time_date, best, best_date, difference }
+              mergedRecord.county = { label, position, rank, best, best_date, difference }
               break
             }
             case "sw" : {
-              mergedRecord.regional = { label, position, rank, time, time_date, best, best_date, difference }
+              mergedRecord.regional = { label, position, rank, best, best_date, difference }
               break
             }
             default : {
-              mergedRecord.national = { label, position, rank, time, time_date, best, best_date, difference }
+              mergedRecord.national = { label, position, rank, best, best_date, difference }
               break
             }
           }
@@ -222,21 +226,29 @@
                 </th>
                 <th
                   scope="col"
-                  colSpan="4"
+                  rowSpan="2"
+                  class="sortable whitespace-nowrap align-bottom px-2 py-3.5 text-left text-sm font-semibold text-gray-900"
+                  @click="sort('time')"
+                >
+                  <span>Time</span><i :class="getSortIcon('time')" />
+                </th>
+                <th
+                  scope="col"
+                  colSpan="3"
                   class="px-2 py-3.5 text-center text-sm font-semibold text-gray-900"
                 >
                   County
                 </th>
                 <th
                   scope="col"
-                  colSpan="4"
+                  colSpan="3"
                   class="px-2 py-3.5 text-center text-sm font-semibold text-gray-900"
                 >
                   Regional
                 </th>
                 <th
                   scope="col"
-                  colSpan="4"
+                  colSpan="3"
                   class="py-3.5 pl-3 pr-4 text-center text-sm font-semibold text-gray-900 sm:pr-0"
                 >
                   National
@@ -256,13 +268,6 @@
                   @click="sort('county_best')"
                 >
                   <span>Lead</span><i :class="getSortIcon('county_best')" />
-                </th>
-                <th
-                  scope="col"
-                  class="sortable whitespace-nowrap px-2 py-3.5 text-right text-sm font-semibold text-gray-900"
-                  @click="sort('county_time')"
-                >
-                  <span>Time</span><i :class="getSortIcon('county_time')" />
                 </th>
                 <th
                   scope="col"
@@ -288,13 +293,6 @@
                 <th
                   scope="col"
                   class="sortable whitespace-nowrap px-2 py-3.5 text-right text-sm font-semibold text-gray-900"
-                  @click="sort('regional_time')"
-                >
-                  <span>Time</span><i :class="getSortIcon('regional_time')" />
-                </th>
-                <th
-                  scope="col"
-                  class="sortable whitespace-nowrap px-2 py-3.5 text-right text-sm font-semibold text-gray-900"
                   @click="sort('regional_diff')"
                 >
                   <span>Diff</span><i :class="getSortIcon('regional_diff')" />
@@ -312,13 +310,6 @@
                   @click="sort('national_best')"
                 >
                   <span>Lead</span><i :class="getSortIcon('national_best')" />
-                </th>
-                <th
-                  scope="col"
-                  class="sortable whitespace-nowrap px-2 py-3.5 text-right text-sm font-semibold text-gray-900"
-                  @click="sort('national_time')"
-                >
-                  <span>Time</span><i :class="getSortIcon('national_time')" />
                 </th>
                 <th
                   scope="col"
@@ -345,6 +336,9 @@
                   {{ row.course === "lc" ? "Long" : "Short" }}
                 </td>
                 <td class="whitespace-nowrap p-2 text-right text-sm text-gray-900">
+                  <span class="tooltip">{{ row.time ? secondsToTime( row.time ) : '' }}<span class="tooltip-text">{{ row.time_date }}</span></span>
+                </td>
+                <td class="whitespace-nowrap p-2 text-right text-sm text-gray-900">
                   <span class="inline-flex items-baseline">
                     {{ row.county.rank }}
                     <a
@@ -359,9 +353,6 @@
                 </td>
                 <td class="whitespace-nowrap p-2 text-right text-sm text-gray-500">
                   <span class="tooltip">{{ row.county.best ? secondsToTime( row.county.best ) : '' }}<span class="tooltip-text">{{ row.county.best_date }}</span></span>
-                </td>
-                <td class="whitespace-nowrap p-2 text-right text-sm text-gray-500">
-                  <span class="tooltip">{{ row.county.time ? secondsToTime( row.county.time ) : '' }}<span class="tooltip-text">{{ row.county.time_date }}</span></span>
                 </td>
                 <td class="whitespace-nowrap p-2 text-right text-sm text-gray-500">
                   {{ row.county.difference ? secondsToTime( row.county.difference ) : '' }}
@@ -383,9 +374,6 @@
                   <span class="tooltip">{{ row.regional.best ? secondsToTime( row.regional.best ) : '' }}<span class="tooltip-text">{{ row.regional.best_date }}</span></span>
                 </td>
                 <td class="whitespace-nowrap p-2 text-right text-sm text-gray-500">
-                  <span class="tooltip">{{ row.regional.time ? secondsToTime( row.regional.time ) : '' }}<span class="tooltip-text">{{ row.regional.time_date }}</span></span>
-                </td>
-                <td class="whitespace-nowrap p-2 text-right text-sm text-gray-500">
                   {{ row.regional.difference ? secondsToTime( row.regional.difference ) : '' }}
                 </td>
                 <td class="whitespace-nowrap p-2 text-right text-sm text-gray-900">
@@ -403,9 +391,6 @@
                 </td>
                 <td class="whitespace-nowrap p-2 text-right text-sm text-gray-500">
                   <span class="tooltip">{{ row.national.best ? secondsToTime( row.national.best ) : '' }}<span class="tooltip-text">{{ row.national.best_date }}</span></span>
-                </td>
-                <td class="whitespace-nowrap p-2 text-right text-sm text-gray-500">
-                  <span class="tooltip">{{ row.national.time ? secondsToTime( row.national.time ) : '' }}<span class="tooltip-text">{{ row.national.time_date }}</span></span>
                 </td>
                 <td class="whitespace-nowrap py-2 pl-3 pr-4 text-right text-sm text-gray-500 sm:pr-0">
                   {{ row.national.difference ? secondsToTime( row.national.difference ) : '' }}
