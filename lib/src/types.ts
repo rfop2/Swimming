@@ -1,6 +1,7 @@
 export interface Individual {
   course: string
   stroke: string
+  distance: string
   time: number
   converted_time: number
   wa_pts: number

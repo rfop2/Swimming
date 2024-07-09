@@ -111,9 +111,16 @@ const parseIndividual = ( $: CheerioAPI ) => {
   const data: IndividualStats = []
   const longCourse = extractTableData( $, $( tables[0] ) )
   for ( const row of longCourse ) {
+    const matches = row.stroke.match( /(?<distance>\d+)\s(?<stroke>[\w\s]+)$/ )
+    if ( !matches ) {
+      throw new Error( `Can't match individual on '${row.stroke}'` )
+    }
+    const { distance = "", stroke = "" } = { ...matches?.groups }
+
     const courseRow: Individual = {
-      course: "long",
-      stroke: row.stroke,
+      course: "lc",
+      stroke: stroke.replace( /\s/g, "_" ).toLowerCase(),
+      distance,
       time: timetoSeconds( row.lc_time ),
       converted_time: timetoSeconds( row.converted_to_sc ),
       wa_pts: Number( row.lc_wa_pts ),
@@ -128,9 +135,16 @@ const parseIndividual = ( $: CheerioAPI ) => {
 
   const shortCourse = extractTableData( $, $( tables[1] ) )
   for ( const row of shortCourse ) {
+    const matches = row.stroke.match( /(?<distance>\d+)\s(?<stroke>[\w\s]+)$/ )
+    if ( !matches ) {
+      throw new Error( `Can't match individual on '${row.stroke}'` )
+    }
+    const { distance = "", stroke = "" } = { ...matches?.groups }
+
     const courseRow: Individual = {
-      course: "short",
-      stroke: row.stroke,
+      course: "sc",
+      stroke: stroke.replace( /\s/g, "_" ).toLowerCase(),
+      distance,
       time: timetoSeconds( row.sc_time ),
       converted_time: timetoSeconds( row.converted_to_lc ),
       wa_pts: Number( row.sc_wa_pts ),
@@ -301,22 +315,41 @@ const updateData = async () => {
     const pageData = await fetchPages()
     // console.log( inspect( pageData, { depth: 5 } ) )
 
+    // Individual
     for ( const row of pageData.individual ) {
       saveIndividual.run( { created: today, ...row } )
     }
+
+    // Rankings + Performance
     for ( const [ label, ranking ] of Object.entries( pageData.ranking ) ) {
-      deleteRankings.run( today, label )
+      // 100m_backstroke_female_sc_11_glos
+      const matches = label.match( /(?<distance>\d+m)_(?<stroke>\w+)_female_(?<course>.c)_11(?:_(?<area>\w+))?/ )
+      if ( !matches ) {
+        throw new Error( `Can't match ranking on '${label}'` )
+      }
+      const { distance = "", stroke = "", course = "", area = "national" } = { ...matches?.groups }
+      // const area = groups.area ? ( groups.area === "glos" ? "county" : "regional" ) : "national"
+
+      deleteRankings.run( today, course, stroke, distance, area )
       for ( const row of ranking.table ) {
-        saveRankings.run( { created: today, label, ...row } )
+        saveRankings.run( { created: today, course, stroke, distance, area, ...row } )
       }
       if ( ranking.stats ) {
-        deletePerformance.run( today, label )
-        savePerformance.run( { created: today, label, ...ranking.stats } )
+        deletePerformance.run( today, course, stroke, distance, area )
+        savePerformance.run( { created: today, course, stroke, distance, area, ...ranking.stats } )
       }
     }
+
+    // Results
     for ( const [ label, results ] of Object.entries( pageData.results ) ) {
+      const matches = label.match( /(?<distance>\d+)m_(?<stroke>\w+)_(?<course>.c)$/ )
+      if ( !matches ) {
+        throw new Error( `Can't match results on '${label}'` )
+      }
+      const { distance = "", stroke = "", course = "" } = { ...matches?.groups }
+
       for ( const result of results ) {
-        saveResults.run( { created: today, label, ...result } )
+        saveResults.run( { created: today, course, stroke, distance, ...result } )
       }
     }
   } catch ( error ) {
