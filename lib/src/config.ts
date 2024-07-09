@@ -22,6 +22,10 @@ export const individualParams = {
 
 export const rankBaseUrl = "/12months/last12.php"
 
+export const GENDER = "female"
+
+export const AGE = "11"
+
 export const NATIONALITY = {
   BRITISH:  "A",
   ENGLAND:  "E",
