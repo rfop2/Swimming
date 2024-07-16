@@ -1,4 +1,4 @@
-import { RankingStats } from "./types.js"
+import { RankingStats, Result } from "./types.js"
 
 export const createIndividualSql =
 `CREATE TABLE IF NOT EXISTS Individual (
@@ -157,6 +157,13 @@ export const insertPerformanceSql =
   :time_date,
   :difference
 );`
+
+export interface ResultsRow extends Result {
+  created: string
+  course: string
+  stroke: string
+  distance: string
+}
 
 export const createResultsSql =
 `CREATE TABLE IF NOT EXISTS Results (
