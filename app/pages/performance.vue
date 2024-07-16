@@ -148,7 +148,7 @@
 
   const sortedRecords = computed( () => {
     if ( multiSortMeta.value.length === 0 ) {
-      return records.value
+      return flattenedRecords.value
     }
     return [ ...flattenedRecords.value || [] ].sort( ( a, b ) => {
       for ( const meta of multiSortMeta.value ) {
