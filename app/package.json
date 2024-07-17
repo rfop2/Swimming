@@ -16,6 +16,8 @@
     "@node-rs/argon2": "^1.8.3",
     "@nuxtjs/tailwindcss": "^6.12.0",
     "better-sqlite3": "^9.6.0",
+    "chart.js": "^4.4.3",
+    "chartjs-adapter-date-fns": "^3.0.0",
     "date-fns": "^3.6.0",
     "lib": "file:../lib",
     "lucia": "^3.2.0",
@@ -25,6 +27,7 @@
     "primevue": "^4.0.0-rc.2",
     "seedrandom": "^3.0.5",
     "vue": "^3.4.29",
+    "vue-chartjs": "^5.3.1",
     "vue-router": "^4.3.3"
   },
   "devDependencies": {
@@ -33,6 +36,7 @@
     "@stylistic/eslint-plugin": "^2.2.2",
     "@tailwindcss/forms": "^0.5.7",
     "@types/better-sqlite3": "^7.6.10",
+    "eslint": "^8.57.0",
     "eslint-plugin-vue": "^9.27.0",
     "sass": "^1.77.6",
     "typescript": "^5.5.2"

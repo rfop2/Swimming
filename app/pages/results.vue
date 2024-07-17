@@ -1,7 +1,10 @@
 <script setup lang="ts">
   import { Listbox, ListboxButton, ListboxLabel, ListboxOption, ListboxOptions } from "@headlessui/vue"
   import { CheckIcon, ChevronUpDownIcon } from "@heroicons/vue/24/outline"
-import { secondsToTime, type ResultsRow } from "lib";
+  import { secondsToTime } from "lib"
+  import { Line } from "vue-chartjs"
+  import {  Chart as ChartJS, CategoryScale, LinearScale, TimeScale, PointElement, LineElement, Title, Tooltip, Legend, type ChartData, type ChartOptions, type TooltipItem } from "chart.js"
+  import "chartjs-adapter-date-fns"
 
   import type { InternalApi } from "nitropack"
   /*
@@ -56,13 +59,14 @@ import { secondsToTime, type ResultsRow } from "lib";
   ]
 
   const selections = reactive( {
-    course: courses[0],
+    course: courses[1],
     stroke: strokes[0],
     distance: distances[0],
   } )
   const query = computed( () => Object.fromEntries( Object.entries( selections ).map( ( [ label, option ] ) => ( [ label, option.value ] ) ) ) )
 
   type ApiResponse = InternalApi["/api/results"]["get"]
+  type ResultType = ApiResponse[number]
   /* interface AreaDetail extends Partial<ApiResponse[number]> {
     label: string
   } */
@@ -72,69 +76,72 @@ import { secondsToTime, type ResultsRow } from "lib";
     {
       query: query,
       watch: [ query ]
-      /* transform( data: ApiResponse ) : Array<RecordType> {
-        const recordsMap = data.reduce( ( recordsMap, record ) => {
-          const { course, stroke, distance, area, position, rank, time, time_date, best, best_date, difference } = record
-          const key = `${distance}_${stroke}_${course}`
-          let mergedRecord = recordsMap.get( key )
-          if ( !mergedRecord ) {
-            mergedRecord = {
-              key,
-              course,
-              stroke,
-              distance,
-              time,
-              time_date,
-              county: {},
-              regional: {},
-              national: {},
-            }
-          }
-          const label = `${distance}_${stroke}_${GENDER}_${course}_${AGE}${area ? `_${area}` : ""}`
-          switch ( area ) {
-            case "glos" : {
-              mergedRecord.county = { label, position, rank, best, best_date, difference }
-              break
-            }
-            case "sw" : {
-              mergedRecord.regional = { label, position, rank, best, best_date, difference }
-              break
-            }
-            default : {
-              mergedRecord.national = { label, position, rank, best, best_date, difference }
-              break
-            }
-          }
-          recordsMap.set( key, mergedRecord )
-          return recordsMap
-        }, new Map<string,RecordType>() )
-
-        const recordArray = Array.from( recordsMap.values() )
-        recordArray.sort( ( a, b ) => {
-          if ( a.course < b.course ) {
-            return 1
-          } else if ( a.course > b.course ) {
-            return -1
-          }
-          if ( strokeSort[a.stroke] < strokeSort[b.stroke] ) {
-            return -1
-          } else if ( strokeSort[a.stroke] > strokeSort[b.stroke] ) {
-            return 1
-          }
-          if ( a.distance < b.distance ) {
-            return 1
-          } else if ( a.distance > b.distance ) {
-            return -1
-          }
-          return 0
-        } )
-        return recordArray
-      }, */
     } )
 
-    const { updateSort, getSortIcon, sortRecords, resetSort } = useMultiSort<ResultsRow>()
+  const { updateSort, getSortIcon, sortRecords } = useMultiSort<ResultType>()
 
-    const sortedRecords = computed( () => sortRecords( records.value as Array<ResultsRow> ) )
+  const sortedRecords = computed( () => sortRecords( records.value as Array<ResultType> ) )
+
+  ChartJS.register(
+    CategoryScale,
+    LinearScale,
+    TimeScale,
+    PointElement,
+    LineElement,
+    Title,
+    Tooltip,
+    Legend
+  )
+
+  const data = computed<ChartData<"line",number[],string>>( () => ( {
+    labels: ( records?.value || [] ).map( record => record.date ),
+    datasets: [
+      {
+        label: "Time",
+        backgroundColor: "#3b82f6",
+        // data: ( records?.value || [] ).map( record => ( { x: record.date, y: Number( record.time ) } ) )
+        data: ( records?.value || [] ).map( record => Number( record.time ) )
+      }
+    ]
+  } ) )
+
+  const options: ChartOptions<"line"> = {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      x: {
+        type: "time",
+        time: {
+          unit: "month",
+          tooltipFormat: "MMM do, yyyy"
+        },
+        title: {
+          display: true,
+          text: "Date"
+        }
+      },
+      y: {
+        title: {
+          display: true,
+          text: "Time"
+        }
+      }
+    },
+    plugins: {
+      legend: {
+        display: false // Hides the legend
+      },
+      tooltip: {
+        callbacks: {
+          label: ( context: TooltipItem<"line"> ) => {
+            const label = context.dataset.label || ""
+            return `${label}: ${secondsToTime( context.raw as number )}`
+          }
+        }
+      }
+    }
+  }
+
 </script>
 
 <template>
@@ -305,6 +312,21 @@ import { secondsToTime, type ResultsRow } from "lib";
         </div>
       </div>
     </div>
+    <div
+      v-if="data.datasets[0].data.length > 0"
+      class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8"
+    >
+      <div
+        id="chart-container"
+        class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8"
+      >
+        <Line
+          height="300"
+          :data="data"
+          :options="options"
+        />
+      </div>
+    </div>
     <div class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
       <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
         <table class="min-w-full divide-y divide-gray-300">
@@ -384,3 +406,9 @@ import { secondsToTime, type ResultsRow } from "lib";
     </div>
   </div>
 </template>
+
+<style lang="scss" scoped>
+#chart-container {
+  height: 400px;
+}
+</style>
