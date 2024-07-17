@@ -75,7 +75,23 @@
     "/api/results",
     {
       query: query,
-      watch: [ query ]
+      watch: [ query ],
+      transform( records: ApiResponse ) : Array<ResultType> {
+        records.sort( ( a, b ) => {
+          if ( a.date < b.date ) {
+            return -1
+          } else if ( a.date > b.date ) {
+            return 1
+          }
+          if ( a.round < b.round ) {
+            return 1
+          } else if ( a.round > b.round ) {
+            return -1
+          }
+          return 0
+        } )
+        return records
+      },
     } )
 
   const { updateSort, getSortIcon, sortRecords } = useMultiSort<ResultType>()
@@ -378,7 +394,7 @@
           <tbody class="divide-y divide-gray-200 bg-white">
             <tr
               v-for="row in sortedRecords"
-              :key="row.date"
+              :key="`${row.date}-${row.round}`"
               class="divide-x divide-gray-200"
             >
               <td class="whitespace-nowrap py-2 pl-4 pr-3 text-right text-sm font-medium text-gray-900 sm:pl-0">
