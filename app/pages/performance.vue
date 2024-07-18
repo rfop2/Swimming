@@ -118,55 +118,10 @@
 
   type RecordKey = typeof flattenedRecords["value"][number]
 
-  interface SortMeta {
-    field: keyof RecordKey;
-    order: number;
-  }
+  const { updateSort, getSortIcon, sortRecords, resetSort } = useMultiSort<RecordKey>()
 
-  const multiSortMeta = ref<SortMeta[]>( [] )
+  const sortedRecords = computed( () => sortRecords( flattenedRecords.value ) )
 
-  const sort = ( field: keyof RecordKey ) => {
-    const existingSortMeta = multiSortMeta.value.find( meta => meta.field === field )
-    if ( existingSortMeta ) {
-      if ( existingSortMeta.order === 1 ) {
-        existingSortMeta.order = -1
-      } else {
-        multiSortMeta.value = multiSortMeta.value.filter( meta => meta.field !== field )
-      }
-    } else {
-      multiSortMeta.value.push( { field, order: 1 } )
-    }
-  }
-
-  const getSortIcon = ( field: keyof RecordKey ) => {
-    const sortMeta = multiSortMeta.value.find( meta => meta.field === field )
-    if ( sortMeta ) {
-      return sortMeta.order === 1 ? "pi pi-sort-up" : "pi pi-sort-down"
-    }
-    return "pi pi-sort"
-  }
-
-  const sortedRecords = computed( () => {
-    if ( multiSortMeta.value.length === 0 ) {
-      return flattenedRecords.value
-    }
-    return [ ...flattenedRecords.value || [] ].sort( ( a, b ) => {
-      for ( const meta of multiSortMeta.value ) {
-        const field = meta.field as keyof RecordType
-        const valueA = a[field]
-        const valueB = b[field]
-        const result = valueA > valueB ? 1 : valueA < valueB ? -1 : 0
-        if ( result !== 0 ) {
-          return meta.order * result
-        }
-      }
-      return 0
-    } )
-  } )
-
-  const resetSort = () => {
-    multiSortMeta.value = []
-  }
 </script>
 
 <template>
@@ -204,7 +159,7 @@
                   scope="col"
                   rowSpan="2"
                   class="sortable whitespace-nowrap align-bottom pl-4 pr-3 py-3.5 text-right text-sm font-semibold text-gray-900 sm:pl-0"
-                  @click="sort('distance')"
+                  @click="updateSort('distance')"
                 >
                   <span>Dist.</span><i :class="getSortIcon('distance')" />
                 </th>
@@ -212,7 +167,7 @@
                   scope="col"
                   rowSpan="2"
                   class="sortable whitespace-nowrap align-bottom px-2 py-3.5 text-left text-sm font-semibold text-gray-900"
-                  @click="sort('stroke')"
+                  @click="updateSort('stroke')"
                 >
                   <span>Stroke</span><i :class="getSortIcon('stroke')" />
                 </th>
@@ -220,7 +175,7 @@
                   scope="col"
                   rowSpan="2"
                   class="sortable whitespace-nowrap align-bottom px-2 py-3.5 text-left text-sm font-semibold text-gray-900"
-                  @click="sort('course')"
+                  @click="updateSort('course')"
                 >
                   <span>Course</span><i :class="getSortIcon('course')" />
                 </th>
@@ -228,7 +183,7 @@
                   scope="col"
                   rowSpan="2"
                   class="sortable whitespace-nowrap align-bottom px-2 py-3.5 text-left text-sm font-semibold text-gray-900"
-                  @click="sort('time')"
+                  @click="updateSort('time')"
                 >
                   <span>Time</span><i :class="getSortIcon('time')" />
                 </th>
@@ -258,63 +213,63 @@
                 <th
                   scope="col"
                   class="sortable whitespace-nowrap px-2 py-3.5 text-right text-sm font-semibold text-gray-900 border-l-[1px]"
-                  @click="sort('county_rank')"
+                  @click="updateSort('county_rank')"
                 >
                   <span>Rank</span><i :class="getSortIcon('county_rank')" />
                 </th>
                 <th
                   scope="col"
                   class="sortable whitespace-nowrap px-2 py-3.5 text-right text-sm font-semibold text-gray-900"
-                  @click="sort('county_best')"
+                  @click="updateSort('county_best')"
                 >
                   <span>Lead</span><i :class="getSortIcon('county_best')" />
                 </th>
                 <th
                   scope="col"
                   class="sortable whitespace-nowrap px-2 py-3.5 text-right text-sm font-semibold text-gray-900"
-                  @click="sort('county_diff')"
+                  @click="updateSort('county_diff')"
                 >
                   <span>Diff</span><i :class="getSortIcon('county_diff')" />
                 </th>
                 <th
                   scope="col"
                   class="sortable whitespace-nowrap px-2 py-3.5 text-right text-sm font-semibold text-gray-900"
-                  @click="sort('regional_rank')"
+                  @click="updateSort('regional_rank')"
                 >
                   <span>Rank</span><i :class="getSortIcon('regional_rank')" />
                 </th>
                 <th
                   scope="col"
                   class="sortable whitespace-nowrap px-2 py-3.5 text-right text-sm font-semibold text-gray-900"
-                  @click="sort('regional_best')"
+                  @click="updateSort('regional_best')"
                 >
                   <span>Lead</span><i :class="getSortIcon('regional_best')" />
                 </th>
                 <th
                   scope="col"
                   class="sortable whitespace-nowrap px-2 py-3.5 text-right text-sm font-semibold text-gray-900"
-                  @click="sort('regional_diff')"
+                  @click="updateSort('regional_diff')"
                 >
                   <span>Diff</span><i :class="getSortIcon('regional_diff')" />
                 </th>
                 <th
                   scope="col"
                   class="sortable whitespace-nowrap px-2 py-3.5 text-right text-sm font-semibold text-gray-900"
-                  @click="sort('national_rank')"
+                  @click="updateSort('national_rank')"
                 >
                   <span>Rank</span><i :class="getSortIcon('national_rank')" />
                 </th>
                 <th
                   scope="col"
                   class="sortable whitespace-nowrap px-2 py-3.5 text-right text-sm font-semibold text-gray-900"
-                  @click="sort('national_best')"
+                  @click="updateSort('national_best')"
                 >
                   <span>Lead</span><i :class="getSortIcon('national_best')" />
                 </th>
                 <th
                   scope="col"
                   class="sortable whitespace-nowrap pl-3 pr-4 py-3.5 text-right text-sm font-semibold text-gray-900"
-                  @click="sort('national_diff')"
+                  @click="updateSort('national_diff')"
                 >
                   <span>Diff</span><i :class="getSortIcon('national_diff')" />
                 </th>
