@@ -3,7 +3,12 @@ import eslint from "@eslint/js"
 import tseslint from "typescript-eslint"
 import stylisticPlugin from "@stylistic/eslint-plugin"
 
-export default tseslint.config(
+export default [
+  {
+    ignores: [
+      "build"
+    ]
+  },
   eslint.configs.recommended,
   ...tseslint.configs.recommended,
   {
@@ -38,4 +43,4 @@ export default tseslint.config(
       "@stylistic/semi": [ "error", "never" ],
     },
   }
-)
+]
