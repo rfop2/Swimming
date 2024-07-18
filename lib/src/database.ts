@@ -1,8 +1,16 @@
 import { RankingStats, Result } from "./types.js"
 
+export const createSwimmerSql =
+`CREATE TABLE IF NOT EXISTS Swimmers (
+  id VARCHAR(8) NOT NULL PRIMARY KEY,
+  name TEXT,
+  birthday DATE
+);`
+
 export const createIndividualSql =
 `CREATE TABLE IF NOT EXISTS Individual (
-  created DATE,
+  created DATE NOT NULL,
+  swimmer VARCHAR(8) NOT NULL,
   course VARCHAR(8),
   stroke VARCHAR(32),
   distance VARCHAR(8),
@@ -14,12 +22,14 @@ export const createIndividualSql =
   venue TEXT,
   licence TEXT,
   level INTEGER,
-  UNIQUE(created, course, stroke, distance)
+  UNIQUE(created, course, stroke, distance),
+  FOREIGN KEY (swimmer) REFERENCES Swimmers(id)
 );`
 
 export const insertIndividualSql =
 `INSERT OR IGNORE INTO Individual (
   created,
+  swimmer,
   course,
   stroke,
   distance,
@@ -33,6 +43,7 @@ export const insertIndividualSql =
   level
 ) VALUES (
   :created,
+  :swimmer,
   :course,
   :stroke,
   :distance,
@@ -48,12 +59,13 @@ export const insertIndividualSql =
 
 export const createRankingsSql =
 `CREATE TABLE IF NOT EXISTS Rankings (
-  created DATE,
-  course VARCHAR(8),
+  created DATE NOT NULL,
+  course VARCHAR(8) NOT NULL,
   stroke VARCHAR(32),
   distance VARCHAR(8),
   area VARCHAR(16),
   rank INTEGER,
+  swimmer VARCHAR(8),
   name TEXT,
   ranked_club TEXT,
   yob INTEGER,
@@ -75,6 +87,7 @@ export const insertRankingsSql =
   distance,
   area,
   rank,
+  swimmer,
   name,
   ranked_club,
   yob,
@@ -91,6 +104,7 @@ export const insertRankingsSql =
   :distance,
   :area,
   :rank,
+  :swimmer,
   :name,
   :ranked_club,
   :yob,
@@ -112,7 +126,8 @@ export interface PerformanceRow extends RankingStats {
 
 export const createPerformanceSql =
 `CREATE TABLE IF NOT EXISTS Performance (
-  created DATE DEFAULT CURRENT_TIMESTAMP,
+  created DATE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  swimmer VARCHAR(8) NOT NULL,
   course VARCHAR(8),
   stroke VARCHAR(32),
   distance VARCHAR(8),
@@ -124,14 +139,16 @@ export const createPerformanceSql =
   time DECIMAL(8,2),
   time_date DATE,
   difference DECIMAL(8,2),
-  UNIQUE( created, course, stroke, distance, area )
+  UNIQUE( created, course, stroke, distance, area ),
+  FOREIGN KEY (swimmer) REFERENCES Swimmers(id)
 );`
 
-export const deletePerformanceSql = "DELETE FROM Performance WHERE created = ? AND course = ? AND stroke = ? AND distance = ? AND area = ?;;"
+export const deletePerformanceSql = "DELETE FROM Performance WHERE created = ? AND swimmer = ? AND course = ? AND stroke = ? AND distance = ? AND area = ?;"
 
 export const insertPerformanceSql =
 `INSERT INTO Performance (
   created,
+  swimmer,
   course,
   stroke,
   distance,
@@ -145,6 +162,7 @@ export const insertPerformanceSql =
   difference
 ) VALUES (
   :created,
+  :swimmer,
   :course,
   :stroke,
   :distance,
@@ -167,7 +185,8 @@ export interface ResultsRow extends Result {
 
 export const createResultsSql =
 `CREATE TABLE IF NOT EXISTS Results (
-  created DATE DEFAULT CURRENT_TIMESTAMP,
+  created DATE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  swimmer VARCHAR(8) NOT NULL,
   course VARCHAR(8),
   stroke VARCHAR(32),
   distance VARCHAR(8),
@@ -179,12 +198,14 @@ export const createResultsSql =
   venue TEXT,
   club_swam_under TEXT,
   level INTEGER,
-  UNIQUE( course, stroke, distance, date, round )
+  UNIQUE( course, stroke, distance, date, round ),
+  FOREIGN KEY (swimmer) REFERENCES Swimmers(id)
 );`
 
 export const insertResultsSql =
 `INSERT OR IGNORE INTO Results (
   created,
+  swimmer,
   course,
   stroke,
   distance,
@@ -198,6 +219,7 @@ export const insertResultsSql =
   level
 ) VALUES (
   :created,
+  :swimmer,
   :course,
   :stroke,
   :distance,
