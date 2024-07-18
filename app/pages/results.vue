@@ -357,37 +357,46 @@
               </th>
               <th
                 scope="col"
+                class="whitespace-nowrap align-bottom px-2 py-3.5 text-right text-sm font-semibold text-gray-900"
+                @click="updateSort('time')"
+              >
+                <span>Time</span><i :class="getSortIcon('time')" />
+              </th>
+              <th
+                scope="col"
+                class="whitespace-nowrap align-bottom px-2 py-3.5 text-right text-sm font-semibold text-gray-900"
+              >
+                Points
+              </th>
+              <th
+                scope="col"
                 class="whitespace-nowrap align-bottom px-2 py-3.5 text-left text-sm font-semibold text-gray-900"
               >
                 Round
               </th>
               <th
                 scope="col"
-                class="sortable whitespace-nowrap align-bottom px-2 py-3.5 text-left text-sm font-semibold text-gray-900"
-                @click="updateSort('distance')"
+                class="whitespace-nowrap align-bottom px-2 py-3.5 text-left text-sm font-semibold text-gray-900"
               >
-                <span>Dist.</span><i :class="getSortIcon('distance')" />
+                Meet
+              </th>
+              <th
+                scope="col"
+                class="whitespace-nowrap align-bottom px-2 py-3.5 text-left text-sm font-semibold text-gray-900"
+              >
+                Venue
+              </th>
+              <th
+                scope="col"
+                class="whitespace-nowrap align-bottom px-2 py-3.5 text-left text-sm font-semibold text-gray-900"
+              >
+                Club
               </th>
               <th
                 scope="col"
                 class="sortable whitespace-nowrap align-bottom px-2 py-3.5 text-left text-sm font-semibold text-gray-900"
-                @click="updateSort('stroke')"
               >
-                <span>Stroke</span><i :class="getSortIcon('stroke')" />
-              </th>
-              <th
-                scope="col"
-                class="sortable whitespace-nowrap align-bottom px-2 py-3.5 text-left text-sm font-semibold text-gray-900"
-                @click="updateSort('course')"
-              >
-                <span>Course</span><i :class="getSortIcon('course')" />
-              </th>
-              <th
-                scope="col"
-                class="sortable whitespace-nowrap align-bottom px-2 py-3.5 text-left text-sm font-semibold text-gray-900"
-                @click="updateSort('time')"
-              >
-                <span>Time</span><i :class="getSortIcon('time')" />
+                Level
               </th>
             </tr>
           </thead>
@@ -400,20 +409,26 @@
               <td class="whitespace-nowrap py-2 pl-4 pr-3 text-right text-sm font-medium text-gray-900 sm:pl-0">
                 {{ row.date }}
               </td>
+              <td class="whitespace-nowrap p-2 text-right text-sm text-gray-900">
+                {{ row.time ? secondsToTime( row.time ) : '' }}
+              </td>
+              <td class="whitespace-nowrap p-2 text-right text-sm text-gray-900">
+                {{ row.wa_pts }}
+              </td>
               <td class="whitespace-nowrap p-2 text-sm text-gray-900">
                 {{ row.round === "H" ? "Heat" : ( row.round === "F" ? "Final" : "?" ) }}
               </td>
               <td class="whitespace-nowrap p-2 text-sm text-gray-900">
-                {{ row.distance }}
+                {{ row.meet }}
               </td>
               <td class="whitespace-nowrap p-2 text-sm text-gray-900">
-                {{ row.stroke.replace( /_/g, " " ).replace(/\b\w/g, char => char.toUpperCase()) }}
+                {{ row.venue }}
               </td>
               <td class="whitespace-nowrap p-2 text-sm text-gray-900">
-                {{ row.course === "lc" ? "Long" : "Short" }}
+                {{ row.club_swam_under }}
               </td>
-              <td class="whitespace-nowrap py-2 pl-3 pr-4 text-right text-sm text-gray-500 sm:pr-0">
-                {{ row.time ? secondsToTime( row.time ) : '' }}
+              <td class="whitespace-nowrap py-2 pl-3 pr-4 text-sm text-gray-500 sm:pr-0">
+                {{ row.level }}
               </td>
             </tr>
           </tbody>
