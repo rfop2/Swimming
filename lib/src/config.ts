@@ -13,11 +13,13 @@ export const MAX_FETCH_INTERVAL = 300
 
 export const individualBaseUrl = "/individualbest/personal_best.php"
 
+export const SWIMMER_ID = "1660835"
+
 export const individualParams = {
   back: "individualbestname",
   mode: "L",
   name: "Howard",
-  tiref: "1660835",
+  tiref: SWIMMER_ID,
 }
 
 export const rankBaseUrl = "/12months/last12.php"
@@ -98,6 +100,6 @@ export const resultsBaseUrl = "/individualbest/personal_best_time_date.php"
 
 export const resultsParams = {
   // back: "individualbestname",
-  tiref: "1660835",
+  tiref: SWIMMER_ID,
   mode: "A",
 }

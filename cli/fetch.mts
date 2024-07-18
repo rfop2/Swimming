@@ -13,6 +13,7 @@ import {
   USER_AGENT,
   DB_PATH,
   MATCH_NAME,
+  createSwimmerSql,
   createIndividualSql,
   createPerformanceSql,
   createRankingsSql,
@@ -27,7 +28,8 @@ import {
   timetoSeconds,
   pages,
   sleep,
-  rng
+  rng,
+  SWIMMER_ID
 } from "lib"
 
 import type {
@@ -48,6 +50,9 @@ const db = new Database( DB_PATH )
 db.pragma( "journal_mode = WAL" )
 
 // Create tables, and prepare statements
+const swimmerTableCreate = db.prepare( createSwimmerSql )
+swimmerTableCreate.run()
+
 const individualTableCreate = db.prepare( createIndividualSql )
 individualTableCreate.run()
 
@@ -214,7 +219,7 @@ const parseResults = ( $: CheerioAPI ) => {
     for ( const row of table ) {
       const resultRow: Result = {
         time: timetoSeconds( row.time ),
-        wa_pts: Number( row.sc_wa_pts ),
+        wa_pts: Number( row.wa_pts ),
         round: row.round,
         date: format( parse( row.date, "dd/MM/yy", now ), "yyyy-MM-dd" ),
         meet: row.meet,
@@ -317,7 +322,7 @@ const updateData = async () => {
 
     // Individual
     for ( const row of pageData.individual ) {
-      saveIndividual.run( { created: today, ...row } )
+      saveIndividual.run( { created: today, swimmer: SWIMMER_ID, ...row } )
     }
 
     // Rankings + Performance
@@ -332,11 +337,11 @@ const updateData = async () => {
 
       deleteRankings.run( today, course, stroke, distance, area )
       for ( const row of ranking.table ) {
-        saveRankings.run( { created: today, course, stroke, distance, area, ...row } )
+        saveRankings.run( { created: today, swimmer: "", course, stroke, distance, area, ...row } )
       }
       if ( ranking.stats ) {
-        deletePerformance.run( today, course, stroke, distance, area )
-        savePerformance.run( { created: today, course, stroke, distance, area, ...ranking.stats } )
+        deletePerformance.run( today, SWIMMER_ID, course, stroke, distance, area )
+        savePerformance.run( { created: today, swimmer: SWIMMER_ID, course, stroke, distance, area, ...ranking.stats } )
       }
     }
 
@@ -349,7 +354,7 @@ const updateData = async () => {
       const { distance = "", stroke = "", course = "" } = { ...matches?.groups }
 
       for ( const result of results ) {
-        saveResults.run( { created: today, course, stroke, distance, ...result } )
+        saveResults.run( { created: today, swimmer: SWIMMER_ID, course, stroke, distance, ...result } )
       }
     }
   } catch ( error ) {

@@ -1,7 +1,10 @@
 <script setup lang="ts">
   import { Listbox, ListboxButton, ListboxLabel, ListboxOption, ListboxOptions } from "@headlessui/vue"
   import { CheckIcon, ChevronUpDownIcon } from "@heroicons/vue/24/outline"
-import { secondsToTime, type ResultsRow } from "lib";
+  import { secondsToTime } from "lib"
+  import { Line } from "vue-chartjs"
+  import {  Chart as ChartJS, CategoryScale, LinearScale, TimeScale, PointElement, LineElement, Title, Tooltip, Legend, type ChartData, type ChartOptions, type TooltipItem } from "chart.js"
+  import "chartjs-adapter-date-fns"
 
   import type { InternalApi } from "nitropack"
   /*
@@ -56,13 +59,14 @@ import { secondsToTime, type ResultsRow } from "lib";
   ]
 
   const selections = reactive( {
-    course: courses[0],
+    course: courses[1],
     stroke: strokes[0],
     distance: distances[0],
   } )
   const query = computed( () => Object.fromEntries( Object.entries( selections ).map( ( [ label, option ] ) => ( [ label, option.value ] ) ) ) )
 
   type ApiResponse = InternalApi["/api/results"]["get"]
+  type ResultType = ApiResponse[number]
   /* interface AreaDetail extends Partial<ApiResponse[number]> {
     label: string
   } */
@@ -71,70 +75,89 @@ import { secondsToTime, type ResultsRow } from "lib";
     "/api/results",
     {
       query: query,
-      watch: [ query ]
-      /* transform( data: ApiResponse ) : Array<RecordType> {
-        const recordsMap = data.reduce( ( recordsMap, record ) => {
-          const { course, stroke, distance, area, position, rank, time, time_date, best, best_date, difference } = record
-          const key = `${distance}_${stroke}_${course}`
-          let mergedRecord = recordsMap.get( key )
-          if ( !mergedRecord ) {
-            mergedRecord = {
-              key,
-              course,
-              stroke,
-              distance,
-              time,
-              time_date,
-              county: {},
-              regional: {},
-              national: {},
-            }
-          }
-          const label = `${distance}_${stroke}_${GENDER}_${course}_${AGE}${area ? `_${area}` : ""}`
-          switch ( area ) {
-            case "glos" : {
-              mergedRecord.county = { label, position, rank, best, best_date, difference }
-              break
-            }
-            case "sw" : {
-              mergedRecord.regional = { label, position, rank, best, best_date, difference }
-              break
-            }
-            default : {
-              mergedRecord.national = { label, position, rank, best, best_date, difference }
-              break
-            }
-          }
-          recordsMap.set( key, mergedRecord )
-          return recordsMap
-        }, new Map<string,RecordType>() )
-
-        const recordArray = Array.from( recordsMap.values() )
-        recordArray.sort( ( a, b ) => {
-          if ( a.course < b.course ) {
-            return 1
-          } else if ( a.course > b.course ) {
+      watch: [ query ],
+      transform( records: ApiResponse ) : Array<ResultType> {
+        records.sort( ( a, b ) => {
+          if ( a.date < b.date ) {
             return -1
-          }
-          if ( strokeSort[a.stroke] < strokeSort[b.stroke] ) {
-            return -1
-          } else if ( strokeSort[a.stroke] > strokeSort[b.stroke] ) {
+          } else if ( a.date > b.date ) {
             return 1
           }
-          if ( a.distance < b.distance ) {
+          if ( a.round < b.round ) {
             return 1
-          } else if ( a.distance > b.distance ) {
+          } else if ( a.round > b.round ) {
             return -1
           }
           return 0
         } )
-        return recordArray
-      }, */
+        return records
+      },
     } )
 
-    const { updateSort, getSortIcon, sortRecords, resetSort } = useMultiSort<ResultsRow>()
+  const { updateSort, getSortIcon, sortRecords } = useMultiSort<ResultType>()
 
-    const sortedRecords = computed( () => sortRecords( records.value as Array<ResultsRow> ) )
+  const sortedRecords = computed( () => sortRecords( records.value as Array<ResultType> ) )
+
+  ChartJS.register(
+    CategoryScale,
+    LinearScale,
+    TimeScale,
+    PointElement,
+    LineElement,
+    Title,
+    Tooltip,
+    Legend
+  )
+
+  const data = computed<ChartData<"line",number[],string>>( () => ( {
+    labels: ( records?.value || [] ).map( record => record.date ),
+    datasets: [
+      {
+        label: "Time",
+        backgroundColor: "#3b82f6",
+        // data: ( records?.value || [] ).map( record => ( { x: record.date, y: Number( record.time ) } ) )
+        data: ( records?.value || [] ).map( record => Number( record.time ) )
+      }
+    ]
+  } ) )
+
+  const options: ChartOptions<"line"> = {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      x: {
+        type: "time",
+        time: {
+          unit: "month",
+          tooltipFormat: "MMM do, yyyy"
+        },
+        title: {
+          display: true,
+          text: "Date"
+        }
+      },
+      y: {
+        title: {
+          display: true,
+          text: "Time"
+        }
+      }
+    },
+    plugins: {
+      legend: {
+        display: false // Hides the legend
+      },
+      tooltip: {
+        callbacks: {
+          label: ( context: TooltipItem<"line"> ) => {
+            const label = context.dataset.label || ""
+            return `${label}: ${secondsToTime( context.raw as number )}`
+          }
+        }
+      }
+    }
+  }
+
 </script>
 
 <template>
@@ -305,6 +328,21 @@ import { secondsToTime, type ResultsRow } from "lib";
         </div>
       </div>
     </div>
+    <div
+      v-if="data.datasets[0].data.length > 0"
+      class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8"
+    >
+      <div
+        id="chart-container"
+        class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8"
+      >
+        <Line
+          height="300"
+          :data="data"
+          :options="options"
+        />
+      </div>
+    </div>
     <div class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
       <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
         <table class="min-w-full divide-y divide-gray-300">
@@ -319,63 +357,78 @@ import { secondsToTime, type ResultsRow } from "lib";
               </th>
               <th
                 scope="col"
+                class="whitespace-nowrap align-bottom px-2 py-3.5 text-right text-sm font-semibold text-gray-900"
+                @click="updateSort('time')"
+              >
+                <span>Time</span><i :class="getSortIcon('time')" />
+              </th>
+              <th
+                scope="col"
+                class="whitespace-nowrap align-bottom px-2 py-3.5 text-right text-sm font-semibold text-gray-900"
+              >
+                Points
+              </th>
+              <th
+                scope="col"
                 class="whitespace-nowrap align-bottom px-2 py-3.5 text-left text-sm font-semibold text-gray-900"
               >
                 Round
               </th>
               <th
                 scope="col"
-                class="sortable whitespace-nowrap align-bottom px-2 py-3.5 text-left text-sm font-semibold text-gray-900"
-                @click="updateSort('distance')"
+                class="whitespace-nowrap align-bottom px-2 py-3.5 text-left text-sm font-semibold text-gray-900"
               >
-                <span>Dist.</span><i :class="getSortIcon('distance')" />
+                Meet
+              </th>
+              <th
+                scope="col"
+                class="whitespace-nowrap align-bottom px-2 py-3.5 text-left text-sm font-semibold text-gray-900"
+              >
+                Venue
+              </th>
+              <th
+                scope="col"
+                class="whitespace-nowrap align-bottom px-2 py-3.5 text-left text-sm font-semibold text-gray-900"
+              >
+                Club
               </th>
               <th
                 scope="col"
                 class="sortable whitespace-nowrap align-bottom px-2 py-3.5 text-left text-sm font-semibold text-gray-900"
-                @click="updateSort('stroke')"
               >
-                <span>Stroke</span><i :class="getSortIcon('stroke')" />
-              </th>
-              <th
-                scope="col"
-                class="sortable whitespace-nowrap align-bottom px-2 py-3.5 text-left text-sm font-semibold text-gray-900"
-                @click="updateSort('course')"
-              >
-                <span>Course</span><i :class="getSortIcon('course')" />
-              </th>
-              <th
-                scope="col"
-                class="sortable whitespace-nowrap align-bottom px-2 py-3.5 text-left text-sm font-semibold text-gray-900"
-                @click="updateSort('time')"
-              >
-                <span>Time</span><i :class="getSortIcon('time')" />
+                Level
               </th>
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-200 bg-white">
             <tr
               v-for="row in sortedRecords"
-              :key="row.date"
+              :key="`${row.date}-${row.round}`"
               class="divide-x divide-gray-200"
             >
               <td class="whitespace-nowrap py-2 pl-4 pr-3 text-right text-sm font-medium text-gray-900 sm:pl-0">
                 {{ row.date }}
               </td>
+              <td class="whitespace-nowrap p-2 text-right text-sm text-gray-900">
+                {{ row.time ? secondsToTime( row.time ) : '' }}
+              </td>
+              <td class="whitespace-nowrap p-2 text-right text-sm text-gray-900">
+                {{ row.wa_pts }}
+              </td>
               <td class="whitespace-nowrap p-2 text-sm text-gray-900">
                 {{ row.round === "H" ? "Heat" : ( row.round === "F" ? "Final" : "?" ) }}
               </td>
               <td class="whitespace-nowrap p-2 text-sm text-gray-900">
-                {{ row.distance }}
+                {{ row.meet }}
               </td>
               <td class="whitespace-nowrap p-2 text-sm text-gray-900">
-                {{ row.stroke.replace( /_/g, " " ).replace(/\b\w/g, char => char.toUpperCase()) }}
+                {{ row.venue }}
               </td>
               <td class="whitespace-nowrap p-2 text-sm text-gray-900">
-                {{ row.course === "lc" ? "Long" : "Short" }}
+                {{ row.club_swam_under }}
               </td>
-              <td class="whitespace-nowrap py-2 pl-3 pr-4 text-right text-sm text-gray-500 sm:pr-0">
-                {{ row.time ? secondsToTime( row.time ) : '' }}
+              <td class="whitespace-nowrap py-2 pl-3 pr-4 text-sm text-gray-500 sm:pr-0">
+                {{ row.level }}
               </td>
             </tr>
           </tbody>
@@ -384,3 +437,9 @@ import { secondsToTime, type ResultsRow } from "lib";
     </div>
   </div>
 </template>
+
+<style lang="scss" scoped>
+#chart-container {
+  height: 400px;
+}
+</style>

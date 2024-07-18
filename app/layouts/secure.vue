@@ -49,6 +49,11 @@
     router.push( "/login" )
   }
 
+  const updated = useLastUpdate()
+
+  await callOnce( async () => {
+    updated.value = await $fetch( "/api/updated" )
+  } )
 </script>
 
 <template>
@@ -92,6 +97,9 @@
             </div>
           </div>
           <div class="hidden sm:ml-6 sm:flex sm:items-center">
+            <p class="mr-2 text-sm text-gray-700">
+              Updated: {{ updated }}
+            </p>
             <button
               type="button"
               class="relative rounded-full bg-white p-1 text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
