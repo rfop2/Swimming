@@ -219,7 +219,7 @@ const parseResults = ( $: CheerioAPI ) => {
     for ( const row of table ) {
       const resultRow: Result = {
         time: timetoSeconds( row.time ),
-        wa_pts: Number( row.sc_wa_pts ),
+        wa_pts: Number( row.wa_pts ),
         round: row.round,
         date: format( parse( row.date, "dd/MM/yy", now ), "yyyy-MM-dd" ),
         meet: row.meet,
