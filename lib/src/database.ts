@@ -3,8 +3,9 @@ import { RankingStats, Result } from "./types.js"
 export const createSwimmerSql =
 `CREATE TABLE IF NOT EXISTS Swimmers (
   id VARCHAR(8) NOT NULL PRIMARY KEY,
-  name TEXT,
-  birthday DATE
+  name VARCHAR(32),
+  birthday DATE,
+  gender VARCHAR(16)
 );`
 
 export const createIndividualSql =
