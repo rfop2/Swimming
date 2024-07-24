@@ -1,7 +1,7 @@
 <script setup lang="ts">
   import type { InternalApi } from "nitropack"
   import { ArrowUturnLeftIcon, LinkIcon } from "@heroicons/vue/16/solid"
-  import { AGE, GENDER, pages, secondsToTime } from "lib"
+  import { AGE, GENDER, convertTime, pages, secondsToTime } from "lib"
 
   definePageMeta( {
     layout: "secure",
@@ -18,9 +18,15 @@
     individual_medley: 4
   }
 
+  const { data: qualifying } = await useFetch(
+    "/api/qualifying",
+  )
+
   type ApiResponse = InternalApi["/api/relative"]["get"]
   interface AreaDetail extends Partial<ApiResponse[number]> {
     label: string
+    qualifyTime?: string
+    qualified?: boolean
   }
 
   interface RecordType {
@@ -30,6 +36,7 @@
     distance: string
     time: number
     time_date: string
+    qualifiedFor: number
     county: Partial<AreaDetail>
     regional: Partial<AreaDetail>
     national: Partial<AreaDetail>
@@ -51,23 +58,34 @@
               distance,
               time,
               time_date,
+              qualifiedFor: 0,
               county: {},
               regional: {},
               national: {},
             }
           }
+          const qualifyingEntry = ( qualifying?.value || [] ).find( entry => (
+            course && entry.stroke === stroke && entry.distance === distance && entry.area === area
+            // entry.course === course && entry.stroke === stroke && entry.distance === distance && entry.area === area
+          ) )
+          const qualifyRaw = qualifyingEntry ? convertTime( qualifyingEntry.course, course, stroke, distance, qualifyingEntry.time ) : undefined
+          const qualifyTime = qualifyRaw ? secondsToTime( qualifyRaw ) : undefined
+          const qualified = time <= ( qualifyRaw ?? 0 )
           const label = `${distance}_${stroke}_${GENDER}_${course}_${AGE}${area ? `_${area}` : ""}`
           switch ( area ) {
             case "glos" : {
-              mergedRecord.county = { label, position, rank, best, best_date, difference }
+              mergedRecord.qualifiedFor = mergedRecord.qualifiedFor < 1 && qualified ? 1 : mergedRecord.qualifiedFor
+              mergedRecord.county = { label, position, rank, best, best_date, difference, qualifyTime, qualified }
               break
             }
             case "sw" : {
-              mergedRecord.regional = { label, position, rank, best, best_date, difference }
+              mergedRecord.qualifiedFor = mergedRecord.qualifiedFor < 2 && qualified ? 2 : mergedRecord.qualifiedFor
+              mergedRecord.regional = { label, position, rank, best, best_date, difference, qualifyTime, qualified }
               break
             }
             default : {
-              mergedRecord.national = { label, position, rank, best, best_date, difference }
+              mergedRecord.qualifiedFor = mergedRecord.qualifiedFor < 3 && qualified ? 3 : mergedRecord.qualifiedFor
+              mergedRecord.national = { label, position, rank, best, best_date, difference, qualifyTime, qualified }
               break
             }
           }
@@ -105,14 +123,17 @@
       county_best: record.county.best,
       county_time: record.county.time,
       county_diff: record.county.difference,
+      county_qualify: record.county.qualifyTime,
       regional_rank: record.regional.rank,
       regional_best: record.regional.best,
       regional_time: record.regional.time,
       regional_diff: record.regional.difference,
+      regional_qualify: record.regional.qualifyTime,
       national_rank: record.national.rank,
       national_best: record.national.best,
       national_time: record.national.time,
       national_diff: record.national.difference,
+      national_qualify: record.national.qualifyTime,
     }
   } ) ) )
 
@@ -189,21 +210,21 @@
                 </th>
                 <th
                   scope="col"
-                  colSpan="3"
+                  colSpan="4"
                   class="px-2 py-3.5 text-center text-sm font-semibold text-gray-900"
                 >
                   County
                 </th>
                 <th
                   scope="col"
-                  colSpan="3"
+                  colSpan="4"
                   class="px-2 py-3.5 text-center text-sm font-semibold text-gray-900"
                 >
                   Regional
                 </th>
                 <th
                   scope="col"
-                  colSpan="3"
+                  colSpan="4"
                   class="py-3.5 pl-3 pr-4 text-center text-sm font-semibold text-gray-900 sm:pr-0"
                 >
                   National
@@ -234,6 +255,13 @@
                 <th
                   scope="col"
                   class="sortable whitespace-nowrap px-2 py-3.5 text-right text-sm font-semibold text-gray-900"
+                  @click="updateSort('county_qualify')"
+                >
+                  <span>Qual.</span><i :class="getSortIcon('county_qualify')" />
+                </th>
+                <th
+                  scope="col"
+                  class="sortable whitespace-nowrap px-2 py-3.5 text-right text-sm font-semibold text-gray-900"
                   @click="updateSort('regional_rank')"
                 >
                   <span>Rank</span><i :class="getSortIcon('regional_rank')" />
@@ -251,6 +279,13 @@
                   @click="updateSort('regional_diff')"
                 >
                   <span>Diff</span><i :class="getSortIcon('regional_diff')" />
+                </th>
+                <th
+                  scope="col"
+                  class="sortable whitespace-nowrap px-2 py-3.5 text-right text-sm font-semibold text-gray-900"
+                  @click="updateSort('regional_qualify')"
+                >
+                  <span>Qual.</span><i :class="getSortIcon('regional_qualify')" />
                 </th>
                 <th
                   scope="col"
@@ -273,6 +308,13 @@
                 >
                   <span>Diff</span><i :class="getSortIcon('national_diff')" />
                 </th>
+                <th
+                  scope="col"
+                  class="sortable whitespace-nowrap px-2 py-3.5 text-right text-sm font-semibold text-gray-900"
+                  @click="updateSort('national_qualify')"
+                >
+                  <span>Qual.</span><i :class="getSortIcon('national_qualify')" />
+                </th>
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-200 bg-white">
@@ -291,7 +333,10 @@
                   {{ row.course === "lc" ? "Long" : "Short" }}
                 </td>
                 <td class="whitespace-nowrap p-2 text-right text-sm text-gray-900">
-                  <span class="tooltip">{{ row.time ? secondsToTime( row.time ) : '' }}<span class="tooltip-text">{{ row.time_date }}</span></span>
+                  <span class="tooltip">
+                    <span :class="`qualifiedArea${row.qualifiedFor}`">{{ row.time ? secondsToTime( row.time ) : '' }}</span>
+                    <span class="tooltip-text">{{ row.time_date }}</span>
+                  </span>
                 </td>
                 <td class="whitespace-nowrap p-2 text-right text-sm text-gray-900">
                   <span class="inline-flex items-baseline">
@@ -312,6 +357,9 @@
                 <td class="whitespace-nowrap p-2 text-right text-sm text-gray-500">
                   {{ row.county.difference ? secondsToTime( row.county.difference ) : '' }}
                 </td>
+                <td class="whitespace-nowrap p-2 text-right text-sm text-gray-500">
+                  {{ row.county.qualifyTime }}
+                </td>
                 <td class="whitespace-nowrap p-2 text-right text-sm text-gray-900">
                   <span class="inline-flex items-baseline">
                     {{ row.regional.rank }}
@@ -331,6 +379,9 @@
                 <td class="whitespace-nowrap p-2 text-right text-sm text-gray-500">
                   {{ row.regional.difference ? secondsToTime( row.regional.difference ) : '' }}
                 </td>
+                <td class="whitespace-nowrap p-2 text-right text-sm text-gray-500">
+                  {{ row.regional.qualifyTime }}
+                </td>
                 <td class="whitespace-nowrap p-2 text-right text-sm text-gray-900">
                   <span class="inline-flex items-baseline">
                     {{ row.national.rank }}
@@ -347,8 +398,11 @@
                 <td class="whitespace-nowrap p-2 text-right text-sm text-gray-500">
                   <span class="tooltip">{{ row.national.best ? secondsToTime( row.national.best ) : '' }}<span class="tooltip-text">{{ row.national.best_date }}</span></span>
                 </td>
-                <td class="whitespace-nowrap py-2 pl-3 pr-4 text-right text-sm text-gray-500 sm:pr-0">
+                <td class="whitespace-nowrap p-2 text-right text-sm text-gray-500">
                   {{ row.national.difference ? secondsToTime( row.national.difference ) : '' }}
+                </td>
+                <td class="whitespace-nowrap py-2 pl-3 pr-4 text-right text-sm text-gray-500 sm:pr-0">
+                  {{ row.national.qualifyTime }}
                 </td>
               </tr>
             </tbody>
@@ -365,5 +419,17 @@
 
 .pi-sort, .pi-sort-up, .pi-sort-down {
   margin-left: 0.25rem;
+}
+
+.qualifiedArea1 {
+  color: #22c55e;
+}
+
+.qualifiedArea2 {
+  color: #f97316;
+}
+
+.qualifiedArea3 {
+  color: #ef4444;
 }
 </style>

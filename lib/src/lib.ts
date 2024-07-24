@@ -102,3 +102,84 @@ export const secondsToTime = ( seconds: number ): string => {
     return format( date, "s.SS" )
   }
 }
+
+const turnFactors = new Map<string,number>( Object.entries( {
+  "50-freestyle": 42.245,
+  "100-freestyle": 42.245,
+  "200-freestyle": 43.786,
+  "400-freestyle": 44.233,
+  "800-freestyle": 45.525,
+  "1500-freestyle": 46.221,
+  "50-breaststroke": 63.616,
+  "100-breaststroke": 63.616,
+  "200-breaststroke": 66.598,
+  "50-butterfly": 38.269,
+  "100-butterfly": 38.269,
+  "200-butterfly": 39.76,
+  "50-backstroke": 40.5,
+  "100-backstroke": 40.5,
+  "200-backstroke": 41.98,
+  "200-individual_medley": 49.7,
+  "400-individual_medley": 55.366,
+} ) )
+
+const validatePoolAndDistance = ( pool: string, distance: number ) => {
+  let turnsPer100 = 0
+  let minDistance = 0
+  switch ( pool ) {
+    case "lc" : {
+      turnsPer100 = 1
+      minDistance = 50
+      break
+    }
+    case "sc" : {
+      turnsPer100 = 3
+      minDistance = 25
+      break
+    }
+    default : {
+      throw( new Error( `Invalid pool length '${pool}'` ) )
+    }
+  }
+  if ( distance < minDistance ) {
+    throw( new Error( `Invalid distance '${distance}' for pool '${pool}'` ) )
+  }
+  return turnsPer100
+}
+
+export const convertTime = ( fromPool: string, toPool: string, stroke: string, distance: string, time: string | number ) => {
+  const rawDistance = Number( distance.replace( /m$/, "" ) )
+  const fromTurnsPer100 = validatePoolAndDistance( fromPool, rawDistance )
+  const toTurnsPer100 = validatePoolAndDistance( toPool, rawDistance )
+
+  let timeInSecs = Number( time )
+  if ( isNaN( timeInSecs ) ) {
+    timeInSecs = timetoSeconds( String( time ) )
+    if ( isNaN( timeInSecs ) ) {
+      throw( new Error( `Invalid time '${time}'` ) )
+    }
+  }
+
+  if ( fromPool === toPool ) {
+    return timeInSecs
+  }
+
+  const turnFactor = turnFactors.get( `${rawDistance}-${stroke}` )
+  if ( !turnFactor ) {
+    throw new Error( `Unable to get turn factor for '${rawDistance}-${stroke}'` )
+  }
+
+  let timeAs50 = timeInSecs
+  if ( fromPool !== "lc" ) {
+    const numTurnFactor = ( rawDistance / 100 ) * ( rawDistance / 100 ) * ( fromTurnsPer100 - 1 )
+    console.log( "nTF", numTurnFactor )
+    timeAs50 = ( timeInSecs + Math.sqrt( timeInSecs * timeInSecs + ( 4 * turnFactor * numTurnFactor ) ) ) / 2
+  }
+
+  const turnVal = turnFactor / timeAs50 * ( rawDistance / 100 )
+  const turnTime = turnVal * ( rawDistance / 100 ) * ( toTurnsPer100 - 1 )
+
+  const convertedTime = Number( ( timeAs50 - turnTime ).toFixed( 1 ) )
+
+  return convertedTime
+}

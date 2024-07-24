@@ -233,3 +233,29 @@ export const insertResultsSql =
   :club_swam_under,
   :level
 );`
+
+export interface QualifyingRow {
+  created: string
+  course: string
+  stroke: string
+  distance: string
+  area: string
+  gender: string
+  age: string
+  timeString: string
+  time: number
+}
+
+export const createQualifyingSql =
+`CREATE TABLE IF NOT EXISTS Qualifying (
+  created DATE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  course VARCHAR(8) NOT NULL,
+  stroke VARCHAR(32) NOT NULL,
+  distance VARCHAR(8) NOT NULL,
+  area VARCHAR(16) NOT NULL,
+  gender VARCHAR(16) NOT NULL,
+  age  VARCHAR(8) NOT NULL,
+  timeString VARCHAR(16) NOT NULL,
+  time DECIMAL(8,2) NOT NULL DEFAULT 0.00,
+  UNIQUE( age, gender, course, stroke, distance, area )
+);`
