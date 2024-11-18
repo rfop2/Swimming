@@ -172,7 +172,6 @@ export const convertTime = ( fromPool: string, toPool: string, stroke: string, d
   let timeAs50 = timeInSecs
   if ( fromPool !== "lc" ) {
     const numTurnFactor = ( rawDistance / 100 ) * ( rawDistance / 100 ) * ( fromTurnsPer100 - 1 )
-    console.log( "nTF", numTurnFactor )
     timeAs50 = ( timeInSecs + Math.sqrt( timeInSecs * timeInSecs + ( 4 * turnFactor * numTurnFactor ) ) ) / 2
   }
 
