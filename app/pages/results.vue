@@ -161,7 +161,7 @@
 </script>
 
 <template>
-  <div class="px-4 sm:px-6 lg:px-8">
+  <div>
     <div class="sm:flex sm:items-center">
       <div class="sm:flex-auto">
         <h1 class="text-base font-semibold leading-6 text-gray-900">
@@ -330,7 +330,7 @@
     </div>
     <div
       v-if="data.datasets[0].data.length > 0"
-      class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8"
+      class="overflow-x-auto"
     >
       <div
         id="chart-container"
@@ -343,7 +343,7 @@
         />
       </div>
     </div>
-    <div class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+    <div class="overflow-x-auto">
       <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
         <table class="min-w-full divide-y divide-gray-300">
           <thead>
