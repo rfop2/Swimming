@@ -1,5 +1,6 @@
 import seedrandom from "seedrandom"
-import type { Cheerio, CheerioAPI, AnyNode } from "cheerio"
+import type { AnyNode } from "domhandler"
+import type { Cheerio, CheerioAPI } from "cheerio"
 import { addMilliseconds, format } from "date-fns"
 
 const debugEnabled = !!( process.env?.DEBUG === "true" ) || false

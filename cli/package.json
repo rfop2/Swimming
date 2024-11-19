@@ -11,19 +11,19 @@
   "dependencies": {
     "@node-rs/argon2": "^1.8.3",
     "better-sqlite3": "^9.6.0",
-    "cheerio": "^1.0.0-rc.12",
+    "cheerio": "^1.0.0",
     "date-fns": "^3.6.0",
     "dotenv": "^16.4.5",
     "lib": "file:../lib",
-    "lucia": "^3.2.0",
+    "lucia": "^3.2.2",
     "node-fetch": "^3.3.2"
   },
   "devDependencies": {
-    "@stylistic/eslint-plugin": "^2.3.0",
-    "@types/better-sqlite3": "^7.6.10",
-    "@types/node": "^20.14.9",
-    "eslint": "^8.57.0",
-    "typescript": "^5.5.2",
-    "typescript-eslint": "^7.15.0"
+    "@stylistic/eslint-plugin": "^2.10.1",
+    "@types/better-sqlite3": "^7.6.11",
+    "@types/node": "^18.19.64",
+    "eslint": "^8.57.1",
+    "typescript": "^5.6.3",
+    "typescript-eslint": "^7.18.0"
   }
 }

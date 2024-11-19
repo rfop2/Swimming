@@ -2,7 +2,9 @@
 import "dotenv/config"
 import { format, parse, differenceInHours } from "date-fns"
 import { stat, readFile, writeFile } from "fs/promises"
-import cheerio, { type Cheerio, type CheerioAPI, type AnyNode } from "cheerio"
+import type { AnyNode } from "domhandler"
+import * as cheerio from "cheerio"
+import type { Cheerio, CheerioAPI } from "cheerio"
 import Database from "better-sqlite3"
 // import { inspect } from "util"
 
