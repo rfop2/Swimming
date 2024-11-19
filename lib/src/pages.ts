@@ -246,6 +246,33 @@ export const pages: PageData = [
     type: "ranking"
   },
   {
+    label: `200m_breaststroke_${GENDER}_sc_${AGE}`,
+    url: createUrl( rankBaseUrl, {
+      ...{ Stroke: STROKE.BREASTSTROKE_200M, Pool: POOLS.SHORT },
+      ...globalRankParams,
+      ...nationalRankParams,
+    } ),
+    type: "ranking"
+  },
+  {
+    label: `200m_breaststroke_${GENDER}_sc_${AGE}_sw`,
+    url: createUrl( rankBaseUrl, {
+      ...{ Stroke: STROKE.BREASTSTROKE_200M, Pool: POOLS.SHORT },
+      ...globalRankParams,
+      ...regionalRankParams,
+    } ),
+    type: "ranking"
+  },
+  {
+    label: `200m_breaststroke_${GENDER}_sc_${AGE}_glos`,
+    url: createUrl( rankBaseUrl, {
+      ...{ Stroke: STROKE.BREASTSTROKE_200M, Pool: POOLS.SHORT },
+      ...globalRankParams,
+      ...countyRankParams,
+    } ),
+    type: "ranking"
+  },
+  {
     label: `50m_butterfly_${GENDER}_sc_${AGE}`,
     url: createUrl( rankBaseUrl, {
       ...{ Stroke: STROKE.BUTTERFLY_50M, Pool: POOLS.SHORT },
