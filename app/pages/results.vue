@@ -55,6 +55,10 @@
     {
       value: "100m",
       label: "100m",
+    },
+    {
+      value: "200m",
+      label: "200m",
     }
   ]
 
