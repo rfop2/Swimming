@@ -59,7 +59,7 @@
     {
       value: "200m",
       label: "200m",
-    }
+    },
   ]
 
   const selections = reactive( {
