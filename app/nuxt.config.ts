@@ -19,14 +19,8 @@ export default defineNuxtConfig( {
     "~/assets/custom.scss"
   ],
 
-  hooks: {
-    "pages:extend" ( pages ) {
-      pages.push( {
-        name: "index",
-        path: "/",
-        file: "~/pages/performance"
-      } )
-    }
+  routeRules: {
+    "/": { redirect: "/performance" },
   },
 
   compatibilityDate: "2024-07-03"
