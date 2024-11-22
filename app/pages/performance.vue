@@ -34,6 +34,7 @@
     course: string
     stroke: string
     distance: string
+    distanceMetres: number
     time: number
     time_date: string
     qualifiedFor: number
@@ -56,6 +57,7 @@
               course,
               stroke,
               distance,
+              distanceMetres: Number( distance.replace( /m$/, "" ) ),
               time,
               time_date,
               qualifiedFor: 0,
@@ -105,10 +107,10 @@
           } else if ( strokeSort[a.stroke] > strokeSort[b.stroke] ) {
             return 1
           }
-          if ( a.distance < b.distance ) {
-            return 1
-          } else if ( a.distance > b.distance ) {
+          if ( a.distanceMetres < b.distanceMetres ) {
             return -1
+          } else if ( a.distanceMetres > b.distanceMetres ) {
+            return 1
           }
           return 0
         } )
@@ -180,9 +182,9 @@
                   scope="col"
                   rowSpan="2"
                   class="sortable whitespace-nowrap align-bottom pl-4 pr-3 py-3.5 text-right text-sm font-semibold text-gray-900 sm:pl-0"
-                  @click="updateSort('distance')"
+                  @click="updateSort('distanceMetres')"
                 >
-                  <span>Dist.</span><i :class="getSortIcon('distance')" />
+                  <span>Dist.</span><i :class="getSortIcon('distanceMetres')" />
                 </th>
                 <th
                   scope="col"
