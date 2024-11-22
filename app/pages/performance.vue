@@ -205,7 +205,7 @@
                 <th
                   scope="col"
                   rowSpan="2"
-                  class="sortable whitespace-nowrap align-bottom px-1 py-3.5 text-left text-sm font-semibold text-gray-900"
+                  class="sortable whitespace-nowrap align-bottom px-1 py-3.5 text-right text-sm font-semibold text-gray-900"
                   @click="updateSort('time')"
                 >
                   <span>Time</span><i :class="getSortIcon('time')" />
@@ -213,7 +213,7 @@
                 <th
                   scope="col"
                   rowSpan="2"
-                  class="sortable whitespace-nowrap align-bottom px-1 py-3.5 text-left text-sm font-semibold text-gray-900"
+                  class="sortable whitespace-nowrap align-bottom px-1 py-3.5 text-right text-sm font-semibold text-gray-900"
                   @click="updateSort('time_date')"
                 >
                   <span>Date</span><i :class="getSortIcon('time_date')" />
