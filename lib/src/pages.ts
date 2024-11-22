@@ -456,6 +456,14 @@ export const pages: PageData = [
     type: "results"
   },
   {
+    label: "50m_breaststroke_sc",
+    url: createUrl( resultsBaseUrl, {
+      ...resultsParams,
+      ...{ tstroke: STROKE.BREASTSTROKE_50M, tcourse: POOLS.SHORT },
+    } ),
+    type: "results"
+  },
+  {
     label: "100m_breaststroke_sc",
     url: createUrl( resultsBaseUrl, {
       ...resultsParams,
@@ -464,10 +472,10 @@ export const pages: PageData = [
     type: "results"
   },
   {
-    label: "50m_breaststroke_sc",
+    label: "200m_breaststroke_sc",
     url: createUrl( resultsBaseUrl, {
       ...resultsParams,
-      ...{ tstroke: STROKE.BREASTSTROKE_50M, tcourse: POOLS.SHORT },
+      ...{ tstroke: STROKE.BREASTSTROKE_200M, tcourse: POOLS.SHORT },
     } ),
     type: "results"
   },
