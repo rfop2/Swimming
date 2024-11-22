@@ -23,5 +23,5 @@ export default defineNuxtConfig( {
     "/": { redirect: "/performance" },
   },
 
-  compatibilityDate: "2024-07-03"
+  compatibilityDate: "2024-11-21"
 } )
