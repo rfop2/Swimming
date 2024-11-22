@@ -1,4 +1,4 @@
-FROM node:18
+FROM node:lts
 
 # Args
 ARG UID=1001
