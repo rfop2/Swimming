@@ -75,6 +75,10 @@ export const globalRankParams = {
   TargetNationality: NATIONALITY.BRITISH,
 }
 
+export const globalRankPage2Params = {
+  StartNumber: "101",
+}
+
 export const nationalRankParams = {
   TargetRegion: "P",
   Level: "N",

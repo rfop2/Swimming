@@ -113,7 +113,7 @@ const extractTableData = ( $: CheerioAPI, table: Cheerio<AnyNode> ) => {
   return dataObject
 }
 
-const parseIndividual = ( $: CheerioAPI ) => {
+const parseIndividual = ( pageInfo: PageInfo, $: CheerioAPI ) => {
   const tables = $( "[id='rankTable'] tbody" )
   const data: IndividualStats = []
   const longCourse = extractTableData( $, $( tables[0] ) )
@@ -167,7 +167,7 @@ const parseIndividual = ( $: CheerioAPI ) => {
   return data
 }
 
-const parseRanking = ( $: CheerioAPI ) => {
+const parseRanking = ( pageInfo: PageInfo, $: CheerioAPI ) => {
   const tables = $( "[id='rankTable'] tbody" )
   const data: Ranking = {
     table: [],
@@ -192,6 +192,13 @@ const parseRanking = ( $: CheerioAPI ) => {
     }
     const index = table.findIndex( ( row ) => row.name === MATCH_NAME )
     if ( index >= 0 ) {
+      const url = new URL( pageInfo.url )
+      const startNumber = url.searchParams.get( "StartNumber" )
+      if ( !startNumber ) {
+        throw new Error( `Can't find start number in '${pageInfo.url}'` )
+      }
+      const baseIndex = Number( startNumber ) - 1
+      const fullIndex = baseIndex + index
       const rank = data.table[index].rank
       const bestTime = data.table[0].time
       const bestDate = data.table[0].date
@@ -199,7 +206,7 @@ const parseRanking = ( $: CheerioAPI ) => {
       const refDate = data.table[index].date
       const deltaTime = refTime - bestTime
       data.stats = {
-        position: index + 1,
+        position: fullIndex + 1,
         rank,
         best: bestTime,
         best_date: bestDate,
@@ -212,7 +219,7 @@ const parseRanking = ( $: CheerioAPI ) => {
   return data
 }
 
-const parseResults = ( $: CheerioAPI ) => {
+const parseResults = ( pageInfo: PageInfo, $: CheerioAPI ) => {
   const tables = $( "[id='rankTable'] tbody" )
   const data: Results = []
   const table = extractTableData( $, $( tables[1] ) )
@@ -291,21 +298,35 @@ const fetchPages = async () => {
     ranking: {},
     results: {}
   }
-  for ( const pageInfo of shuffle( pages ) ) {
+  // Add second page for national rankings
+  const extPages = []
+  for ( const page of pages ) {
+    extPages.push( page )
+    if ( page.type === "ranking" ) {
+      const url = new URL( page.url )
+      const params = url.searchParams
+      if ( params.get( "Level" ) === "N" ) {
+        params.set( "StartNumber", "101" )
+        url.search = new URLSearchParams( params ).toString()
+        extPages.push( Object.assign( {}, page, { label: `${page.label}_2`, url } ) )
+      }
+    }
+  }
+  for ( const pageInfo of shuffle( extPages ) ) {
     const content = await fetchPage( pageInfo )
     if ( content ) {
       const $ = cheerio.load( content )
       switch ( pageInfo.type ) {
         case "individual": {
-          data[pageInfo.type] = parseIndividual( $ )
+          data[pageInfo.type] = parseIndividual( pageInfo, $ )
           break
         }
         case "ranking" : {
-          data[pageInfo.type][pageInfo.label] = parseRanking( $ )
+          data[pageInfo.type][pageInfo.label] = parseRanking( pageInfo, $ )
           break
         }
         case "results" : {
-          data[pageInfo.type][pageInfo.label] = parseResults( $ )
+          data[pageInfo.type][pageInfo.label] = parseResults( pageInfo, $ )
           break
         }
         default : {
