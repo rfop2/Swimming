@@ -520,3 +520,21 @@ export const pages: PageData = [
     type: "results"
   },
 ]
+
+export const extendedPages = () => {
+  // Add second page for national rankings
+  const extPages = []
+  for ( const page of pages ) {
+    extPages.push( page )
+    if ( page.type === "ranking" ) {
+      const url = new URL( page.url )
+      const params = url.searchParams
+      if ( params.get( "Level" ) === "N" ) {
+        params.set( "StartNumber", "101" )
+        url.search = new URLSearchParams( params ).toString()
+        extPages.push( Object.assign( {}, page, { label: `${page.label}_2`, url } ) )
+      }
+    }
+  }
+  return extPages
+}

@@ -1,14 +1,15 @@
 <script setup lang="ts">
   import type { InternalApi } from "nitropack"
   import { ArrowUturnLeftIcon, LinkIcon } from "@heroicons/vue/16/solid"
-  import { AGE, GENDER, convertTime, pages, secondsToTime } from "lib"
+  import { AGE, GENDER, convertTime, extendedPages, secondsToTime } from "lib"
 
   definePageMeta( {
     layout: "secure",
     // middleware: [ "protected" ]
   } )
 
-  const pageLookup = new Map( pages.map( page => ( [ page.label, page.url.toString() ] ) ) )
+  const extPages = extendedPages()
+  const pageLookup = new Map( extPages.map( page => ( [ page.label, page.url.toString() ] ) ) )
 
   const strokeSort: Record<string,number> = {
     freestyle: 0,
