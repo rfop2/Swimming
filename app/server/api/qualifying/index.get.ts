@@ -7,9 +7,9 @@ import { AGE, DB_PATH, GENDER, type QualifyingRow } from "lib"
 const db = new Database( DB_PATH )
 db.pragma( "journal_mode = WAL" )
 
-const selectRecords: Statement<{ gender: string, age: string }, QualifyingRow> = db.prepare( "SELECT * FROM Qualifying WHERE gender = :gender AND age LIKE :age" )
+const selectRecords: Statement<{ gender: string, age: string }, QualifyingRow> = db.prepare( "SELECT * FROM Qualifying WHERE gender = :gender AND age = :age" )
 
 export default defineEventHandler( async ( _event ) => {
-  const data = selectRecords.all( { gender: GENDER, age: `%${AGE}%` } )
+  const data = selectRecords.all( { gender: GENDER, age: AGE } )
   return data
 } )
