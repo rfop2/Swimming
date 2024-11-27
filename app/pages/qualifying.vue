@@ -2,13 +2,11 @@
   import type { InternalApi } from "nitropack"
   import type { NuxtError } from "#app"
   import { XMarkIcon } from "@heroicons/vue/24/outline"
-  import type { IRowNode, NewValueParams, ValueFormatterParams, ValueGetterParams, ValueSetterParams } from "ag-grid-community"
+  import type { GetQuickFilterTextParams, IRowNode, NewValueParams, ValueFormatterParams, ValueGetterParams, ValueSetterParams } from "ag-grid-community"
   import "ag-grid-community/styles/ag-grid.css" // Mandatory CSS required by the Data Grid
   import "ag-grid-community/styles/ag-theme-quartz.css" // Optional Theme applied to the Data Grid
   import { AgGridVue } from "ag-grid-vue3" // Vue Data Grid Component
-  import { secondsToTime, strokeSort, timetoSeconds, type QualifyingRow } from "lib"
-
-  // import type { InternalApi } from "nitropack"
+  import { AGE, secondsToTime, strokeSort, timetoSeconds, type QualifyingRow } from "lib"
 
   definePageMeta( {
     layout: "secure",
@@ -16,7 +14,6 @@
   } )
 
   type ApiResponse = InternalApi["/api/qualifying"]["get"]
-  // type DataType = Array<Array<string | number>>
 
   interface ExtQualifyingRow extends QualifyingRow {
     distanceMetres: number
@@ -35,6 +32,11 @@
           }
         } )
         extData.sort( ( a, b ) => {
+          if ( a.age < b.age ) {
+            return -1
+          } else if ( a.age > b.age ) {
+            return 1
+          }
           if ( a.course < b.course ) {
             return 1
           } else if ( a.course > b.course ) {
@@ -60,20 +62,19 @@
     statusCode: number
   }
 
-  async function reset( e: Event ) {
+  async function reset( _e: Event ) {
     await refreshNuxtData()
+    dirty.value = false
   }
 
-  async function save( e: Event ) {
-    console.log( "SS", e )
+  async function save( _e: Event ) {
     try {
-      console.log( "SsS" )
       await $fetch( "/api/qualifying", {
         method: "PUT",
         body: JSON.stringify( qualifying.value ),
       } )
-      console.log( "Save" )
-      // await refreshNuxtData()
+      await refreshNuxtData()
+      dirty.value = false
     } catch ( error ) {
       console.log( "Error", error )
       errString.value = ( error as NuxtError<ApiError> ).data?.message ?? null
@@ -84,7 +85,6 @@
     type: "rightAligned",
     editable: false,
     filter: "agTextColumnFilter",
-    // floatingFilter: true,
     filterParams: {
       maxNumConditions: 1,
     }
@@ -125,7 +125,6 @@
     },
     {
       field: "age",
-      filter: "agNumberColumnFilter",
     },
     {
       editable: true,
@@ -141,6 +140,9 @@
         params.data.time = params.newValue
         params.data.timeString = secondsToTime( params.newValue )
         return true
+      },
+      getQuickFilterText: ( _params: GetQuickFilterTextParams ): string => {
+        return ""
       },
       onCellValueChanged: ( _event: NewValueParams ) => {
         dirty.value = true
@@ -160,13 +162,16 @@
         params.data.timeString = secondsToTime( params.data.time )
         return true
       },
+      getQuickFilterText: ( _params: GetQuickFilterTextParams ) => {
+        return ""
+      },
       onCellValueChanged: ( _event: NewValueParams ) => {
         dirty.value = true
       },
     },
   ] )
 
-  const filter = ref( String( new Date().getFullYear() ) )
+  const filter = ref( String( new Date().getFullYear() ) + " " + AGE )
 
   const autoSizeStrategy = {
     type: "fitGridWidth",

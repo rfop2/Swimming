@@ -1,20 +1,19 @@
-// import { db } from "~/server/utils/db"
-
-// import type { DatabaseUser } from "~/server/utils/db"
+import { db } from "~/server/utils/db"
 
 export default eventHandler( async ( event ) => {
-  const saveData = await readBody( event )
-  console.log( saveData )
-  /* const username = formData.get( "username" )
-  if (
-    typeof username !== "string" ||
-    username.length < 3 ||
-    username.length > 31 ||
-    !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test( username )
-  ) {
+  try {
+    const saveData = await readBody( event )
+    const sql = "UPDATE Qualifying SET time = :time, timeString = :timeString WHERE year = :year AND course = :course AND stroke = :stroke AND distance = :distance AND area = :area AND gender = :gender AND age = :age"
+    const updateRow = db.prepare( sql )
+    for ( const row of saveData ) {
+    console.log( row )
+      updateRow.run( row )
+    }
+  } catch ( error ) {
+    console.error( error )
     throw createError( {
-      message: "Invalid username",
-      statusCode: 400
+      message: "Unable to update qualifying times",
+      statusCode: 500
     } )
-  } */
+  }
 } )
