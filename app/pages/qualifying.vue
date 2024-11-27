@@ -1,40 +1,153 @@
 <script setup lang="ts">
-  import { Listbox, ListboxButton, ListboxLabel, ListboxOption, ListboxOptions } from "@headlessui/vue"
-  import { CheckIcon, ChevronUpDownIcon } from "@heroicons/vue/24/outline"
-  import { ActiveTable } from "active-table"
+  import type { NuxtError } from "#app"
+  import { XMarkIcon } from "@heroicons/vue/24/outline"
+  import type { NewValueParams, ValueFormatterParams, ValueGetterParams, ValueSetterParams } from "ag-grid-community"
+  import "ag-grid-community/styles/ag-grid.css" // Mandatory CSS required by the Data Grid
+  import "ag-grid-community/styles/ag-theme-quartz.css" // Optional Theme applied to the Data Grid
+  import { AgGridVue } from "ag-grid-vue3" // Vue Data Grid Component
+  import { secondsToTime, timetoSeconds } from "lib"
 
-  import type { InternalApi } from "nitropack"
+  // import type { InternalApi } from "nitropack"
 
   definePageMeta( {
     layout: "secure",
     // middleware: [ "protected" ]
   } )
 
-  type ApiResponse = InternalApi["/api/qualifying"]["get"]
-  type DataType = Array<Array<string | number>>
+  // type ApiResponse = InternalApi["/api/qualifying"]["get"]
+  // type DataType = Array<Array<string | number>>
 
   const { data: qualifying } = await useFetch(
-    "/api/qualifying",
-    {
-      transform( data: ApiResponse ) : DataType {
-        const tableData: DataType = [
-          Object.keys( data[0] )
-        ]
-        for ( const row of data ) {
-          tableData.push( Object.values( row ) )
-        }
-        console.log( "TD", tableData )
-        return tableData
-      }
-    }
+    "/api/qualifying"
   )
-  console.log( "Q", qualifying.value )
 
-  const years = [
-    "2024",
-    "2025"
-  ]
-  const year = "2024"
+  const errString = ref<string | null>( null )
+
+  // Add to types???
+  interface ApiError {
+    message: string
+    statusCode: number
+  }
+
+  async function reset( e: Event ) {
+    await refreshNuxtData()
+  }
+
+  async function save( e: Event ) {
+    console.log( "SS", e )
+    try {
+      console.log( "SsS" )
+      await $fetch( "/api/qualifying", {
+        method: "PUT",
+        body: JSON.stringify( qualifying.value ),
+      } )
+      console.log( "Save" )
+      // await refreshNuxtData()
+    } catch ( error ) {
+      console.log( "Error", error )
+      errString.value = ( error as NuxtError<ApiError> ).data?.message ?? null
+    }
+  }
+
+  const defaultColumnAttrs = {
+    type: "rightAligned",
+    editable: false,
+    filter: "agTextColumnFilter",
+    // floatingFilter: true,
+    filterParams: {
+      maxNumConditions: 1,
+    }
+  }
+
+  const dirty = ref( false )
+
+  const columns = ref( [
+    {
+      field: "year",
+    },
+    {
+      field: "area",
+      valueFormatter: ( { value }: ValueFormatterParams ) => value === "sw" ? "South West" : "Gloucestershire",
+    },
+    {
+      field: "distance",
+      comparator: ( valueA: string, valueB: string ) => {
+        if ( valueA == valueB ) return 0
+        return ( Number( valueA.slice( 0, -1 ) ) > Number( valueB.slice( 0, -1 ) ) ) ? 1 : -1
+      }
+    },
+    {
+      field: "stroke",
+      // valueFormatter: ( { value }: ValueFormatterParams ) => value ? value.charAt( 0 ).toUpperCase() + value.slice( 1 ) : "",
+      valueFormatter: ( { value }: ValueFormatterParams ) => value ? value.split( "_" ).map( ( word: string ) => word.charAt( 0 ).toUpperCase() + word.slice( 1 ) ).join( " " ) : ""
+
+    },
+    {
+      field: "course",
+      valueFormatter: ( { value }: ValueFormatterParams ) => value === "lc" ? "Long" : "Short",
+      filterValueGetter: ( params: ValueGetterParams ) => {
+        return params.data.course === "lc" ? "Long" : "Short"
+      },
+    },
+    {
+      field: "gender",
+      valueFormatter: ( { value }: ValueFormatterParams ) => value ? value.charAt( 0 ).toUpperCase() + value.slice( 1 ) : "",
+    },
+    {
+      field: "age",
+      filter: "agNumberColumnFilter",
+    },
+    {
+      editable: true,
+      headerName: "Time",
+      cellEditor: "agNumberCellEditor",
+      cellEditorParams: { min: 30, max: 1800 },
+      type: [ "numericColumn" ],
+      filter: false,
+      valueGetter: ( params: ValueGetterParams ) => {
+        return params.data.time
+      },
+      valueSetter: ( params: ValueSetterParams ): boolean => {
+        params.data.time = params.newValue
+        params.data.timeString = secondsToTime( params.newValue )
+        return true
+      },
+      onCellValueChanged: ( _event: NewValueParams ) => {
+        dirty.value = true
+      },
+    },
+    {
+      editable: true,
+      headerName: "Time (m:ss.SS)",
+      cellEditor: "agTextCellEditor",
+      cellEditorParams: { maxLength: 8 },
+      filter: false,
+      valueGetter: ( params: ValueGetterParams ) => {
+        return params.data.timeString
+      },
+      valueSetter: ( params: ValueSetterParams ): boolean => {
+        params.data.time = timetoSeconds( params.newValue )
+        params.data.timeString = secondsToTime( params.data.time )
+        return true
+      },
+      onCellValueChanged: ( _event: NewValueParams ) => {
+        dirty.value = true
+      },
+    },
+  ] )
+
+  const filter = ref( String( new Date().getFullYear() ) )
+
+  const autoSizeStrategy = {
+    type: "fitGridWidth",
+    defaultMinWidth: 100,
+    columnLimits: [
+      {
+        colId: "country",
+        minWidth: 900
+      }
+    ]
+  }
 
 </script>
 
@@ -49,64 +162,71 @@
           County and regional qualifying times for each event
         </p>
       </div>
-      <div class="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">
-        <div class="min-w-48">
-          <Listbox
-            v-model="year"
-            as="div"
+      <div class="sm:flex-auto">
+        <h5 class="text-sm font-medium leading-6 text-gray-900">
+          Filter
+        </h5>
+        <div class="mt-2">
+          <div class="relative">
+            <input
+              id="filter"
+              v-model="filter"
+              type="text"
+              required
+              class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+            >
+            <button
+              type="button"
+              class="absolute top-1/2 right-2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
+              onclick="this.previousElementSibling.value = ''"
+            >
+              <XMarkIcon
+                class="block h-6 w-6"
+                @click="filter=''"
+              />
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="mt-4 sm:ml-8 sm:mt-0 sm:flex-none">
+        <div class="min-w-24 pt-8">
+          <button
+            type="button"
+            class="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
+            :disabled="!dirty"
+            @click="reset"
           >
-            <ListboxLabel class="block text-sm font-medium leading-6 text-gray-900">
-              Year
-            </ListboxLabel>
-            <div class="relative mt-2">
-              <ListboxButton class="relative w-full cursor-default rounded-md bg-white py-1.5 pl-3 pr-10 text-left text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6">
-                <span class="block truncate">Year</span>
-                <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
-                  <ChevronUpDownIcon
-                    class="h-5 w-5 text-gray-400"
-                    aria-hidden="true"
-                  />
-                </span>
-              </ListboxButton>
-              <transition
-                leave-active-class="transition ease-in duration-100"
-                leave-from-class="opacity-100"
-                leave-to-class="opacity-0"
-              >
-                <ListboxOptions class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
-                  <ListboxOption
-                    v-for="option in years"
-                    :key="option"
-                    v-slot="{ active, selected }"
-                    as="template"
-                    :value="option"
-                  >
-                    <li :class="[active ? 'bg-indigo-600 text-white' : 'text-gray-900', 'relative cursor-default select-none py-2 pl-3 pr-9']">
-                      <span :class="[selected ? 'font-semibold' : 'font-normal', 'block truncate']">{{ option }}</span>
-
-                      <span
-                        v-if="selected"
-                        :class="[active ? 'text-white' : 'text-indigo-600', 'absolute inset-y-0 right-0 flex items-center pr-4']"
-                      >
-                        <CheckIcon
-                          class="h-5 w-5"
-                          aria-hidden="true"
-                        />
-                      </span>
-                    </li>
-                  </ListboxOption>
-                </ListboxOptions>
-              </transition>
-            </div>
-          </Listbox>
+            Reset
+          </button>
+        </div>
+      </div>
+      <div class="mt-4 sm:ml-4 sm:mt-0 sm:flex-none">
+        <div class="min-w-24 pt-8">
+          <button
+            type="submit"
+            class="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
+            :disabled="!dirty"
+            @click="save"
+          >
+            Save
+          </button>
         </div>
       </div>
     </div>
     <div class="mt-4 flow-root">
       <div class="overflow-x-auto">
         <ClientOnly>
-          <active-table
-            :data="qualifying"
+          <ag-grid-vue
+            :auto-size-strategy="autoSizeStrategy"
+            :default-col-def="defaultColumnAttrs"
+            :row-data="qualifying"
+            :column-defs="columns"
+            :quick-filter-text="filter"
+            dom-layout="autoHeight"
+            class="ag-theme-quartz"
+            on-cell-value-changed="( event ) => {
+              console.log( event )
+            }"
           />
         </ClientOnly>
       </div>
