@@ -1,11 +1,12 @@
 <script setup lang="ts">
+  import type { InternalApi } from "nitropack"
   import type { NuxtError } from "#app"
   import { XMarkIcon } from "@heroicons/vue/24/outline"
-  import type { NewValueParams, ValueFormatterParams, ValueGetterParams, ValueSetterParams } from "ag-grid-community"
+  import type { IRowNode, NewValueParams, ValueFormatterParams, ValueGetterParams, ValueSetterParams } from "ag-grid-community"
   import "ag-grid-community/styles/ag-grid.css" // Mandatory CSS required by the Data Grid
   import "ag-grid-community/styles/ag-theme-quartz.css" // Optional Theme applied to the Data Grid
   import { AgGridVue } from "ag-grid-vue3" // Vue Data Grid Component
-  import { secondsToTime, timetoSeconds } from "lib"
+  import { secondsToTime, strokeSort, timetoSeconds, type QualifyingRow } from "lib"
 
   // import type { InternalApi } from "nitropack"
 
@@ -14,11 +15,41 @@
     // middleware: [ "protected" ]
   } )
 
-  // type ApiResponse = InternalApi["/api/qualifying"]["get"]
+  type ApiResponse = InternalApi["/api/qualifying"]["get"]
   // type DataType = Array<Array<string | number>>
 
+  interface ExtQualifyingRow extends QualifyingRow {
+    distanceMetres: number
+  }
+
   const { data: qualifying } = await useFetch(
-    "/api/qualifying"
+    "/api/qualifying",
+    {
+      transform( data: ApiResponse ): Array<ExtQualifyingRow> {
+        const extData = data.map( row => {
+          return {
+            ...row,
+            ...{
+              distanceMetres: Number( row.distance.replace( /m$/, "" ) )
+            }
+          }
+        } )
+        extData.sort( ( a, b ) => {
+          if ( a.course < b.course ) {
+            return 1
+          } else if ( a.course > b.course ) {
+            return -1
+          }
+          if ( strokeSort[a.stroke] < strokeSort[b.stroke] ) {
+            return -1
+          } else if ( strokeSort[a.stroke] > strokeSort[b.stroke] ) {
+            return 1
+          }
+          return a.distanceMetres - b.distanceMetres
+        } )
+        return extData
+      },
+    }
   )
 
   const errString = ref<string | null>( null )
@@ -71,9 +102,8 @@
     },
     {
       field: "distance",
-      comparator: ( valueA: string, valueB: string ) => {
-        if ( valueA == valueB ) return 0
-        return ( Number( valueA.slice( 0, -1 ) ) > Number( valueB.slice( 0, -1 ) ) ) ? 1 : -1
+      comparator: ( valueA: string, valueB: string, rowA: IRowNode, rowB: IRowNode ) => {
+        return rowA.data.distanceMetres - rowB.data.distanceMetres
       }
     },
     {
