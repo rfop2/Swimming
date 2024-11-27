@@ -66,6 +66,14 @@ export const STROKE = {
   INDIVIDUAL_MEDLEY_400M: "17",
 }
 
+export const strokeSort: Record<string,number> = {
+  freestyle: 0,
+  breaststroke: 1,
+  butterfly: 2,
+  backstroke: 3,
+  individual_medley: 4
+}
+
 export const globalRankParams = {
   Sex: GENDER.substring( 0,1 ).toUpperCase(),
   AgeGroup: AGE,

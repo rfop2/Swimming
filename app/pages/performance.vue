@@ -1,7 +1,7 @@
 <script setup lang="ts">
   import type { InternalApi } from "nitropack"
   import { ArrowUturnLeftIcon, LinkIcon } from "@heroicons/vue/16/solid"
-  import { AGE, GENDER, convertTime, extendedPages, secondsToTime } from "lib"
+  import { AGE, GENDER, convertTime, extendedPages, secondsToTime, strokeSort } from "lib"
 
   definePageMeta( {
     layout: "secure",
@@ -10,14 +10,6 @@
 
   const extPages = extendedPages()
   const pageLookup = new Map( extPages.map( page => ( [ page.label, page.url.toString() ] ) ) )
-
-  const strokeSort: Record<string,number> = {
-    freestyle: 0,
-    breaststroke: 1,
-    butterfly: 2,
-    backstroke: 3,
-    individual_medley: 4
-  }
 
   const { data: qualifying } = await useFetch(
     "/api/qualifying",
@@ -117,7 +109,8 @@
         } )
         return recordArray
       },
-    } )
+    }
+  )
 
   const flattenedRecords = computed( () => ( records.value || [] ).map( record => ( {
     ...record,
