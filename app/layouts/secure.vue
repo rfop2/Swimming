@@ -35,6 +35,7 @@
   const navigation = [
     { name: "Performance", href: "performance", current: router.currentRoute.value.name === "performance" },
     { name: "Results", href: "results", current: router.currentRoute.value.name === "results" },
+    { name: "Qualifying", href: "qualifying", current: router.currentRoute.value.name === "qualifying" },
   ]
   const userNavigation = [
     // { name: "Your Profile", href: "#" },
