@@ -63,6 +63,21 @@ const saveIndividual = db.prepare( insertIndividualSql )
 const rankingsTableCreate = db.prepare( createRankingsSql )
 rankingsTableCreate.run()
 
+interface RankingRecord extends RankingRow {
+  course: string
+  stroke: string
+  distance: string
+  area: string
+}
+
+const getBestRankingTimes = db.prepare<{date:string},RankingRecord>(
+  "SELECT stroke, distance, course, area, date, MIN(time) as time FROM Rankings WHERE created = :date GROUP BY stroke, distance, course, area"
+)
+
+const getSwimmerRankingTimes = db.prepare<{date:string,name:string},RankingRecord>(
+  "SELECT stroke, distance, course, area, rank, date, time FROM Rankings WHERE created = :date AND name = :name"
+)
+
 const deleteRankings = db.prepare( deleteRankingsSql )
 
 const saveRankings = db.prepare( insertRankingsSql )
@@ -190,31 +205,6 @@ const parseRanking = ( pageInfo: PageInfo, $: CheerioAPI ) => {
       }
       data.table.push( rankingRow )
     }
-    const index = table.findIndex( ( row ) => row.name === MATCH_NAME )
-    if ( index >= 0 ) {
-      const url = new URL( pageInfo.url )
-      const startNumber = url.searchParams.get( "StartNumber" )
-      if ( !startNumber ) {
-        throw new Error( `Can't find start number in '${pageInfo.url}'` )
-      }
-      const baseIndex = Number( startNumber ) - 1
-      const fullIndex = baseIndex + index
-      const rank = data.table[index].rank
-      const bestTime = data.table[0].time
-      const bestDate = data.table[0].date
-      const refTime = data.table[index].time
-      const refDate = data.table[index].date
-      const deltaTime = refTime - bestTime
-      data.stats = {
-        position: fullIndex + 1,
-        rank,
-        best: bestTime,
-        best_date: bestDate,
-        time: refTime,
-        time_date: refDate,
-        difference: deltaTime,
-      }
-    }
   }
   return data
 }
@@ -338,7 +328,7 @@ const updateData = async () => {
     // Rankings + Performance
     for ( const [ label, ranking ] of Object.entries( pageData.ranking ) ) {
       // 100m_backstroke_female_sc_11_glos
-      const matches = label.match( /(?<distance>\d+m)_(?<stroke>\w+)_female_(?<course>.c)_11(?:_(?<area>\w+))?/ )
+      const matches = label.match( /(?<distance>\d+m)_(?<stroke>\w+)_female_(?<course>.c)_11(?:_(?<area>\w+))?(?:-(?<page>\d+))?/ )
       if ( !matches ) {
         throw new Error( `Can't match ranking on '${label}'` )
       }
@@ -349,10 +339,30 @@ const updateData = async () => {
       for ( const row of ranking.table ) {
         saveRankings.run( { created: today, swimmer: "", course, stroke, distance, area, ...row } )
       }
-      if ( ranking.stats ) {
-        deletePerformance.run( today, SWIMMER_ID, course, stroke, distance, area )
-        savePerformance.run( { created: today, swimmer: SWIMMER_ID, course, stroke, distance, area, ...ranking.stats } )
+    }
+
+    // Now generate the performance records
+    const swimmerTimes = getSwimmerRankingTimes.all( { date: today, name: MATCH_NAME} )
+    const bestTimes = getBestRankingTimes.all( { date: today } )
+    const bestTimesMap = new Map( bestTimes.map( time => [ `${time.course}_${time.stroke}_${time.distance}_${time.area}`, time ] ) )
+
+    for ( const swimmerTime of swimmerTimes ) {
+      const raceLabel = `${swimmerTime.course}_${swimmerTime.stroke}_${swimmerTime.distance}_${swimmerTime.area}`
+      const bestTime = bestTimesMap.get( raceLabel )
+      if ( !bestTime ) {
+        throw new Error( `Unable to find best time record for '${raceLabel}` )
       }
+      const record = {
+        position: 0,
+        rank: swimmerTime.rank,
+        best: bestTime.time,
+        best_date: bestTime.date,
+        time: swimmerTime.time,
+        time_date: swimmerTime.date,
+        difference: swimmerTime.time - bestTime.time,
+      }
+      deletePerformance.run( today, SWIMMER_ID, swimmerTime.course, swimmerTime.stroke, swimmerTime.distance, swimmerTime.area )
+      savePerformance.run( { created: today, swimmer: SWIMMER_ID, course: swimmerTime.course, stroke: swimmerTime.stroke, distance: swimmerTime.distance, area: swimmerTime.area, ...record } )
     }
 
     // Results

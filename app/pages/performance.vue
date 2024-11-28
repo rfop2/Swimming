@@ -11,8 +11,17 @@
   const extPages = extendedPages()
   const pageLookup = new Map( extPages.map( page => ( [ page.label, page.url.toString() ] ) ) )
 
+  const year = new Date().getFullYear()
+
+  type QualifyingApiResponse = InternalApi["/api/qualifying"]["get"]
   const { data: qualifying } = await useFetch(
+    // `/api/qualifying/${year}/${AGE}`,
     "/api/qualifying",
+    {
+      transform( data: QualifyingApiResponse ) {
+        return data.filter( row => ( row.year === year && row.age === AGE ) )
+      }
+    }
   )
 
   type ApiResponse = InternalApi["/api/relative"]["get"]
@@ -40,74 +49,79 @@
     "/api/relative",
     {
       transform( data: ApiResponse ) : Array<RecordType> {
-        const recordsMap = data.reduce( ( recordsMap, record ) => {
-          const { course, stroke, distance, area, position, rank, time, time_date, best, best_date, difference } = record
-          const key = `${distance}_${stroke}_${course}`
-          let mergedRecord = recordsMap.get( key )
-          if ( !mergedRecord ) {
-            mergedRecord = {
-              key,
-              course,
-              stroke,
-              distance,
-              distanceMetres: Number( distance.replace( /m$/, "" ) ),
-              time,
-              time_date,
-              qualifiedFor: 0,
-              county: {},
-              regional: {},
-              national: {},
+        try {
+          const recordsMap = data.reduce( ( recordsMap, record ) => {
+            const { course, stroke, distance, area, position, rank, time, time_date, best, best_date, difference } = record
+            const key = `${distance}_${stroke}_${course}`
+            let mergedRecord = recordsMap.get( key )
+            if ( !mergedRecord ) {
+              mergedRecord = {
+                key,
+                course,
+                stroke,
+                distance,
+                distanceMetres: Number( distance.replace( /m$/, "" ) ),
+                time,
+                time_date,
+                qualifiedFor: 0,
+                county: {},
+                regional: {},
+                national: {},
+              }
             }
-          }
-          const qualifyingEntry = ( qualifying?.value || [] ).find( entry => (
-            course && entry.stroke === stroke && entry.distance === distance && entry.area === area
-            // entry.course === course && entry.stroke === stroke && entry.distance === distance && entry.area === area
-          ) )
-          const qualifyRaw = qualifyingEntry ? convertTime( qualifyingEntry.course, course, stroke, distance, qualifyingEntry.time ) : undefined
-          const qualifyTime = qualifyRaw ? secondsToTime( qualifyRaw ) : undefined
-          const qualified = time <= ( qualifyRaw ?? 0 )
-          const label = `${distance}_${stroke}_${GENDER}_${course}_${AGE}${area ? `_${area}` : ""}`
-          switch ( area ) {
-            case "glos" : {
-              mergedRecord.qualifiedFor = mergedRecord.qualifiedFor < 1 && qualified ? 1 : mergedRecord.qualifiedFor
-              mergedRecord.county = { label, position, rank, best, best_date, difference, qualifyTime, qualified }
-              break
+            const qualifyingEntry = ( qualifying?.value || [] ).find( entry => (
+              entry.stroke === stroke && entry.distance === distance && entry.area === area
+            ) )
+            const qualifyRaw = qualifyingEntry ? convertTime( qualifyingEntry.course, course, stroke, distance, qualifyingEntry.time ) : undefined
+            const qualifyTime = qualifyRaw ? secondsToTime( qualifyRaw ) : undefined
+            const qualified = time <= ( qualifyRaw ?? 0 )
+            const page = Math.floor( rank / 100 ) + 1
+            const label = `${distance}_${stroke}_${GENDER}_${course}_${AGE}${area ? `_${area}` : ""}${page > 1 ? `-${page}` : ""}`
+            switch ( area ) {
+              case "glos" : {
+                mergedRecord.qualifiedFor = mergedRecord.qualifiedFor < 1 && qualified ? 1 : mergedRecord.qualifiedFor
+                mergedRecord.county = { label, position, rank, best, best_date, difference, qualifyTime, qualified }
+                break
+              }
+              case "sw" : {
+                mergedRecord.qualifiedFor = mergedRecord.qualifiedFor < 2 && qualified ? 2 : mergedRecord.qualifiedFor
+                mergedRecord.regional = { label, position, rank, best, best_date, difference, qualifyTime, qualified }
+                break
+              }
+              default : {
+                mergedRecord.qualifiedFor = mergedRecord.qualifiedFor < 3 && qualified ? 3 : mergedRecord.qualifiedFor
+                mergedRecord.national = { label, position, rank, best, best_date, difference, qualifyTime, qualified }
+                break
+              }
             }
-            case "sw" : {
-              mergedRecord.qualifiedFor = mergedRecord.qualifiedFor < 2 && qualified ? 2 : mergedRecord.qualifiedFor
-              mergedRecord.regional = { label, position, rank, best, best_date, difference, qualifyTime, qualified }
-              break
-            }
-            default : {
-              mergedRecord.qualifiedFor = mergedRecord.qualifiedFor < 3 && qualified ? 3 : mergedRecord.qualifiedFor
-              mergedRecord.national = { label, position, rank, best, best_date, difference, qualifyTime, qualified }
-              break
-            }
-          }
-          recordsMap.set( key, mergedRecord )
-          return recordsMap
-        }, new Map<string,RecordType>() )
+            recordsMap.set( key, mergedRecord )
+            return recordsMap
+          }, new Map<string,RecordType>() )
 
-        const recordArray = Array.from( recordsMap.values() )
-        recordArray.sort( ( a, b ) => {
-          if ( a.course < b.course ) {
-            return 1
-          } else if ( a.course > b.course ) {
-            return -1
-          }
-          if ( strokeSort[a.stroke] < strokeSort[b.stroke] ) {
-            return -1
-          } else if ( strokeSort[a.stroke] > strokeSort[b.stroke] ) {
-            return 1
-          }
-          if ( a.distanceMetres < b.distanceMetres ) {
-            return -1
-          } else if ( a.distanceMetres > b.distanceMetres ) {
-            return 1
-          }
-          return 0
-        } )
-        return recordArray
+          const recordArray = Array.from( recordsMap.values() )
+          recordArray.sort( ( a, b ) => {
+            if ( a.course < b.course ) {
+              return 1
+            } else if ( a.course > b.course ) {
+              return -1
+            }
+            if ( strokeSort[a.stroke] < strokeSort[b.stroke] ) {
+              return -1
+            } else if ( strokeSort[a.stroke] > strokeSort[b.stroke] ) {
+              return 1
+            }
+            if ( a.distanceMetres < b.distanceMetres ) {
+              return -1
+            } else if ( a.distanceMetres > b.distanceMetres ) {
+              return 1
+            }
+            return 0
+          } )
+          return recordArray
+        } catch ( error ) {
+          console.error( error )
+        }
+        return []
       },
     }
   )

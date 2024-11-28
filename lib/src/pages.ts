@@ -532,7 +532,7 @@ export const extendedPages = () => {
       if ( params.get( "Level" ) === "N" ) {
         params.set( "StartNumber", "101" )
         url.search = new URLSearchParams( params ).toString()
-        extPages.push( Object.assign( {}, page, { label: `${page.label}_2`, url } ) )
+        extPages.push( Object.assign( {}, page, { label: `${page.label}-2`, url } ) )
       }
     }
   }
