@@ -76,7 +76,7 @@
       await refreshNuxtData()
       dirty.value = false
     } catch ( error ) {
-      console.log( "Error", error )
+      console.error( "Error", error )
       errString.value = ( error as NuxtError<ApiError> ).data?.message ?? null
     }
   }
