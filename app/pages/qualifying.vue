@@ -27,6 +27,8 @@
           return {
             ...row,
             ...{
+              time: row.time || timetoSeconds( row.timeString ),
+              timeString: row.timeString.replace( /^0+:?/, "" ),
               distanceMetres: Number( row.distance.replace( /m$/, "" ) )
             }
           }
