@@ -78,7 +78,7 @@ export const createRankingsSql =
   fina INTEGER
 );`
 
-export const deleteRankingsSql = "DELETE FROM Rankings WHERE created = ? AND course = ? AND stroke = ? AND distance = ? AND area = ?;"
+export const deleteRankingsSql = "DELETE FROM Rankings WHERE created = ?;"
 
 export const insertRankingsSql =
 `INSERT INTO Rankings (

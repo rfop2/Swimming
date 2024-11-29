@@ -326,6 +326,7 @@ const updateData = async () => {
     }
 
     // Rankings + Performance
+    deleteRankings.run( today )
     for ( const [ label, ranking ] of Object.entries( pageData.ranking ) ) {
       // 100m_backstroke_female_sc_11_glos
       const matches = label.match( /(?<distance>\d+m)_(?<stroke>\w+)_female_(?<course>.c)_11(?:_(?<area>\w+))?(?:-(?<page>\d+))?/ )
@@ -335,7 +336,6 @@ const updateData = async () => {
       const { distance = "", stroke = "", course = "", area = "" } = { ...matches?.groups }
       // const area = groups.area ? ( groups.area === "glos" ? "county" : "regional" ) : "national"
 
-      deleteRankings.run( today, course, stroke, distance, area )
       for ( const row of ranking.table ) {
         saveRankings.run( { created: today, swimmer: "", course, stroke, distance, area, ...row } )
       }
