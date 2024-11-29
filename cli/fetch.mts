@@ -246,7 +246,7 @@ export const fetchPage = async ( pageInfo: PageInfo ) => {
     // Page has been cached
     const age = differenceInHours( Date.now(), stats.mtime )
     console.log( `Cached: ${age}` )
-    if ( age < 12 ) {
+    if ( age < 24 ) {
       // Page is new enough
       console.log( `Reading ${contentFile}` )
       const content = await readFile( contentFile )
