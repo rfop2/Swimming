@@ -176,12 +176,6 @@
   const autoSizeStrategy = {
     type: "fitGridWidth",
     defaultMinWidth: 100,
-    columnLimits: [
-      {
-        colId: "country",
-        minWidth: 900
-      }
-    ]
   }
 
 </script>
@@ -250,20 +244,18 @@
     </div>
     <div class="mt-4 flow-root">
       <div class="overflow-x-auto">
-        <ClientOnly>
-          <ag-grid-vue
-            :auto-size-strategy="autoSizeStrategy"
-            :default-col-def="defaultColumnAttrs"
-            :row-data="qualifying"
-            :column-defs="columns"
-            :quick-filter-text="filter"
-            dom-layout="autoHeight"
-            class="ag-theme-quartz"
-            on-cell-value-changed="( event ) => {
-              console.log( event )
-            }"
-          />
-        </ClientOnly>
+        <ag-grid-vue
+          :auto-size-strategy="autoSizeStrategy"
+          :default-col-def="defaultColumnAttrs"
+          :row-data="qualifying"
+          :column-defs="columns"
+          :quick-filter-text="filter"
+          dom-layout="autoHeight"
+          class="ag-theme-quartz"
+          @cell-value-changed="( event ) => {
+            console.log( 'Data changed', event )
+          }"
+        />
       </div>
     </div>
   </div>
