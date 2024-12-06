@@ -27,7 +27,7 @@ import {
   insertRankingsSql,
   insertResultsSql,
   shuffle,
-  timetoSeconds,
+  timeToSeconds,
   sleep,
   rng,
   SWIMMER_ID,
@@ -143,8 +143,8 @@ const parseIndividual = ( pageInfo: PageInfo, $: CheerioAPI ) => {
       course: "lc",
       stroke: stroke.replace( /\s/g, "_" ).toLowerCase(),
       distance: `${distance}m`,
-      time: timetoSeconds( row.lc_time ),
-      converted_time: timetoSeconds( row.converted_to_sc ),
+      time: timeToSeconds( row.lc_time ),
+      converted_time: timeToSeconds( row.converted_to_sc ),
       wa_pts: Number( row.lc_wa_pts ),
       date: format( parse( row.date, "dd/MM/yy", now ), "yyyy-MM-dd" ),
       meet: row.meet,
@@ -167,8 +167,8 @@ const parseIndividual = ( pageInfo: PageInfo, $: CheerioAPI ) => {
       course: "sc",
       stroke: stroke.replace( /\s/g, "_" ).toLowerCase(),
       distance: `${distance}m`,
-      time: timetoSeconds( row.sc_time ),
-      converted_time: timetoSeconds( row.converted_to_lc ),
+      time: timeToSeconds( row.sc_time ),
+      converted_time: timeToSeconds( row.converted_to_lc ),
       wa_pts: Number( row.sc_wa_pts ),
       date: format( parse( row.date, "dd/MM/yy", now ), "yyyy-MM-dd" ),
       meet: row.meet,
@@ -200,7 +200,7 @@ const parseRanking = ( pageInfo: PageInfo, $: CheerioAPI ) => {
         venue: row.venue,
         level: Number( row.level ),
         date: format( parse( row.date, "dd/MM/yy", now ), "yyyy-MM-dd" ),
-        time: timetoSeconds( row.time ),
+        time: timeToSeconds( row.time ),
         fina: Number( row.fina ),
       }
       data.table.push( rankingRow )
@@ -217,7 +217,7 @@ const parseResults = ( pageInfo: PageInfo, $: CheerioAPI ) => {
     // Do any conversions
     for ( const row of table ) {
       const resultRow: Result = {
-        time: timetoSeconds( row.time ),
+        time: timeToSeconds( row.time ),
         wa_pts: Number( row.wa_pts ),
         round: row.round,
         date: format( parse( row.date, "dd/MM/yy", now ), "yyyy-MM-dd" ),

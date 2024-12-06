@@ -6,7 +6,7 @@
   import "ag-grid-community/styles/ag-grid.css" // Mandatory CSS required by the Data Grid
   import "ag-grid-community/styles/ag-theme-quartz.css" // Optional Theme applied to the Data Grid
   import { AgGridVue } from "ag-grid-vue3" // Vue Data Grid Component
-  import { AGE, secondsToTime, strokeSort, timetoSeconds, type QualifyingRow } from "lib"
+  import { AGE, secondsToTime, strokeSort, timeToSeconds, type QualifyingRow } from "lib"
 
   definePageMeta( {
     layout: "secure",
@@ -27,7 +27,7 @@
           return {
             ...row,
             ...{
-              time: row.time || timetoSeconds( row.timeString ),
+              time: row.time || timeToSeconds( row.timeString ),
               timeString: row.timeString.replace( /^0+:?/, "" ),
               distanceMetres: Number( row.distance.replace( /m$/, "" ) )
             }
@@ -160,7 +160,7 @@
         return params.data.timeString
       },
       valueSetter: ( params: ValueSetterParams ): boolean => {
-        params.data.time = timetoSeconds( params.newValue )
+        params.data.time = timeToSeconds( params.newValue )
         params.data.timeString = secondsToTime( params.data.time )
         return true
       },

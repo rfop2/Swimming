@@ -56,7 +56,7 @@ export const extractTableData = ( $: CheerioAPI, table: Cheerio<AnyNode> ) => {
   return dataObject
 }
 
-export const timetoSeconds = ( time: string ): number => {
+export const timeToSeconds = ( time: string ): number => {
   // Split the input time string by colons
   const timeParts = time.split( ":" )
 
@@ -155,7 +155,7 @@ export const convertTime = ( fromPool: string, toPool: string, stroke: string, d
 
   let timeInSecs = Number( time )
   if ( isNaN( timeInSecs ) ) {
-    timeInSecs = timetoSeconds( String( time ) )
+    timeInSecs = timeToSeconds( String( time ) )
     if ( isNaN( timeInSecs ) ) {
       throw( new Error( `Invalid time '${time}'` ) )
     }
