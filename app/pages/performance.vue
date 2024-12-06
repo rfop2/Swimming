@@ -2,6 +2,7 @@
   import type { InternalApi } from "nitropack"
   import { ArrowUturnLeftIcon, LinkIcon } from "@heroicons/vue/16/solid"
   import { AGE, GENDER, convertTime, extendedPages, secondsToTime, strokeSort } from "lib"
+  import { addYears, getYear, subMonths } from "date-fns"
 
   definePageMeta( {
     layout: "secure",
@@ -11,7 +12,8 @@
   const extPages = extendedPages()
   const pageLookup = new Map( extPages.map( page => ( [ page.label, page.url.toString() ] ) ) )
 
-  const year = new Date().getFullYear()
+  // const year = new Date().getFullYear()
+  const year = getYear( addYears( subMonths( new Date(), 1 ), 1 ) )
 
   type QualifyingApiResponse = InternalApi["/api/qualifying"]["get"]
   const { data: qualifying } = await useFetch(
@@ -19,7 +21,7 @@
     "/api/qualifying",
     {
       transform( data: QualifyingApiResponse ) {
-        return data.filter( row => ( row.year === year && row.age === AGE ) )
+        return data.filter( row => ( row.year === year && row.age === String( Number( AGE ) + 1 ) ) )
       }
     }
   )

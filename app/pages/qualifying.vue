@@ -7,6 +7,7 @@
   import "ag-grid-community/styles/ag-theme-quartz.css" // Optional Theme applied to the Data Grid
   import { AgGridVue } from "ag-grid-vue3" // Vue Data Grid Component
   import { AGE, secondsToTime, strokeSort, timeToSeconds, type QualifyingRow } from "lib"
+  import { addYears, getYear, subMonths } from "date-fns"
 
   definePageMeta( {
     layout: "secure",
@@ -173,7 +174,7 @@
     },
   ] )
 
-  const quickFilter = ref( String( new Date().getFullYear() ) + " " + AGE )
+  const quickFilter = ref( String( getYear( addYears( subMonths( new Date(), 1 ), 1 ) ) ) + " " + String( Number( AGE ) + 1 ) )
 
   const autoSizeStrategy = {
     type: "fitGridWidth",
