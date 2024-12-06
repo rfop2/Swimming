@@ -1,15 +1,15 @@
-CREATE TABLE User (
+CREATE TABLE IF NOT EXISTS "User" (
   id TEXT NOT NULL PRIMARY KEY,
   username TEXT NOT NULL UNIQUE,
   password_hash TEXT NOT NULL
 );
-CREATE TABLE Session (
+CREATE TABLE IF NOT EXISTS "Session" (
   id TEXT NOT NULL PRIMARY KEY,
   expires_at INTEGER NOT NULL,
   user_id TEXT NOT NULL,
   FOREIGN KEY (user_id) REFERENCES User(id)
 );
-CREATE TABLE Individual (
+CREATE TABLE IF NOT EXISTS "Individual" (
   created DATE NOT NULL,
   swimmer VARCHAR(8) NOT NULL,
   course VARCHAR(8),
@@ -26,7 +26,7 @@ CREATE TABLE Individual (
   UNIQUE(created, course, stroke, distance),
   FOREIGN KEY (swimmer) REFERENCES Swimmers(id)
 );
-CREATE TABLE Rankings (
+CREATE TABLE IF NOT EXISTS "Rankings" (
   created DATE NOT NULL,
   course VARCHAR(8) NOT NULL,
   stroke VARCHAR(32),
@@ -44,7 +44,7 @@ CREATE TABLE Rankings (
   time DECIMAL(8,2),
   fina INTEGER
 );
-CREATE TABLE Performance (
+CREATE TABLE IF NOT EXISTS "Performance" (
   created DATE NOT NULL DEFAULT CURRENT_TIMESTAMP,
   swimmer VARCHAR(8) NOT NULL,
   course VARCHAR(8),
@@ -61,7 +61,7 @@ CREATE TABLE Performance (
   UNIQUE( created, course, stroke, distance, area ),
   FOREIGN KEY (swimmer) REFERENCES Swimmers(id)
 );
-CREATE TABLE Results (
+CREATE TABLE IF NOT EXISTS "Results" (
   created DATE NOT NULL DEFAULT CURRENT_TIMESTAMP,
   swimmer VARCHAR(8) NOT NULL,
   course VARCHAR(8),
@@ -78,7 +78,7 @@ CREATE TABLE Results (
   UNIQUE( course, stroke, distance, date, round ),
   FOREIGN KEY (swimmer) REFERENCES Swimmers(id)
 );
-CREATE TABLE Swimmers (
+CREATE TABLE IF NOT EXISTS "Swimmers" (
   id VARCHAR(8) NOT NULL PRIMARY KEY,
   name VARCHAR(32),
   birthday DATE,
