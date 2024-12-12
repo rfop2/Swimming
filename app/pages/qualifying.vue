@@ -102,6 +102,9 @@
     {
       field: "area",
       valueFormatter: ( { value }: ValueFormatterParams ) => value === "sw" ? "South West" : "Gloucestershire",
+      filterValueGetter: ( params: ValueGetterParams ) => {
+        return params.data.area === "sw" ? "South West" : "Gloucestershire"
+      },
     },
     {
       field: "distance",
