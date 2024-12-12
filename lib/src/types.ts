@@ -1,3 +1,10 @@
+export interface Swimmer {
+  id: string
+  name: string
+  birthdate: string
+  gender: string
+}
+
 export interface Individual {
   course: string
   stroke: string
