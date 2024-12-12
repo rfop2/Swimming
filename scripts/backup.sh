@@ -20,7 +20,7 @@ lastBackupFile=`(ls -t ${backupFileRoot}* 2>/dev/null) | head -1`
 tempBackupFile="temp.sql"
 
 sqlite3 ${DATABASE_DIR}/records.db ".dump" \
-    | sed 's/CREATE TABLE IF NOT EXISTS \("[^"]*"\) (/DROP TABLE IF EXISTS \1;\n&/' \
+    | sed -E 's/CREATE TABLE( IF NOT EXISTS)? "?([^"]+)"? \(/DROP TABLE IF EXISTS \2;\n&/' \
     > ${backupFile}
 
 if [[ $lastBackupFile ]]
