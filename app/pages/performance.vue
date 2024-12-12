@@ -179,14 +179,14 @@
           Performance in events relative to the event leader if appearing in top 100 rankings.
         </p>
       </div>
-      <div class="min-w-32">
+      <div class="mt-4 sm:ml-3 sm:mt-0 sm:flex-none max-w-32">
         <Listbox
           v-model="qualifyingYear"
           as="div"
         >
           <div class="relative">
             <ListboxButton class="relative w-full cursor-default rounded-md bg-white py-1.5 pl-3 pr-10 text-left text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6">
-              <span class="block truncate">{{ qualifyingYear }}</span>
+              <span class="block truncate">{{ qualifyingYear + " / " + qualifyingAge }}</span>
               <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
                 <ChevronUpDownIcon
                   class="h-5 w-5 text-gray-400"
@@ -208,7 +208,7 @@
                   :value="year"
                 >
                   <li :class="[active ? 'bg-indigo-600 text-white' : 'text-gray-900', 'relative cursor-default select-none py-2 pl-3 pr-9']">
-                    <span :class="[selected ? 'font-semibold' : 'font-normal', 'block truncate']">{{ year }}</span>
+                    <span :class="[selected ? 'font-semibold' : 'font-normal', 'block truncate']">{{ year + " / " + String( Number( AGE ) + ( year - getYear( new Date() ) ) ) }}</span>
 
                     <span
                       v-if="selected"
