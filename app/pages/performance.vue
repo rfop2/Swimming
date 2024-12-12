@@ -2,7 +2,7 @@
   import type { InternalApi } from "nitropack"
   import { ArrowUturnLeftIcon, LinkIcon } from "@heroicons/vue/16/solid"
   import { AGE, GENDER, convertTime, extendedPages, secondsToTime, strokeSort } from "lib"
-  import { addYears, getYear, subMonths } from "date-fns"
+  import { addYears, differenceInCalendarMonths, getYear, subMonths } from "date-fns"
 
   definePageMeta( {
     layout: "secure",
@@ -41,6 +41,7 @@
     distanceMetres: number
     time: number
     time_date: string
+    age: number
     qualifiedFor: number
     county: Partial<AreaDetail>
     regional: Partial<AreaDetail>
@@ -54,6 +55,7 @@
         try {
           const recordsMap = data.reduce( ( recordsMap, record ) => {
             const { course, stroke, distance, area, position, rank, time, time_date, best, best_date, difference } = record
+            const age = differenceInCalendarMonths( new Date(), new Date( time_date ) )
             const key = `${distance}_${stroke}_${course}`
             let mergedRecord = recordsMap.get( key )
             if ( !mergedRecord ) {
@@ -65,6 +67,7 @@
                 distanceMetres: Number( distance.replace( /m$/, "" ) ),
                 time,
                 time_date,
+                age,
                 qualifiedFor: 0,
                 county: {},
                 regional: {},
@@ -355,7 +358,7 @@
                 <td class="whitespace-nowrap px-2 py-2 text-right text-sm text-gray-900">
                   <span :class="`qualifiedArea${row.qualifiedFor}`">{{ row.time ? secondsToTime( row.time ) : '' }}</span>
                 </td>
-                <td class="whitespace-nowrap px-2 py-2 text-right text-sm text-gray-900">
+                <td :class="`whitespace-nowrap px-2 py-2 text-right text-sm text-gray-900 opacity-30 age-${row.age}`">
                   {{ row.time_date }}
                 </td>
                 <td class="whitespace-nowrap px-2 py-2 text-right text-sm text-gray-900">
@@ -451,5 +454,29 @@
 
 .qualifiedArea3 {
   color: #ef4444;
+}
+
+.age-0, .age-1, .age-2 {
+  opacity: 1.0
+}
+
+.age-3, .age-4 {
+  opacity: 0.85
+}
+
+.age-5, .age-6 {
+  opacity: 0.7
+}
+
+.age-7, .age-8 {
+  opacity: 0.6
+}
+
+.age-9, .age-10, .age-11 {
+  opacity: 0.5
+}
+
+.age-12 {
+  opacity: 0.4
 }
 </style>
