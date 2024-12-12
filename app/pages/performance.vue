@@ -1,6 +1,7 @@
 <script setup lang="ts">
   import type { InternalApi } from "nitropack"
-  import { ArrowUturnLeftIcon, LinkIcon } from "@heroicons/vue/16/solid"
+  import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from "@headlessui/vue"
+  import { ArrowUturnLeftIcon, LinkIcon, CheckIcon, ChevronUpDownIcon } from "@heroicons/vue/24/outline"
   import { AGE, GENDER, convertTime, extendedPages, secondsToTime, strokeSort } from "lib"
   import { addYears, differenceInCalendarMonths, getYear, subMonths } from "date-fns"
 
@@ -12,19 +13,27 @@
   const extPages = extendedPages()
   const pageLookup = new Map( extPages.map( page => ( [ page.label, page.url.toString() ] ) ) )
 
-  // const year = new Date().getFullYear()
-  const year = getYear( addYears( subMonths( new Date(), 1 ), 1 ) )
+  // type QualifyingApiResponse = InternalApi["/api/qualifying"]["get"]
 
-  type QualifyingApiResponse = InternalApi["/api/qualifying"]["get"]
-  const { data: qualifying } = await useFetch(
+  const qualifyingYear = ref( getYear( addYears( subMonths( new Date(), 1 ), 1 ) ) )
+  const qualifyingAge = computed( () => String( Number( AGE ) + ( qualifyingYear.value - getYear( new Date() ) ) ) )
+
+  const { data: qualifyingInfo } = await useFetch(
     // `/api/qualifying/${year}/${AGE}`,
-    "/api/qualifying",
-    {
-      transform( data: QualifyingApiResponse ) {
-        return data.filter( row => ( row.year === year && row.age === String( Number( AGE ) + 1 ) ) )
-      }
-    }
+    "/api/qualifying"
   )
+
+  const qualifyingYears = computed( () => Array.from( ( qualifyingInfo.value ?? [] ).reduce(
+    ( years, row ) => {
+      if ( !years.has( row.year ) ) {
+        years.add( row.year )
+      }
+      return years
+    },
+    new Set<number>()
+  ) )
+  )
+  const qualifyingYearInfo = computed( () => ( qualifyingInfo.value ?? [] ).filter( row => ( row.year === qualifyingYear.value && row.age === qualifyingAge.value ) ) )
 
   type ApiResponse = InternalApi["/api/relative"]["get"]
   interface AreaDetail extends Partial<ApiResponse[number]> {
@@ -48,88 +57,87 @@
     national: Partial<AreaDetail>
   }
 
-  const { data: records } = await useFetch(
+  const { data: performanceRecords } = await useFetch(
     "/api/relative",
-    {
-      transform( data: ApiResponse ) : Array<RecordType> {
-        try {
-          const recordsMap = data.reduce( ( recordsMap, record ) => {
-            const { course, stroke, distance, area, position, rank, time, time_date, best, best_date, difference } = record
-            const age = differenceInCalendarMonths( new Date(), new Date( time_date ) )
-            const key = `${distance}_${stroke}_${course}`
-            let mergedRecord = recordsMap.get( key )
-            if ( !mergedRecord ) {
-              mergedRecord = {
-                key,
-                course,
-                stroke,
-                distance,
-                distanceMetres: Number( distance.replace( /m$/, "" ) ),
-                time,
-                time_date,
-                age,
-                qualifiedFor: 0,
-                county: {},
-                regional: {},
-                national: {},
-              }
-            }
-            const qualifyingEntry = ( qualifying?.value || [] ).find( entry => (
-              entry.stroke === stroke && entry.distance === distance && entry.area === area
-            ) )
-            const qualifyRaw = qualifyingEntry ? convertTime( qualifyingEntry.course, course, stroke, distance, qualifyingEntry.time ) : undefined
-            const qualifyTime = qualifyRaw ? secondsToTime( qualifyRaw ) : undefined
-            const qualified = time <= ( qualifyRaw ?? 0 )
-            const page = Math.floor( rank / 100 ) + 1
-            const label = `${distance}_${stroke}_${GENDER}_${course}_${AGE}${area ? `_${area}` : ""}${page > 1 ? `-${page}` : ""}`
-            switch ( area ) {
-              case "glos" : {
-                mergedRecord.qualifiedFor = mergedRecord.qualifiedFor < 1 && qualified ? 1 : mergedRecord.qualifiedFor
-                mergedRecord.county = { label, position, rank, best, best_date, difference, qualifyTime, qualified }
-                break
-              }
-              case "sw" : {
-                mergedRecord.qualifiedFor = mergedRecord.qualifiedFor < 2 && qualified ? 2 : mergedRecord.qualifiedFor
-                mergedRecord.regional = { label, position, rank, best, best_date, difference, qualifyTime, qualified }
-                break
-              }
-              default : {
-                mergedRecord.qualifiedFor = mergedRecord.qualifiedFor < 3 && qualified ? 3 : mergedRecord.qualifiedFor
-                mergedRecord.national = { label, position, rank, best, best_date, difference, qualifyTime, qualified }
-                break
-              }
-            }
-            recordsMap.set( key, mergedRecord )
-            return recordsMap
-          }, new Map<string,RecordType>() )
-
-          const recordArray = Array.from( recordsMap.values() )
-          recordArray.sort( ( a, b ) => {
-            if ( a.course < b.course ) {
-              return 1
-            } else if ( a.course > b.course ) {
-              return -1
-            }
-            if ( strokeSort[a.stroke] < strokeSort[b.stroke] ) {
-              return -1
-            } else if ( strokeSort[a.stroke] > strokeSort[b.stroke] ) {
-              return 1
-            }
-            if ( a.distanceMetres < b.distanceMetres ) {
-              return -1
-            } else if ( a.distanceMetres > b.distanceMetres ) {
-              return 1
-            }
-            return 0
-          } )
-          return recordArray
-        } catch ( error ) {
-          console.error( error )
-        }
-        return []
-      },
-    }
   )
+
+  const records = computed( () => {
+    try {
+      const recordsMap = ( performanceRecords.value ?? [] ).reduce( ( recordsMap, record ) => {
+        const { course, stroke, distance, area, position, rank, time, time_date, best, best_date, difference } = record
+        const age = differenceInCalendarMonths( new Date(), new Date( time_date ) )
+        const key = `${distance}_${stroke}_${course}`
+        let mergedRecord = recordsMap.get( key )
+        if ( !mergedRecord ) {
+          mergedRecord = {
+            key,
+            course,
+            stroke,
+            distance,
+            distanceMetres: Number( distance.replace( /m$/, "" ) ),
+            time,
+            time_date,
+            age,
+            qualifiedFor: 0,
+            county: {},
+            regional: {},
+            national: {},
+          }
+        }
+        const qualifyingEntry = ( qualifyingYearInfo?.value || [] ).find( entry => (
+          entry.stroke === stroke && entry.distance === distance && entry.area === area
+        ) )
+        const qualifyRaw = qualifyingEntry ? convertTime( qualifyingEntry.course, course, stroke, distance, qualifyingEntry.time ) : undefined
+        const qualifyTime = qualifyRaw ? secondsToTime( qualifyRaw ) : undefined
+        const qualified = time <= ( qualifyRaw ?? 0 )
+        const page = Math.floor( rank / 100 ) + 1
+        const label = `${distance}_${stroke}_${GENDER}_${course}_${AGE}${area ? `_${area}` : ""}${page > 1 ? `-${page}` : ""}`
+        switch ( area ) {
+          case "glos" : {
+            mergedRecord.qualifiedFor = mergedRecord.qualifiedFor < 1 && qualified ? 1 : mergedRecord.qualifiedFor
+            mergedRecord.county = { label, position, rank, best, best_date, difference, qualifyTime, qualified }
+            break
+          }
+          case "sw" : {
+            mergedRecord.qualifiedFor = mergedRecord.qualifiedFor < 2 && qualified ? 2 : mergedRecord.qualifiedFor
+            mergedRecord.regional = { label, position, rank, best, best_date, difference, qualifyTime, qualified }
+            break
+          }
+          default : {
+            mergedRecord.qualifiedFor = mergedRecord.qualifiedFor < 3 && qualified ? 3 : mergedRecord.qualifiedFor
+            mergedRecord.national = { label, position, rank, best, best_date, difference, qualifyTime, qualified }
+            break
+          }
+        }
+        recordsMap.set( key, mergedRecord )
+        return recordsMap
+      }, new Map<string,RecordType>() )
+
+      const recordArray = Array.from( recordsMap.values() )
+      recordArray.sort( ( a, b ) => {
+        if ( a.course < b.course ) {
+          return 1
+        } else if ( a.course > b.course ) {
+          return -1
+        }
+        if ( strokeSort[a.stroke] < strokeSort[b.stroke] ) {
+          return -1
+        } else if ( strokeSort[a.stroke] > strokeSort[b.stroke] ) {
+          return 1
+        }
+        if ( a.distanceMetres < b.distanceMetres ) {
+          return -1
+        } else if ( a.distanceMetres > b.distanceMetres ) {
+          return 1
+        }
+        return 0
+      } )
+      return recordArray
+    } catch ( error ) {
+      console.error( error )
+    }
+    return []
+  } )
 
   const flattenedRecords = computed( () => ( records.value || [] ).map( record => ( {
     ...record,
@@ -171,13 +179,60 @@
           Performance in events relative to the event leader if appearing in top 100 rankings.
         </p>
       </div>
-      <div class="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">
+      <div class="min-w-32">
+        <Listbox
+          v-model="qualifyingYear"
+          as="div"
+        >
+          <div class="relative">
+            <ListboxButton class="relative w-full cursor-default rounded-md bg-white py-1.5 pl-3 pr-10 text-left text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6">
+              <span class="block truncate">{{ qualifyingYear }}</span>
+              <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
+                <ChevronUpDownIcon
+                  class="h-5 w-5 text-gray-400"
+                  aria-hidden="true"
+                />
+              </span>
+            </ListboxButton>
+            <transition
+              leave-active-class="transition ease-in duration-100"
+              leave-from-class="opacity-100"
+              leave-to-class="opacity-0"
+            >
+              <ListboxOptions class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+                <ListboxOption
+                  v-for="year in qualifyingYears"
+                  :key="year"
+                  v-slot="{ active, selected }"
+                  as="template"
+                  :value="year"
+                >
+                  <li :class="[active ? 'bg-indigo-600 text-white' : 'text-gray-900', 'relative cursor-default select-none py-2 pl-3 pr-9']">
+                    <span :class="[selected ? 'font-semibold' : 'font-normal', 'block truncate']">{{ year }}</span>
+
+                    <span
+                      v-if="selected"
+                      :class="[active ? 'text-white' : 'text-indigo-600', 'absolute inset-y-0 right-0 flex items-center pr-4']"
+                    >
+                      <CheckIcon
+                        class="h-5 w-5"
+                        aria-hidden="true"
+                      />
+                    </span>
+                  </li>
+                </ListboxOption>
+              </ListboxOptions>
+            </transition>
+          </div>
+        </Listbox>
+      </div>
+      <div class="mt-4 sm:ml-3 sm:mt-0 sm:flex-none">
         <button
           type="button"
-          class="inline-flex items-center gap-x-1.5 rounded bg-white px-2 py-1 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+          class="inline-flex items-center gap-x-1.5 rounded-md bg-white px-2 py-1 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
           @click="resetSort"
         >
-          Reset sort
+          <span class="py-1">Reset sort</span>
           <ArrowUturnLeftIcon
             class="-mr-0.5 h-5 w-5"
             aria-hidden="true"
