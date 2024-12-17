@@ -2,7 +2,7 @@
   import type { InternalApi } from "nitropack"
   import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from "@headlessui/vue"
   import { ArrowUturnLeftIcon, LinkIcon, CheckIcon, ChevronUpDownIcon } from "@heroicons/vue/24/outline"
-  import { AGE, GENDER, convertTime, extendedPages, secondsToTime, strokeSort } from "lib"
+  import { type Swimmer, convertTime, extendedPages, secondsToTime, strokeSort } from "lib"
   import { addYears, differenceInCalendarMonths, getYear, subMonths } from "date-fns"
 
   definePageMeta( {
@@ -10,13 +10,14 @@
     // middleware: [ "protected" ]
   } )
 
-  const extPages = extendedPages()
-  const pageLookup = new Map( extPages.map( page => ( [ page.label, page.url.toString() ] ) ) )
+  const swimmer = useState<Swimmer>( "swimmer" )
 
+  const extPages = extendedPages( swimmer.value )
+  const pageLookup = new Map( extPages.map( page => ( [ page.label, page.url.toString() ] ) ) )
   // type QualifyingApiResponse = InternalApi["/api/qualifying"]["get"]
 
   const qualifyingYear = ref( getYear( addYears( subMonths( new Date(), 1 ), 1 ) ) )
-  const qualifyingAge = computed( () => String( Number( AGE ) + ( qualifyingYear.value - getYear( new Date() ) ) ) )
+  const qualifyingAge = computed( () => String( Number( swimmer.value.age ) + ( qualifyingYear.value - getYear( new Date() ) ) ) )
 
   const { data: qualifyingInfo } = await useFetch(
     // `/api/qualifying/${year}/${AGE}`,
@@ -35,7 +36,7 @@
   )
   const qualifyingYearInfo = computed( () => ( qualifyingInfo.value ?? [] ).filter( row => ( row.year === qualifyingYear.value && row.age === qualifyingAge.value ) ) )
 
-  type ApiResponse = InternalApi["/api/relative"]["get"]
+  type ApiResponse = InternalApi["/api/relative/:id"]["get"]
   interface AreaDetail extends Partial<ApiResponse[number]> {
     label: string
     qualifyTime?: string
@@ -58,7 +59,7 @@
   }
 
   const { data: performanceRecords } = await useFetch(
-    "/api/relative",
+    `/api/relative/${swimmer.value.id}`,
   )
 
   const records = computed( () => {
@@ -91,7 +92,7 @@
         const qualifyTime = qualifyRaw ? secondsToTime( qualifyRaw ) : undefined
         const qualified = time <= ( qualifyRaw ?? 0 )
         const page = Math.floor( rank / 100 ) + 1
-        const label = `${distance}_${stroke}_${GENDER}_${course}_${AGE}${area ? `_${area}` : ""}${page > 1 ? `-${page}` : ""}`
+        const label = `${distance}_${stroke}_${swimmer.value.gender}_${course}_${swimmer.value.age}${area ? `_${area}` : ""}${page > 1 ? `-${page}` : ""}`
         switch ( area ) {
           case "glos" : {
             mergedRecord.qualifiedFor = mergedRecord.qualifiedFor < 1 && qualified ? 1 : mergedRecord.qualifiedFor
@@ -208,7 +209,7 @@
                   :value="year"
                 >
                   <li :class="[active ? 'bg-indigo-600 text-white' : 'text-gray-900', 'relative cursor-default select-none py-2 pl-3 pr-9']">
-                    <span :class="[selected ? 'font-semibold' : 'font-normal', 'block truncate']">{{ year + " / " + String( Number( AGE ) + ( year - getYear( new Date() ) ) ) }}</span>
+                    <span :class="[selected ? 'font-semibold' : 'font-normal', 'block truncate']">{{ year + " / " + String( Number( swimmer.age ) + ( year - getYear( new Date() ) ) ) }}</span>
 
                     <span
                       v-if="selected"

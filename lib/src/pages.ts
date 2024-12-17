@@ -1,7 +1,5 @@
 import {
   BASE_URL,
-  GENDER,
-  AGE,
   STROKE,
   POOLS,
   countyRankParams,
@@ -15,7 +13,7 @@ import {
   resultsParams,
 } from "./config.js"
 
-import { PageData } from "./types.js"
+import { PageData, Swimmer } from "./types.js"
 
 export const createUrl = ( base: string, params: Record<string, string> ) => {
   const url = new URL( BASE_URL + base )
@@ -23,506 +21,510 @@ export const createUrl = ( base: string, params: Record<string, string> ) => {
   return url
 }
 
-export const pages: PageData = [
-  {
-    label: "individual",
-    url: createUrl( individualBaseUrl, individualParams ),
-    type: "individual"
-  },
-  {
-    label: `50m_freestyle_${GENDER}_lc_${AGE}`,
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.FREESTYLE_50M, Pool: POOLS.LONG },
-      ...globalRankParams,
-      ...nationalRankParams,
-    } ),
-    type: "ranking"
-  },
-  {
-    label: `50m_freestyle_${GENDER}_lc_${AGE}_sw`,
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.FREESTYLE_50M, Pool: POOLS.LONG },
-      ...globalRankParams,
-      ...regionalRankParams,
-    } ),
-    type: "ranking"
-  },
-  {
-    label: `50m_freestyle_${GENDER}_lc_${AGE}_glos`,
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.FREESTYLE_50M, Pool: POOLS.LONG },
-      ...globalRankParams,
-      ...countyRankParams,
-    } ),
-    type: "ranking"
-  },
-  {
-    label: `100m_breaststroke_${GENDER}_lc_${AGE}`,
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.BREASTSTROKE_100M, Pool: POOLS.LONG },
-      ...globalRankParams,
-      ...nationalRankParams,
-    } ),
-    type: "ranking"
-  },
-  {
-    label: `100m_breaststroke_${GENDER}_lc_${AGE}_sw`,
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.BREASTSTROKE_100M, Pool: POOLS.LONG },
-      ...globalRankParams,
-      ...regionalRankParams,
-    } ),
-    type: "ranking"
-  },
-  {
-    label: `100m_breaststroke_${GENDER}_lc_${AGE}_glos`,
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.BREASTSTROKE_100M, Pool: POOLS.LONG },
-      ...globalRankParams,
-      ...countyRankParams,
-    } ),
-    type: "ranking"
-  },
-  {
-    label: `50m_butterfly_${GENDER}_lc_${AGE}`,
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.BUTTERFLY_50M, Pool: POOLS.LONG },
-      ...globalRankParams,
-      ...nationalRankParams,
-    } ),
-    type: "ranking"
-  },
-  {
-    label: `50m_butterfly_${GENDER}_lc_${AGE}_sw`,
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.BUTTERFLY_50M, Pool: POOLS.LONG },
-      ...globalRankParams,
-      ...regionalRankParams,
-    } ),
-    type: "ranking"
-  },
-  {
-    label: `50m_butterfly_${GENDER}_lc_${AGE}_glos`,
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.BUTTERFLY_50M, Pool: POOLS.LONG },
-      ...globalRankParams,
-      ...countyRankParams,
-    } ),
-    type: "ranking"
-  },
-  {
-    label: `100m_backstroke_${GENDER}_lc_${AGE}`,
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.BACKSTROKE_100M, Pool: POOLS.LONG },
-      ...globalRankParams,
-      ...nationalRankParams,
-    } ),
-    type: "ranking"
-  },
-  {
-    label: `100m_backstroke_${GENDER}_lc_${AGE}_sw`,
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.BACKSTROKE_100M, Pool: POOLS.LONG },
-      ...globalRankParams,
-      ...regionalRankParams,
-    } ),
-    type: "ranking"
-  },
-  {
-    label: `100m_backstroke_${GENDER}_lc_${AGE}_glos`,
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.BACKSTROKE_100M, Pool: POOLS.LONG },
-      ...globalRankParams,
-      ...countyRankParams,
-    } ),
-    type: "ranking"
-  },
-  {
-    label: `50m_freestyle_${GENDER}_sc_${AGE}`,
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.FREESTYLE_50M, Pool: POOLS.SHORT },
-      ...globalRankParams,
-      ...nationalRankParams,
-    } ),
-    type: "ranking"
-  },
-  {
-    label: `50m_freestyle_${GENDER}_sc_${AGE}_sw`,
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.FREESTYLE_50M, Pool: POOLS.SHORT },
-      ...globalRankParams,
-      ...regionalRankParams,
-    } ),
-    type: "ranking"
-  },
-  {
-    label: `50m_freestyle_${GENDER}_sc_${AGE}_glos`,
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.FREESTYLE_50M, Pool: POOLS.SHORT },
-      ...globalRankParams,
-      ...countyRankParams,
-    } ),
-    type: "ranking"
-  },
-  {
-    label: `100m_freestyle_${GENDER}_sc_${AGE}`,
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.FREESTYLE_100M, Pool: POOLS.SHORT },
-      ...globalRankParams,
-      ...nationalRankParams,
-    } ),
-    type: "ranking"
-  },
-  {
-    label: `100m_freestyle_${GENDER}_sc_${AGE}_sw`,
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.FREESTYLE_100M, Pool: POOLS.SHORT },
-      ...globalRankParams,
-      ...regionalRankParams,
-    } ),
-    type: "ranking"
-  },
-  {
-    label: `100m_freestyle_${GENDER}_sc_${AGE}_glos`,
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.FREESTYLE_100M, Pool: POOLS.SHORT },
-      ...globalRankParams,
-      ...countyRankParams,
-    } ),
-    type: "ranking"
-  },
-  {
-    label: `50m_breaststroke_${GENDER}_sc_${AGE}`,
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.BREASTSTROKE_50M, Pool: POOLS.SHORT },
-      ...globalRankParams,
-      ...nationalRankParams,
-    } ),
-    type: "ranking"
-  },
-  {
-    label: `50m_breaststroke_${GENDER}_sc_${AGE}_sw`,
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.BREASTSTROKE_50M, Pool: POOLS.SHORT },
-      ...globalRankParams,
-      ...regionalRankParams,
-    } ),
-    type: "ranking"
-  },
-  {
-    label: `50m_breaststroke_${GENDER}_sc_${AGE}_glos`,
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.BREASTSTROKE_50M, Pool: POOLS.SHORT },
-      ...globalRankParams,
-      ...countyRankParams,
-    } ),
-    type: "ranking"
-  },
-  {
-    label: `100m_breaststroke_${GENDER}_sc_${AGE}`,
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.BREASTSTROKE_100M, Pool: POOLS.SHORT },
-      ...globalRankParams,
-      ...nationalRankParams,
-    } ),
-    type: "ranking"
-  },
-  {
-    label: `100m_breaststroke_${GENDER}_sc_${AGE}_sw`,
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.BREASTSTROKE_100M, Pool: POOLS.SHORT },
-      ...globalRankParams,
-      ...regionalRankParams,
-    } ),
-    type: "ranking"
-  },
-  {
-    label: `100m_breaststroke_${GENDER}_sc_${AGE}_glos`,
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.BREASTSTROKE_100M, Pool: POOLS.SHORT },
-      ...globalRankParams,
-      ...countyRankParams,
-    } ),
-    type: "ranking"
-  },
-  {
-    label: `200m_breaststroke_${GENDER}_sc_${AGE}`,
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.BREASTSTROKE_200M, Pool: POOLS.SHORT },
-      ...globalRankParams,
-      ...nationalRankParams,
-    } ),
-    type: "ranking"
-  },
-  {
-    label: `200m_breaststroke_${GENDER}_sc_${AGE}_sw`,
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.BREASTSTROKE_200M, Pool: POOLS.SHORT },
-      ...globalRankParams,
-      ...regionalRankParams,
-    } ),
-    type: "ranking"
-  },
-  {
-    label: `200m_breaststroke_${GENDER}_sc_${AGE}_glos`,
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.BREASTSTROKE_200M, Pool: POOLS.SHORT },
-      ...globalRankParams,
-      ...countyRankParams,
-    } ),
-    type: "ranking"
-  },
-  {
-    label: `50m_butterfly_${GENDER}_sc_${AGE}`,
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.BUTTERFLY_50M, Pool: POOLS.SHORT },
-      ...globalRankParams,
-      ...nationalRankParams,
-    } ),
-    type: "ranking"
-  },
-  {
-    label: `50m_butterfly_${GENDER}_sc_${AGE}_sw`,
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.BUTTERFLY_50M, Pool: POOLS.SHORT },
-      ...globalRankParams,
-      ...regionalRankParams,
-    } ),
-    type: "ranking"
-  },
-  {
-    label: `50m_butterfly_${GENDER}_sc_${AGE}_glos`,
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.BUTTERFLY_50M, Pool: POOLS.SHORT },
-      ...globalRankParams,
-      ...countyRankParams,
-    } ),
-    type: "ranking"
-  },
-  {
-    label: `100m_butterfly_${GENDER}_sc_${AGE}`,
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.BUTTERFLY_100M, Pool: POOLS.SHORT },
-      ...globalRankParams,
-      ...nationalRankParams,
-    } ),
-    type: "ranking"
-  },
-  {
-    label: `100m_butterfly_${GENDER}_sc_${AGE}_sw`,
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.BUTTERFLY_100M, Pool: POOLS.SHORT },
-      ...globalRankParams,
-      ...regionalRankParams,
-    } ),
-    type: "ranking"
-  },
-  {
-    label: `100m_butterfly_${GENDER}_sc_${AGE}_glos`,
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.BUTTERFLY_100M, Pool: POOLS.SHORT },
-      ...globalRankParams,
-      ...countyRankParams,
-    } ),
-    type: "ranking"
-  },
-  {
-    label: `50m_backstroke_${GENDER}_sc_${AGE}`,
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.BACKSTROKE_50M, Pool: POOLS.SHORT },
-      ...globalRankParams,
-      ...nationalRankParams,
-    } ),
-    type: "ranking"
-  },
-  {
-    label: `50m_backstroke_${GENDER}_sc_${AGE}_sw`,
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.BACKSTROKE_50M, Pool: POOLS.SHORT },
-      ...globalRankParams,
-      ...regionalRankParams,
-    } ),
-    type: "ranking"
-  },
-  {
-    label: `50m_backstroke_${GENDER}_sc_${AGE}_glos`,
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.BACKSTROKE_50M, Pool: POOLS.SHORT },
-      ...globalRankParams,
-      ...countyRankParams,
-    } ),
-    type: "ranking"
-  },
-  {
-    label: `100m_backstroke_${GENDER}_sc_${AGE}`,
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.BACKSTROKE_100M, Pool: POOLS.SHORT },
-      ...globalRankParams,
-      ...nationalRankParams,
-    } ),
-    type: "ranking"
-  },
-  {
-    label: `100m_backstroke_${GENDER}_sc_${AGE}_sw`,
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.BACKSTROKE_100M, Pool: POOLS.SHORT },
-      ...globalRankParams,
-      ...regionalRankParams,
-    } ),
-    type: "ranking"
-  },
-  {
-    label: `100m_backstroke_${GENDER}_sc_${AGE}_glos`,
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.BACKSTROKE_100M, Pool: POOLS.SHORT },
-      ...globalRankParams,
-      ...countyRankParams,
-    } ),
-    type: "ranking"
-  },
-  {
-    label: `100m_individual_medley_${GENDER}_sc_${AGE}`,
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.INDIVIDUAL_MEDLEY_100M, Pool: POOLS.SHORT },
-      ...globalRankParams,
-      ...nationalRankParams,
-    } ),
-    type: "ranking"
-  },
-  {
-    label: `100m_individual_medley_${GENDER}_sc_${AGE}_sw`,
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.INDIVIDUAL_MEDLEY_100M, Pool: POOLS.SHORT },
-      ...globalRankParams,
-      ...regionalRankParams,
-    } ),
-    type: "ranking"
-  },
-  {
-    label: `100m_individual_medley_${GENDER}_sc_${AGE}_glos`,
-    url: createUrl( rankBaseUrl, {
-      ...{ Stroke: STROKE.INDIVIDUAL_MEDLEY_100M, Pool: POOLS.SHORT },
-      ...globalRankParams,
-      ...countyRankParams,
-    } ),
-    type: "ranking"
-  },
-  {
-    label: "50m_freestyle_lc",
-    url: createUrl( resultsBaseUrl, {
-      ...resultsParams,
-      ...{ tstroke: STROKE.FREESTYLE_50M, tcourse: POOLS.LONG },
-    } ),
-    type: "results"
-  },
-  {
-    label: "100m_breaststroke_lc",
-    url: createUrl( resultsBaseUrl, {
-      ...resultsParams,
-      ...{ tstroke: STROKE.BREASTSTROKE_100M, tcourse: POOLS.LONG },
-    } ),
-    type: "results"
-  },
-  {
-    label: "50m_butterfly_lc",
-    url: createUrl( resultsBaseUrl, {
-      ...resultsParams,
-      ...{ tstroke: STROKE.BUTTERFLY_50M, tcourse: POOLS.LONG },
-    } ),
-    type: "results"
-  },
-  {
-    label: "100m_backstroke_lc",
-    url: createUrl( resultsBaseUrl, {
-      ...resultsParams,
-      ...{ tstroke: STROKE.BACKSTROKE_100M, tcourse: POOLS.LONG },
-    } ),
-    type: "results"
-  },
-  {
-    label: "50m_freestyle_sc",
-    url: createUrl( resultsBaseUrl, {
-      ...resultsParams,
-      ...{ tstroke: STROKE.FREESTYLE_50M, tcourse: POOLS.SHORT },
-    } ),
-    type: "results"
-  },
-  {
-    label: "100m_freestyle_sc",
-    url: createUrl( resultsBaseUrl, {
-      ...resultsParams,
-      ...{ tstroke: STROKE.FREESTYLE_100M, tcourse: POOLS.SHORT },
-    } ),
-    type: "results"
-  },
-  {
-    label: "50m_breaststroke_sc",
-    url: createUrl( resultsBaseUrl, {
-      ...resultsParams,
-      ...{ tstroke: STROKE.BREASTSTROKE_50M, tcourse: POOLS.SHORT },
-    } ),
-    type: "results"
-  },
-  {
-    label: "100m_breaststroke_sc",
-    url: createUrl( resultsBaseUrl, {
-      ...resultsParams,
-      ...{ tstroke: STROKE.BREASTSTROKE_100M, tcourse: POOLS.SHORT },
-    } ),
-    type: "results"
-  },
-  {
-    label: "200m_breaststroke_sc",
-    url: createUrl( resultsBaseUrl, {
-      ...resultsParams,
-      ...{ tstroke: STROKE.BREASTSTROKE_200M, tcourse: POOLS.SHORT },
-    } ),
-    type: "results"
-  },
-  {
-    label: "50m_butterfly_sc",
-    url: createUrl( resultsBaseUrl, {
-      ...resultsParams,
-      ...{ tstroke: STROKE.BUTTERFLY_50M, tcourse: POOLS.SHORT },
-    } ),
-    type: "results"
-  },
-  {
-    label: "100m_butterfly_sc",
-    url: createUrl( resultsBaseUrl, {
-      ...resultsParams,
-      ...{ tstroke: STROKE.BUTTERFLY_100M, tcourse: POOLS.SHORT },
-    } ),
-    type: "results"
-  },
-  {
-    label: "50m_backstroke_sc",
-    url: createUrl( resultsBaseUrl, {
-      ...resultsParams,
-      ...{ tstroke: STROKE.BACKSTROKE_50M, tcourse: POOLS.SHORT },
-    } ),
-    type: "results"
-  },
-  {
-    label: "100m_backstroke_sc",
-    url: createUrl( resultsBaseUrl, {
-      ...resultsParams,
-      ...{ tstroke: STROKE.BACKSTROKE_100M, tcourse: POOLS.SHORT },
-    } ),
-    type: "results"
-  },
-  {
-    label: "100m_individual_medley_sc",
-    url: createUrl( resultsBaseUrl, {
-      ...resultsParams,
-      ...{ tstroke: STROKE.INDIVIDUAL_MEDLEY_100M, tcourse: POOLS.SHORT },
-    } ),
-    type: "results"
-  },
-]
+const getPages = ( swimmer: Swimmer ) => {
+  const pages: PageData = [
+    {
+      label: "individual",
+      url: createUrl( individualBaseUrl, individualParams( swimmer ) ),
+      type: "individual"
+    },
+    {
+      label: `50m_freestyle_${swimmer.gender}_lc_${swimmer.age}`,
+      url: createUrl( rankBaseUrl, {
+        ...{ Stroke: STROKE.FREESTYLE_50M, Pool: POOLS.LONG },
+        ...globalRankParams( swimmer ),
+        ...nationalRankParams,
+      } ),
+      type: "ranking"
+    },
+    {
+      label: `50m_freestyle_${swimmer.gender}_lc_${swimmer.age}_sw`,
+      url: createUrl( rankBaseUrl, {
+        ...{ Stroke: STROKE.FREESTYLE_50M, Pool: POOLS.LONG },
+        ...globalRankParams( swimmer ),
+        ...regionalRankParams,
+      } ),
+      type: "ranking"
+    },
+    {
+      label: `50m_freestyle_${swimmer.gender}_lc_${swimmer.age}_glos`,
+      url: createUrl( rankBaseUrl, {
+        ...{ Stroke: STROKE.FREESTYLE_50M, Pool: POOLS.LONG },
+        ...globalRankParams( swimmer ),
+        ...countyRankParams,
+      } ),
+      type: "ranking"
+    },
+    {
+      label: `100m_breaststroke_${swimmer.gender}_lc_${swimmer.age}`,
+      url: createUrl( rankBaseUrl, {
+        ...{ Stroke: STROKE.BREASTSTROKE_100M, Pool: POOLS.LONG },
+        ...globalRankParams( swimmer ),
+        ...nationalRankParams,
+      } ),
+      type: "ranking"
+    },
+    {
+      label: `100m_breaststroke_${swimmer.gender}_lc_${swimmer.age}_sw`,
+      url: createUrl( rankBaseUrl, {
+        ...{ Stroke: STROKE.BREASTSTROKE_100M, Pool: POOLS.LONG },
+        ...globalRankParams( swimmer ),
+        ...regionalRankParams,
+      } ),
+      type: "ranking"
+    },
+    {
+      label: `100m_breaststroke_${swimmer.gender}_lc_${swimmer.age}_glos`,
+      url: createUrl( rankBaseUrl, {
+        ...{ Stroke: STROKE.BREASTSTROKE_100M, Pool: POOLS.LONG },
+        ...globalRankParams( swimmer ),
+        ...countyRankParams,
+      } ),
+      type: "ranking"
+    },
+    {
+      label: `50m_butterfly_${swimmer.gender}_lc_${swimmer.age}`,
+      url: createUrl( rankBaseUrl, {
+        ...{ Stroke: STROKE.BUTTERFLY_50M, Pool: POOLS.LONG },
+        ...globalRankParams( swimmer ),
+        ...nationalRankParams,
+      } ),
+      type: "ranking"
+    },
+    {
+      label: `50m_butterfly_${swimmer.gender}_lc_${swimmer.age}_sw`,
+      url: createUrl( rankBaseUrl, {
+        ...{ Stroke: STROKE.BUTTERFLY_50M, Pool: POOLS.LONG },
+        ...globalRankParams( swimmer ),
+        ...regionalRankParams,
+      } ),
+      type: "ranking"
+    },
+    {
+      label: `50m_butterfly_${swimmer.gender}_lc_${swimmer.age}_glos`,
+      url: createUrl( rankBaseUrl, {
+        ...{ Stroke: STROKE.BUTTERFLY_50M, Pool: POOLS.LONG },
+        ...globalRankParams( swimmer ),
+        ...countyRankParams,
+      } ),
+      type: "ranking"
+    },
+    {
+      label: `100m_backstroke_${swimmer.gender}_lc_${swimmer.age}`,
+      url: createUrl( rankBaseUrl, {
+        ...{ Stroke: STROKE.BACKSTROKE_100M, Pool: POOLS.LONG },
+        ...globalRankParams( swimmer ),
+        ...nationalRankParams,
+      } ),
+      type: "ranking"
+    },
+    {
+      label: `100m_backstroke_${swimmer.gender}_lc_${swimmer.age}_sw`,
+      url: createUrl( rankBaseUrl, {
+        ...{ Stroke: STROKE.BACKSTROKE_100M, Pool: POOLS.LONG },
+        ...globalRankParams( swimmer ),
+        ...regionalRankParams,
+      } ),
+      type: "ranking"
+    },
+    {
+      label: `100m_backstroke_${swimmer.gender}_lc_${swimmer.age}_glos`,
+      url: createUrl( rankBaseUrl, {
+        ...{ Stroke: STROKE.BACKSTROKE_100M, Pool: POOLS.LONG },
+        ...globalRankParams( swimmer ),
+        ...countyRankParams,
+      } ),
+      type: "ranking"
+    },
+    {
+      label: `50m_freestyle_${swimmer.gender}_sc_${swimmer.age}`,
+      url: createUrl( rankBaseUrl, {
+        ...{ Stroke: STROKE.FREESTYLE_50M, Pool: POOLS.SHORT },
+        ...globalRankParams( swimmer ),
+        ...nationalRankParams,
+      } ),
+      type: "ranking"
+    },
+    {
+      label: `50m_freestyle_${swimmer.gender}_sc_${swimmer.age}_sw`,
+      url: createUrl( rankBaseUrl, {
+        ...{ Stroke: STROKE.FREESTYLE_50M, Pool: POOLS.SHORT },
+        ...globalRankParams( swimmer ),
+        ...regionalRankParams,
+      } ),
+      type: "ranking"
+    },
+    {
+      label: `50m_freestyle_${swimmer.gender}_sc_${swimmer.age}_glos`,
+      url: createUrl( rankBaseUrl, {
+        ...{ Stroke: STROKE.FREESTYLE_50M, Pool: POOLS.SHORT },
+        ...globalRankParams( swimmer ),
+        ...countyRankParams,
+      } ),
+      type: "ranking"
+    },
+    {
+      label: `100m_freestyle_${swimmer.gender}_sc_${swimmer.age}`,
+      url: createUrl( rankBaseUrl, {
+        ...{ Stroke: STROKE.FREESTYLE_100M, Pool: POOLS.SHORT },
+        ...globalRankParams( swimmer ),
+        ...nationalRankParams,
+      } ),
+      type: "ranking"
+    },
+    {
+      label: `100m_freestyle_${swimmer.gender}_sc_${swimmer.age}_sw`,
+      url: createUrl( rankBaseUrl, {
+        ...{ Stroke: STROKE.FREESTYLE_100M, Pool: POOLS.SHORT },
+        ...globalRankParams( swimmer ),
+        ...regionalRankParams,
+      } ),
+      type: "ranking"
+    },
+    {
+      label: `100m_freestyle_${swimmer.gender}_sc_${swimmer.age}_glos`,
+      url: createUrl( rankBaseUrl, {
+        ...{ Stroke: STROKE.FREESTYLE_100M, Pool: POOLS.SHORT },
+        ...globalRankParams( swimmer ),
+        ...countyRankParams,
+      } ),
+      type: "ranking"
+    },
+    {
+      label: `50m_breaststroke_${swimmer.gender}_sc_${swimmer.age}`,
+      url: createUrl( rankBaseUrl, {
+        ...{ Stroke: STROKE.BREASTSTROKE_50M, Pool: POOLS.SHORT },
+        ...globalRankParams( swimmer ),
+        ...nationalRankParams,
+      } ),
+      type: "ranking"
+    },
+    {
+      label: `50m_breaststroke_${swimmer.gender}_sc_${swimmer.age}_sw`,
+      url: createUrl( rankBaseUrl, {
+        ...{ Stroke: STROKE.BREASTSTROKE_50M, Pool: POOLS.SHORT },
+        ...globalRankParams( swimmer ),
+        ...regionalRankParams,
+      } ),
+      type: "ranking"
+    },
+    {
+      label: `50m_breaststroke_${swimmer.gender}_sc_${swimmer.age}_glos`,
+      url: createUrl( rankBaseUrl, {
+        ...{ Stroke: STROKE.BREASTSTROKE_50M, Pool: POOLS.SHORT },
+        ...globalRankParams( swimmer ),
+        ...countyRankParams,
+      } ),
+      type: "ranking"
+    },
+    {
+      label: `100m_breaststroke_${swimmer.gender}_sc_${swimmer.age}`,
+      url: createUrl( rankBaseUrl, {
+        ...{ Stroke: STROKE.BREASTSTROKE_100M, Pool: POOLS.SHORT },
+        ...globalRankParams( swimmer ),
+        ...nationalRankParams,
+      } ),
+      type: "ranking"
+    },
+    {
+      label: `100m_breaststroke_${swimmer.gender}_sc_${swimmer.age}_sw`,
+      url: createUrl( rankBaseUrl, {
+        ...{ Stroke: STROKE.BREASTSTROKE_100M, Pool: POOLS.SHORT },
+        ...globalRankParams( swimmer ),
+        ...regionalRankParams,
+      } ),
+      type: "ranking"
+    },
+    {
+      label: `100m_breaststroke_${swimmer.gender}_sc_${swimmer.age}_glos`,
+      url: createUrl( rankBaseUrl, {
+        ...{ Stroke: STROKE.BREASTSTROKE_100M, Pool: POOLS.SHORT },
+        ...globalRankParams( swimmer ),
+        ...countyRankParams,
+      } ),
+      type: "ranking"
+    },
+    {
+      label: `200m_breaststroke_${swimmer.gender}_sc_${swimmer.age}`,
+      url: createUrl( rankBaseUrl, {
+        ...{ Stroke: STROKE.BREASTSTROKE_200M, Pool: POOLS.SHORT },
+        ...globalRankParams( swimmer ),
+        ...nationalRankParams,
+      } ),
+      type: "ranking"
+    },
+    {
+      label: `200m_breaststroke_${swimmer.gender}_sc_${swimmer.age}_sw`,
+      url: createUrl( rankBaseUrl, {
+        ...{ Stroke: STROKE.BREASTSTROKE_200M, Pool: POOLS.SHORT },
+        ...globalRankParams( swimmer ),
+        ...regionalRankParams,
+      } ),
+      type: "ranking"
+    },
+    {
+      label: `200m_breaststroke_${swimmer.gender}_sc_${swimmer.age}_glos`,
+      url: createUrl( rankBaseUrl, {
+        ...{ Stroke: STROKE.BREASTSTROKE_200M, Pool: POOLS.SHORT },
+        ...globalRankParams( swimmer ),
+        ...countyRankParams,
+      } ),
+      type: "ranking"
+    },
+    {
+      label: `50m_butterfly_${swimmer.gender}_sc_${swimmer.age}`,
+      url: createUrl( rankBaseUrl, {
+        ...{ Stroke: STROKE.BUTTERFLY_50M, Pool: POOLS.SHORT },
+        ...globalRankParams( swimmer ),
+        ...nationalRankParams,
+      } ),
+      type: "ranking"
+    },
+    {
+      label: `50m_butterfly_${swimmer.gender}_sc_${swimmer.age}_sw`,
+      url: createUrl( rankBaseUrl, {
+        ...{ Stroke: STROKE.BUTTERFLY_50M, Pool: POOLS.SHORT },
+        ...globalRankParams( swimmer ),
+        ...regionalRankParams,
+      } ),
+      type: "ranking"
+    },
+    {
+      label: `50m_butterfly_${swimmer.gender}_sc_${swimmer.age}_glos`,
+      url: createUrl( rankBaseUrl, {
+        ...{ Stroke: STROKE.BUTTERFLY_50M, Pool: POOLS.SHORT },
+        ...globalRankParams( swimmer ),
+        ...countyRankParams,
+      } ),
+      type: "ranking"
+    },
+    {
+      label: `100m_butterfly_${swimmer.gender}_sc_${swimmer.age}`,
+      url: createUrl( rankBaseUrl, {
+        ...{ Stroke: STROKE.BUTTERFLY_100M, Pool: POOLS.SHORT },
+        ...globalRankParams( swimmer ),
+        ...nationalRankParams,
+      } ),
+      type: "ranking"
+    },
+    {
+      label: `100m_butterfly_${swimmer.gender}_sc_${swimmer.age}_sw`,
+      url: createUrl( rankBaseUrl, {
+        ...{ Stroke: STROKE.BUTTERFLY_100M, Pool: POOLS.SHORT },
+        ...globalRankParams( swimmer ),
+        ...regionalRankParams,
+      } ),
+      type: "ranking"
+    },
+    {
+      label: `100m_butterfly_${swimmer.gender}_sc_${swimmer.age}_glos`,
+      url: createUrl( rankBaseUrl, {
+        ...{ Stroke: STROKE.BUTTERFLY_100M, Pool: POOLS.SHORT },
+        ...globalRankParams( swimmer ),
+        ...countyRankParams,
+      } ),
+      type: "ranking"
+    },
+    {
+      label: `50m_backstroke_${swimmer.gender}_sc_${swimmer.age}`,
+      url: createUrl( rankBaseUrl, {
+        ...{ Stroke: STROKE.BACKSTROKE_50M, Pool: POOLS.SHORT },
+        ...globalRankParams( swimmer ),
+        ...nationalRankParams,
+      } ),
+      type: "ranking"
+    },
+    {
+      label: `50m_backstroke_${swimmer.gender}_sc_${swimmer.age}_sw`,
+      url: createUrl( rankBaseUrl, {
+        ...{ Stroke: STROKE.BACKSTROKE_50M, Pool: POOLS.SHORT },
+        ...globalRankParams( swimmer ),
+        ...regionalRankParams,
+      } ),
+      type: "ranking"
+    },
+    {
+      label: `50m_backstroke_${swimmer.gender}_sc_${swimmer.age}_glos`,
+      url: createUrl( rankBaseUrl, {
+        ...{ Stroke: STROKE.BACKSTROKE_50M, Pool: POOLS.SHORT },
+        ...globalRankParams( swimmer ),
+        ...countyRankParams,
+      } ),
+      type: "ranking"
+    },
+    {
+      label: `100m_backstroke_${swimmer.gender}_sc_${swimmer.age}`,
+      url: createUrl( rankBaseUrl, {
+        ...{ Stroke: STROKE.BACKSTROKE_100M, Pool: POOLS.SHORT },
+        ...globalRankParams( swimmer ),
+        ...nationalRankParams,
+      } ),
+      type: "ranking"
+    },
+    {
+      label: `100m_backstroke_${swimmer.gender}_sc_${swimmer.age}_sw`,
+      url: createUrl( rankBaseUrl, {
+        ...{ Stroke: STROKE.BACKSTROKE_100M, Pool: POOLS.SHORT },
+        ...globalRankParams( swimmer ),
+        ...regionalRankParams,
+      } ),
+      type: "ranking"
+    },
+    {
+      label: `100m_backstroke_${swimmer.gender}_sc_${swimmer.age}_glos`,
+      url: createUrl( rankBaseUrl, {
+        ...{ Stroke: STROKE.BACKSTROKE_100M, Pool: POOLS.SHORT },
+        ...globalRankParams( swimmer ),
+        ...countyRankParams,
+      } ),
+      type: "ranking"
+    },
+    {
+      label: `100m_individual_medley_${swimmer.gender}_sc_${swimmer.age}`,
+      url: createUrl( rankBaseUrl, {
+        ...{ Stroke: STROKE.INDIVIDUAL_MEDLEY_100M, Pool: POOLS.SHORT },
+        ...globalRankParams( swimmer ),
+        ...nationalRankParams,
+      } ),
+      type: "ranking"
+    },
+    {
+      label: `100m_individual_medley_${swimmer.gender}_sc_${swimmer.age}_sw`,
+      url: createUrl( rankBaseUrl, {
+        ...{ Stroke: STROKE.INDIVIDUAL_MEDLEY_100M, Pool: POOLS.SHORT },
+        ...globalRankParams( swimmer ),
+        ...regionalRankParams,
+      } ),
+      type: "ranking"
+    },
+    {
+      label: `100m_individual_medley_${swimmer.gender}_sc_${swimmer.age}_glos`,
+      url: createUrl( rankBaseUrl, {
+        ...{ Stroke: STROKE.INDIVIDUAL_MEDLEY_100M, Pool: POOLS.SHORT },
+        ...globalRankParams( swimmer ),
+        ...countyRankParams,
+      } ),
+      type: "ranking"
+    },
+    {
+      label: "50m_freestyle_lc",
+      url: createUrl( resultsBaseUrl, {
+        ...resultsParams( swimmer ),
+        ...{ tstroke: STROKE.FREESTYLE_50M, tcourse: POOLS.LONG },
+      } ),
+      type: "results"
+    },
+    {
+      label: "100m_breaststroke_lc",
+      url: createUrl( resultsBaseUrl, {
+        ...resultsParams( swimmer ),
+        ...{ tstroke: STROKE.BREASTSTROKE_100M, tcourse: POOLS.LONG },
+      } ),
+      type: "results"
+    },
+    {
+      label: "50m_butterfly_lc",
+      url: createUrl( resultsBaseUrl, {
+        ...resultsParams( swimmer ),
+        ...{ tstroke: STROKE.BUTTERFLY_50M, tcourse: POOLS.LONG },
+      } ),
+      type: "results"
+    },
+    {
+      label: "100m_backstroke_lc",
+      url: createUrl( resultsBaseUrl, {
+        ...resultsParams( swimmer ),
+        ...{ tstroke: STROKE.BACKSTROKE_100M, tcourse: POOLS.LONG },
+      } ),
+      type: "results"
+    },
+    {
+      label: "50m_freestyle_sc",
+      url: createUrl( resultsBaseUrl, {
+        ...resultsParams( swimmer ),
+        ...{ tstroke: STROKE.FREESTYLE_50M, tcourse: POOLS.SHORT },
+      } ),
+      type: "results"
+    },
+    {
+      label: "100m_freestyle_sc",
+      url: createUrl( resultsBaseUrl, {
+        ...resultsParams( swimmer ),
+        ...{ tstroke: STROKE.FREESTYLE_100M, tcourse: POOLS.SHORT },
+      } ),
+      type: "results"
+    },
+    {
+      label: "50m_breaststroke_sc",
+      url: createUrl( resultsBaseUrl, {
+        ...resultsParams( swimmer ),
+        ...{ tstroke: STROKE.BREASTSTROKE_50M, tcourse: POOLS.SHORT },
+      } ),
+      type: "results"
+    },
+    {
+      label: "100m_breaststroke_sc",
+      url: createUrl( resultsBaseUrl, {
+        ...resultsParams( swimmer ),
+        ...{ tstroke: STROKE.BREASTSTROKE_100M, tcourse: POOLS.SHORT },
+      } ),
+      type: "results"
+    },
+    {
+      label: "200m_breaststroke_sc",
+      url: createUrl( resultsBaseUrl, {
+        ...resultsParams( swimmer ),
+        ...{ tstroke: STROKE.BREASTSTROKE_200M, tcourse: POOLS.SHORT },
+      } ),
+      type: "results"
+    },
+    {
+      label: "50m_butterfly_sc",
+      url: createUrl( resultsBaseUrl, {
+        ...resultsParams( swimmer ),
+        ...{ tstroke: STROKE.BUTTERFLY_50M, tcourse: POOLS.SHORT },
+      } ),
+      type: "results"
+    },
+    {
+      label: "100m_butterfly_sc",
+      url: createUrl( resultsBaseUrl, {
+        ...resultsParams( swimmer ),
+        ...{ tstroke: STROKE.BUTTERFLY_100M, tcourse: POOLS.SHORT },
+      } ),
+      type: "results"
+    },
+    {
+      label: "50m_backstroke_sc",
+      url: createUrl( resultsBaseUrl, {
+        ...resultsParams( swimmer ),
+        ...{ tstroke: STROKE.BACKSTROKE_50M, tcourse: POOLS.SHORT },
+      } ),
+      type: "results"
+    },
+    {
+      label: "100m_backstroke_sc",
+      url: createUrl( resultsBaseUrl, {
+        ...resultsParams( swimmer ),
+        ...{ tstroke: STROKE.BACKSTROKE_100M, tcourse: POOLS.SHORT },
+      } ),
+      type: "results"
+    },
+    {
+      label: "100m_individual_medley_sc",
+      url: createUrl( resultsBaseUrl, {
+        ...resultsParams( swimmer ),
+        ...{ tstroke: STROKE.INDIVIDUAL_MEDLEY_100M, tcourse: POOLS.SHORT },
+      } ),
+      type: "results"
+    },
+  ]
+  return pages
+}
 
-export const extendedPages = () => {
+export const extendedPages = ( swimmer: Swimmer ) => {
   // Add second page for national rankings
+  const pages = getPages( swimmer )
   const extPages = []
   for ( const page of pages ) {
     extPages.push( page )

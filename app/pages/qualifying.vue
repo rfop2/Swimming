@@ -6,13 +6,15 @@
   import "ag-grid-community/styles/ag-grid.css" // Mandatory CSS required by the Data Grid
   import "ag-grid-community/styles/ag-theme-quartz.css" // Optional Theme applied to the Data Grid
   import { AgGridVue } from "ag-grid-vue3" // Vue Data Grid Component
-  import { AGE, secondsToTime, strokeSort, timeToSeconds, type QualifyingRow } from "lib"
+  import { type Swimmer, secondsToTime, strokeSort, timeToSeconds, type QualifyingRow } from "lib"
   import { addYears, getYear, subMonths } from "date-fns"
 
   definePageMeta( {
     layout: "secure",
     // middleware: [ "protected" ]
   } )
+
+  const swimmer = useState<Swimmer>( "swimmer" )
 
   type ApiResponse = InternalApi["/api/qualifying"]["get"]
 
@@ -177,7 +179,7 @@
     },
   ] )
 
-  const quickFilter = ref( String( getYear( addYears( subMonths( new Date(), 1 ), 1 ) ) ) + " " + String( Number( AGE ) + 1 ) )
+  const quickFilter = ref( String( getYear( addYears( subMonths( new Date(), 1 ), 1 ) ) ) + " " + swimmer.value.gender + " " + String( Number( swimmer.value.age ) + 1 ) )
 
   const autoSizeStrategy = {
     type: "fitGridWidth",

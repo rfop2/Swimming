@@ -7,7 +7,7 @@ import { DB_PATH, type Swimmer } from "lib"
 const db = new Database( DB_PATH )
 db.pragma( "journal_mode = WAL" )
 
-const selectRecords: Statement<unknown[],Swimmer> = db.prepare( "SELECT * FROM Swimmers WHERE active = 1" )
+const selectRecords: Statement<unknown[],Swimmer> = db.prepare( "SELECT * FROM SwimmersView WHERE active = 1" )
 
 export default defineEventHandler( async ( _event ) => {
   const data = selectRecords.all()

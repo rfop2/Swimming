@@ -1,7 +1,8 @@
 export interface Swimmer {
   id: string
   name: string
-  birthdate: string
+  birthday: string
+  age: string
   gender: string
 }
 

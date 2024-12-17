@@ -1,4 +1,4 @@
-export const MATCH_NAME = "Eloise Howard"
+import { Swimmer } from "./types.js"
 
 export const DB_DIR = "../db"
 export const DB_PATH = `${DB_DIR}/records.db`
@@ -13,20 +13,12 @@ export const MAX_FETCH_INTERVAL = 120
 
 export const individualBaseUrl = "/individualbest/personal_best.php"
 
-export const SWIMMER_ID = "1660835"
-
-export const individualParams = {
-  back: "individualbestname",
+export const individualParams = ( swimmer: Swimmer ) => ( {
   mode: "L",
-  name: "Howard",
-  tiref: SWIMMER_ID,
-}
+  tiref: swimmer.id,
+} )
 
 export const rankBaseUrl = "/12months/last12.php"
-
-export const GENDER = "female"
-
-export const AGE = "11"
 
 export const NATIONALITY = {
   BRITISH:  "A",
@@ -74,14 +66,14 @@ export const strokeSort: Record<string,number> = {
   individual_medley: 4
 }
 
-export const globalRankParams = {
-  Sex: GENDER.substring( 0,1 ).toUpperCase(),
-  AgeGroup: AGE,
+export const globalRankParams = ( swimmer: Swimmer ) => ( {
+  Sex: swimmer.gender.substring( 0,1 ).toUpperCase(),
+  AgeGroup: swimmer.age,
   date: new Date( new Date().getFullYear(), 11, 31 ).toLocaleDateString( "en-GB" ),
   StartNumber: "1",
   RecordsToView: "100",
   TargetNationality: NATIONALITY.BRITISH,
-}
+} )
 
 export const globalRankPage2Params = {
   StartNumber: "101",
@@ -110,8 +102,8 @@ export const countyRankParams = {
 
 export const resultsBaseUrl = "/individualbest/personal_best_time_date.php"
 
-export const resultsParams = {
+export const resultsParams = ( swimmer: Swimmer ) => ( {
   // back: "individualbestname",
-  tiref: SWIMMER_ID,
+  tiref: swimmer.id,
   mode: "A",
-}
+} )

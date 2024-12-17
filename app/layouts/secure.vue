@@ -1,6 +1,6 @@
 <script setup lang="ts">
-  import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/vue"
-  import { Bars3Icon, BellIcon, UserIcon, XMarkIcon } from "@heroicons/vue/24/outline"
+  import { Disclosure, DisclosureButton, DisclosurePanel, Listbox, ListboxButton, ListboxOption, ListboxOptions, Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/vue"
+  import { Bars3Icon, BellIcon, CheckIcon, ChevronUpDownIcon, UserIcon, XMarkIcon } from "@heroicons/vue/24/outline"
 
   const user = useAuthenticatedUser()
 
@@ -42,6 +42,12 @@
     // { name: "Settings", href: "#" },
     { name: "Sign out", href: "#", click: logout },
   ]
+
+  const { data: swimmers } = await useFetch(
+    "/api/swimmers",
+  )
+
+  const swimmer = useState( "swimmer", () => ( swimmers.value && swimmers.value[0] ) || { name: "Unknown Swimmer" } )
 
   async function logout() {
     await $fetch( "/api/user/logout", {
@@ -99,7 +105,53 @@
               >{{ item.name }}</a>
             </div>
           </div>
-          <div class="hidden sm:ml-6 sm:flex sm:items-center">
+          <div class="hidden sm:ml-6 sm:flex sm:items-center pt-2">
+            <div class="min-w-36 pr-4">
+              <Listbox
+                v-model="swimmer"
+                as="div"
+              >
+                <div class="relative">
+                  <ListboxButton class="relative w-full cursor-default rounded-md bg-white py-1 pl-3 pr-10 text-left text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                    <span class="block truncate">{{ swimmer?.name }}</span>
+                    <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
+                      <ChevronUpDownIcon
+                        class="h-5 w-5 text-gray-400"
+                        aria-hidden="true"
+                      />
+                    </span>
+                  </ListboxButton>
+                  <transition
+                    leave-active-class="transition ease-in duration-100"
+                    leave-from-class="opacity-100"
+                    leave-to-class="opacity-0"
+                  >
+                    <ListboxOptions class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+                      <ListboxOption
+                        v-for="option in swimmers"
+                        :key="option.id"
+                        v-slot="{ active, selected }"
+                        as="template"
+                        :value="swimmer"
+                      >
+                        <li :class="[active ? 'bg-indigo-600 text-white' : 'text-gray-900', 'relative cursor-default select-none py-1 pl-3 pr-9']">
+                          <span :class="[selected ? 'font-semibold' : 'font-normal', 'block truncate']">{{ option.name }}</span>
+                          <span
+                            v-if="selected"
+                            :class="[active ? 'text-white' : 'text-indigo-600', 'absolute inset-y-0 right-0 flex items-center pr-4']"
+                          >
+                            <CheckIcon
+                              class="h-5 w-5"
+                              aria-hidden="true"
+                            />
+                          </span>
+                        </li>
+                      </ListboxOption>
+                    </ListboxOptions>
+                  </transition>
+                </div>
+              </Listbox>
+            </div>
             <p class="mr-2 text-sm text-gray-700">
               Updated: {{ updated }}
             </p>

@@ -192,5 +192,5 @@ export const getCompetitionAge = ( birthdate: Date ): number => {
 }
 
 export const getSwimmerAge = ( swimmer: Swimmer ): number => {
-  return getCompetitionAge( parseISO( swimmer.birthdate ) )
+  return getCompetitionAge( parseISO( swimmer.birthday ) )
 }
