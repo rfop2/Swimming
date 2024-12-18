@@ -167,6 +167,16 @@
 
   const sortedRecords = computed( () => sortRecords( flattenedRecords.value ) )
 
+  const rankClass = ( rank?: number ) => {
+    if ( rank ) {
+      if ( rank <= 10 ) {
+        return "rank-10"
+      } else if ( rank <= 20 ) {
+        return "rank-20"
+      }
+    }
+    return null
+  }
 </script>
 
 <template>
@@ -418,7 +428,10 @@
                   {{ row.time_date }}
                 </td>
                 <td class="whitespace-nowrap px-2 py-2 text-right text-sm text-gray-900">
-                  <span class="inline-flex items-baseline">
+                  <span
+                    class="inline-flex items-baseline"
+                    :class="rankClass( row.county.rank )"
+                  >
                     {{ row.county.rank }}
                     <a
                       v-if="row.county.label"
@@ -440,7 +453,10 @@
                   {{ row.county.qualifyTime }}
                 </td>
                 <td class="whitespace-nowrap px-2 py-2 text-right text-sm text-gray-900">
-                  <span class="inline-flex items-baseline">
+                  <span
+                    class="inline-flex items-baseline"
+                    :class="rankClass( row.regional.rank )"
+                  >
                     {{ row.regional.rank }}
                     <a
                       v-if="row.regional.label"
@@ -462,7 +478,10 @@
                   {{ row.regional.qualifyTime }}
                 </td>
                 <td class="whitespace-nowrap px-2 py-2 text-right text-sm text-gray-900">
-                  <span class="inline-flex items-baseline">
+                  <span
+                    class="inline-flex items-baseline"
+                    :class="rankClass( row.national.rank )"
+                  >
                     {{ row.national.rank }}
                     <a
                       v-if="row.national.label"
@@ -534,5 +553,13 @@
 
 .age-12 {
   opacity: 0.4
+}
+
+.rank-10 {
+  color: #22c55e;
+}
+
+.rank-20 {
+  color: #f97316;
 }
 </style>
