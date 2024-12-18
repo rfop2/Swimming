@@ -43,6 +43,8 @@
     { name: "Sign out", href: "#", click: logout },
   ]
 
+  const config = useRuntimeConfig()
+
   const { data: swimmers } = await useFetch(
     "/api/swimmers",
   )
@@ -154,6 +156,9 @@
             </div>
             <p class="mr-2 text-sm text-gray-700">
               Updated: {{ updated }}
+            </p>
+            <p class="mr-2 text-sm text-gray-700">
+              v{{ config.public.appVersion }}
             </p>
             <button
               type="button"

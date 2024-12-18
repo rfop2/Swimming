@@ -1,5 +1,7 @@
 {
-  "name": "nuxt-app",
+  "name": "swimming-app",
+  "version": "2.0.0",
+  "description": "Swimming performance and qualification monitoring",
   "private": true,
   "type": "module",
   "scripts": {

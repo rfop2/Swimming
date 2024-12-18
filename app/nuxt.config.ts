@@ -1,4 +1,6 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
+import pkg from "./package.json"
+
 export default defineNuxtConfig( {
   devtools: { enabled: true },
 
@@ -7,6 +9,12 @@ export default defineNuxtConfig( {
     "@primevue/nuxt-module",
     "@nuxt/eslint"
   ],
+
+  runtimeConfig: {
+    public: {
+      appVersion: pkg.version,
+    },
+  },
 
   primevue: {
     options: {
