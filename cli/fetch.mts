@@ -14,14 +14,12 @@ import {
   MIN_FETCH_INTERVAL,
   USER_AGENT,
   DB_PATH,
-  MATCH_NAME,
-  createSwimmerSql,
-  createIndividualSql,
-  createPerformanceSql,
-  createRankingsSql,
-  createResultsSql,
+  // createSwimmerSql,
+  // createIndividualSql,
+  // createPerformanceSql,
+  // createRankingsSql,
+  // createResultsSql,
   deletePerformanceSql,
-  deleteRankingsSql,
   insertIndividualSql,
   insertPerformanceSql,
   insertRankingsSql,
@@ -30,8 +28,7 @@ import {
   timeToSeconds,
   sleep,
   rng,
-  SWIMMER_ID,
-  extendedPages
+  extendedPages,
 } from "lib"
 
 import type {
@@ -41,7 +38,8 @@ import type {
   Ranking,
   RankingRow,
   Result,
-  Results
+  Results,
+  Swimmer
 } from "lib"
 
 const now = new Date()
@@ -52,16 +50,20 @@ const db = new Database( DB_PATH )
 db.pragma( "journal_mode = WAL" )
 
 // Create tables, and prepare statements
-const swimmerTableCreate = db.prepare( createSwimmerSql )
-swimmerTableCreate.run()
+// const swimmerTableCreate = db.prepare( createSwimmerSql )
+// swimmerTableCreate.run()
 
-const individualTableCreate = db.prepare( createIndividualSql )
-individualTableCreate.run()
+const getSwimmers = db.prepare<unknown[],Swimmer>(
+  "SELECT * FROM SwimmersView WHERE active = 1"
+)
+
+// const individualTableCreate = db.prepare( createIndividualSql )
+// individualTableCreate.run()
 
 const saveIndividual = db.prepare( insertIndividualSql )
 
-const rankingsTableCreate = db.prepare( createRankingsSql )
-rankingsTableCreate.run()
+// const rankingsTableCreate = db.prepare( createRankingsSql )
+// rankingsTableCreate.run()
 
 interface RankingRecord extends RankingRow {
   course: string
@@ -70,27 +72,29 @@ interface RankingRecord extends RankingRow {
   area: string
 }
 
-const getBestRankingTimes = db.prepare<{date:string},RankingRecord>(
-  "SELECT stroke, distance, course, area, date, MIN(time) as time FROM Rankings WHERE created = :date GROUP BY stroke, distance, course, area"
+const getBestRankingTimes = db.prepare<{date:string,gender:string,age:string},RankingRecord>(
+  "SELECT course, stroke, distance, area, date, MIN(time) as time FROM Rankings WHERE created = :date AND gender = :gender AND age = :age GROUP BY gender, age, course, stroke, distance, area"
 )
 
 const getSwimmerRankingTimes = db.prepare<{date:string,name:string},RankingRecord>(
-  "SELECT stroke, distance, course, area, rank, date, time FROM Rankings WHERE created = :date AND name = :name"
+  "SELECT course, stroke, distance, area, rank, date, time FROM Rankings WHERE created = :date AND name = :name"
 )
+
+export const deleteRankingsSql = "DELETE FROM Rankings WHERE created = :created AND gender = :gender AND age = :age"
 
 const deleteRankings = db.prepare( deleteRankingsSql )
 
 const saveRankings = db.prepare( insertRankingsSql )
 
-const performanceTableCreate = db.prepare( createPerformanceSql )
-performanceTableCreate.run()
+// const performanceTableCreate = db.prepare( createPerformanceSql )
+// performanceTableCreate.run()
 
 const deletePerformance = db.prepare( deletePerformanceSql )
 
 const savePerformance = db.prepare( insertPerformanceSql )
 
-const resultsTableCreate = db.prepare( createResultsSql )
-resultsTableCreate.run()
+// const resultsTableCreate = db.prepare( createResultsSql )
+// resultsTableCreate.run()
 
 const saveResults = db.prepare( insertResultsSql )
 
@@ -191,6 +195,9 @@ const parseRanking = ( pageInfo: PageInfo, $: CheerioAPI ) => {
   if ( table.length ) {
     // Do any conversions
     for ( const row of table ) {
+      if ( row.name === "Member Hidden" ) {
+        continue
+      }
       const rankingRow: RankingRow = {
         rank: Number( row.rank ),
         name: row.name,
@@ -282,13 +289,13 @@ export const fetchPage = async ( pageInfo: PageInfo ) => {
   }
 }
 
-const fetchPages = async () => {
+const fetchPages = async ( swimmer: Swimmer ) => {
   const data: PageData = {
     individual: [],
     ranking: {},
     results: {}
   }
-  const extPages = extendedPages()
+  const extPages = extendedPages( swimmer )
   for ( const pageInfo of shuffle( extPages ) ) {
     const content = await fetchPage( pageInfo )
     if ( content ) {
@@ -315,71 +322,70 @@ const fetchPages = async () => {
   return data
 }
 
-const updateData = async () => {
-  try {
-    const pageData = await fetchPages()
-    // console.log( inspect( pageData, { depth: 5 } ) )
+const updateData = async ( swimmer: Swimmer ) => {
+  console.log( `Updating data for swimmer '${swimmer.name}'` )
 
-    // Individual
-    for ( const row of pageData.individual ) {
-      saveIndividual.run( { created: today, swimmer: SWIMMER_ID, ...row } )
+  const pageData = await fetchPages( swimmer )
+  // console.log( inspect( pageData, { depth: 5 } ) )
+
+  // Individual
+  for ( const row of pageData.individual ) {
+    saveIndividual.run( { created: today, swimmer: swimmer.id, ...row } )
+  }
+
+  // Rankings + Performance
+  deleteRankings.run( { created: today, gender: swimmer.gender, age: swimmer.age } )
+  for ( const [ label, ranking ] of Object.entries( pageData.ranking ) ) {
+    // 100m_backstroke_female_sc_11_glos
+    const regexp = new RegExp( `(?<distance>\\d+m)_(?<stroke>\\w+)_${swimmer.gender}_(?<course>.c)_${swimmer.age}(?:_(?<area>\\w+))?(?:-(?<page>\\d+))?` )
+    const matches = label.match( regexp )
+    if ( !matches ) {
+      throw new Error( `Can't match ranking on '${label}'` )
     }
+    const { distance = "", stroke = "", course = "", area = "" } = { ...matches?.groups }
+    // const area = groups.area ? ( groups.area === "glos" ? "county" : "regional" ) : "national"
 
-    // Rankings + Performance
-    deleteRankings.run( today )
-    for ( const [ label, ranking ] of Object.entries( pageData.ranking ) ) {
-      // 100m_backstroke_female_sc_11_glos
-      const matches = label.match( /(?<distance>\d+m)_(?<stroke>\w+)_female_(?<course>.c)_11(?:_(?<area>\w+))?(?:-(?<page>\d+))?/ )
-      if ( !matches ) {
-        throw new Error( `Can't match ranking on '${label}'` )
-      }
-      const { distance = "", stroke = "", course = "", area = "" } = { ...matches?.groups }
-      // const area = groups.area ? ( groups.area === "glos" ? "county" : "regional" ) : "national"
-
-      for ( const row of ranking.table ) {
-        saveRankings.run( { created: today, swimmer: "", course, stroke, distance, area, ...row } )
-      }
+    for ( const row of ranking.table ) {
+      saveRankings.run( { created: today, gender: swimmer.gender, age: swimmer.age, swimmer: "", course, stroke, distance, area, ...row } )
     }
+  }
 
-    // Now generate the performance records
-    const swimmerTimes = getSwimmerRankingTimes.all( { date: today, name: MATCH_NAME} )
-    const bestTimes = getBestRankingTimes.all( { date: today } )
-    const bestTimesMap = new Map( bestTimes.map( time => [ `${time.course}_${time.stroke}_${time.distance}_${time.area}`, time ] ) )
+  // Now generate the performance records
+  const swimmerTimes = getSwimmerRankingTimes.all( { date: today, name: swimmer.name } )
+  const bestTimes = getBestRankingTimes.all( { date: today, gender: swimmer.gender, age: swimmer.age } )
+  const bestTimesMap = new Map( bestTimes.map( time => [ `${time.course}_${time.stroke}_${time.distance}_${time.area}`, time ] ) )
 
-    for ( const swimmerTime of swimmerTimes ) {
-      const raceLabel = `${swimmerTime.course}_${swimmerTime.stroke}_${swimmerTime.distance}_${swimmerTime.area}`
-      const bestTime = bestTimesMap.get( raceLabel )
-      if ( !bestTime ) {
-        throw new Error( `Unable to find best time record for '${raceLabel}` )
-      }
-      const record = {
-        position: 0,
-        rank: swimmerTime.rank,
-        best: bestTime.time,
-        best_date: bestTime.date,
-        time: swimmerTime.time,
-        time_date: swimmerTime.date,
-        difference: swimmerTime.time - bestTime.time,
-      }
-      deletePerformance.run( today, SWIMMER_ID, swimmerTime.course, swimmerTime.stroke, swimmerTime.distance, swimmerTime.area )
-      savePerformance.run( { created: today, swimmer: SWIMMER_ID, course: swimmerTime.course, stroke: swimmerTime.stroke, distance: swimmerTime.distance, area: swimmerTime.area, ...record } )
+  for ( const swimmerTime of swimmerTimes ) {
+    const raceLabel = `${swimmerTime.course}_${swimmerTime.stroke}_${swimmerTime.distance}_${swimmerTime.area}`
+    const bestTime = bestTimesMap.get( raceLabel )
+    if ( !bestTime ) {
+      throw new Error( `Unable to find best time record for '${raceLabel}` )
     }
-
-    // Results
-    for ( const [ label, results ] of Object.entries( pageData.results ) ) {
-      const matches = label.match( /(?<distance>\d+m)_(?<stroke>\w+)_(?<course>.c)$/ )
-      if ( !matches ) {
-        throw new Error( `Can't match results on '${label}'` )
-      }
-      const { distance = "", stroke = "", course = "" } = { ...matches?.groups }
-
-      for ( const result of results ) {
-        saveResults.run( { created: today, swimmer: SWIMMER_ID, course, stroke, distance, ...result } )
-      }
+    const record = {
+      position: 0,
+      rank: swimmerTime.rank,
+      best: bestTime.time,
+      best_date: bestTime.date,
+      time: swimmerTime.time,
+      time_date: swimmerTime.date,
+      difference: swimmerTime.time - bestTime.time,
     }
-  } catch ( error ) {
-    console.error( "General error", error )
-    process.exit( -1 )
+    deletePerformance.run( today, swimmer.id, swimmerTime.course, swimmerTime.stroke, swimmerTime.distance, swimmerTime.area )
+    savePerformance.run( { created: today, swimmer: swimmer.id, course: swimmerTime.course, stroke: swimmerTime.stroke, distance: swimmerTime.distance, area: swimmerTime.area, ...record } )
+  }
+
+  // Results
+  for ( const [ label, results ] of Object.entries( pageData.results ) ) {
+    const regexp = new RegExp( `(?<distance>\\d+m)_(?<stroke>\\w+)_(?<course>.c)_${swimmer.id}$` )
+    const matches = label.match( regexp )
+    if ( !matches ) {
+      throw new Error( `Can't match results on '${label}'` )
+    }
+    const { distance = "", stroke = "", course = "" } = { ...matches?.groups }
+
+    for ( const result of results ) {
+      saveResults.run( { created: today, swimmer: swimmer.id, course, stroke, distance, ...result } )
+    }
   }
 };
 
@@ -392,7 +398,15 @@ const updateData = async () => {
     },
   }) */
 
-  await updateData()
+  try {
+    const swimmers = getSwimmers.all()
+    for ( const swimmer of swimmers ) {
+      await updateData( swimmer )
+    }
+  } catch ( error ) {
+    console.error( "General error", error )
+    process.exit( -1 )
+  }
 
   process.exit( 0 )
 } )().catch( ( error ) => {

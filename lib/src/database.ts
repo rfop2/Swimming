@@ -78,11 +78,11 @@ export const createRankingsSql =
   fina INTEGER
 );`
 
-export const deleteRankingsSql = "DELETE FROM Rankings WHERE created = ?;"
-
 export const insertRankingsSql =
 `INSERT INTO Rankings (
   created,
+  gender,
+  age,
   course,
   stroke,
   distance,
@@ -100,6 +100,8 @@ export const insertRankingsSql =
   fina
 ) VALUES (
   :created,
+  :gender,
+  :age,
   :course,
   :stroke,
   :distance,

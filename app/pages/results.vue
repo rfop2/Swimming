@@ -1,15 +1,13 @@
 <script setup lang="ts">
   import { Listbox, ListboxButton, ListboxLabel, ListboxOption, ListboxOptions } from "@headlessui/vue"
   import { CheckIcon, ChevronUpDownIcon } from "@heroicons/vue/24/outline"
-  import { secondsToTime } from "lib"
+  import { type Swimmer, secondsToTime } from "lib"
   import { Line } from "vue-chartjs"
   import {  Chart as ChartJS, CategoryScale, LinearScale, TimeScale, PointElement, LineElement, Title, Tooltip, Legend, type ChartData, type ChartOptions, type TooltipItem } from "chart.js"
   import "chartjs-adapter-date-fns"
 
   import type { InternalApi } from "nitropack"
-  /*
-  import { AGE, GENDER, pages, secondsToTime } from "lib"
-  */
+
   definePageMeta( {
     layout: "secure",
     // middleware: [ "protected" ]
@@ -69,17 +67,20 @@
   } )
   const query = computed( () => Object.fromEntries( Object.entries( selections ).map( ( [ label, option ] ) => ( [ label, option.value ] ) ) ) )
 
-  type ApiResponse = InternalApi["/api/results"]["get"]
+  const swimmer = useState<Swimmer>( "swimmer" )
+
+  type ApiResponse = InternalApi["/api/results/:id"]["get"]
   type ResultType = ApiResponse[number]
   /* interface AreaDetail extends Partial<ApiResponse[number]> {
     label: string
   } */
 
+  const resultsUrl = computed( ()=> ( `/api/results/${swimmer.value.id}` ) )
   const { data: records } = await useFetch(
-    "/api/results",
+    resultsUrl,
     {
       query: query,
-      watch: [ query ],
+      watch: [ swimmer, query ],
       transform( records: ApiResponse ) : Array<ResultType> {
         records.sort( ( a, b ) => {
           if ( a.date < b.date ) {
@@ -96,7 +97,8 @@
         } )
         return records
       },
-    } )
+    }
+  )
 
   const { updateSort, getSortIcon, sortRecords } = useMultiSort<ResultType>()
 

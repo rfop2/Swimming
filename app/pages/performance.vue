@@ -2,7 +2,7 @@
   import type { InternalApi } from "nitropack"
   import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from "@headlessui/vue"
   import { ArrowUturnLeftIcon, LinkIcon, CheckIcon, ChevronUpDownIcon } from "@heroicons/vue/24/outline"
-  import { AGE, GENDER, convertTime, extendedPages, secondsToTime, strokeSort } from "lib"
+  import { type Swimmer, convertTime, extendedPages, secondsToTime, strokeSort } from "lib"
   import { addYears, differenceInCalendarMonths, getYear, subMonths } from "date-fns"
 
   definePageMeta( {
@@ -10,14 +10,15 @@
     // middleware: [ "protected" ]
   } )
 
-  const extPages = extendedPages()
-  const pageLookup = new Map( extPages.map( page => ( [ page.label, page.url.toString() ] ) ) )
+  const swimmer = useState<Swimmer>( "swimmer" )
 
-  // type QualifyingApiResponse = InternalApi["/api/qualifying"]["get"]
+  const extPages = computed( () => extendedPages( swimmer.value ) )
+  const pageLookup = computed( () => new Map( extPages.value.map( page => ( [ page.label, page.url.toString() ] ) ) ) )
 
   const qualifyingYear = ref( getYear( addYears( subMonths( new Date(), 1 ), 1 ) ) )
-  const qualifyingAge = computed( () => String( Number( AGE ) + ( qualifyingYear.value - getYear( new Date() ) ) ) )
+  const qualifyingAge = computed( () => String( Number( swimmer.value.age ) + ( qualifyingYear.value - getYear( new Date() ) ) ) )
 
+  // type QualifyingApiResponse = InternalApi["/api/qualifying"]["get"]
   const { data: qualifyingInfo } = await useFetch(
     // `/api/qualifying/${year}/${AGE}`,
     "/api/qualifying"
@@ -35,7 +36,7 @@
   )
   const qualifyingYearInfo = computed( () => ( qualifyingInfo.value ?? [] ).filter( row => ( row.year === qualifyingYear.value && row.age === qualifyingAge.value ) ) )
 
-  type ApiResponse = InternalApi["/api/relative"]["get"]
+  type ApiResponse = InternalApi["/api/relative/:id"]["get"]
   interface AreaDetail extends Partial<ApiResponse[number]> {
     label: string
     qualifyTime?: string
@@ -57,8 +58,12 @@
     national: Partial<AreaDetail>
   }
 
-  const { data: performanceRecords } = await useFetch(
-    "/api/relative",
+  const performanceUrl = computed( ()=> ( `/api/relative/${swimmer.value.id}` ) )
+  const { data: performanceRecords } = await useFetch<ApiResponse>(
+    performanceUrl,
+    {
+      watch: [ swimmer ],
+    }
   )
 
   const records = computed( () => {
@@ -91,7 +96,7 @@
         const qualifyTime = qualifyRaw ? secondsToTime( qualifyRaw ) : undefined
         const qualified = time <= ( qualifyRaw ?? 0 )
         const page = Math.floor( rank / 100 ) + 1
-        const label = `${distance}_${stroke}_${GENDER}_${course}_${AGE}${area ? `_${area}` : ""}${page > 1 ? `-${page}` : ""}`
+        const label = `${distance}_${stroke}_${swimmer.value.gender}_${course}_${swimmer.value.age}${area ? `_${area}` : ""}${page > 1 ? `-${page}` : ""}`
         switch ( area ) {
           case "glos" : {
             mergedRecord.qualifiedFor = mergedRecord.qualifiedFor < 1 && qualified ? 1 : mergedRecord.qualifiedFor
@@ -166,6 +171,16 @@
 
   const sortedRecords = computed( () => sortRecords( flattenedRecords.value ) )
 
+  const rankClass = ( rank?: number ) => {
+    if ( rank ) {
+      if ( rank <= 10 ) {
+        return "rank-10"
+      } else if ( rank <= 20 ) {
+        return "rank-20"
+      }
+    }
+    return null
+  }
 </script>
 
 <template>
@@ -208,7 +223,7 @@
                   :value="year"
                 >
                   <li :class="[active ? 'bg-indigo-600 text-white' : 'text-gray-900', 'relative cursor-default select-none py-2 pl-3 pr-9']">
-                    <span :class="[selected ? 'font-semibold' : 'font-normal', 'block truncate']">{{ year + " / " + String( Number( AGE ) + ( year - getYear( new Date() ) ) ) }}</span>
+                    <span :class="[selected ? 'font-semibold' : 'font-normal', 'block truncate']">{{ year + " / " + String( Number( swimmer.age ) + ( year - getYear( new Date() ) ) ) }}</span>
 
                     <span
                       v-if="selected"
@@ -417,7 +432,10 @@
                   {{ row.time_date }}
                 </td>
                 <td class="whitespace-nowrap px-2 py-2 text-right text-sm text-gray-900">
-                  <span class="inline-flex items-baseline">
+                  <span
+                    class="inline-flex items-baseline"
+                    :class="rankClass( row.county.rank )"
+                  >
                     {{ row.county.rank }}
                     <a
                       v-if="row.county.label"
@@ -439,7 +457,10 @@
                   {{ row.county.qualifyTime }}
                 </td>
                 <td class="whitespace-nowrap px-2 py-2 text-right text-sm text-gray-900">
-                  <span class="inline-flex items-baseline">
+                  <span
+                    class="inline-flex items-baseline"
+                    :class="rankClass( row.regional.rank )"
+                  >
                     {{ row.regional.rank }}
                     <a
                       v-if="row.regional.label"
@@ -461,7 +482,10 @@
                   {{ row.regional.qualifyTime }}
                 </td>
                 <td class="whitespace-nowrap px-2 py-2 text-right text-sm text-gray-900">
-                  <span class="inline-flex items-baseline">
+                  <span
+                    class="inline-flex items-baseline"
+                    :class="rankClass( row.national.rank )"
+                  >
                     {{ row.national.rank }}
                     <a
                       v-if="row.national.label"
@@ -533,5 +557,13 @@
 
 .age-12 {
   opacity: 0.4
+}
+
+.rank-10 {
+  color: #22c55e;
+}
+
+.rank-20 {
+  color: #f97316;
 }
 </style>

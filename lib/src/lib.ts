@@ -1,7 +1,8 @@
 import seedrandom from "seedrandom"
 import type { AnyNode } from "domhandler"
 import type { Cheerio, CheerioAPI } from "cheerio"
-import { addMilliseconds, format } from "date-fns"
+import { addMilliseconds, differenceInYears, endOfYear, format, parseISO } from "date-fns"
+import { Swimmer } from "./types.js"
 
 const debugEnabled = !!( process.env?.DEBUG === "true" ) || false
 
@@ -182,4 +183,14 @@ export const convertTime = ( fromPool: string, toPool: string, stroke: string, d
   const convertedTime = Number( ( timeAs50 - turnTime ).toFixed( 1 ) )
 
   return convertedTime
+}
+
+export const getCompetitionAge = ( birthdate: Date ): number => {
+  // Function to calculate age on December 31st of the current year
+  const dec31 = endOfYear( new Date() ) // Get December 31st of the current year
+  return differenceInYears( dec31, birthdate ) // Calculate the difference in years
+}
+
+export const getSwimmerAge = ( swimmer: Swimmer ): number => {
+  return getCompetitionAge( parseISO( swimmer.birthday ) )
 }

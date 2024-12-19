@@ -11,8 +11,6 @@ const selectMaxCreated: Statement<unknown[], { MaxCreated: string }> = db.prepar
 const selectRecords: Statement<{ date: string }, Individual> = db.prepare( "SELECT * FROM Individual WHERE created = :date" )
 
 export default defineEventHandler( async ( event ) => {
-  console.log( "Event", event )
-  console.log( "Params", getRouterParams( event ) )
   let bindParams = { date: "" }
   const date = getRouterParam( event, "date" )
   if ( date ) {
@@ -20,12 +18,11 @@ export default defineEventHandler( async ( event ) => {
   }
   else {
     const result = selectMaxCreated.get()
-    console.log( "Result", result )
     if ( result?.MaxCreated ) {
       bindParams = { date: result.MaxCreated }
     }
   }
   const data = selectRecords.all( bindParams )
-  console.log( "Data", data )
+  // console.log( "Data", data )
   return data
 } )
