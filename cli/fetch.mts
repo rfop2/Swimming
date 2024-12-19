@@ -195,6 +195,9 @@ const parseRanking = ( pageInfo: PageInfo, $: CheerioAPI ) => {
   if ( table.length ) {
     // Do any conversions
     for ( const row of table ) {
+      if ( row.name === "Member Hidden" ) {
+        continue
+      }
       const rankingRow: RankingRow = {
         rank: Number( row.rank ),
         name: row.name,
