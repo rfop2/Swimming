@@ -179,7 +179,8 @@
     },
   ] )
 
-  const quickFilter = ref( String( getYear( addYears( subMonths( new Date(), 1 ), 1 ) ) ) + " " + swimmer.value.gender + " " + String( Number( swimmer.value.age ) + 1 ) )
+  const initialFilter = computed( () => String( getYear( addYears( subMonths( new Date(), 1 ), 1 ) ) ) + " " + swimmer.value.gender + " " + String( Number( swimmer.value.age ) + 1 ) )
+  const quickFilter = ref( initialFilter )
 
   const autoSizeStrategy = {
     type: "fitGridWidth",
