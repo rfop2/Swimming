@@ -12,13 +12,13 @@
 
   const swimmer = useState<Swimmer>( "swimmer" )
 
-  const extPages = extendedPages( swimmer.value )
-  const pageLookup = new Map( extPages.map( page => ( [ page.label, page.url.toString() ] ) ) )
-  // type QualifyingApiResponse = InternalApi["/api/qualifying"]["get"]
+  const extPages = computed( () => extendedPages( swimmer.value ) )
+  const pageLookup = computed( () => new Map( extPages.value.map( page => ( [ page.label, page.url.toString() ] ) ) ) )
 
   const qualifyingYear = ref( getYear( addYears( subMonths( new Date(), 1 ), 1 ) ) )
   const qualifyingAge = computed( () => String( Number( swimmer.value.age ) + ( qualifyingYear.value - getYear( new Date() ) ) ) )
 
+  // type QualifyingApiResponse = InternalApi["/api/qualifying"]["get"]
   const { data: qualifyingInfo } = await useFetch(
     // `/api/qualifying/${year}/${AGE}`,
     "/api/qualifying"
@@ -58,8 +58,12 @@
     national: Partial<AreaDetail>
   }
 
-  const { data: performanceRecords } = await useFetch(
-    `/api/relative/${swimmer.value.id}`,
+  const performanceUrl = computed( ()=> ( `/api/relative/${swimmer.value.id}` ) )
+  const { data: performanceRecords } = await useFetch<ApiResponse>(
+    performanceUrl,
+    {
+      watch: [ swimmer ],
+    }
   )
 
   const records = computed( () => {

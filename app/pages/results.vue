@@ -75,11 +75,12 @@
     label: string
   } */
 
+  const resultsUrl = computed( ()=> ( `/api/results/${swimmer.value.id}` ) )
   const { data: records } = await useFetch(
-    `/api/results/${swimmer.value.id}`,
+    resultsUrl,
     {
       query: query,
-      watch: [ query ],
+      watch: [ swimmer, query ],
       transform( records: ApiResponse ) : Array<ResultType> {
         records.sort( ( a, b ) => {
           if ( a.date < b.date ) {
@@ -96,7 +97,8 @@
         } )
         return records
       },
-    } )
+    }
+  )
 
   const { updateSort, getSortIcon, sortRecords } = useMultiSort<ResultType>()
 
