@@ -373,7 +373,8 @@ const updateData = async ( swimmer: Swimmer ) => {
 
   // Results
   for ( const [ label, results ] of Object.entries( pageData.results ) ) {
-    const matches = label.match( /(?<distance>\d+m)_(?<stroke>\w+)_(?<course>.c)$/ )
+    const regexp = new RegExp( `(?<distance>\\d+m)_(?<stroke>\\w+)_(?<course>.c)_${swimmer.id}$` )
+    const matches = label.match( regexp )
     if ( !matches ) {
       throw new Error( `Can't match results on '${label}'` )
     }

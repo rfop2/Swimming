@@ -24,7 +24,7 @@ export const createUrl = ( base: string, params: Record<string, string> ) => {
 const getPages = ( swimmer: Swimmer ) => {
   const pages: PageData = [
     {
-      label: "individual",
+      label: `individual_${swimmer.id}`,
       url: createUrl( individualBaseUrl, individualParams( swimmer ) ),
       type: "individual"
     },
@@ -407,7 +407,7 @@ const getPages = ( swimmer: Swimmer ) => {
       type: "ranking"
     },
     {
-      label: "50m_freestyle_lc",
+      label: `50m_freestyle_lc_${swimmer.id}`,
       url: createUrl( resultsBaseUrl, {
         ...resultsParams( swimmer ),
         ...{ tstroke: STROKE.FREESTYLE_50M, tcourse: POOLS.LONG },
@@ -415,7 +415,7 @@ const getPages = ( swimmer: Swimmer ) => {
       type: "results"
     },
     {
-      label: "100m_breaststroke_lc",
+      label: `100m_breaststroke_lc_${swimmer.id}`,
       url: createUrl( resultsBaseUrl, {
         ...resultsParams( swimmer ),
         ...{ tstroke: STROKE.BREASTSTROKE_100M, tcourse: POOLS.LONG },
@@ -423,7 +423,7 @@ const getPages = ( swimmer: Swimmer ) => {
       type: "results"
     },
     {
-      label: "50m_butterfly_lc",
+      label: `50m_butterfly_lc_${swimmer.id}`,
       url: createUrl( resultsBaseUrl, {
         ...resultsParams( swimmer ),
         ...{ tstroke: STROKE.BUTTERFLY_50M, tcourse: POOLS.LONG },
@@ -431,7 +431,7 @@ const getPages = ( swimmer: Swimmer ) => {
       type: "results"
     },
     {
-      label: "100m_backstroke_lc",
+      label: `100m_backstroke_lc_${swimmer.id}`,
       url: createUrl( resultsBaseUrl, {
         ...resultsParams( swimmer ),
         ...{ tstroke: STROKE.BACKSTROKE_100M, tcourse: POOLS.LONG },
@@ -439,7 +439,7 @@ const getPages = ( swimmer: Swimmer ) => {
       type: "results"
     },
     {
-      label: "50m_freestyle_sc",
+      label: `50m_freestyle_sc_${swimmer.id}`,
       url: createUrl( resultsBaseUrl, {
         ...resultsParams( swimmer ),
         ...{ tstroke: STROKE.FREESTYLE_50M, tcourse: POOLS.SHORT },
@@ -447,7 +447,7 @@ const getPages = ( swimmer: Swimmer ) => {
       type: "results"
     },
     {
-      label: "100m_freestyle_sc",
+      label: `100m_freestyle_sc_${swimmer.id}`,
       url: createUrl( resultsBaseUrl, {
         ...resultsParams( swimmer ),
         ...{ tstroke: STROKE.FREESTYLE_100M, tcourse: POOLS.SHORT },
@@ -455,7 +455,7 @@ const getPages = ( swimmer: Swimmer ) => {
       type: "results"
     },
     {
-      label: "50m_breaststroke_sc",
+      label: `50m_breaststroke_sc_${swimmer.id}`,
       url: createUrl( resultsBaseUrl, {
         ...resultsParams( swimmer ),
         ...{ tstroke: STROKE.BREASTSTROKE_50M, tcourse: POOLS.SHORT },
@@ -463,7 +463,7 @@ const getPages = ( swimmer: Swimmer ) => {
       type: "results"
     },
     {
-      label: "100m_breaststroke_sc",
+      label: `100m_breaststroke_sc_${swimmer.id}`,
       url: createUrl( resultsBaseUrl, {
         ...resultsParams( swimmer ),
         ...{ tstroke: STROKE.BREASTSTROKE_100M, tcourse: POOLS.SHORT },
@@ -471,7 +471,7 @@ const getPages = ( swimmer: Swimmer ) => {
       type: "results"
     },
     {
-      label: "200m_breaststroke_sc",
+      label: `200m_breaststroke_sc_${swimmer.id}`,
       url: createUrl( resultsBaseUrl, {
         ...resultsParams( swimmer ),
         ...{ tstroke: STROKE.BREASTSTROKE_200M, tcourse: POOLS.SHORT },
@@ -479,7 +479,7 @@ const getPages = ( swimmer: Swimmer ) => {
       type: "results"
     },
     {
-      label: "50m_butterfly_sc",
+      label: `50m_butterfly_sc_${swimmer.id}`,
       url: createUrl( resultsBaseUrl, {
         ...resultsParams( swimmer ),
         ...{ tstroke: STROKE.BUTTERFLY_50M, tcourse: POOLS.SHORT },
@@ -487,7 +487,7 @@ const getPages = ( swimmer: Swimmer ) => {
       type: "results"
     },
     {
-      label: "100m_butterfly_sc",
+      label: `100m_butterfly_sc_${swimmer.id}`,
       url: createUrl( resultsBaseUrl, {
         ...resultsParams( swimmer ),
         ...{ tstroke: STROKE.BUTTERFLY_100M, tcourse: POOLS.SHORT },
@@ -495,7 +495,7 @@ const getPages = ( swimmer: Swimmer ) => {
       type: "results"
     },
     {
-      label: "50m_backstroke_sc",
+      label: `50m_backstroke_sc_${swimmer.id}`,
       url: createUrl( resultsBaseUrl, {
         ...resultsParams( swimmer ),
         ...{ tstroke: STROKE.BACKSTROKE_50M, tcourse: POOLS.SHORT },
@@ -503,7 +503,7 @@ const getPages = ( swimmer: Swimmer ) => {
       type: "results"
     },
     {
-      label: "100m_backstroke_sc",
+      label: `100m_backstroke_sc_${swimmer.id}`,
       url: createUrl( resultsBaseUrl, {
         ...resultsParams( swimmer ),
         ...{ tstroke: STROKE.BACKSTROKE_100M, tcourse: POOLS.SHORT },
@@ -511,7 +511,7 @@ const getPages = ( swimmer: Swimmer ) => {
       type: "results"
     },
     {
-      label: "100m_individual_medley_sc",
+      label: `100m_individual_medley_sc_${swimmer.id}`,
       url: createUrl( resultsBaseUrl, {
         ...resultsParams( swimmer ),
         ...{ tstroke: STROKE.INDIVIDUAL_MEDLEY_100M, tcourse: POOLS.SHORT },
