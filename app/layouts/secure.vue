@@ -33,9 +33,9 @@
       "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80",
   } */
   const navigation = [
-    { name: "Performance", href: "performance", current: router.currentRoute.value.name === "performance" },
-    { name: "Results", href: "results", current: router.currentRoute.value.name === "results" },
-    { name: "Qualifying", href: "qualifying", current: router.currentRoute.value.name === "qualifying" },
+    { name: "Performance", href: "performance" },
+    { name: "Results", href: "results" },
+    { name: "Qualifying", href: "qualifying" },
   ]
   const userNavigation = [
     // { name: "Your Profile", href: "#" },
@@ -98,13 +98,15 @@
               </svg>
             </div>
             <div class="hidden sm:-my-px sm:ml-6 sm:flex sm:space-x-8">
-              <a
+              <nuxt-link
                 v-for="item in navigation"
                 :key="item.name"
                 :href="item.href"
-                :class="[item.current ? 'border-indigo-500 text-gray-900' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700', 'inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium']"
-                :aria-current="item.current ? 'page' : undefined"
-              >{{ item.name }}</a>
+                :class="[item.href === router.currentRoute.value.name ? 'border-indigo-500 text-gray-900' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700', 'inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium']"
+                :aria-current="item.href === router.currentRoute.value.name ? 'page' : undefined"
+              >
+                {{ item.name }}
+              </nuxt-link>
             </div>
           </div>
           <div class="hidden sm:ml-6 sm:flex sm:items-center pt-2">
