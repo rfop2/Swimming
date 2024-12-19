@@ -136,7 +136,7 @@
                         :key="option.id"
                         v-slot="{ active, selected }"
                         as="template"
-                        :value="swimmer"
+                        :value="option"
                       >
                         <li :class="[active ? 'bg-indigo-600 text-white' : 'text-gray-900', 'relative cursor-default select-none py-1 pl-3 pr-9']">
                           <span :class="[selected ? 'font-semibold' : 'font-normal', 'block truncate']">{{ option.name }}</span>
