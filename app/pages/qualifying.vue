@@ -6,8 +6,8 @@
   import "ag-grid-community/styles/ag-grid.css" // Mandatory CSS required by the Data Grid
   import "ag-grid-community/styles/ag-theme-quartz.css" // Optional Theme applied to the Data Grid
   import { AgGridVue } from "ag-grid-vue3" // Vue Data Grid Component
-  import { type Swimmer, secondsToTime, strokeSort, timeToSeconds, type QualifyingRow } from "lib"
-  import { addYears, getYear, subMonths } from "date-fns"
+  import { type Swimmer, secondsToTime, strokeSort, timeToSeconds, type QualifyingRow, getCompetitionAge } from "lib"
+  import { addYears, getYear, parseISO, subMonths } from "date-fns"
 
   definePageMeta( {
     layout: "secure",
@@ -179,8 +179,21 @@
     },
   ] )
 
-  const initialFilter = computed( () => String( getYear( addYears( subMonths( new Date(), 1 ), 1 ) ) ) + " " + swimmer.value.gender + " " + String( Number( swimmer.value.age ) + 1 ) )
+  const generateQuickFilter = ( swimmer: Swimmer ) => {
+    return String( getYear( addYears( subMonths( new Date(), 1 ), 1 ) ) ) + " " + swimmer.gender + " " + String( getCompetitionAge( parseISO( swimmer.birthday ) ) )
+  }
+
+  const initialFilter = generateQuickFilter( swimmer.value )
   const quickFilter = ref( initialFilter )
+
+  watch( swimmer, ( newSwimmer ) => {
+    quickFilter.value = generateQuickFilter( newSwimmer )
+  } )
+
+  const quickFilterMatcher = ( quickFilterParts: Array<string>, rowQuickFilterAggregateText: string ) => {
+    return quickFilterParts.every( element => rowQuickFilterAggregateText.split( /\n/ ).includes( element ) )
+    // return quickFilterParts.every( part => rowQuickFilterAggregateText.match( part ) )
+  }
 
   const autoSizeStrategy = {
     type: "fitGridWidth",
@@ -254,6 +267,7 @@
     <div class="mt-4 flow-root">
       <div class="overflow-x-auto">
         <ag-grid-vue
+          :quick-filter-matcher="quickFilterMatcher"
           :auto-size-strategy="autoSizeStrategy"
           :default-col-def="defaultColumnAttrs"
           :row-data="qualifying"
