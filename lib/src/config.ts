@@ -14,7 +14,7 @@ export const MAX_FETCH_INTERVAL = 120
 export const individualBaseUrl = "/individualbest/personal_best.php"
 
 export const individualParams = ( swimmer: Swimmer ) => ( {
-  mode: "L",
+  mode: "A",
   tiref: swimmer.id,
 } )
 
