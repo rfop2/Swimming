@@ -2,7 +2,7 @@
   import type { InternalApi } from "nitropack"
   import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from "@headlessui/vue"
   import { ArrowUturnLeftIcon, LinkIcon, CheckIcon, ChevronUpDownIcon } from "@heroicons/vue/24/outline"
-  import { type Swimmer, convertTime, extendedPages, secondsToTime, strokeSort } from "lib"
+  import { type Individual, type Swimmer, convertTime, extendedPages, secondsToTime, strokeSort } from "lib"
   import { addYears, differenceInCalendarMonths, getYear, subMonths } from "date-fns"
 
   definePageMeta( {
@@ -34,92 +34,122 @@
     new Set<number>()
   ) )
   )
-  const qualifyingYearInfo = computed( () => ( qualifyingInfo.value ?? [] ).filter( row => ( row.year === qualifyingYear.value && row.age === qualifyingAge.value ) ) )
 
-  type ApiResponse = InternalApi["/api/relative/:id"]["get"]
-  interface AreaDetail extends Partial<ApiResponse[number]> {
+  const areaToScope = ( area: string ) => ( area === "glos" ? "county" : ( area === "sw" ? "regional" : "national" ) )
+
+  const qualifyingYearInfo = computed( () => ( qualifyingInfo.value ?? [] ).map( row => ( { ...row, scope: areaToScope( row.area ) } ) ).filter( row => ( row.year === qualifyingYear.value && row.age === qualifyingAge.value ) ) )
+
+  type PerformanceApiResponse = InternalApi["/api/relative/:id"]["get"]
+  interface AreaDetail extends Partial<PerformanceApiResponse[number]> {
     label: string
     qualifyTime?: string
     qualified?: boolean
   }
 
-  interface RecordType {
-    key: string
-    course: string
-    stroke: string
-    distance: string
-    distanceMetres: number
-    time: number
-    time_date: string
-    age: number
-    qualifiedFor: number
+  interface QualifyingType {
     county: Partial<AreaDetail>
     regional: Partial<AreaDetail>
     national: Partial<AreaDetail>
   }
 
   const performanceUrl = computed( ()=> ( `/api/relative/${swimmer.value.id}` ) )
-  const { data: performanceRecords } = await useFetch<ApiResponse>(
+  const { data: performanceRecords } = await useFetch<PerformanceApiResponse>(
     performanceUrl,
     {
       watch: [ swimmer ],
     }
   )
 
+  type PersonalApiResponse = InternalApi["/api/personal/:id"]["get"]
+
+  const personalUrl = computed( ()=> ( `/api/personal/${swimmer.value.id}` ) )
+  const { data: personalRecords } = await useFetch<PersonalApiResponse>(
+    personalUrl,
+    {
+      watch: [ swimmer ],
+    }
+  )
+
+  interface PersonalQualifyingType extends Individual {
+    key: string
+    age: number
+    distanceMetres: number
+    qualifiedFor: number
+    qualifying: QualifyingType
+  }
+
   const records = computed( () => {
     try {
-      const recordsMap = ( performanceRecords.value ?? [] ).reduce( ( recordsMap, record ) => {
-        const { course, stroke, distance, area, position, rank, time, time_date, best, best_date, difference } = record
-        const age = differenceInCalendarMonths( new Date(), new Date( time_date ) )
+      // console.log( "PF", personalRecords.value, performanceRecords.value, qualifyingYearInfo.value )
+
+      const performanceRecordsMap = new Map<string,AreaDetail>( ( performanceRecords.value ?? [] ).map( record => {
+        const { course, stroke, distance, area, position, rank, best, best_date, difference } = record
+        const scope = area === "glos" ? "county" : ( area === "sw" ? "regional" : "national" )
+        const key = `${distance}_${stroke}_${course}_${scope}`
+        const page = Math.floor( rank / 100 ) + 1
+        const label = `${distance}_${stroke}_${swimmer.value.gender}_${course}_${swimmer.value.age}${area ? `_${area}` : ""}${page > 1 ? `-${page}` : ""}`
+        return [ key, {
+          label,
+          position,
+          rank,
+          best,
+          best_date,
+          difference
+        } ]
+      } ) )
+      // console.log( "PerfMap", performanceRecordsMap )
+
+      const qualifyingRecords = ( personalRecords.value ?? [] ).map( record => {
+        const { course, stroke, distance, date, time } = record
         const key = `${distance}_${stroke}_${course}`
-        let mergedRecord = recordsMap.get( key )
-        if ( !mergedRecord ) {
-          mergedRecord = {
-            key,
-            course,
-            stroke,
-            distance,
-            distanceMetres: Number( distance.replace( /m$/, "" ) ),
-            time,
-            time_date,
-            age,
-            qualifiedFor: 0,
+        const age = differenceInCalendarMonths( new Date(), new Date( date ) )
+        const qualifyingRecord: PersonalQualifyingType = {
+          key,
+          ...record,
+          age,
+          distanceMetres: Number( distance.replace( /m$/, "" ) ),
+          qualifiedFor: 0,
+          qualifying: {
             county: {},
             regional: {},
             national: {},
           }
         }
-        const qualifyingEntry = ( qualifyingYearInfo?.value || [] ).find( entry => (
-          entry.stroke === stroke && entry.distance === distance && entry.area === area
-        ) )
-        const qualifyRaw = qualifyingEntry ? convertTime( qualifyingEntry.course, course, stroke, distance, qualifyingEntry.time ) : undefined
-        const qualifyTime = qualifyRaw ? secondsToTime( qualifyRaw ) : undefined
-        const qualified = time <= ( qualifyRaw ?? 0 )
-        const page = Math.floor( rank / 100 ) + 1
-        const label = `${distance}_${stroke}_${swimmer.value.gender}_${course}_${swimmer.value.age}${area ? `_${area}` : ""}${page > 1 ? `-${page}` : ""}`
-        switch ( area ) {
-          case "glos" : {
-            mergedRecord.qualifiedFor = mergedRecord.qualifiedFor < 1 && qualified ? 1 : mergedRecord.qualifiedFor
-            mergedRecord.county = { label, position, rank, best, best_date, difference, qualifyTime, qualified }
-            break
+        for ( const scope of Object.keys( qualifyingRecord.qualifying ) ) {
+          const performanceRecord = performanceRecordsMap.get( `${key}_${scope}` )
+          if ( performanceRecord ) {
+            qualifyingRecord.qualifying[scope as keyof QualifyingType] = performanceRecord
           }
-          case "sw" : {
-            mergedRecord.qualifiedFor = mergedRecord.qualifiedFor < 2 && qualified ? 2 : mergedRecord.qualifiedFor
-            mergedRecord.regional = { label, position, rank, best, best_date, difference, qualifyTime, qualified }
-            break
-          }
-          default : {
-            mergedRecord.qualifiedFor = mergedRecord.qualifiedFor < 3 && qualified ? 3 : mergedRecord.qualifiedFor
-            mergedRecord.national = { label, position, rank, best, best_date, difference, qualifyTime, qualified }
-            break
+          const qualifyingEntry = ( qualifyingYearInfo?.value || [] ).find( entry => (
+            entry.stroke === stroke && entry.distance === distance && entry.scope === scope
+          ) )
+          if ( qualifyingEntry ) {
+            const qualifyRaw = qualifyingEntry ? convertTime( qualifyingEntry.course, course, stroke, distance, qualifyingEntry.time ) : undefined
+            const qualifyTime = qualifyRaw ? secondsToTime( qualifyRaw ) : undefined
+            const qualified = time <= ( qualifyRaw ?? 0 )
+            qualifyingRecord.qualifying[scope as keyof QualifyingType].qualifyTime = qualifyTime
+            qualifyingRecord.qualifying[scope as keyof QualifyingType].qualified = qualified
+            switch ( scope ) {
+              case "county" : {
+                qualifyingRecord.qualifiedFor = qualifyingRecord.qualifiedFor < 1 && qualified ? 1 : qualifyingRecord.qualifiedFor
+                break
+              }
+              case "regional" : {
+                qualifyingRecord.qualifiedFor = qualifyingRecord.qualifiedFor < 2 && qualified ? 2 : qualifyingRecord.qualifiedFor
+                break
+              }
+              default : {
+                qualifyingRecord.qualifiedFor = qualifyingRecord.qualifiedFor < 3 && qualified ? 3 : qualifyingRecord.qualifiedFor
+                break
+              }
+            }
           }
         }
-        recordsMap.set( key, mergedRecord )
-        return recordsMap
-      }, new Map<string,RecordType>() )
+        return qualifyingRecord
+      } )
+      // console.log( "QR", qualifyingRecords )
 
-      const recordArray = Array.from( recordsMap.values() )
-      recordArray.sort( ( a, b ) => {
+      qualifyingRecords.sort( ( a, b ) => {
         if ( a.course < b.course ) {
           return 1
         } else if ( a.course > b.course ) {
@@ -137,7 +167,7 @@
         }
         return 0
       } )
-      return recordArray
+      return qualifyingRecords
     } catch ( error ) {
       console.error( error )
     }
@@ -147,21 +177,21 @@
   const flattenedRecords = computed( () => ( records.value || [] ).map( record => ( {
     ...record,
     ...{
-      county_rank: record.county.rank,
-      county_best: record.county.best,
-      county_time: record.county.time,
-      county_diff: record.county.difference,
-      county_qualify: record.county.qualifyTime,
-      regional_rank: record.regional.rank,
-      regional_best: record.regional.best,
-      regional_time: record.regional.time,
-      regional_diff: record.regional.difference,
-      regional_qualify: record.regional.qualifyTime,
-      national_rank: record.national.rank,
-      national_best: record.national.best,
-      national_time: record.national.time,
-      national_diff: record.national.difference,
-      national_qualify: record.national.qualifyTime,
+      county_rank: record.qualifying.county.rank,
+      county_best: record.qualifying.county.best,
+      county_time: record.qualifying.county.time,
+      county_diff: record.qualifying.county.difference,
+      county_qualify: record.qualifying.county.qualifyTime,
+      regional_rank: record.qualifying.regional.rank,
+      regional_best: record.qualifying.regional.best,
+      regional_time: record.qualifying.regional.time,
+      regional_diff: record.qualifying.regional.difference,
+      regional_qualify: record.qualifying.regional.qualifyTime,
+      national_rank: record.qualifying.national.rank,
+      national_best: record.qualifying.national.best,
+      national_time: record.qualifying.national.time,
+      national_diff: record.qualifying.national.difference,
+      national_qualify: record.qualifying.national.qualifyTime,
     }
   } ) ) )
 
@@ -170,6 +200,7 @@
   const { updateSort, getSortIcon, sortRecords, resetSort } = useMultiSort<RecordKey>()
 
   const sortedRecords = computed( () => sortRecords( flattenedRecords.value ) )
+  // console.log( "SR", sortedRecords )
 
   const rankClass = ( rank?: number ) => {
     if ( rank ) {
@@ -297,9 +328,9 @@
                   scope="col"
                   rowSpan="2"
                   class="sortable whitespace-nowrap align-bottom px-1 py-3.5 text-right text-sm font-semibold text-gray-900"
-                  @click="updateSort('time_date')"
+                  @click="updateSort('date')"
                 >
-                  <span>Date</span><i :class="getSortIcon('time_date')" />
+                  <span>Date</span><i :class="getSortIcon('date')" />
                 </th>
                 <th
                   scope="col"
@@ -429,82 +460,82 @@
                   <span :class="`qualifiedArea${row.qualifiedFor}`">{{ row.time ? secondsToTime( row.time ) : '' }}</span>
                 </td>
                 <td :class="`whitespace-nowrap px-2 py-2 text-right text-sm text-gray-900 opacity-30 age-${row.age}`">
-                  {{ row.time_date }}
+                  {{ row.date }}
                 </td>
                 <td class="whitespace-nowrap px-2 py-2 text-right text-sm text-gray-900">
                   <span
                     class="inline-flex items-baseline"
-                    :class="rankClass( row.county.rank )"
+                    :class="rankClass( row.qualifying.county.rank )"
                   >
-                    {{ row.county.rank }}
+                    {{ row.qualifying.county.rank }}
                     <a
-                      v-if="row.county.label"
+                      v-if="row.qualifying.county.label"
                       target="_blank"
                       rel="noreferrer,nofollow"
-                      :href="pageLookup.get(row.county.label)"
+                      :href="pageLookup.get(row.qualifying.county.label)"
                     >
                       <LinkIcon class="size-3 text-gray-900" />
                     </a>
                   </span>
                 </td>
                 <td class="whitespace-nowrap px-2 py-2 text-right text-sm text-gray-500">
-                  <span class="tooltip">{{ row.county.best ? secondsToTime( row.county.best ) : '' }}<span class="tooltip-text">{{ row.county.best_date }}</span></span>
+                  <span class="tooltip">{{ row.qualifying.county.best ? secondsToTime( row.qualifying.county.best ) : '' }}<span class="tooltip-text">{{ row.qualifying.county.best_date }}</span></span>
                 </td>
                 <td class="whitespace-nowrap px-2 py-2 text-right text-sm text-gray-500">
-                  {{ row.county.difference ? secondsToTime( row.county.difference ) : '' }}
+                  {{ row.qualifying.county.difference ? secondsToTime( row.qualifying.county.difference ) : '' }}
                 </td>
                 <td class="whitespace-nowrap px-2 py-2 text-right text-sm text-gray-500">
-                  {{ row.county.qualifyTime }}
+                  {{ row.qualifying.county.qualifyTime }}
                 </td>
                 <td class="whitespace-nowrap px-2 py-2 text-right text-sm text-gray-900">
                   <span
                     class="inline-flex items-baseline"
-                    :class="rankClass( row.regional.rank )"
+                    :class="rankClass( row.qualifying.regional.rank )"
                   >
-                    {{ row.regional.rank }}
+                    {{ row.qualifying.regional.rank }}
                     <a
-                      v-if="row.regional.label"
+                      v-if="row.qualifying.regional.label"
                       target="_blank"
                       rel="noreferrer,nofollow"
-                      :href="pageLookup.get(row.regional.label)"
+                      :href="pageLookup.get(row.qualifying.regional.label)"
                     >
                       <LinkIcon class="size-3 text-gray-900" />
                     </a>
                   </span>
                 </td>
                 <td class="whitespace-nowrap px-2 py-2 text-right text-sm text-gray-500">
-                  <span class="tooltip">{{ row.regional.best ? secondsToTime( row.regional.best ) : '' }}<span class="tooltip-text">{{ row.regional.best_date }}</span></span>
+                  <span class="tooltip">{{ row.qualifying.regional.best ? secondsToTime( row.qualifying.regional.best ) : '' }}<span class="tooltip-text">{{ row.qualifying.regional.best_date }}</span></span>
                 </td>
                 <td class="whitespace-nowrap px-2 py-2 text-right text-sm text-gray-500">
-                  {{ row.regional.difference ? secondsToTime( row.regional.difference ) : '' }}
+                  {{ row.qualifying.regional.difference ? secondsToTime( row.qualifying.regional.difference ) : '' }}
                 </td>
                 <td class="whitespace-nowrap px-2 py-2 text-right text-sm text-gray-500">
-                  {{ row.regional.qualifyTime }}
+                  {{ row.qualifying.regional.qualifyTime }}
                 </td>
                 <td class="whitespace-nowrap px-2 py-2 text-right text-sm text-gray-900">
                   <span
                     class="inline-flex items-baseline"
-                    :class="rankClass( row.national.rank )"
+                    :class="rankClass( row.qualifying.national.rank )"
                   >
-                    {{ row.national.rank }}
+                    {{ row.qualifying.national.rank }}
                     <a
-                      v-if="row.national.label"
+                      v-if="row.qualifying.national.label"
                       target="_blank"
                       rel="noreferrer,nofollow"
-                      :href="pageLookup.get(row.national.label)"
+                      :href="pageLookup.get(row.qualifying.national.label)"
                     >
                       <LinkIcon class="size-3 text-gray-900" />
                     </a>
                   </span>
                 </td>
                 <td class="whitespace-nowrap px-2 py-2 text-right text-sm text-gray-500">
-                  <span class="tooltip">{{ row.national.best ? secondsToTime( row.national.best ) : '' }}<span class="tooltip-text">{{ row.national.best_date }}</span></span>
+                  <span class="tooltip">{{ row.qualifying.national.best ? secondsToTime( row.qualifying.national.best ) : '' }}<span class="tooltip-text">{{ row.qualifying.national.best_date }}</span></span>
                 </td>
                 <td class="whitespace-nowrap px-2 py-2 text-right text-sm text-gray-500">
-                  {{ row.national.difference ? secondsToTime( row.national.difference ) : '' }}
+                  {{ row.qualifying.national.difference ? secondsToTime( row.qualifying.national.difference ) : '' }}
                 </td>
                 <td class="whitespace-nowrap py-2 pl-2 pr-1 text-right text-sm text-gray-500 sm:pr-0">
-                  {{ row.national.qualifyTime }}
+                  {{ row.qualifying.national.qualifyTime }}
                 </td>
               </tr>
             </tbody>
