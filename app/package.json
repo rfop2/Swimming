@@ -34,9 +34,9 @@
     "vue-router": "^4.5.0"
   },
   "devDependencies": {
-    "@nuxt/eslint": "^0.7.6",
+    "@nuxt/eslint": "^1.1.0",
     "@primevue/nuxt-module": "^4.3.1",
-    "@stylistic/eslint-plugin": "^2.13.0",
+    "@stylistic/eslint-plugin": "^4.2.0",
     "@tailwindcss/forms": "^0.5.10",
     "@types/better-sqlite3": "^7.6.12",
     "eslint": "^9.21.0",
