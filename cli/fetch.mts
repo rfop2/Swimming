@@ -390,7 +390,9 @@ const updateData = async ( swimmer: Swimmer ) => {
   try {
     const swimmers = getSwimmers.all()
     for ( const swimmer of swimmers ) {
-      await updateData( swimmer )
+      if ( process.argv.length < 3 || process.argv[2] === swimmer.id ) {
+        await updateData( swimmer )
+      }
     }
   } catch ( error ) {
     console.error( "General error", error )
