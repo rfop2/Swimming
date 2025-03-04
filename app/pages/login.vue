@@ -1,10 +1,5 @@
 <script lang="ts" setup>
-  import type { NuxtError } from "#app"
-
-  interface ApiError {
-    message: string
-    statusCode: number
-  }
+  import type { FetchError } from "ofetch"
 
   const errString = ref<string | null>( null )
 
@@ -18,7 +13,7 @@
       } )
       await navigateTo( "/performance" )
     } catch ( error ) {
-      errString.value = ( error as NuxtError<ApiError> ).data?.message ?? null
+      errString.value = ( error as FetchError ).message ?? null
     }
   }
 </script>

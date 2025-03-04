@@ -1,13 +1,13 @@
 <script setup lang="ts">
   import type { InternalApi } from "nitropack"
-  import type { NuxtError } from "#app"
   import { XMarkIcon } from "@heroicons/vue/24/outline"
   import type { GetQuickFilterTextParams, IRowNode, NewValueParams, ValueFormatterParams, ValueGetterParams, ValueSetterParams } from "ag-grid-community"
   import "ag-grid-community/styles/ag-grid.css" // Mandatory CSS required by the Data Grid
   import "ag-grid-community/styles/ag-theme-quartz.css" // Optional Theme applied to the Data Grid
   import { AgGridVue } from "ag-grid-vue3" // Vue Data Grid Component
   import { type Swimmer, secondsToTime, strokeSort, timeToSeconds, type QualifyingRow, getCompetitionAge } from "lib"
-  import { addYears, getYear, parseISO, subMonths } from "date-fns"
+  import { addMonths, getYear, parseISO } from "date-fns"
+  import type { FetchError } from "ofetch"
 
   definePageMeta( {
     layout: "secure",
@@ -61,12 +61,6 @@
 
   const errString = ref<string | null>( null )
 
-  // Add to types???
-  interface ApiError {
-    message: string
-    statusCode: number
-  }
-
   async function reset( _e: Event ) {
     await refreshNuxtData()
     dirty.value = false
@@ -82,7 +76,7 @@
       dirty.value = false
     } catch ( error ) {
       console.error( "Error", error )
-      errString.value = ( error as NuxtError<ApiError> ).data?.message ?? null
+      errString.value = ( error as FetchError ).message ?? null
     }
   }
 
@@ -180,7 +174,8 @@
   ] )
 
   const generateQuickFilter = ( swimmer: Swimmer ) => {
-    return String( getYear( addYears( subMonths( new Date(), 1 ), 1 ) ) ) + " " + swimmer.gender + " " + String( getCompetitionAge( parseISO( swimmer.birthday ) ) )
+    const filterYear = getYear( addMonths( new Date(), 1 ) )
+    return String( filterYear ) + " " + swimmer.gender + " " + String( getCompetitionAge( parseISO( swimmer.birthday ) ) )
   }
 
   const initialFilter = generateQuickFilter( swimmer.value )

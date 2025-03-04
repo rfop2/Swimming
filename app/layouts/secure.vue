@@ -1,6 +1,7 @@
 <script setup lang="ts">
   import { Disclosure, DisclosureButton, DisclosurePanel, Listbox, ListboxButton, ListboxOption, ListboxOptions, Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/vue"
   import { Bars3Icon, BellIcon, CheckIcon, ChevronUpDownIcon, UserIcon, XMarkIcon } from "@heroicons/vue/24/outline"
+  import { FetchError } from "ofetch"
 
   const user = useAuthenticatedUser()
 
@@ -49,7 +50,7 @@
     "/api/swimmers",
   )
 
-  const swimmer = useState( "swimmer", () => ( swimmers.value && swimmers.value[0] ) || { name: "Unknown Swimmer" } )
+  const swimmer = useState( "swimmer", () => ( swimmers.value && swimmers.value[0] ) || { name: "Unknown Swimmer", id: "" } )
 
   async function logout() {
     await $fetch( "/api/user/logout", {
@@ -60,9 +61,26 @@
 
   const updated = useLastUpdate()
 
-  await callOnce( async () => {
-    updated.value = await $fetch( "/api/updated" )
-  } )
+  watch(
+    swimmer,
+    async ( newSwimmer ) => {
+      // console.log( "NS", newSwimmer )
+      if ( newSwimmer.id ) {
+        try {
+          updated.value = await $fetch( `/api/updated/${newSwimmer.id}` )
+        } catch ( error ) {
+          updated.value = "<error>"
+          if ( error instanceof FetchError ) {
+            const apiError = error as FetchError
+            if ( apiError.status === 404 ) {
+              updated.value = "<never>"
+            }
+          }
+        }
+      }
+    },
+    { immediate: true }
+  )
 </script>
 
 <template>
@@ -157,7 +175,7 @@
               </Listbox>
             </div>
             <p class="mr-2 text-sm text-gray-700">
-              Updated: {{ updated }}
+              <ClientOnly>Updated: {{ updated }}</ClientOnly>
             </p>
             <p class="mr-2 text-sm text-gray-700">
               v{{ config.public.appVersion }}

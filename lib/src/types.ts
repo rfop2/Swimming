@@ -4,6 +4,8 @@ export interface Swimmer {
   birthday: string
   age: string
   gender: string
+  county: string
+  region: string
 }
 
 export interface Individual {

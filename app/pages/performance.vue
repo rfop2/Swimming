@@ -2,8 +2,8 @@
   import type { InternalApi } from "nitropack"
   import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from "@headlessui/vue"
   import { ArrowUturnLeftIcon, LinkIcon, CheckIcon, ChevronUpDownIcon } from "@heroicons/vue/24/outline"
-  import { type Individual, type Swimmer, convertTime, extendedPages, secondsToTime, strokeSort } from "lib"
-  import { addYears, differenceInCalendarMonths, getYear, subMonths } from "date-fns"
+  import { type Individual, type QualifyingRow, type Swimmer, convertTime, extendedPages, secondsToTime, strokeSort } from "lib"
+  import { differenceInCalendarMonths, getYear, addMonths } from "date-fns"
 
   definePageMeta( {
     layout: "secure",
@@ -15,13 +15,35 @@
   const extPages = computed( () => extendedPages( swimmer.value ) )
   const pageLookup = computed( () => new Map( extPages.value.map( page => ( [ page.label, page.url.toString() ] ) ) ) )
 
-  const qualifyingYear = ref( getYear( addYears( subMonths( new Date(), 1 ), 1 ) ) )
+  const qualifyingYear = ref( getYear( addMonths( new Date(), 1 ) ) )
   const qualifyingAge = computed( () => String( Number( swimmer.value.age ) + ( qualifyingYear.value - getYear( new Date() ) ) ) )
+
+  type QualifyingApiResponse = InternalApi["/api/qualifying"]["get"]
+
+  interface ExtQualifyingRow extends QualifyingRow {
+    scope: string
+  }
+
+  // TODO - Change to use one method for identifying regions/counties
+  const areaToScope = ( area: string ) => ( area === "glos" ? "county" : ( area === "sw" ? "regional" : "national" ) )
 
   // type QualifyingApiResponse = InternalApi["/api/qualifying"]["get"]
   const { data: qualifyingInfo } = await useFetch(
     // `/api/qualifying/${year}/${AGE}`,
-    "/api/qualifying"
+    "/api/qualifying",
+    {
+      transform( records: QualifyingApiResponse ) : Array<ExtQualifyingRow> {
+        const extData = records.map( row => {
+          return {
+            ...row,
+            ...{
+              scope: areaToScope( row.area ),
+            }
+          }
+        } )
+        return extData
+      },
+    }
   )
 
   const qualifyingYears = computed( () => Array.from( ( qualifyingInfo.value ?? [] ).reduce(
@@ -34,8 +56,6 @@
     new Set<number>()
   ) )
   )
-
-  const areaToScope = ( area: string ) => ( area === "glos" ? "county" : ( area === "sw" ? "regional" : "national" ) )
 
   const qualifyingYearInfo = computed( () => ( qualifyingInfo.value ?? [] ).map( row => ( { ...row, scope: areaToScope( row.area ) } ) ).filter( row => ( row.year === qualifyingYear.value && row.age === qualifyingAge.value ) ) )
 
@@ -84,8 +104,7 @@
 
       const performanceRecordsMap = new Map<string,AreaDetail>( ( performanceRecords.value ?? [] ).map( record => {
         const { course, stroke, distance, area, position, rank, best, best_date, difference } = record
-        const scope = area === "glos" ? "county" : ( area === "sw" ? "regional" : "national" )
-        const key = `${distance}_${stroke}_${course}_${scope}`
+        const key = `${distance}_${stroke}_${course}_${area}`
         const page = Math.floor( rank / 100 ) + 1
         const label = `${distance}_${stroke}_${swimmer.value.gender}_${course}_${swimmer.value.age}${area ? `_${area}` : ""}${page > 1 ? `-${page}` : ""}`
         return [ key, {
@@ -222,7 +241,7 @@
           Performance
         </h1>
         <p class="mt-2 text-sm text-gray-700">
-          Performance in events relative to the event leader if appearing in top 100 rankings.
+          Performance in events relative to the event leader if appearing in top 100 rankings (200 for national) in the last 12 months.
         </p>
       </div>
       <div class="mt-4 sm:ml-3 sm:mt-0 sm:flex-none max-w-32">

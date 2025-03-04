@@ -7,10 +7,11 @@ import { DB_PATH } from "lib"
 const db = new Database( DB_PATH )
 db.pragma( "journal_mode = WAL" )
 
-const selectMaxCreated: Statement<unknown[], { MaxCreated: string }> = db.prepare( "SELECT MAX(created) AS MaxCreated FROM Performance" )
+const selectMaxCreated: Statement<unknown[], { MaxCreated: string }> = db.prepare( "SELECT MAX(created) AS MaxCreated FROM Performance WHERE swimmer = :id" )
 
-export default defineEventHandler( async ( _event ) => {
-  const result = selectMaxCreated.get()
+export default defineEventHandler( async ( event ) => {
+  const id = getRouterParam( event, "id" )
+  const result = selectMaxCreated.get( { id } )
   if ( !result?.MaxCreated ) {
     throw createError( { status: 404, statusText: "No records found"} )
   }
