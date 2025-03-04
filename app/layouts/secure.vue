@@ -175,7 +175,7 @@
               </Listbox>
             </div>
             <p class="mr-2 text-sm text-gray-700">
-              Updated: {{ updated }}
+              <ClientOnly>Updated: {{ updated }}</ClientOnly>
             </p>
             <p class="mr-2 text-sm text-gray-700">
               v{{ config.public.appVersion }}
