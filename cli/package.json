@@ -9,21 +9,21 @@
     "fetch": "node ./build/fetch.mjs"
   },
   "dependencies": {
-    "@node-rs/argon2": "^2.0.0",
-    "better-sqlite3": "^11.5.0",
+    "@node-rs/argon2": "^2.0.2",
+    "better-sqlite3": "^11.8.1",
     "cheerio": "^1.0.0",
     "date-fns": "^4.1.0",
-    "dotenv": "^16.4.5",
+    "dotenv": "^16.4.7",
     "lib": "file:../lib",
     "lucia": "^3.2.2",
     "node-fetch": "^3.3.2"
   },
   "devDependencies": {
-    "@stylistic/eslint-plugin": "^2.11.0",
+    "@stylistic/eslint-plugin": "^2.13.0",
     "@types/better-sqlite3": "^7.6.12",
-    "@types/node": "^22.9.1",
-    "eslint": "^9.15.0",
-    "typescript": "^5.6.3",
-    "typescript-eslint": "^8.15.0"
+    "@types/node": "^22.13.9",
+    "eslint": "^9.21.0",
+    "typescript": "^5.8.2",
+    "typescript-eslint": "^8.26.0"
   }
 }
