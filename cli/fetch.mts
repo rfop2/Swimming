@@ -133,55 +133,44 @@ const extractTableData = ( $: CheerioAPI, table: Cheerio<AnyNode> ) => {
 }
 
 const parseIndividual = ( pageInfo: PageInfo, $: CheerioAPI ) => {
+  const headers = $( "p.rnk_sj" )
   const tables = $( "[id='rankTable'] tbody" )
   const data: IndividualStats = []
-  const longCourse = extractTableData( $, $( tables[0] ) )
-  for ( const row of longCourse ) {
-    const matches = row.stroke.match( /(?<distance>\d+)\s(?<stroke>[\w\s]+)$/ )
-    if ( !matches ) {
-      throw new Error( `Can't match individual on '${row.stroke}'` )
+  tables.each( ( index, table ) => {
+    const label = $( headers[index + 1] ).text().trim()
+    let course = ""
+    if ( label === "Long Course" ) {
+      course = "lc"
+    } else if ( label === "Short Course" ) {
+      course = "sc"
+    } else {
+      throw new Error( `Unexpected table label '${label}` )
     }
-    const { distance = "", stroke = "" } = { ...matches?.groups }
 
-    const courseRow: Individual = {
-      course: "lc",
-      stroke: stroke.replace( /\s/g, "_" ).toLowerCase(),
-      distance: `${distance}m`,
-      time: timeToSeconds( row.lc_time ),
-      converted_time: timeToSeconds( row.converted_to_sc ),
-      wa_pts: Number( row.lc_wa_pts ),
-      date: format( parse( row.date, "dd/MM/yy", now ), "yyyy-MM-dd" ),
-      meet: row.meet,
-      venue: row.venue,
-      licence: row.licence,
-      level: Number( row.level ),
-    }
-    data.push( courseRow )
-  }
+    const tableData = extractTableData( $, $( table ) )
+    for ( const row of tableData ) {
+      const matches = row.stroke.match( /(?<distance>\d+)\s(?<stroke>[\w\s]+)$/ )
+      if ( !matches ) {
+        throw new Error( `Can't match individual on '${row.stroke}'` )
+      }
+      const { distance = "", stroke = "" } = { ...matches?.groups }
 
-  const shortCourse = extractTableData( $, $( tables[1] ) )
-  for ( const row of shortCourse ) {
-    const matches = row.stroke.match( /(?<distance>\d+)\s(?<stroke>[\w\s]+)$/ )
-    if ( !matches ) {
-      throw new Error( `Can't match individual on '${row.stroke}'` )
+      const courseRow: Individual = {
+        course,
+        stroke: stroke.replace( /\s/g, "_" ).toLowerCase(),
+        distance: `${distance}m`,
+        time: timeToSeconds( course === "lc" ? row.lc_time : row.sc_time ),
+        converted_time: timeToSeconds( course === "lc" ? row.converted_to_sc : row.converted_to_lc ),
+        wa_pts: Number( course === "lc" ? row.lc_wa_pts : row.sc_wa_pts ),
+        date: format( parse( row.date, "dd/MM/yy", now ), "yyyy-MM-dd" ),
+        meet: row.meet,
+        venue: row.venue,
+        licence: row.licence,
+        level: Number( row.level ),
+      }
+      data.push( courseRow )
     }
-    const { distance = "", stroke = "" } = { ...matches?.groups }
-
-    const courseRow: Individual = {
-      course: "sc",
-      stroke: stroke.replace( /\s/g, "_" ).toLowerCase(),
-      distance: `${distance}m`,
-      time: timeToSeconds( row.sc_time ),
-      converted_time: timeToSeconds( row.converted_to_lc ),
-      wa_pts: Number( row.sc_wa_pts ),
-      date: format( parse( row.date, "dd/MM/yy", now ), "yyyy-MM-dd" ),
-      meet: row.meet,
-      venue: row.venue,
-      licence: row.licence,
-      level: Number( row.level ),
-    }
-    data.push( courseRow )
-  }
+  } )
 
   return data
 }
