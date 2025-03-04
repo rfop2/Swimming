@@ -6,7 +6,7 @@
   import "ag-grid-community/styles/ag-theme-quartz.css" // Optional Theme applied to the Data Grid
   import { AgGridVue } from "ag-grid-vue3" // Vue Data Grid Component
   import { type Swimmer, secondsToTime, strokeSort, timeToSeconds, type QualifyingRow, getCompetitionAge } from "lib"
-  import { addYears, getYear, parseISO, subMonths } from "date-fns"
+  import { addMonths, getYear, parseISO } from "date-fns"
   import type { FetchError } from "ofetch"
 
   definePageMeta( {
@@ -174,7 +174,8 @@
   ] )
 
   const generateQuickFilter = ( swimmer: Swimmer ) => {
-    return String( getYear( addYears( subMonths( new Date(), 1 ), 1 ) ) ) + " " + swimmer.gender + " " + String( getCompetitionAge( parseISO( swimmer.birthday ) ) )
+    const filterYear = getYear( addMonths( new Date(), 1 ) )
+    return String( filterYear ) + " " + swimmer.gender + " " + String( getCompetitionAge( parseISO( swimmer.birthday ) ) )
   }
 
   const initialFilter = generateQuickFilter( swimmer.value )

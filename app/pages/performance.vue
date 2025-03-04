@@ -3,7 +3,7 @@
   import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from "@headlessui/vue"
   import { ArrowUturnLeftIcon, LinkIcon, CheckIcon, ChevronUpDownIcon } from "@heroicons/vue/24/outline"
   import { type Individual, type Swimmer, convertTime, extendedPages, secondsToTime, strokeSort } from "lib"
-  import { addYears, differenceInCalendarMonths, getYear, subMonths } from "date-fns"
+  import { differenceInCalendarMonths, getYear, addMonths } from "date-fns"
 
   definePageMeta( {
     layout: "secure",
@@ -15,7 +15,7 @@
   const extPages = computed( () => extendedPages( swimmer.value ) )
   const pageLookup = computed( () => new Map( extPages.value.map( page => ( [ page.label, page.url.toString() ] ) ) ) )
 
-  const qualifyingYear = ref( getYear( addYears( subMonths( new Date(), 1 ), 1 ) ) )
+  const qualifyingYear = ref( getYear( addMonths( new Date(), 1 ) ) )
   const qualifyingAge = computed( () => String( Number( swimmer.value.age ) + ( qualifyingYear.value - getYear( new Date() ) ) ) )
 
   // type QualifyingApiResponse = InternalApi["/api/qualifying"]["get"]
