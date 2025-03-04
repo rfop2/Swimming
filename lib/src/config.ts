@@ -136,6 +136,7 @@ export const EVENTS = [
   { stroke_distance: STROKE.FREESTYLE__50M, course: POOLS.LONG },
   { stroke_distance: STROKE.BREASTSTROKE__100M, course: POOLS.LONG },
   { stroke_distance: STROKE.BUTTERFLY__50M, course: POOLS.LONG },
+  { stroke_distance: STROKE.BUTTERFLY__100M, course: POOLS.LONG },
   { stroke_distance: STROKE.BACKSTROKE__100M, course: POOLS.LONG },
   // Short course
   { stroke_distance: STROKE.FREESTYLE__50M, course: POOLS.SHORT },
