@@ -24,11 +24,20 @@ import {
   insertPerformanceSql,
   insertRankingsSql,
   insertResultsSql,
-  shuffle,
   timeToSeconds,
   sleep,
   rng,
-  extendedPages,
+  createUrl,
+  individualBaseUrl,
+  individualParams,
+  rankBaseUrl,
+  globalRankParams,
+  nationalRankParams,
+  regionalRankParams,
+  countyRankParams,
+  resultsBaseUrl,
+  resultsParams,
+  STROKE_DISTANCE,
 } from "lib"
 
 import type {
@@ -228,12 +237,6 @@ const parseResults = ( pageInfo: PageInfo, $: CheerioAPI ) => {
   return data
 }
 
-interface PageData {
-  individual: IndividualStats
-  ranking: Record<string,Ranking>
-  results: Record<string,Results>
-}
-
 export const fetchPage = async ( pageInfo: PageInfo ) => {
   const contentFile = CACHE_DIR + "/" + pageInfo.label
   console.log( `Processing ${pageInfo.label} -> ${pageInfo.url}` )
@@ -278,66 +281,140 @@ export const fetchPage = async ( pageInfo: PageInfo ) => {
   }
 }
 
-const fetchPages = async ( swimmer: Swimmer ) => {
-  const data: PageData = {
-    individual: [],
-    ranking: {},
-    results: {}
-  }
-  const extPages = extendedPages( swimmer )
-  for ( const pageInfo of shuffle( extPages ) ) {
-    const content = await fetchPage( pageInfo )
-    if ( content ) {
-      const $ = cheerio.load( content )
-      switch ( pageInfo.type ) {
-        case "individual": {
-          data[pageInfo.type] = parseIndividual( pageInfo, $ )
-          break
-        }
-        case "ranking" : {
-          data[pageInfo.type][pageInfo.label] = parseRanking( pageInfo, $ )
-          break
-        }
-        case "results" : {
-          data[pageInfo.type][pageInfo.label] = parseResults( pageInfo, $ )
-          break
-        }
-        default : {
-          throw new Error( `Not parser defined for page type ${pageInfo.type}` )
-        }
-      }
-    }
-  }
-  return data
-}
+const updateIndividual = async ( swimmer: Swimmer ) => {
+  console.log( `Updating individual data for swimmer '${swimmer.name}'` )
 
-const updateData = async ( swimmer: Swimmer ) => {
-  console.log( `Updating data for swimmer '${swimmer.name}'` )
-
-  const pageData = await fetchPages( swimmer )
+  const page: PageInfo = {
+    label: `individual_${swimmer.id}`,
+    url: createUrl( individualBaseUrl, individualParams( swimmer ) ),
+    type: "individual"
+  }
+  const content = await fetchPage( page )
   // console.log( inspect( pageData, { depth: 5 } ) )
+  const $ = cheerio.load( content )
 
-  // Individual
-  for ( const row of pageData.individual ) {
+  const individualData = parseIndividual( page, $ )
+
+  console.log( `Got records for ${individualData.length} events` )
+  for ( const row of individualData ) {
     saveIndividual.run( { created: today, swimmer: swimmer.id, ...row } )
   }
 
-  // Rankings + Performance
-  deleteRankings.run( { created: today, gender: swimmer.gender, age: swimmer.age } )
-  for ( const [ label, ranking ] of Object.entries( pageData.ranking ) ) {
-    // 100m_backstroke_female_sc_11_glos
-    const regexp = new RegExp( `(?<distance>\\d+m)_(?<stroke>\\w+)_${swimmer.gender}_(?<course>.c)_${swimmer.age}(?:_(?<area>\\w+))?(?:-(?<page>\\d+))?` )
-    const matches = label.match( regexp )
-    if ( !matches ) {
-      throw new Error( `Can't match ranking on '${label}'` )
-    }
-    const { distance = "", stroke = "", course = "", area = "" } = { ...matches?.groups }
-    // const area = groups.area ? ( groups.area === "glos" ? "county" : "regional" ) : "national"
+  return individualData
+}
 
-    for ( const row of ranking.table ) {
-      saveRankings.run( { created: today, gender: swimmer.gender, age: swimmer.age, swimmer: "", course, stroke, distance, area, ...row } )
+const updateResults = async ( swimmer: Swimmer, individualData: Array<Individual> ) => {
+  console.log( `Updating results data for swimmer '${swimmer.name}'` )
+
+  for ( const event of individualData ) {
+    const stroke_distance = STROKE_DISTANCE[`${event.stroke}__${event.distance}`.toLocaleUpperCase() as keyof typeof STROKE_DISTANCE]
+    const course = event.course.substring( 0, 1 ).toLocaleUpperCase()
+
+    const page: PageInfo = {
+      label: `${event.distance}_${event.stroke}_${event.course}_${swimmer.id}`,
+      url: createUrl( resultsBaseUrl, {
+        ...resultsParams( swimmer ),
+        ...{ tstroke: stroke_distance, tcourse: course },
+      } ),
+      type: "results"
+    }
+
+    const content = await fetchPage( page )
+    // console.log( inspect( pageData, { depth: 5 } ) )
+    const $ = cheerio.load( content )
+
+    const resultsData = parseResults( page, $ )
+
+    const regexp = new RegExp( `(?<distance>\\d+m)_(?<stroke>\\w+)_(?<course>.c)_${swimmer.id}$` )
+    const matches = page.label.match( regexp )
+    if ( !matches ) {
+      throw new Error( `Can't match results on '${page.label}'` )
+    }
+
+    for ( const result of resultsData ) {
+      saveResults.run( { created: today, swimmer: swimmer.id, course: event.course, stroke: event.stroke, distance: event.distance, ...result } )
     }
   }
+}
+
+const updateRankings = async ( swimmer: Swimmer, individualData: Array<Individual> ) => {
+  console.log( `Updating ranking data for swimmer '${swimmer.name}'` )
+
+  deleteRankings.run( { created: today, gender: swimmer.gender, age: swimmer.age } )
+  for ( const event of individualData ) {
+    const stroke_distance = STROKE_DISTANCE[`${event.stroke}__${event.distance}`.toLocaleUpperCase() as keyof typeof STROKE_DISTANCE]
+    const course = event.course.substring( 0, 1 ).toLocaleUpperCase()
+    const pages: Array<PageInfo> = [
+      {
+        label: `${event.distance}_${event.stroke}_${swimmer.gender}_${event.course}_${swimmer.age}_national`,
+        url: createUrl( rankBaseUrl, {
+          ...{ Stroke: stroke_distance, Pool: course },
+          ...globalRankParams( swimmer ),
+          ...nationalRankParams,
+        } ),
+        type: "ranking"
+      },
+      {
+        label: `${event.distance}_${event.stroke}_${swimmer.gender}_${event.course}_${swimmer.age}_regional`,
+        url: createUrl( rankBaseUrl, {
+          ...{ Stroke: stroke_distance, Pool: course },
+          ...globalRankParams( swimmer ),
+          ...{ ...regionalRankParams, ...{ TargetRegion: swimmer.region } }
+        } ),
+        type: "ranking"
+      },
+      {
+        label: `${event.distance}_${event.stroke}_${swimmer.gender}_${event.course}_${swimmer.age}_county`,
+        url: createUrl( rankBaseUrl, {
+          ...{ Stroke: stroke_distance, Pool: course },
+          ...globalRankParams( swimmer ),
+          ...{ ...countyRankParams, ...{ TargetCounty: swimmer.county } }
+        } ),
+        type: "ranking"
+      },
+    ]
+
+    const pageCounts = {
+      N: 2,
+      D: 1,
+      C: 1,
+    }
+
+    const extraPages = []
+    for ( const page of pages ) {
+      const url = new URL( page.url )
+      const params = url.searchParams
+      const pageCount = pageCounts[params.get( "Level" ) as keyof typeof pageCounts]
+      for ( let i = 1; i < pageCount; i++ ) {
+        params.set( "StartNumber", String( 1 + ( i * 100 ) ) )
+        url.search = new URLSearchParams( params ).toString()
+        extraPages.push( Object.assign( {}, page, { label: `${page.label}-2`, url } ) )
+      }
+    }
+
+    for ( const page of pages ) {
+      const content = await fetchPage( page )
+      // console.log( inspect( pageData, { depth: 5 } ) )
+      const $ = cheerio.load( content )
+
+      const rankingData = parseRanking( page, $ )
+
+      const regexp = new RegExp( `(?<distance>\\d+m)_(?<stroke>\\w+)_${swimmer.gender}_(?<course>.c)_${swimmer.age}(?:_(?<area>\\w+))?(?:-(?<page>\\d+))?` )
+      const matches = page.label.match( regexp )
+      if ( !matches ) {
+        throw new Error( "Can't match ranking on '$page.{label}'" )
+      }
+      const { distance = "", stroke = "", course = "", area = "" } = { ...matches?.groups }
+
+      for ( const row of rankingData.table ) {
+        saveRankings.run( { created: today, gender: swimmer.gender, age: swimmer.age, swimmer: "", course, stroke, distance, area, ...row } )
+      }
+    }
+  }
+}
+
+const updatePerformance = ( swimmer: Swimmer ) => {
+  console.log( `Generating performance data for swimmer '${swimmer.name}'` )
 
   // Now generate the performance records
   const swimmerTimes = getSwimmerRankingTimes.all( { date: today, name: swimmer.name } )
@@ -362,20 +439,17 @@ const updateData = async ( swimmer: Swimmer ) => {
     deletePerformance.run( today, swimmer.id, swimmerTime.course, swimmerTime.stroke, swimmerTime.distance, swimmerTime.area )
     savePerformance.run( { created: today, swimmer: swimmer.id, course: swimmerTime.course, stroke: swimmerTime.stroke, distance: swimmerTime.distance, area: swimmerTime.area, ...record } )
   }
+}
 
-  // Results
-  for ( const [ label, results ] of Object.entries( pageData.results ) ) {
-    const regexp = new RegExp( `(?<distance>\\d+m)_(?<stroke>\\w+)_(?<course>.c)_${swimmer.id}$` )
-    const matches = label.match( regexp )
-    if ( !matches ) {
-      throw new Error( `Can't match results on '${label}'` )
-    }
-    const { distance = "", stroke = "", course = "" } = { ...matches?.groups }
+const updateData = async ( swimmer: Swimmer ) => {
+  console.log( `Updating data for swimmer '${swimmer.name}'` )
 
-    for ( const result of results ) {
-      saveResults.run( { created: today, swimmer: swimmer.id, course, stroke, distance, ...result } )
-    }
-  }
+  const individualData = await updateIndividual( swimmer )
+
+  await updateResults( swimmer, individualData )
+
+  await updateRankings( swimmer, individualData )
+  updatePerformance( swimmer )
 };
 
 ( async () => {

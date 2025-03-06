@@ -94,7 +94,7 @@ export const COUNTIES = {
   "YRKE": "Yorkshire",
 }
 
-export const STROKE = {
+export const STROKE_DISTANCE = {
   FREESTYLE__50M: "1",
   FREESTYLE__100M: "2",
   FREESTYLE__200M: "3",
@@ -116,7 +116,7 @@ export const STROKE = {
   INDIVIDUAL_MEDLEY__400M: "17",
 }
 
-export const strokeLookup = Object.fromEntries( Object.entries( STROKE ).map( ( [ k,v ] ) => [ v,k ] ) )
+export const strokeLookup = Object.fromEntries( Object.entries( STROKE_DISTANCE ).map( ( [ k,v ] ) => [ v,k ] ) )
 
 export const strokeSort: Record<string,number> = {
   freestyle: 0,
@@ -133,36 +133,32 @@ export const POOLS = {
 
 export const EVENTS = [
   // Long course
-  { stroke_distance: STROKE.FREESTYLE__50M, course: POOLS.LONG },
-  { stroke_distance: STROKE.BREASTSTROKE__100M, course: POOLS.LONG },
-  { stroke_distance: STROKE.BUTTERFLY__50M, course: POOLS.LONG },
-  { stroke_distance: STROKE.BUTTERFLY__100M, course: POOLS.LONG },
-  { stroke_distance: STROKE.BACKSTROKE__100M, course: POOLS.LONG },
+  { stroke_distance: STROKE_DISTANCE.FREESTYLE__50M, course: POOLS.LONG },
+  { stroke_distance: STROKE_DISTANCE.BREASTSTROKE__100M, course: POOLS.LONG },
+  { stroke_distance: STROKE_DISTANCE.BUTTERFLY__50M, course: POOLS.LONG },
+  { stroke_distance: STROKE_DISTANCE.BUTTERFLY__100M, course: POOLS.LONG },
+  { stroke_distance: STROKE_DISTANCE.BACKSTROKE__100M, course: POOLS.LONG },
   // Short course
-  { stroke_distance: STROKE.FREESTYLE__50M, course: POOLS.SHORT },
-  { stroke_distance: STROKE.FREESTYLE__100M, course: POOLS.SHORT },
-  { stroke_distance: STROKE.BREASTSTROKE__50M, course: POOLS.SHORT },
-  { stroke_distance: STROKE.BREASTSTROKE__100M, course: POOLS.SHORT },
-  { stroke_distance: STROKE.BREASTSTROKE__200M, course: POOLS.SHORT },
-  { stroke_distance: STROKE.BUTTERFLY__50M, course: POOLS.SHORT },
-  { stroke_distance: STROKE.BUTTERFLY__100M, course: POOLS.SHORT },
-  { stroke_distance: STROKE.BACKSTROKE__50M, course: POOLS.SHORT },
-  { stroke_distance: STROKE.BACKSTROKE__100M, course: POOLS.SHORT },
-  { stroke_distance: STROKE.INDIVIDUAL_MEDLEY__100M, course: POOLS.SHORT },
+  { stroke_distance: STROKE_DISTANCE.FREESTYLE__50M, course: POOLS.SHORT },
+  { stroke_distance: STROKE_DISTANCE.FREESTYLE__100M, course: POOLS.SHORT },
+  { stroke_distance: STROKE_DISTANCE.BREASTSTROKE__50M, course: POOLS.SHORT },
+  { stroke_distance: STROKE_DISTANCE.BREASTSTROKE__100M, course: POOLS.SHORT },
+  { stroke_distance: STROKE_DISTANCE.BREASTSTROKE__200M, course: POOLS.SHORT },
+  { stroke_distance: STROKE_DISTANCE.BUTTERFLY__50M, course: POOLS.SHORT },
+  { stroke_distance: STROKE_DISTANCE.BUTTERFLY__100M, course: POOLS.SHORT },
+  { stroke_distance: STROKE_DISTANCE.BACKSTROKE__50M, course: POOLS.SHORT },
+  { stroke_distance: STROKE_DISTANCE.BACKSTROKE__100M, course: POOLS.SHORT },
+  { stroke_distance: STROKE_DISTANCE.INDIVIDUAL_MEDLEY__100M, course: POOLS.SHORT },
 ]
 
-export const globalRankParams = ( swimmer: Swimmer ) => ( {
-  Sex: swimmer.gender.substring( 0,1 ).toUpperCase(),
+export const globalRankParams = ( swimmer: Swimmer, page = 1 ) => ( {
+  Sex: swimmer.gender.substring( 0, 1 ).toUpperCase(),
   AgeGroup: swimmer.age,
   date: new Date( new Date().getFullYear(), 11, 31 ).toLocaleDateString( "en-GB" ),
-  StartNumber: "1",
+  StartNumber: String( ( ( page - 1 ) * 100 ) + 1 ),
   RecordsToView: "100",
   TargetNationality: NATIONALITY.BRITISH,
 } )
-
-export const globalRankPage2Params = {
-  StartNumber: "101",
-}
 
 export const nationalRankParams = {
   Level: "N",

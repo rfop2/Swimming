@@ -2,7 +2,7 @@
   import type { InternalApi } from "nitropack"
   import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from "@headlessui/vue"
   import { ArrowUturnLeftIcon, LinkIcon, CheckIcon, ChevronUpDownIcon } from "@heroicons/vue/24/outline"
-  import { type Individual, type QualifyingRow, type Swimmer, convertTime, extendedPages, secondsToTime, strokeSort } from "lib"
+  import { type Individual, type QualifyingRow, STROKE_DISTANCE, type Swimmer, convertTime, countyRankParams, createUrl, globalRankParams, nationalRankParams, rankBaseUrl, regionalRankParams, secondsToTime, strokeSort } from "lib"
   import { differenceInCalendarMonths, getYear, addMonths } from "date-fns"
 
   definePageMeta( {
@@ -11,9 +11,6 @@
   } )
 
   const swimmer = useState<Swimmer>( "swimmer" )
-
-  const extPages = computed( () => extendedPages( swimmer.value ) )
-  const pageLookup = computed( () => new Map( extPages.value.map( page => ( [ page.label, page.url.toString() ] ) ) ) )
 
   const qualifyingYear = ref( getYear( addMonths( new Date(), 1 ) ) )
   const qualifyingAge = computed( () => String( Number( swimmer.value.age ) + ( qualifyingYear.value - getYear( new Date() ) ) ) )
@@ -61,7 +58,7 @@
 
   type PerformanceApiResponse = InternalApi["/api/relative/:id"]["get"]
   interface AreaDetail extends Partial<PerformanceApiResponse[number]> {
-    label: string
+    url: URL
     qualifyTime?: string
     qualified?: boolean
   }
@@ -98,6 +95,35 @@
     qualifying: QualifyingType
   }
 
+  const generateRankingUrl = ( swimmer: Swimmer, course: string, stroke: string, distance: string, area: string, page: number ) => {
+    const stroke_distance = STROKE_DISTANCE[`${stroke}__${distance}`.toLocaleUpperCase() as keyof typeof STROKE_DISTANCE]
+    const pool = course.substring( 0, 1 ).toLocaleUpperCase()
+    switch ( area ) {
+      case "national" : {
+        return createUrl( rankBaseUrl, {
+          ...{ Stroke: stroke_distance, Pool: pool },
+          ...globalRankParams( swimmer, page ),
+          ...nationalRankParams,
+        } )
+      }
+      case "regional" : {
+        return createUrl( rankBaseUrl, {
+          ...{ Stroke: stroke_distance, Pool: pool },
+          ...globalRankParams( swimmer, page ),
+          ...{ ...regionalRankParams, ...{ TargetRegion: swimmer.region } }
+        } )
+      }
+      case "county" : {
+        return createUrl( rankBaseUrl, {
+          ...{ Stroke: stroke_distance, Pool: pool },
+          ...globalRankParams( swimmer, page ),
+          ...{ ...countyRankParams, ...{ TargetCounty: swimmer.county } }
+        } )
+      }
+    }
+    throw new Error( `Can't generate ranking url from area ${area}` )
+  }
+
   const records = computed( () => {
     try {
       // console.log( "PF", personalRecords.value, performanceRecords.value, qualifyingYearInfo.value )
@@ -106,9 +132,9 @@
         const { course, stroke, distance, area, position, rank, best, best_date, difference } = record
         const key = `${distance}_${stroke}_${course}_${area}`
         const page = Math.floor( rank / 100 ) + 1
-        const label = `${distance}_${stroke}_${swimmer.value.gender}_${course}_${swimmer.value.age}${area ? `_${area}` : ""}${page > 1 ? `-${page}` : ""}`
+        const url = generateRankingUrl( swimmer.value, course, stroke, distance, area, page )
         return [ key, {
-          label,
+          url,
           position,
           rank,
           best,
@@ -488,10 +514,10 @@
                   >
                     {{ row.qualifying.county.rank }}
                     <a
-                      v-if="row.qualifying.county.label"
+                      v-if="row.qualifying.county.url"
                       target="_blank"
                       rel="noreferrer,nofollow"
-                      :href="pageLookup.get(row.qualifying.county.label)"
+                      :href="row.qualifying.county.url.toString()"
                     >
                       <LinkIcon class="size-3 text-gray-900" />
                     </a>
@@ -513,10 +539,10 @@
                   >
                     {{ row.qualifying.regional.rank }}
                     <a
-                      v-if="row.qualifying.regional.label"
+                      v-if="row.qualifying.regional.url"
                       target="_blank"
                       rel="noreferrer,nofollow"
-                      :href="pageLookup.get(row.qualifying.regional.label)"
+                      :href="row.qualifying.regional.url.toString()"
                     >
                       <LinkIcon class="size-3 text-gray-900" />
                     </a>
@@ -538,10 +564,10 @@
                   >
                     {{ row.qualifying.national.rank }}
                     <a
-                      v-if="row.qualifying.national.label"
+                      v-if="row.qualifying.national.url"
                       target="_blank"
                       rel="noreferrer,nofollow"
-                      :href="pageLookup.get(row.qualifying.national.label)"
+                      :href="row.qualifying.national.url.toString()"
                     >
                       <LinkIcon class="size-3 text-gray-900" />
                     </a>
