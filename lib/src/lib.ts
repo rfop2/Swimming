@@ -3,6 +3,7 @@ import type { AnyNode } from "domhandler"
 import type { Cheerio, CheerioAPI } from "cheerio"
 import { addMilliseconds, differenceInYears, endOfYear, format, parseISO } from "date-fns"
 import { Swimmer } from "./types.js"
+import { BASE_URL } from "./config.js"
 
 const debugEnabled = !!( process.env?.DEBUG === "true" ) || false
 
@@ -193,4 +194,10 @@ export const getCompetitionAge = ( birthdate: Date ): number => {
 
 export const getSwimmerAge = ( swimmer: Swimmer ): number => {
   return getCompetitionAge( parseISO( swimmer.birthday ) )
+}
+
+export const createUrl = ( base: string, params: Record<string, string> ) => {
+  const url = new URL( BASE_URL + base )
+  url.search = new URLSearchParams( params ).toString()
+  return url
 }
