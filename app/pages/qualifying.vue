@@ -1,7 +1,7 @@
 <script setup lang="ts">
   import type { InternalApi } from "nitropack"
   import { XMarkIcon } from "@heroicons/vue/24/outline"
-  import type { GetQuickFilterTextParams, IRowNode, NewValueParams, ValueFormatterParams, ValueGetterParams, ValueSetterParams } from "ag-grid-community"
+  import type { CellValueChangedEvent, GetQuickFilterTextParams, IRowNode, NewValueParams, ValueFormatterParams, ValueGetterParams, ValueSetterParams } from "ag-grid-community"
   import "ag-grid-community/styles/ag-grid.css" // Mandatory CSS required by the Data Grid
   import "ag-grid-community/styles/ag-theme-quartz.css" // Optional Theme applied to the Data Grid
   import { AgGridVue } from "ag-grid-vue3" // Vue Data Grid Component
@@ -270,7 +270,7 @@
           :quick-filter-text="quickFilter"
           dom-layout="autoHeight"
           class="ag-theme-quartz"
-          @cell-value-changed="( event ) => {
+          @cell-value-changed="( event: CellValueChangedEvent ) => {
             console.log( 'Data changed', event )
           }"
         />
