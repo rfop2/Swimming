@@ -1,7 +1,7 @@
 <script setup lang="ts">
   import type { InternalApi } from "nitropack"
   import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from "@headlessui/vue"
-  import { ArrowUturnLeftIcon, LinkIcon, CheckIcon, ChevronUpDownIcon } from "@heroicons/vue/24/outline"
+  import { ArrowUturnLeftIcon, LinkIcon, CheckIcon, ChevronUpDownIcon, ChartBarIcon } from "@heroicons/vue/24/outline"
   import { type Individual, type QualifyingRow, STROKE_DISTANCE, type Swimmer, convertTime, countyRankParams, createUrl, globalRankParams, nationalRankParams, rankBaseUrl, regionalRankParams, secondsToTime, strokeSort } from "lib"
   import { differenceInCalendarMonths, getYear, addMonths } from "date-fns"
 
@@ -364,6 +364,17 @@
                 <th
                   scope="col"
                   rowSpan="2"
+                  class="whitespace-nowrap align-bottom px-1 py-4 text-sm font-semibold text-gray-900"
+                >
+                  <div
+                    class="flex justify-center"
+                  >
+                    <ChartBarIcon class="size-4 text-gray-900" />
+                  </div>
+                </th>
+                <th
+                  scope="col"
+                  rowSpan="2"
                   class="sortable whitespace-nowrap align-bottom px-1 py-3.5 text-right text-sm font-semibold text-gray-900"
                   @click="updateSort('time')"
                 >
@@ -500,6 +511,13 @@
                 </td>
                 <td class="whitespace-nowrap px-2 py-2 text-sm text-gray-900">
                   {{ row.course === "lc" ? "Long" : "Short" }}
+                </td>
+                <td class="whitespace-nowrap px-2 py-2 text-sm text-gray-900">
+                  <nuxt-link
+                    :href="`/results/${row.course}/${row.stroke}/${row.distance}`"
+                  >
+                    <LinkIcon class="size-3 text-gray-900" />
+                  </nuxt-link>
                 </td>
                 <td class="whitespace-nowrap px-2 py-2 text-right text-sm text-gray-900">
                   <span :class="`qualifiedArea${row.qualifiedFor}`">{{ row.time ? secondsToTime( row.time ) : '' }}</span>
