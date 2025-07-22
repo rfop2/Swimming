@@ -72,12 +72,29 @@
     },
   ]
 
+  const route = useRoute()
+  const slug = Array.isArray( route.params.slug ) ? route.params.slug : []
+
+  // Redirect to 404 if slug exists but doesn't have exactly 3 parts
+  if ( slug.length !== 0 && slug.length !== 3 ) {
+    throw createError( { statusCode: 404, statusMessage: "Not Found" } )
+  }
+
   const selections = reactive( {
-    course: courses[1],
-    stroke: strokes[0],
-    distance: distances[0],
+    course: courses.find( option => option.value === slug[0] ) ?? courses[1],
+    stroke: strokes.find( option => option.value === slug[1] ) ?? strokes[0],
+    distance: distances.find( option => option.value === slug[2] ) ?? distances[0],
   } )
   const query = computed( () => Object.fromEntries( Object.entries( selections ).map( ( [ label, option ] ) => ( [ label, option.value ] ) ) ) )
+
+  const router = useRouter()
+
+  watch( [ selections ], ( [ newSelections ] ) => {
+    const newPath = `${route.path}/${newSelections.course.value}/${newSelections.stroke.value}/${newSelections.distance.value}`
+    if ( route.fullPath !== newPath ) {
+      router.replace( newPath )
+    }
+  }, { immediate: false } )
 
   const swimmer = useState<Swimmer>( "swimmer" )
 
