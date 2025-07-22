@@ -75,11 +75,6 @@
   const route = useRoute()
   const slug = Array.isArray( route.params.slug ) ? route.params.slug : []
 
-  // Redirect to 404 if slug exists but doesn't have exactly 3 parts
-  if ( slug.length !== 0 && slug.length !== 3 ) {
-    throw createError( { statusCode: 404, statusMessage: "Not Found" } )
-  }
-
   const selections = reactive( {
     course: courses.find( option => option.value === slug[0] ) ?? courses[1],
     stroke: strokes.find( option => option.value === slug[1] ) ?? strokes[0],
@@ -87,14 +82,14 @@
   } )
   const query = computed( () => Object.fromEntries( Object.entries( selections ).map( ( [ label, option ] ) => ( [ label, option.value ] ) ) ) )
 
-  const router = useRouter()
-
-  watch( [ selections ], ( [ newSelections ] ) => {
-    const newPath = `${route.path}/${newSelections.course.value}/${newSelections.stroke.value}/${newSelections.distance.value}`
-    if ( route.fullPath !== newPath ) {
-      router.replace( newPath )
+  const rewritten = ref( false )
+  onMounted( async () => {
+    if ( slug.length > 0 && !rewritten.value ) {
+      // Rewrite URL to /page without reloading
+      window.history.replaceState( {}, "", "/results" )
+      rewritten.value = true
     }
-  }, { immediate: false } )
+  } )
 
   const swimmer = useState<Swimmer>( "swimmer" )
 
