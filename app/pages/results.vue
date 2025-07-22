@@ -58,6 +58,18 @@
       value: "200m",
       label: "200m",
     },
+    {
+      value: "400m",
+      label: "400m",
+    },
+    {
+      value: "800m",
+      label: "800m",
+    },
+    {
+      value: "1500m",
+      label: "1500m",
+    },
   ]
 
   const selections = reactive( {
