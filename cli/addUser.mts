@@ -1,12 +1,9 @@
 #!/usr/bin/env nodemjs
 import { hash } from "@node-rs/argon2"
 import { generateId } from "lucia"
-import { webcrypto } from "node:crypto"
 import Database, { SqliteError } from "better-sqlite3"
 
 import { DB_PATH } from "lib"
-
-globalThis.crypto = webcrypto as Crypto
 
 const db = new Database( DB_PATH )
 db.pragma( "journal_mode = WAL" );
