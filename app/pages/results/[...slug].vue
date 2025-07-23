@@ -10,7 +10,7 @@
 
   definePageMeta( {
     layout: "secure",
-    // middleware: [ "protected" ]
+    middleware: [ "protected" ]
   } )
 
   const courses = [
