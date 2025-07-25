@@ -97,7 +97,7 @@ CREATE TABLE "Swimmers" (
   gender VARCHAR(16),
   county VARCHAR(16),
   region VARCHAR(16),
-   active BOOLEAN NOT NULL DEFAULT 1
+  active BOOLEAN NOT NULL DEFAULT 1
 );
 DROP VIEW IF EXISTS SwimmersView;
 CREATE VIEW SwimmersView AS SELECT id, name, birthday, strftime('%Y', 'now') - strftime('%Y', birthday ) AS age, gender, county, region, active FROM "Swimmers"
@@ -119,4 +119,18 @@ CREATE TABLE Individual (
   level INTEGER,
   UNIQUE(created, swimmer, course, stroke, distance),
   FOREIGN KEY (swimmer) REFERENCES "Swimmers"(id)
+);
+CREATE TABLE "Meets" (
+  created DATE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  id VARCHAR(8) NOT NULL PRIMARY KEY,
+  code VARCHAR(16) NOT NULL,
+  date DATE NOT NULL,
+  duration INTEGER NOT NULL,
+  name TEXT NOT NULL,
+  country VARCHAR(16) NOT NULL,
+  region VARCHAR(16) NOT NULL,
+  location VARCHAR(32),
+  course VARCHAR(8),
+  level INTEGER,
+  type VARCHAR(16)
 );
