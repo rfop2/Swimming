@@ -1,7 +1,7 @@
 #!/usr/bin/env nodemjs
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import "dotenv/config"
-import { format, parse, differenceInHours } from "date-fns"
+import { format, parse, differenceInHours, differenceInDays } from "date-fns"
 import { stat, readFile, writeFile } from "fs/promises"
 import type { AnyNode } from "domhandler"
 import * as cheerio from "cheerio"
@@ -343,6 +343,15 @@ const parseMeets = ( pageInfo: PageInfo, $: CheerioAPI ) => {
   return data
 }
 const parseMeet = ( pageInfo: PageInfo, $: CheerioAPI, meet: Meet ) => {
+  const startElem = $( "div.cl-event-date:nth-child(2)" )
+  const startParts = $( startElem ).children().map( ( i, el ) => $( el ).text().trim() ).get()
+  const startDate = parse( `${startParts[1]} ${startParts[3]}`, "dd MMM yyyy", now )
+  const endElem = $( "div.cl-event-date:nth-child(3)" )
+  const endParts = $( endElem ).children().map( ( i, el ) => $( el ).text().trim() ).get()
+  const endDate = parse( `${endParts[1]} ${endParts[3]}`, "dd MMM yyyy", now )
+
+  console.log( "SD", startDate, endDate )
+  meet.duration = 1 + differenceInDays( endDate, startDate )
   meet.code = $( ".cl-infobox > dl:nth-child(2) > dd:nth-child(2)" ).text()
   meet.location = $( ".cl-infobox > dl:nth-child(2) > dd:nth-child(8)" ).text()
 }
@@ -573,8 +582,6 @@ const updateMeet = async ( meet: Meet ) => {
   const $ = cheerio.load( content )
 
   parseMeet( page, $, meet )
-
-  console.log( meet )
 }
 
 const updateMeets = async () => {
