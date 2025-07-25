@@ -344,7 +344,29 @@ const parseMeets = ( pageInfo: PageInfo, $: CheerioAPI ) => {
   }
   return data
 }
-const parseMeet = ( pageInfo: PageInfo, $: CheerioAPI, meet: Meet ) => {
+
+type LatLon = { lat:number, lon: number }
+const locations: Record<string,LatLon | null> = {}
+
+const geocodeTown = async ( town: string ): Promise<LatLon | null> => {
+  if ( locations[town] === undefined ) {
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent( town + ", UK" )}`
+    )
+    const data = await response.json()
+    if ( data && data.length > 0 ) {
+      locations[town] = {
+        lat: parseFloat( data[0].lat ),
+        lon: parseFloat( data[0].lon ),
+      }
+    } else {
+      locations[town] = null
+    }
+  }
+  return locations[town]
+}
+
+const parseMeet = async ( pageInfo: PageInfo, $: CheerioAPI, meet: Meet ) => {
   const startElem = $( "div.cl-event-date:nth-child(2)" )
   const startParts = $( startElem ).children().map( ( i, el ) => $( el ).text().trim() ).get()
   const startDate = parse( `${startParts[1]} ${startParts[3]}`, "dd MMM yyyy", now )
@@ -356,6 +378,10 @@ const parseMeet = ( pageInfo: PageInfo, $: CheerioAPI, meet: Meet ) => {
   meet.name = $( ".cl-infobox > h2:nth-child(1)" ).text()
   meet.code = $( ".cl-infobox > dl:nth-child(2) > dd:nth-child(2)" ).text()
   meet.location = $( ".cl-infobox > dl:nth-child(2) > dd:nth-child(8)" ).text()
+
+  const coords = await geocodeTown( meet.location )
+  meet.latitude = coords ? coords.lat : null
+  meet.longitude = coords ? coords.lon : null
 }
 
 export const fetchPage = async ( pageInfo: PageInfo ) => {
@@ -582,7 +608,7 @@ const updateMeet = async ( meet: Meet ) => {
   const content = await fetchPage( page )
   const $ = cheerio.load( content )
 
-  parseMeet( page, $, meet )
+  await parseMeet( page, $, meet )
 }
 
 const updateMeets = async () => {

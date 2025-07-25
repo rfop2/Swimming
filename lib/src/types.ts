@@ -77,6 +77,8 @@ export interface Meet {
   country: string
   region: string
   location?: string
+  latitude?: number | null
+  longitude?: number | null
   course: string
   level: number
   type: string
