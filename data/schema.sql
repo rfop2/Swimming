@@ -129,8 +129,15 @@ CREATE TABLE "Meets" (
   name TEXT NOT NULL,
   country VARCHAR(16) NOT NULL,
   region VARCHAR(16) NOT NULL,
-  location VARCHAR(32),
-  course VARCHAR(8),
-  level INTEGER,
-  type VARCHAR(16)
+  location VARCHAR(32) NOT NULL,
+  course VARCHAR(8) NOT NULL,
+  level INTEGER NOT NULL,
+  type VARCHAR(16) NOT NULL
 );
+CREATE TABLE "Locations" (
+  created DATE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  location VARCHAR(32) NOT NULL PRIMARY KEY,
+  latitude VARCHAR(16),
+  longitude VARCHAR(16)
+);
+CREATE VIEW MeetsView AS SELECT id, code, date, duration, name, country, region, Meets.location, latitude, longitude, course, level, type FROM "Meets" LEFT JOIN "Locations" ON Meets.location = Locations.location;

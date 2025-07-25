@@ -43,6 +43,7 @@ import {
   meetsParams,
   BASE_URL,
   insertMeetsSql,
+  insertLocationsSql,
 } from "lib"
 
 import type {
@@ -345,25 +346,28 @@ const parseMeets = ( pageInfo: PageInfo, $: CheerioAPI ) => {
   return data
 }
 
-type LatLon = { lat:number, lon: number }
-const locations: Record<string,LatLon | null> = {}
+type LatLon = { latitude:number, longitude: number }
 
-const geocodeTown = async ( town: string ): Promise<LatLon | null> => {
-  if ( locations[town] === undefined ) {
+const getLocation = db.prepare<unknown[],LatLon>(
+  "SELECT Latitude, Longitude FROM Locations WHERE Location = :location"
+)
+const saveLocation = db.prepare( insertLocationsSql )
+
+const geocodeTown = async ( town: string ): Promise<LatLon | undefined> => {
+  let latlon = getLocation.get( { location: town } )
+  if ( latlon === undefined ) {
     const response = await fetch(
       `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent( town + ", UK" )}`
     )
     const data = await response.json()
     if ( data && data.length > 0 ) {
-      locations[town] = {
-        lat: parseFloat( data[0].lat ),
-        lon: parseFloat( data[0].lon ),
-      }
+      latlon = { latitude: Number( data[0].lat ), longitude: Number( data[0].lon ) }
+      saveLocation.run( { created: today, location: town, ...latlon } )
     } else {
-      locations[town] = null
+      saveLocation.run( { created: today, location: town, latitude: null, longitude: null } )
     }
   }
-  return locations[town]
+  return latlon
 }
 
 const parseMeet = async ( pageInfo: PageInfo, $: CheerioAPI, meet: Meet ) => {
@@ -379,9 +383,7 @@ const parseMeet = async ( pageInfo: PageInfo, $: CheerioAPI, meet: Meet ) => {
   meet.code = $( ".cl-infobox > dl:nth-child(2) > dd:nth-child(2)" ).text()
   meet.location = $( ".cl-infobox > dl:nth-child(2) > dd:nth-child(8)" ).text()
 
-  const coords = await geocodeTown( meet.location )
-  meet.latitude = coords ? coords.lat : null
-  meet.longitude = coords ? coords.lon : null
+  await geocodeTown( meet.location )
 }
 
 export const fetchPage = async ( pageInfo: PageInfo ) => {

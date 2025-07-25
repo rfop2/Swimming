@@ -275,8 +275,6 @@ export const insertMeetsSql =
   country,
   region,
   location,
-  latitude,
-  longitude,
   course,
   level,
   type
@@ -291,8 +289,6 @@ VALUES (
   :country,
   :region,
   :location,
-  :latitude,
-  :longitude,
   :course,
   :level,
   :type
@@ -305,9 +301,22 @@ ON CONFLICT(id) DO UPDATE SET
   country   = excluded.country,
   region    = excluded.region,
   location  = excluded.location,
-  latitude  = excluded.latitude,
-  longitude = excluded.longitude,
   course    = excluded.course,
   level     = excluded.level,
   type      = excluded.type
+;`
+
+export const insertLocationsSql =
+`INSERT INTO Locations (
+  created,
+  location,
+  latitude,
+  longitude
+)
+VALUES (
+  :created,
+  :location,
+  :latitude,
+  :longitude
+)
 ;`
