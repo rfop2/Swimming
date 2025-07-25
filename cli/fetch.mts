@@ -1,5 +1,4 @@
 #!/usr/bin/env nodemjs
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import "dotenv/config"
 import { format, parse, differenceInHours, differenceInDays } from "date-fns"
 import { stat, readFile, writeFile } from "fs/promises"
@@ -43,7 +42,7 @@ import {
   meetsBaseUrl,
   meetsParams,
   BASE_URL,
-  meetBaseUrl,
+  insertMeetsSql,
 } from "lib"
 
 import type {
@@ -114,6 +113,8 @@ const savePerformance = db.prepare( insertPerformanceSql )
 // resultsTableCreate.run()
 
 const saveResults = db.prepare( insertResultsSql )
+
+const saveMeets = db.prepare( insertMeetsSql )
 
 const extractTableData = ( $: CheerioAPI, table: Cheerio<AnyNode> ) => {
   // const data = await page.evaluate( ( tbody: HTMLTableSectionElement ) => {
@@ -277,7 +278,8 @@ const extractMeetsTableData = ( $: CheerioAPI, table: Cheerio<AnyNode> ) => {
         }
         case 1: {
           const details = $( valueCell ).text()
-          value = details.split( / - / )
+          // value = details.split( / - / )
+          value = ( details.match( /^(.*) - (.+)$/ ) || [ null, details, "" ] ).slice( 1 ) as [string, string]
           const anchor = $( valueCell ).find( "a" )[0]
           const link = $( anchor ).attr( "href" ) ?? ""
           value.push( link )
@@ -350,8 +352,8 @@ const parseMeet = ( pageInfo: PageInfo, $: CheerioAPI, meet: Meet ) => {
   const endParts = $( endElem ).children().map( ( i, el ) => $( el ).text().trim() ).get()
   const endDate = parse( `${endParts[1]} ${endParts[3]}`, "dd MMM yyyy", now )
 
-  console.log( "SD", startDate, endDate )
   meet.duration = 1 + differenceInDays( endDate, startDate )
+  meet.name = $( ".cl-infobox > h2:nth-child(1)" ).text()
   meet.code = $( ".cl-infobox > dl:nth-child(2) > dd:nth-child(2)" ).text()
   meet.location = $( ".cl-infobox > dl:nth-child(2) > dd:nth-child(8)" ).text()
 }
@@ -577,7 +579,6 @@ const updateMeet = async ( meet: Meet ) => {
     url: new URL( `${BASE_URL}${meetsBaseUrl}${meet.link}` ),
     type: "meet"
   }
-  console.log( page )
   const content = await fetchPage( page )
   const $ = cheerio.load( content )
 
@@ -608,12 +609,9 @@ const updateMeets = async () => {
 
     for ( const meet of meetsData ) {
       await updateMeet( meet )
-      console.log( meet )
+      // console.log( meet )
+      saveMeets.run( { created: today, ...meet } )
     }
-
-    /* for ( const row of meetsData ) {
-      saveMeets.run( { created: today, ...row } )
-    } */
 
     if ( pageNo === 1 ) {
       const pagination = $( "#eventWrapper > table:nth-child(1) > tfoot:nth-child(3) > tr:nth-child(1) > td:nth-child(1)" )
@@ -641,13 +639,15 @@ const updateMeets = async () => {
   }) */
 
   try {
-    /* const swimmers = getSwimmers.all()
+    const swimmers = getSwimmers.all()
     for ( const swimmer of swimmers ) {
       if ( process.argv.length < 3 || process.argv[2] === swimmer.id ) {
         await updateSwimmerData( swimmer )
       }
-    } */
-    await updateMeets()
+    }
+    if ( process.argv.length < 3 || process.argv[2] === "meets" ) {
+      await updateMeets()
+    }
   } catch ( error ) {
     console.error( "General error", error )
     process.exit( -1 )
