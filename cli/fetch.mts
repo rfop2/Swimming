@@ -49,6 +49,7 @@ import {
 import type {
   Individual,
   IndividualStats,
+  LatLon,
   Meet,
   Meets,
   PageInfo,
@@ -345,8 +346,6 @@ const parseMeets = ( pageInfo: PageInfo, $: CheerioAPI ) => {
   }
   return data
 }
-
-type LatLon = { latitude:number, longitude: number }
 
 const getLocation = db.prepare<unknown[],LatLon>(
   "SELECT Latitude, Longitude FROM Locations WHERE Location = :location"

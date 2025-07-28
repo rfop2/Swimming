@@ -67,6 +67,8 @@ export interface Result {
 
 export type Results = Array<Result>
 
+export type LatLon = { latitude: number, longitude: number }
+
 export interface Meet {
   id: string
   code: string
