@@ -37,6 +37,7 @@
     { name: "Performance", href: "/performance" },
     { name: "Results", href: "/results" },
     { name: "Qualifying", href: "/qualifying" },
+    { name: "Meets", href: "/meets" },
   ]
   const userNavigation = [
     // { name: "Your Profile", href: "#" },
