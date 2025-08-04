@@ -1,9 +1,20 @@
 <script setup lang="ts">
   import type { InternalApi } from "nitropack"
   import { haversineDistance, type Meet } from "lib"
-  import { addDays, parse } from "date-fns"
+  import { addDays, formatISO, parse } from "date-fns"
   import { Listbox, ListboxButton, ListboxLabel, ListboxOption, ListboxOptions } from "@headlessui/vue"
   import { CheckIcon, ChevronUpDownIcon } from "@heroicons/vue/24/outline"
+  import { ScheduleXCalendar } from '@schedule-x/vue'
+  import {
+    createCalendar,
+    createViewDay,
+    createViewList,
+    createViewMonthAgenda,
+    createViewMonthGrid,
+    createViewWeek,
+  } from '@schedule-x/calendar'
+  import type { CalendarEventExternal } from '@schedule-x/calendar'
+  import '@schedule-x/theme-default/dist/index.css'
 
   definePageMeta( {
     layout: "secure",
@@ -38,21 +49,19 @@
   )
   console.log( meets )
 
-  interface GroupedMeet {
+  interface CalendarEvent {
     id: string
     start: string
     end: string
     duration: number
-    meets: Array<ExtMeet>
-  }
-
-  interface ListedMeet extends GroupedMeet {
-    text: string
+    meet: ExtMeet
+    calendarId?: string
+    title: string
     color?: string
-    tags: Record<string, unknown>
+    location?: string
+    description?: string
+    _options?: Record<string,any>
   }
-
-  const MAX_MEETS = 2
 
   const colors = [
     {name: "Green", id: "#93c47d"},
@@ -61,6 +70,67 @@
     {name: "Red", id: "#ff5163"},
     {name: "Gray", id: "#cccccc"},
   ]
+
+  const courses = [
+    {
+      value: "",
+      label: "All Courses",
+    },
+    {
+      value: "sc",
+      label: "Short",
+    },
+    {
+      value: "lc",
+      label: "Long",
+    },
+  ]
+  const levels = [
+    {
+      value: 0,
+      label: "All Levels",
+    },
+    {
+      value: 1,
+      label: "Level 1",
+    },
+    {
+      value: 2,
+      label: "Level 2",
+    },
+    {
+      value: 3,
+      label: "Level 3",
+    },
+    {
+      value: 4,
+      label: "Level 4",
+    },
+  ]
+  const distances = [
+    {
+      value: 0,
+      label: "All Distances",
+    },
+    {
+      value: 50,
+      label: "<50 Miles",
+    },
+    {
+      value: 75,
+      label: "<75 Miles",
+    },
+    {
+      value: 100,
+      label: "<100 Miles",
+    },
+  ]
+
+  const selections = reactive( {
+    course: courses[0],
+    level: levels[0],
+    distance: distances[0],
+  } )
 
   const distanceColor = ( distance: number | null ) => {
     if ( !distance )
@@ -74,103 +144,128 @@
     return colors[3].id
   }
 
+  const distanceCalendar = ( distance: number | null ) => {
+    if ( !distance )
+      return "distanceNone"
+    if ( distance < 50 )
+      return "distance50"
+    if ( distance < 75 )
+      return "distance75"
+    if ( distance < 100 )
+      return "distance100"
+    return "distanceFar"
+  }
+
   const events = computed( () => {
-    const groupedMeets = ( meets.value ?? [] ).reduce( ( groupedMeets, meet ) => {
-      const tag = `${meet.date}`
-      if ( !groupedMeets[tag] ) {
-        groupedMeets[tag] = {
-          id: meet.id,
-          // start: formatISO( parse( meet.date, "yyyy-MM-dd", new Date() ) ),
-          start: meet.date,
-          // end: formatISO( endOfDay( addDays( parse( meet.date, "yyyy-MM-dd", new Date() ), meet.duration ? meet.duration - 1 : 0 ) ) ),
-          end: formatISO( addDays( parse( meet.date, "yyyy-MM-dd", new Date() ), meet.duration ?? 1 ), { representation: "date" } ),
-          duration: meet.duration as number,
-          meets: [ meet ]
-        }
-      } else {
-        groupedMeets[tag].meets.push( meet )
-      }
-      return groupedMeets
-    }, {} as Record<string,GroupedMeet> )
-    const listedMeets = Object.values( groupedMeets ).reduce( ( listedMeets, meetGroup ) => {
-      for ( const meet of meetGroup.meets.splice( 0, MAX_MEETS ) ) {
-        listedMeets.push( {
-          ...meetGroup,
-          text: meet.name,
-          color: distanceColor( meet.distance ),
-          tags: {
-            abc: 123,
-          },
-          meets: []
-        } )
-      }
-      if ( meetGroup.meets.length ) {
-        listedMeets.push( {
-          ...meetGroup,
-          text: `+${meetGroup.meets.length} meets`,
-          meets: meetGroup.meets,
-          tags: {},
-        } )
-      }
-      return listedMeets
-    }, [] as Array<ListedMeet> )
-    return listedMeets
+    const _ = [selections.course, selections.level, selections.distance]
+
+    const calendarEvents = ( meets.value || [] ).map( ( meet ) : CalendarEvent => ({
+      id: meet.id,
+      start: meet.date,
+      end: formatISO( addDays( parse( meet.date, "yyyy-MM-dd", new Date() ), meet.duration ?? 1 ), { representation: "date" } ),
+      duration: meet.duration as number,
+      title: meet.name,
+      // color: distanceColor( meet.distance ),
+      location: meet.location,
+      description: meet.type,
+      _options: {
+        disableDND: true,
+        disableResize: true,
+        additionalClasses: [
+          `course-${meet.course}`,
+          `level-${meet.level}`,
+        ],
+      },
+      calendarId: distanceCalendar( meet.distance ),
+      meet,
+    }) )
+    const filteredEvents = calendarEvents.filter( event => {
+      if ( selections.course.value && selections.course.value !== event.meet.course )
+        return false
+      if ( selections.level.value && selections.level.value !== event.meet.level )
+        return false
+      if ( selections.distance.value && event.meet.distance && selections.distance.value < event.meet.distance )
+        return false
+      return true
+    })
+    console.log( "FE", filteredEvents )
+    return filteredEvents
   } )
 
-  console.log( "NAV", navigator, typeof navigator )
+  watch( selections, ( newVal, oldVal ) => {
+    console.log( "NS", newVal, oldVal )
+  })
+
+  watchEffect(() => {
+    console.log("Filtered events:", events.value)
+  })
+
   console.log( events.value )
-  const startDate = ref( [ new Date() ] )
-  console.log( startDate.value )
 
-  const courses = [
-    {
-      value: "sc",
-      label: "Short",
+  console.log( "C", process.client )
+  const calendarApp = process.client ? createCalendar({
+    selectedDate: formatISO( new Date(), { representation: 'date' } ),
+    firstDayOfWeek: 1,
+    defaultView: 'month-grid',
+    views: [
+      createViewDay(),
+      createViewWeek(),
+      createViewMonthGrid(),
+      createViewMonthAgenda(),
+      createViewList(),
+    ],
+    callbacks: {
+      onEventClick(calendarEvent: CalendarEventExternal, e: UIEvent) {
+        console.log('onEventClick', calendarEvent)
+      },
+      onDoubleClickEvent(calendarEvent: CalendarEventExternal, e: UIEvent) {
+        console.log('onDoubleClickEvent', calendarEvent)
+      },
     },
-    {
-      value: "lc",
-      label: "Long",
+    calendars: {
+      distance50: {
+        colorName: "distance50",
+        lightColors: {
+          main: '#7cc87c',         // medium pastel green
+          container: '#d5f0d5',    // soft green background
+          onContainer: '#264b26',  // deep green text
+        }
+      },
+      distance75: {
+        colorName: "distance75",
+        lightColors: {
+          main: '#f9d71c',         // bright pastel yellow
+          container: '#fff5aa',    // soft yellow background
+          onContainer: '#594800',  // dark yellow-brown text
+        }
+      },
+      distance100: {
+        colorName: "distance100",
+        lightColors: {
+          main: '#f4a259',         // richer orange
+          container: '#ffe3c7',    // light orange background
+          onContainer: '#5a3200',  // dark orange-brown text
+        }
+      },
+      distanceFar: {
+        colorName: "distanceFar",
+        lightColors: {
+          main: '#e26d6d',         // deeper pastel red
+          container: '#ffd6d6',    // soft red background
+          onContainer: '#4f1d1d',  // dark red text
+        }
+      },
+      distanceNone: {
+        colorName: "distanceNone",
+        lightColors: {
+          main: '#999999',         // medium grey
+          container: '#e0e0e0',    // light grey background
+          onContainer: '#333333',  // dark grey text
+        }
+      }
     },
-  ]
-  const levels = [
-    {
-      value: "1",
-      label: "Level 1",
-    },
-    {
-      value: "2",
-      label: "Level 2",
-    },
-    {
-      value: "3",
-      label: "Level 3",
-    },
-    {
-      value: "4",
-      label: "Level 4",
-    },
-  ]
-  const distances = [
-    {
-      value: "50",
-      label: "<50 miles",
-    },
-    {
-      value: "100",
-      label: "<100 miles",
-    },
-    {
-      value: "1000",
-      label: "All distances",
-    },
-  ]
-
-  const selections = reactive( {
-    course: courses[0],
-    level: levels[0],
-    distance: distances[2],
-  } )
-
+    events: events.value,
+  }) : null
 </script>
 
 <template>
@@ -342,49 +437,24 @@
       </div>
     </div>
     <div class="mt-4 flow-root">
-      <div class="">
-        <ClientOnly>
-          <DayPilotNavigator
-            :config="{
-              selectMode: 'Month',
-              showMonths: 5,
-              skipMonths: 3,
-            }"
-            orientation="Horizontal"
-            @time-range-selected="(args: DayPilot.NavigatorTimeRangeSelectedArgs) => startDate = args.day"
-          />
-          <DayPilotMonth
-            ref="dp"
-            :config="{
-              locale: 'en-gb',
-              timeRangeSelectedHandling: 'Disabled',
-              eventDeleteHandling: 'Disabled',
-              eventMoveHandling: 'Disabled',
-              eventResizeHandling: 'Disabled',
-              eventClickHandling: 'Disabled',
-              eventRightClickHandling: 'ContextMenu',
-              contextMenu: new DayPilot.Menu({
-                items: [
-                  { text: 'Delete', onClick: (args) => { const dp = args.source.calendar; dp.events.remove(args.source); } }
-                ],
-              }),
-              startDate: startDate,
-              showMonths: 3,
-              events: events,
-            }"
-            @before-event-render="onBeforeEventRender"
-          >
-            <template #event="{event}">
-              <div class="event">
-                <CalendarEvent
-                  :event="event"
-                  :use-header="false"
-                />
-              </div>
-            </template>
-          </DayPilotMonth>
-        </ClientOnly>
-      </div>
+      <ClientOnly>
+        <ScheduleXCalendar :calendar-app="calendarApp">
+        </ScheduleXCalendar>
+      </ClientOnly>
     </div>
   </div>
 </template>
+
+<style lang="scss">
+  .sx__event {
+    & .distance-50 {
+      background-color: greenyellow !important;
+    }
+    & .distance-75 {
+      background-color: yellow !important;
+    }
+    & .distance-100 {
+      background-color: orange !important;
+    }
+  }
+</style>
