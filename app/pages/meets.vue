@@ -15,6 +15,7 @@
   } from '@schedule-x/calendar'
   import type { CalendarEventExternal } from '@schedule-x/calendar'
   import { createEventModalPlugin } from '@schedule-x/event-modal'
+  import { createEventsServicePlugin } from '@schedule-x/events-service'
   import '@schedule-x/theme-default/dist/index.css'
 
   definePageMeta( {
@@ -48,7 +49,6 @@
       },
     }
   )
-  console.log( meets )
 
   interface CalendarEvent {
     id: string
@@ -189,21 +189,11 @@
         return false
       return true
     })
-    console.log( "FE", filteredEvents )
     return filteredEvents
   } )
 
-  watch( selections, ( newVal, oldVal ) => {
-    console.log( "NS", newVal, oldVal )
-  })
-
-  watchEffect(() => {
-    console.log("Filtered events:", events.value)
-  })
-
-  console.log( events.value )
-
   const eventModal = createEventModalPlugin()
+  const eventsServicePlugin = createEventsServicePlugin();
 
   console.log( "C", process.client )
   const calendarApp = process.client ? createCalendar({
@@ -268,8 +258,17 @@
       },
     },
     events: events.value,
-    plugins: [eventModal],
+    plugins: [eventModal,eventsServicePlugin],
   }) : null
+
+  watchEffect(() => {
+    if ( process.client ) {
+      if ( eventsServicePlugin && eventsServicePlugin.set ) {
+        eventsServicePlugin.set( events.value )
+      }
+    }
+  })
+
 </script>
 
 <template>
