@@ -448,15 +448,7 @@
 </template>
 
 <style lang="scss">
-  .sx__event {
-    & .distance-50 {
-      background-color: greenyellow !important;
-    }
-    & .distance-75 {
-      background-color: yellow !important;
-    }
-    & .distance-100 {
-      background-color: orange !important;
-    }
+  .sx__month-grid-day {
+    min-height: 9em;
   }
 </style>
