@@ -12,7 +12,6 @@
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
-    "@daypilot/daypilot-lite-vue": "^4.2.1",
     "@headlessui/vue": "^1.7.23",
     "@heroicons/vue": "^2.2.0",
     "@lucia-auth/adapter-sqlite": "^3.0.2",
