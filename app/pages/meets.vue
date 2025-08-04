@@ -1,9 +1,7 @@
 <script setup lang="ts">
   import type { InternalApi } from "nitropack"
-  import type { DayPilotCalendar} from "@daypilot/daypilot-lite-vue"
-  import { DayPilotNavigator, DayPilotMonth, DayPilot } from "@daypilot/daypilot-lite-vue"
   import { haversineDistance, type Meet } from "lib"
-  import { addDays, formatISO, parse } from "date-fns"
+  import { addDays, parse } from "date-fns"
   import { Listbox, ListboxButton, ListboxLabel, ListboxOption, ListboxOptions } from "@headlessui/vue"
   import { CheckIcon, ChevronUpDownIcon } from "@heroicons/vue/24/outline"
 
@@ -121,15 +119,8 @@
 
   console.log( "NAV", navigator, typeof navigator )
   console.log( events.value )
-  const startDate = ref( DayPilot.Date.today() )
+  const startDate = ref( [ new Date() ] )
   console.log( startDate.value )
-  const dp = ref<DayPilotCalendar | null>( null )
-  watch( startDate, value => {
-    console.log( "SD", value, dp.value )
-    if ( dp.value ) {
-      dp.value.control.update()
-    }
-  } )
 
   const courses = [
     {
@@ -179,13 +170,6 @@
     level: levels[0],
     distance: distances[2],
   } )
-  // const query = computed( () => Object.fromEntries( Object.entries( selections ).map( ( [ label, option ] ) => ( [ label, option.value ] ) ) ) )
-  const onBeforeEventRender = ( args: DayPilot.SchedulerBeforeEventRenderArgs ) => {
-    args.data.barHidden = true
-    args.data.borderRadius = "5px"
-    args.data.backColor = ( args.data.color || "#cccccc" ) + "cc"
-    args.data.borderColor = "darker"
-  }
 
 </script>
 
@@ -404,17 +388,3 @@
     </div>
   </div>
 </template>
-
-<style scoped>
-/* Force navigator months to be laid out horizontally */
-.navigator >>> .navigator_main {
-  display: flex !important;
-  flex-direction: row !important;
-}
-
-/* Optional: Style each month */
-.navigator >>> .navigator_month {
-  margin-right: 8px;
-  width: 220px;
-}
-</style>
