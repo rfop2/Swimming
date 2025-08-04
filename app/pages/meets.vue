@@ -1,6 +1,7 @@
 <script setup lang="ts">
   import type { InternalApi } from "nitropack"
-  import { DayPilotNavigator, DayPilotCalendar, DayPilotMonth, DayPilot } from "@daypilot/daypilot-lite-vue"
+  import type { DayPilotCalendar} from "@daypilot/daypilot-lite-vue"
+  import { DayPilotNavigator, DayPilotMonth, DayPilot } from "@daypilot/daypilot-lite-vue"
   import { haversineDistance, type Meet } from "lib"
   import { addDays, formatISO, parse } from "date-fns"
   import { Listbox, ListboxButton, ListboxLabel, ListboxOption, ListboxOptions } from "@headlessui/vue"
@@ -178,6 +179,14 @@
     level: levels[0],
     distance: distances[2],
   } )
+  // const query = computed( () => Object.fromEntries( Object.entries( selections ).map( ( [ label, option ] ) => ( [ label, option.value ] ) ) ) )
+  const onBeforeEventRender = ( args: DayPilot.SchedulerBeforeEventRenderArgs ) => {
+    args.data.barHidden = true
+    args.data.borderRadius = "5px"
+    args.data.backColor = ( args.data.color || "#cccccc" ) + "cc"
+    args.data.borderColor = "darker"
+  }
+
 </script>
 
 <template>
@@ -353,30 +362,59 @@
         <ClientOnly>
           <DayPilotNavigator
             :config="{
-              selectMode: viewType,
-              showMonths: 3,
+              selectMode: 'Month',
+              showMonths: 5,
               skipMonths: 3,
             }"
+            orientation="Horizontal"
             @time-range-selected="(args: DayPilot.NavigatorTimeRangeSelectedArgs) => startDate = args.day"
-          />
-          <DayPilotCalendar
-            :config="{
-              viewType: 'Week',
-              startDate: startDate,
-              showMonths: 3,
-              events: events,
-            }"
           />
           <DayPilotMonth
             ref="dp"
             :config="{
+              locale: 'en-gb',
+              timeRangeSelectedHandling: 'Disabled',
+              eventDeleteHandling: 'Disabled',
+              eventMoveHandling: 'Disabled',
+              eventResizeHandling: 'Disabled',
+              eventClickHandling: 'Disabled',
+              eventRightClickHandling: 'ContextMenu',
+              contextMenu: new DayPilot.Menu({
+                items: [
+                  { text: 'Delete', onClick: (args) => { const dp = args.source.calendar; dp.events.remove(args.source); } }
+                ],
+              }),
               startDate: startDate,
               showMonths: 3,
               events: events,
             }"
-          />
+            @before-event-render="onBeforeEventRender"
+          >
+            <template #event="{event}">
+              <div class="event">
+                <CalendarEvent
+                  :event="event"
+                  :use-header="false"
+                />
+              </div>
+            </template>
+          </DayPilotMonth>
         </ClientOnly>
       </div>
     </div>
   </div>
 </template>
+
+<style scoped>
+/* Force navigator months to be laid out horizontally */
+.navigator >>> .navigator_main {
+  display: flex !important;
+  flex-direction: row !important;
+}
+
+/* Optional: Style each month */
+.navigator >>> .navigator_month {
+  margin-right: 8px;
+  width: 220px;
+}
+</style>
