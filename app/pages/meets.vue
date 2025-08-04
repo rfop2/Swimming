@@ -4,7 +4,7 @@
   import { addDays, formatISO, parse } from "date-fns"
   import { Listbox, ListboxButton, ListboxLabel, ListboxOption, ListboxOptions } from "@headlessui/vue"
   import { CheckIcon, ChevronUpDownIcon } from "@heroicons/vue/24/outline"
-  import { ScheduleXCalendar } from '@schedule-x/vue'
+  import { ScheduleXCalendar } from "@schedule-x/vue"
   import {
     createCalendar,
     createViewDay,
@@ -12,11 +12,12 @@
     createViewMonthAgenda,
     createViewMonthGrid,
     createViewWeek,
-  } from '@schedule-x/calendar'
-  import type { CalendarEventExternal } from '@schedule-x/calendar'
-  import { createEventModalPlugin } from '@schedule-x/event-modal'
-  import { createEventsServicePlugin } from '@schedule-x/events-service'
-  import '@schedule-x/theme-default/dist/index.css'
+  } from "@schedule-x/calendar"
+  import type { CalendarEventExternal } from "@schedule-x/calendar"
+  import { createEventModalPlugin } from "@schedule-x/event-modal"
+  import { createEventsServicePlugin } from "@schedule-x/events-service"
+  import "@schedule-x/theme-default/dist/index.css"
+  import CalendarModal from "~/components/CalendarModal.vue"
 
   definePageMeta( {
     layout: "secure",
@@ -50,27 +51,11 @@
     }
   )
 
-  interface CalendarEvent {
-    id: string
-    start: string
-    end: string
+  interface CalendarEvent extends CalendarEventExternal {
     duration: number
-    meet: ExtMeet
-    calendarId?: string
-    title: string
     color?: string
-    location?: string
-    description?: string
-    _options?: Record<string,any>
+    meet: ExtMeet
   }
-
-  const colors = [
-    {name: "Green", id: "#93c47d"},
-    {name: "Yellow", id: "#ffd966"},
-    {name: "Orange", id: "#f6b26b"},
-    {name: "Red", id: "#ff5163"},
-    {name: "Gray", id: "#cccccc"},
-  ]
 
   const courses = [
     {
@@ -133,18 +118,6 @@
     distance: distances[0],
   } )
 
-  const distanceColor = ( distance: number | null ) => {
-    if ( !distance )
-      return colors[colors.length - 1].id
-    if ( distance < 50 )
-      return colors[0].id
-    if ( distance < 75 )
-      return colors[1].id
-    if ( distance < 100 )
-      return colors[2].id
-    return colors[3].id
-  }
-
   const distanceCalendar = ( distance: number | null ) => {
     if ( !distance )
       return "distanceNone"
@@ -158,16 +131,16 @@
   }
 
   const events = computed( () => {
-    const _ = [selections.course, selections.level, selections.distance]
+    const _ = [ selections.course, selections.level, selections.distance ]
 
-    const calendarEvents = ( meets.value || [] ).map( ( meet ) : CalendarEvent => ({
+    const calendarEvents = ( meets.value || [] ).map( ( meet ) : CalendarEvent => ( {
       id: meet.id,
       start: meet.date,
-      end: formatISO( addDays( parse( meet.date, "yyyy-MM-dd", new Date() ), meet.duration ?? 1 ), { representation: "date" } ),
+      end: formatISO( addDays( parse( meet.date, "yyyy-MM-dd", new Date() ), ( meet.duration ?? 1 ) - 1 ), { representation: "date" } ),
       duration: meet.duration as number,
       title: meet.name,
       // color: distanceColor( meet.distance ),
-      location: `${meet.location} (~${Math.round(meet.distance||0)} miles)`,
+      location: `${meet.location} (~${Math.round( meet.distance || 0 )} miles)`,
       description: meet.type,
       _options: {
         disableDND: true,
@@ -179,7 +152,7 @@
       },
       calendarId: distanceCalendar( meet.distance ),
       meet,
-    }) )
+    } ) )
     const filteredEvents = calendarEvents.filter( event => {
       if ( selections.course.value && selections.course.value !== event.meet.course )
         return false
@@ -188,17 +161,21 @@
       if ( selections.distance.value && event.meet.distance && selections.distance.value < event.meet.distance )
         return false
       return true
-    })
+    } )
     return filteredEvents
   } )
 
-  const eventModal = createEventModalPlugin()
-  const eventsServicePlugin = createEventsServicePlugin();
+  const customComponents = {
+    eventModal: CalendarModal,
+  }
 
-  const calendarApp = process.client ? createCalendar({
-    selectedDate: formatISO( new Date(), { representation: 'date' } ),
+  const eventModal = createEventModalPlugin()
+  const eventsServicePlugin = createEventsServicePlugin()
+
+  const calendarApp = import.meta.client ? createCalendar( {
+    selectedDate: formatISO( new Date(), { representation: "date" } ),
     firstDayOfWeek: 1,
-    defaultView: 'month-grid',
+    defaultView: "month-grid",
     views: [
       createViewDay(),
       createViewWeek(),
@@ -207,66 +184,66 @@
       createViewList(),
     ],
     callbacks: {
-      onEventClick(calendarEvent: CalendarEventExternal, e: UIEvent) {
-        console.log('onEventClick', calendarEvent)
+      onEventClick( calendarEvent: CalendarEventExternal, _e: UIEvent ) {
+        console.log( "onEventClick", calendarEvent )
       },
-      onDoubleClickEvent(calendarEvent: CalendarEventExternal, e: UIEvent) {
-        console.log('onDoubleClickEvent', calendarEvent)
+      onDoubleClickEvent( calendarEvent: CalendarEventExternal, _e: UIEvent ) {
+        console.log( "onDoubleClickEvent", calendarEvent )
       },
     },
     calendars: {
       distance50: {
         colorName: "distance50",
         lightColors: {
-          main: '#7cc87c',         // medium pastel green
-          container: '#d5f0d5',    // soft green background
-          onContainer: '#264b26',  // deep green text
+          main: "#7cc87c",         // medium pastel green
+          container: "#d5f0d5",    // soft green background
+          onContainer: "#264b26",  // deep green text
         }
       },
       distance75: {
         colorName: "distance75",
         lightColors: {
-          main: '#f9d71c',         // bright pastel yellow
-          container: '#fff5aa',    // soft yellow background
-          onContainer: '#594800',  // dark yellow-brown text
+          main: "#f9d71c",         // bright pastel yellow
+          container: "#fff5aa",    // soft yellow background
+          onContainer: "#594800",  // dark yellow-brown text
         }
       },
       distance100: {
         colorName: "distance100",
         lightColors: {
-          main: '#f4a259',         // richer orange
-          container: '#ffe3c7',    // light orange background
-          onContainer: '#5a3200',  // dark orange-brown text
+          main: "#f4a259",         // richer orange
+          container: "#ffe3c7",    // light orange background
+          onContainer: "#5a3200",  // dark orange-brown text
         }
       },
       distanceFar: {
         colorName: "distanceFar",
         lightColors: {
-          main: '#e26d6d',         // deeper pastel red
-          container: '#ffd6d6',    // soft red background
-          onContainer: '#4f1d1d',  // dark red text
+          main: "#e26d6d",         // deeper pastel red
+          container: "#ffd6d6",    // soft red background
+          onContainer: "#4f1d1d",  // dark red text
         }
       },
       distanceNone: {
         colorName: "distanceNone",
         lightColors: {
-          main: '#999999',         // medium grey
-          container: '#e0e0e0',    // light grey background
-          onContainer: '#333333',  // dark grey text
+          main: "#999999",         // medium grey
+          container: "#e0e0e0",    // light grey background
+          onContainer: "#333333",  // dark grey text
         }
       },
     },
     events: events.value,
-    plugins: [eventModal,eventsServicePlugin],
-  }) : null
+    plugins: [ eventModal,eventsServicePlugin ],
+  } ) : null
 
-  watchEffect(() => {
-    if ( process.client ) {
+  watchEffect( () => {
+    if ( import.meta.client ) {
       if ( eventsServicePlugin && eventsServicePlugin.set ) {
         eventsServicePlugin.set( events.value )
       }
     }
-  })
+  } )
 
 </script>
 
@@ -440,8 +417,10 @@
     </div>
     <div class="mt-4 flow-root">
       <ClientOnly>
-        <ScheduleXCalendar :calendar-app="calendarApp">
-        </ScheduleXCalendar>
+        <ScheduleXCalendar
+          :calendar-app="calendarApp"
+          :custom-components="customComponents"
+        />
       </ClientOnly>
     </div>
   </div>
