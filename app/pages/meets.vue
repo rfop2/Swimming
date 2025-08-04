@@ -195,7 +195,6 @@
   const eventModal = createEventModalPlugin()
   const eventsServicePlugin = createEventsServicePlugin();
 
-  console.log( "C", process.client )
   const calendarApp = process.client ? createCalendar({
     selectedDate: formatISO( new Date(), { representation: 'date' } ),
     firstDayOfWeek: 1,
