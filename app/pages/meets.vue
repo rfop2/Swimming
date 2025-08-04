@@ -14,6 +14,7 @@
     createViewWeek,
   } from '@schedule-x/calendar'
   import type { CalendarEventExternal } from '@schedule-x/calendar'
+  import { createEventModalPlugin } from '@schedule-x/event-modal'
   import '@schedule-x/theme-default/dist/index.css'
 
   definePageMeta( {
@@ -166,7 +167,7 @@
       duration: meet.duration as number,
       title: meet.name,
       // color: distanceColor( meet.distance ),
-      location: meet.location,
+      location: `${meet.location} (~${Math.round(meet.distance||0)} miles)`,
       description: meet.type,
       _options: {
         disableDND: true,
@@ -201,6 +202,8 @@
   })
 
   console.log( events.value )
+
+  const eventModal = createEventModalPlugin()
 
   console.log( "C", process.client )
   const calendarApp = process.client ? createCalendar({
@@ -262,9 +265,10 @@
           container: '#e0e0e0',    // light grey background
           onContainer: '#333333',  // dark grey text
         }
-      }
+      },
     },
     events: events.value,
+    plugins: [eventModal],
   }) : null
 </script>
 
