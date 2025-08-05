@@ -1,11 +1,23 @@
 <script setup lang="ts">
   import type { InternalApi } from "nitropack"
-  import type { DayPilotCalendar} from "@daypilot/daypilot-lite-vue"
-  import { DayPilotNavigator, DayPilotMonth, DayPilot } from "@daypilot/daypilot-lite-vue"
   import { haversineDistance, type Meet } from "lib"
   import { addDays, formatISO, parse } from "date-fns"
   import { Listbox, ListboxButton, ListboxLabel, ListboxOption, ListboxOptions } from "@headlessui/vue"
   import { CheckIcon, ChevronUpDownIcon } from "@heroicons/vue/24/outline"
+  import { ScheduleXCalendar } from "@schedule-x/vue"
+  import {
+    createCalendar,
+    createViewDay,
+    createViewList,
+    createViewMonthAgenda,
+    createViewMonthGrid,
+    createViewWeek,
+  } from "@schedule-x/calendar"
+  import type { CalendarEventExternal } from "@schedule-x/calendar"
+  import { createEventModalPlugin } from "@schedule-x/event-modal"
+  import { createEventsServicePlugin } from "@schedule-x/events-service"
+  import "@schedule-x/theme-default/dist/index.css"
+  import CalendarModal from "~/components/CalendarModal.vue"
 
   definePageMeta( {
     layout: "secure",
@@ -34,104 +46,39 @@
             }
           }
         } )
+        extData.sort( ( a, b ) => {
+          // 1. Sort by date
+          if ( a.date !== b.date ) return a.date.localeCompare( b.date )
+
+          // 2. Sort by duration
+          const durationDiff = a.duration - b.duration
+          if ( durationDiff !== 0 ) return durationDiff
+
+          // 3. Sort by distance (nulls last)
+          const distanceA = a.distance ?? Infinity
+          const distanceB = b.distance ?? Infinity
+          const distanceDiff = distanceA - distanceB
+          if ( distanceDiff !== 0 ) return distanceDiff
+
+          // 4. Sort by name (alphabetically)
+          return a.name.localeCompare( b.name )
+        } )
         return extData
       },
     }
   )
-  console.log( meets )
 
-  interface GroupedMeet {
-    id: string
-    start: string
-    end: string
+  interface CalendarEvent extends CalendarEventExternal {
     duration: number
-    meets: Array<ExtMeet>
-  }
-
-  interface ListedMeet extends GroupedMeet {
-    text: string
     color?: string
-    tags: Record<string, unknown>
+    meet: ExtMeet
   }
-
-  const MAX_MEETS = 2
-
-  const colors = [
-    {name: "Green", id: "#93c47d"},
-    {name: "Yellow", id: "#ffd966"},
-    {name: "Orange", id: "#f6b26b"},
-    {name: "Red", id: "#ff5163"},
-    {name: "Gray", id: "#cccccc"},
-  ]
-
-  const distanceColor = ( distance: number | null ) => {
-    if ( !distance )
-      return colors[colors.length - 1].id
-    if ( distance < 50 )
-      return colors[0].id
-    if ( distance < 75 )
-      return colors[1].id
-    if ( distance < 100 )
-      return colors[2].id
-    return colors[3].id
-  }
-
-  const events = computed( () => {
-    const groupedMeets = ( meets.value ?? [] ).reduce( ( groupedMeets, meet ) => {
-      const tag = `${meet.date}`
-      if ( !groupedMeets[tag] ) {
-        groupedMeets[tag] = {
-          id: meet.id,
-          // start: formatISO( parse( meet.date, "yyyy-MM-dd", new Date() ) ),
-          start: meet.date,
-          // end: formatISO( endOfDay( addDays( parse( meet.date, "yyyy-MM-dd", new Date() ), meet.duration ? meet.duration - 1 : 0 ) ) ),
-          end: formatISO( addDays( parse( meet.date, "yyyy-MM-dd", new Date() ), meet.duration ?? 1 ), { representation: "date" } ),
-          duration: meet.duration as number,
-          meets: [ meet ]
-        }
-      } else {
-        groupedMeets[tag].meets.push( meet )
-      }
-      return groupedMeets
-    }, {} as Record<string,GroupedMeet> )
-    const listedMeets = Object.values( groupedMeets ).reduce( ( listedMeets, meetGroup ) => {
-      for ( const meet of meetGroup.meets.splice( 0, MAX_MEETS ) ) {
-        listedMeets.push( {
-          ...meetGroup,
-          text: meet.name,
-          color: distanceColor( meet.distance ),
-          tags: {
-            abc: 123,
-          },
-          meets: []
-        } )
-      }
-      if ( meetGroup.meets.length ) {
-        listedMeets.push( {
-          ...meetGroup,
-          text: `+${meetGroup.meets.length} meets`,
-          meets: meetGroup.meets,
-          tags: {},
-        } )
-      }
-      return listedMeets
-    }, [] as Array<ListedMeet> )
-    return listedMeets
-  } )
-
-  console.log( "NAV", navigator, typeof navigator )
-  console.log( events.value )
-  const startDate = ref( DayPilot.Date.today() )
-  console.log( startDate.value )
-  const dp = ref<DayPilotCalendar | null>( null )
-  watch( startDate, value => {
-    console.log( "SD", value, dp.value )
-    if ( dp.value ) {
-      dp.value.control.update()
-    }
-  } )
 
   const courses = [
+    {
+      value: "",
+      label: "All Courses",
+    },
     {
       value: "sc",
       label: "Short",
@@ -143,49 +90,176 @@
   ]
   const levels = [
     {
-      value: "1",
+      value: 0,
+      label: "All Levels",
+    },
+    {
+      value: 1,
       label: "Level 1",
     },
     {
-      value: "2",
+      value: 2,
       label: "Level 2",
     },
     {
-      value: "3",
+      value: 3,
       label: "Level 3",
     },
     {
-      value: "4",
+      value: 4,
       label: "Level 4",
     },
   ]
   const distances = [
     {
-      value: "50",
-      label: "<50 miles",
+      value: 0,
+      label: "All Distances",
     },
     {
-      value: "100",
-      label: "<100 miles",
+      value: 50,
+      label: "<50 Miles",
     },
     {
-      value: "1000",
-      label: "All distances",
+      value: 75,
+      label: "<75 Miles",
+    },
+    {
+      value: 100,
+      label: "<100 Miles",
     },
   ]
 
   const selections = reactive( {
     course: courses[0],
     level: levels[0],
-    distance: distances[2],
+    distance: distances[0],
   } )
-  // const query = computed( () => Object.fromEntries( Object.entries( selections ).map( ( [ label, option ] ) => ( [ label, option.value ] ) ) ) )
-  const onBeforeEventRender = ( args: DayPilot.SchedulerBeforeEventRenderArgs ) => {
-    args.data.barHidden = true
-    args.data.borderRadius = "5px"
-    args.data.backColor = ( args.data.color || "#cccccc" ) + "cc"
-    args.data.borderColor = "darker"
+
+  const distanceCalendar = ( distance: number | null ) => {
+    if ( !distance )
+      return "distanceNone"
+    if ( distance < 50 )
+      return "distance50"
+    if ( distance < 75 )
+      return "distance75"
+    if ( distance < 100 )
+      return "distance100"
+    return "distanceFar"
   }
+
+  const events = computed( () => {
+    const calendarEvents = ( meets.value || [] ).map( ( meet ) : CalendarEvent => ( {
+      id: meet.id,
+      start: meet.date,
+      end: formatISO( addDays( parse( meet.date, "yyyy-MM-dd", new Date() ), ( meet.duration ?? 1 ) - 1 ), { representation: "date" } ),
+      duration: meet.duration as number,
+      title: meet.name,
+      // color: distanceColor( meet.distance ),
+      location: `${meet.location} (~${Math.round( meet.distance || 0 )} miles)`,
+      description: meet.type,
+      _options: {
+        disableDND: true,
+        disableResize: true,
+        additionalClasses: [
+          `course-${meet.course}`,
+          `level-${meet.level}`,
+        ],
+      },
+      calendarId: distanceCalendar( meet.distance ),
+      meet,
+    } ) )
+    const filteredEvents = calendarEvents.filter( event => {
+      if ( selections.course.value && selections.course.value !== event.meet.course )
+        return false
+      if ( selections.level.value && selections.level.value !== event.meet.level )
+        return false
+      if ( selections.distance.value && event.meet.distance && selections.distance.value < event.meet.distance )
+        return false
+      return true
+    } )
+    return filteredEvents
+  } )
+
+  const customComponents = {
+    eventModal: CalendarModal,
+  }
+
+  const eventModal = createEventModalPlugin()
+  const eventsServicePlugin = createEventsServicePlugin()
+
+  const calendarApp = import.meta.client ? createCalendar( {
+    selectedDate: formatISO( new Date(), { representation: "date" } ),
+    firstDayOfWeek: 1,
+    defaultView: "month-grid",
+    views: [
+      createViewDay(),
+      createViewWeek(),
+      createViewMonthGrid(),
+      createViewMonthAgenda(),
+      createViewList(),
+    ],
+    callbacks: {
+      /* onEventClick( calendarEvent: CalendarEventExternal, _e: UIEvent ) {
+        console.log( "onEventClick", calendarEvent )
+      }, */
+      onDoubleClickEvent( calendarEvent: CalendarEventExternal, _e: UIEvent ) {
+        console.log( "onDoubleClickEvent", calendarEvent )
+        window.open( `https://www.swimmingresults.org/licensed_meets/meet.php?meet=${calendarEvent.id}&page=1&region=P&level=P&month=P&year=P`, "_blank", "noopener,noreferrer" )
+      },
+    },
+    calendars: {
+      distance50: {
+        colorName: "distance50",
+        lightColors: {
+          main: "#7cc87c",         // medium pastel green
+          container: "#d5f0d5",    // soft green background
+          onContainer: "#264b26",  // deep green text
+        }
+      },
+      distance75: {
+        colorName: "distance75",
+        lightColors: {
+          main: "#f9d71c",         // bright pastel yellow
+          container: "#fff5aa",    // soft yellow background
+          onContainer: "#594800",  // dark yellow-brown text
+        }
+      },
+      distance100: {
+        colorName: "distance100",
+        lightColors: {
+          main: "#f4a259",         // richer orange
+          container: "#ffe3c7",    // light orange background
+          onContainer: "#5a3200",  // dark orange-brown text
+        }
+      },
+      distanceFar: {
+        colorName: "distanceFar",
+        lightColors: {
+          main: "#e26d6d",         // deeper pastel red
+          container: "#ffd6d6",    // soft red background
+          onContainer: "#4f1d1d",  // dark red text
+        }
+      },
+      distanceNone: {
+        colorName: "distanceNone",
+        lightColors: {
+          main: "#999999",         // medium grey
+          container: "#e0e0e0",    // light grey background
+          onContainer: "#333333",  // dark grey text
+        }
+      },
+    },
+    events: events.value,
+    plugins: [ eventModal,eventsServicePlugin ],
+  } ) : null
+
+  watchEffect( () => {
+    if ( import.meta.client ) {
+      if ( eventsServicePlugin && eventsServicePlugin.set ) {
+        eventsServicePlugin.set( events.value )
+      }
+    }
+  } )
 
 </script>
 
@@ -358,63 +432,18 @@
       </div>
     </div>
     <div class="mt-4 flow-root">
-      <div class="">
-        <ClientOnly>
-          <DayPilotNavigator
-            :config="{
-              selectMode: 'Month',
-              showMonths: 5,
-              skipMonths: 3,
-            }"
-            orientation="Horizontal"
-            @time-range-selected="(args: DayPilot.NavigatorTimeRangeSelectedArgs) => startDate = args.day"
-          />
-          <DayPilotMonth
-            ref="dp"
-            :config="{
-              locale: 'en-gb',
-              timeRangeSelectedHandling: 'Disabled',
-              eventDeleteHandling: 'Disabled',
-              eventMoveHandling: 'Disabled',
-              eventResizeHandling: 'Disabled',
-              eventClickHandling: 'Disabled',
-              eventRightClickHandling: 'ContextMenu',
-              contextMenu: new DayPilot.Menu({
-                items: [
-                  { text: 'Delete', onClick: (args) => { const dp = args.source.calendar; dp.events.remove(args.source); } }
-                ],
-              }),
-              startDate: startDate,
-              showMonths: 3,
-              events: events,
-            }"
-            @before-event-render="onBeforeEventRender"
-          >
-            <template #event="{event}">
-              <div class="event">
-                <CalendarEvent
-                  :event="event"
-                  :use-header="false"
-                />
-              </div>
-            </template>
-          </DayPilotMonth>
-        </ClientOnly>
-      </div>
+      <ClientOnly>
+        <ScheduleXCalendar
+          :calendar-app="calendarApp"
+          :custom-components="customComponents"
+        />
+      </ClientOnly>
     </div>
   </div>
 </template>
 
-<style scoped>
-/* Force navigator months to be laid out horizontally */
-.navigator >>> .navigator_main {
-  display: flex !important;
-  flex-direction: row !important;
-}
-
-/* Optional: Style each month */
-.navigator >>> .navigator_month {
-  margin-right: 8px;
-  width: 220px;
-}
+<style lang="scss">
+  .sx__month-grid-day {
+    min-height: 9em;
+  }
 </style>
