@@ -184,11 +184,12 @@
       createViewList(),
     ],
     callbacks: {
-      onEventClick( calendarEvent: CalendarEventExternal, _e: UIEvent ) {
+      /* onEventClick( calendarEvent: CalendarEventExternal, _e: UIEvent ) {
         console.log( "onEventClick", calendarEvent )
-      },
+      }, */
       onDoubleClickEvent( calendarEvent: CalendarEventExternal, _e: UIEvent ) {
         console.log( "onDoubleClickEvent", calendarEvent )
+        window.open( `https://www.swimmingresults.org/licensed_meets/meet.php?meet=${calendarEvent.id}&page=1&region=P&level=P&month=P&year=P`, "_blank", "noopener,noreferrer" )
       },
     },
     calendars: {
