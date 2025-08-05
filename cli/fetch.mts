@@ -671,7 +671,7 @@ const updateMeets = async () => {
         await updateSwimmerData( swimmer )
       }
     }
-    if ( process.argv.length === 2 && process.argv[2] === "meets" ) {
+    if ( process.argv.length === 3 && process.argv[2] === "meets" ) {
       await updateMeets()
     }
   } catch ( error ) {
