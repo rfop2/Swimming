@@ -11,7 +11,14 @@
   <div tabindex="0" class="sx__event-modal sx__event-modal-default is-open">
     <div class="sx__has-icon sx__event-modal__title">
       <div class="sx__event-modal__color-icon sx__event-icon" :style="{ backgroundColor: `var(--sx-color-${calendarEvent.calendarId}-container)` }"/>
+        <a
+        :href="`https://www.swimmingresults.org/licensed_meets/meet.php?meet=${calendarEvent.id}&page=1&region=P&level=P&month=P&year=P`"
+        target="_blank"
+        rel="noopener,noreferrer"
+        class=""
+      >
       {{ props.calendarEvent.title }}
+    </a>
     </div>
     <div class="sx__has-icon sx__event-modal__time">
       <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="sx__event-icon">
@@ -41,7 +48,7 @@
           </defs>
         </g>
       </svg>
-      {{ props.calendarEvent.location }}
+      {{ props.calendarEvent.location }} / {{ props.calendarEvent.meet.region }}
     </div>
     <div class="sx__has-icon sx__event-modal__description">
       <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="sx__event-icon">
@@ -55,18 +62,11 @@
       </svg>
       {{ calendarEvent.description }}
     </div>
-    <div class="sx__event-modal__description">
-      <a
-        :href="`https://www.swimmingresults.org/licensed_meets/meet.php?meet=${calendarEvent.id}&page=1&region=P&level=P&month=P&year=P`"
-        target="_blank"
-        rel="noopener,noreferrer"
-        class="sx__has-icon"
-      >
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true" class="size-4 text-gray-900">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244"/>
+    <div class="sx__has-icon sx__event-modal__description">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4">
+        <path stroke-linecap="round" stroke-linejoin="round" d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z" />
       </svg>
-      <span class="">Details #{{ calendarEvent.id }}</span>
-    </a>
+      <span class="">Level {{ calendarEvent.meet.level }} / {{ calendarEvent.meet.course === "lc" ? "Long" : "Short" }} Course</span>
     </div>
   </div>
 </template>
