@@ -198,6 +198,10 @@
       createViewMonthAgenda(),
       createViewList(),
     ],
+    monthGridOptions: {
+      nEventsPerDay: 8,
+    },
+    isResponsive: true,
     callbacks: {
       /* onEventClick( calendarEvent: CalendarEventExternal, _e: UIEvent ) {
         console.log( "onEventClick", calendarEvent )
