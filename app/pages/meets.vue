@@ -46,6 +46,23 @@
             }
           }
         } )
+        extData.sort( ( a, b ) => {
+          // 1. Sort by date
+          if ( a.date !== b.date ) return a.date.localeCompare( b.date )
+
+          // 2. Sort by duration
+          const durationDiff = a.duration - b.duration
+          if ( durationDiff !== 0 ) return durationDiff
+
+          // 3. Sort by distance (nulls last)
+          const distanceA = a.distance ?? Infinity
+          const distanceB = b.distance ?? Infinity
+          const distanceDiff = distanceA - distanceB
+          if ( distanceDiff !== 0 ) return distanceDiff
+
+          // 4. Sort by name (alphabetically)
+          return a.name.localeCompare( b.name )
+        } )
         return extData
       },
     }
