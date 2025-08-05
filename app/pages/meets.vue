@@ -131,8 +131,6 @@
   }
 
   const events = computed( () => {
-    const _ = [ selections.course, selections.level, selections.distance ]
-
     const calendarEvents = ( meets.value || [] ).map( ( meet ) : CalendarEvent => ( {
       id: meet.id,
       start: meet.date,
