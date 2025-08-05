@@ -1,6 +1,6 @@
 #!/usr/bin/env nodemjs
 import "dotenv/config"
-import { format, parse, differenceInHours } from "date-fns"
+import { format, parse, differenceInHours, differenceInDays } from "date-fns"
 import { stat, readFile, writeFile } from "fs/promises"
 import type { AnyNode } from "domhandler"
 import * as cheerio from "cheerio"
@@ -10,6 +10,7 @@ import Database from "better-sqlite3"
 
 import {
   CACHE_DIR,
+  CACHE_TIME,
   MAX_FETCH_INTERVAL,
   MIN_FETCH_INTERVAL,
   USER_AGENT,
@@ -38,11 +39,18 @@ import {
   resultsBaseUrl,
   resultsParams,
   STROKE_DISTANCE,
+  meetsBaseUrl,
+  meetsParams,
+  BASE_URL,
+  insertMeetsSql,
+  insertLocationsSql,
 } from "lib"
 
 import type {
   Individual,
   IndividualStats,
+  LatLon,
+  Meet,
   PageInfo,
   Ranking,
   RankingRow,
@@ -106,6 +114,8 @@ const savePerformance = db.prepare( insertPerformanceSql )
 // resultsTableCreate.run()
 
 const saveResults = db.prepare( insertResultsSql )
+
+const saveMeets = db.prepare( insertMeetsSql )
 
 const extractTableData = ( $: CheerioAPI, table: Cheerio<AnyNode> ) => {
   // const data = await page.evaluate( ( tbody: HTMLTableSectionElement ) => {
@@ -237,6 +247,143 @@ const parseResults = ( pageInfo: PageInfo, $: CheerioAPI ) => {
   return data
 }
 
+const extractMeetsTableData = ( $: CheerioAPI, table: Cheerio<AnyNode> ) => {
+  // const data = await page.evaluate( ( tbody: HTMLTableSectionElement ) => {
+  const headers: Array<string> = []
+  const dataObject: Array<Record<string, string | string[]>> = []
+
+  const thead = table.find( "thead" )[0]
+  $( thead ).find( "tr" ).each( ( rowIndex, rowElement ) => {
+    const row = $( rowElement )
+    if ( rowIndex === 0 ) {
+      row.find( "th" ).each( ( cellIndex, cellElement ) => {
+        console.log( $( cellElement ).text() )
+        headers.push( $( cellElement ).text().trim().toLowerCase().replace( /\W+/g, "_" ) )
+      } )
+      return
+    }
+  } )
+
+  const tbody = table.find( "tbody" )[0]
+  $( tbody ).find( "tr" ).each( ( rowIndex, rowElement ) => {
+    const row = $( rowElement )
+    const valueCells = row.find( "td div" )
+    const rowData: Record<string, string | string[]> = {}
+    let headerIndex = 0
+    for ( const valueCell of valueCells ) {
+      let value: string | string[] = ""
+      switch ( headerIndex ) {
+        case 0: {
+          value = $( valueCell ).children().map( ( i, el ) => $( el ).text().trim() ).get()
+          break
+        }
+        case 1: {
+          const details = $( valueCell ).text()
+          // value = details.split( / - / )
+          value = ( details.match( /^(.*) - (.+)$/ ) || [ null, details, "" ] ).slice( 1 ) as [string, string]
+          const anchor = $( valueCell ).find( "a" )[0]
+          const link = $( anchor ).attr( "href" ) ?? ""
+          value.push( link )
+          value.push( link.match( /meet=(\d+)/ )?.[1] ?? "" )
+          break
+        }
+        case 2: {
+          const image = $( valueCell ).find( "img" )[0]
+          const src = $( image ).attr( "src" ) ?? ""
+          value = src.replace( /^.*calendar\/(?:swim-)?/, "" ).replace( /-logo\..*$/, "" )
+          break
+        }
+        case 3: {
+          const detail = $( valueCell ).html() ??  ""
+          $( valueCell ).html( detail.replace( /<br>/g, "\n" ) )
+          value = $( valueCell ).text().trim().split( "\n" )
+          break
+        }
+        default: {
+          value = $( valueCell ).text().trim()
+          break
+        }
+      }
+      rowData[headers[headerIndex++]] = value
+    }
+    dataObject.push( rowData )
+  } )
+  return dataObject
+}
+
+const parseMeets = ( pageInfo: PageInfo, $: CheerioAPI ) => {
+  const tables = $( "#eventWrapper > table:nth-child(1)" )
+  const data: Array<Partial<Meet>> = []
+  const table = extractMeetsTableData( $, $( tables[0] ) )
+  if ( table.length ) {
+    // Do any conversions
+    for ( const row of table ) {
+      console.log( row )
+      let course = ""
+      if ( row.region_level[1] === "Long Course" ) {
+        course = "lc"
+      } else if ( row.region_level[1] === "Short Course" ) {
+        course = "sc"
+      } else {
+        throw new Error( `Unexpected course '${row.region_level[1]}` )
+      }
+
+      const resultRow: Partial<Meet> = {
+        id: row.meet_name[3],
+        code: row.meet_name[1],
+        link: row.meet_name[2],
+        date: format( parse( `${row.date[0]} ${row.date[2]}`, "dd MMM yyyy", now ), "yyyy-MM-dd" ),
+        name: row.meet_name[0],
+        country: row.country as string,
+        region: row.region_level[0],
+        course,
+        level: Number( row.region_level[2].match( /Level (\d+)/ )?.[1] ?? "" ),
+        type: row.region_level[3],
+      }
+      data.push( resultRow )
+    }
+  }
+  return data
+}
+
+const getLocation = db.prepare<unknown[],LatLon>(
+  "SELECT Latitude, Longitude FROM Locations WHERE Location = :location"
+)
+const saveLocation = db.prepare( insertLocationsSql )
+
+const geocodeTown = async ( town: string ): Promise<LatLon | undefined> => {
+  let latlon = getLocation.get( { location: town } )
+  if ( latlon === undefined ) {
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent( town + ", UK" )}`
+    )
+    const data = await response.json()
+    if ( data && data.length > 0 ) {
+      latlon = { latitude: Number( data[0].lat ), longitude: Number( data[0].lon ) }
+      saveLocation.run( { created: today, location: town, ...latlon } )
+    } else {
+      saveLocation.run( { created: today, location: town, latitude: null, longitude: null } )
+    }
+  }
+  return latlon
+}
+
+const parseMeet = async ( pageInfo: PageInfo, $: CheerioAPI, meet: Partial<Meet> ) => {
+  const startElem = $( "div.cl-event-date:nth-child(2)" )
+  const startParts = $( startElem ).children().map( ( i, el ) => $( el ).text().trim() ).get()
+  const startDate = parse( `${startParts[1]} ${startParts[3]}`, "dd MMM yyyy", now )
+  const endElem = $( "div.cl-event-date:nth-child(3)" )
+  const endParts = $( endElem ).children().map( ( i, el ) => $( el ).text().trim() ).get()
+  const endDate = parse( `${endParts[1]} ${endParts[3]}`, "dd MMM yyyy", now )
+
+  meet.duration = 1 + differenceInDays( endDate, startDate )
+  meet.name = $( ".cl-infobox > h2:nth-child(1)" ).text()
+  meet.code = $( ".cl-infobox > dl:nth-child(2) > dd:nth-child(2)" ).text()
+  meet.location = $( ".cl-infobox > dl:nth-child(2) > dd:nth-child(8)" ).text()
+
+  await geocodeTown( meet.location )
+}
+
 export const fetchPage = async ( pageInfo: PageInfo ) => {
   const contentFile = CACHE_DIR + "/" + pageInfo.label
   console.log( `Processing ${pageInfo.label} -> ${pageInfo.url}` )
@@ -245,7 +392,7 @@ export const fetchPage = async ( pageInfo: PageInfo ) => {
     // Page has been cached
     const age = differenceInHours( Date.now(), stats.mtime )
     console.log( `Cached: ${age}` )
-    if ( age < 24 ) {
+    if ( age < CACHE_TIME ) {
       // Page is new enough
       console.log( `Reading ${contentFile}` )
       const content = await readFile( contentFile )
@@ -441,7 +588,7 @@ const updatePerformance = ( swimmer: Swimmer ) => {
   }
 }
 
-const updateData = async ( swimmer: Swimmer ) => {
+const updateSwimmerData = async ( swimmer: Swimmer ) => {
   console.log( `Updating data for swimmer '${swimmer.name}'` )
 
   const individualData = await updateIndividual( swimmer )
@@ -450,6 +597,62 @@ const updateData = async ( swimmer: Swimmer ) => {
 
   await updateRankings( swimmer, individualData )
   updatePerformance( swimmer )
+}
+
+const updateMeet = async ( meet: Partial<Meet> ) => {
+  const page: PageInfo = {
+    label: `meets_${meet.id}`,
+    url: new URL( `${BASE_URL}${meetsBaseUrl}${meet.link}` ),
+    type: "meet"
+  }
+  const content = await fetchPage( page )
+  const $ = cheerio.load( content )
+
+  await parseMeet( page, $, meet )
+}
+
+const updateMeets = async () => {
+  console.log( "Updating meets" )
+
+  const region = "P"
+
+  let pageNo = 1
+  let numPages = 1
+  do {
+    const page: PageInfo = {
+      label: `meets_list_${region}-${pageNo}`,
+      url: createUrl( meetsBaseUrl, meetsParams( pageNo, region ) ),
+      type: "meets"
+    }
+    const content = await fetchPage( page )
+    // console.log( inspect( pageData, { depth: 5 } ) )
+    const $ = cheerio.load( content )
+
+    const meetsData = parseMeets( page, $ )
+
+    // console.log( meetsData )
+    console.log( `Got records for ${meetsData.length} meets` )
+
+    for ( const meet of meetsData ) {
+      await updateMeet( meet )
+      // console.log( meet )
+      saveMeets.run( { created: today, ...meet } )
+    }
+
+    if ( pageNo === 1 ) {
+      const pagination = $( "#eventWrapper > table:nth-child(1) > tfoot:nth-child(3) > tr:nth-child(1) > td:nth-child(1)" )
+      const pages = pagination.text()
+
+      const regexp = new RegExp( "Page (?<currPage>\\d+) of (?<maxPages>\\d+)" )
+      const matches = pages.match( regexp )
+      if ( !matches ) {
+        throw new Error( "Can't match pages on '$page.{label}'" )
+      }
+      const { currPage = "", maxPages = "" } = { ...matches?.groups }
+      numPages = Number( maxPages )
+      console.log( "Got", currPage, maxPages )
+    }
+  } while ( ++pageNo <= numPages )
 };
 
 ( async () => {
@@ -465,8 +668,11 @@ const updateData = async ( swimmer: Swimmer ) => {
     const swimmers = getSwimmers.all()
     for ( const swimmer of swimmers ) {
       if ( process.argv.length < 3 || process.argv[2] === swimmer.id ) {
-        await updateData( swimmer )
+        await updateSwimmerData( swimmer )
       }
+    }
+    if ( process.argv.length < 3 || process.argv[2] === "meets" ) {
+      await updateMeets()
     }
   } catch ( error ) {
     console.error( "General error", error )

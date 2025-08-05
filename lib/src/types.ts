@@ -67,10 +67,29 @@ export interface Result {
 
 export type Results = Array<Result>
 
+export type LatLon = { latitude: number, longitude: number }
+
+export interface Meet {
+  id: string
+  code: string
+  link: string
+  date: string
+  duration: number
+  name: string
+  country: string
+  region: string
+  location: string
+  latitude: number | null
+  longitude: number | null
+  course: string
+  level: number
+  type: string
+}
+
 export interface PageInfo {
   label: string
   url: URL
-  type: "individual" | "ranking" | "results"
+  type: "individual" | "ranking" | "results" | "meets" | "meet"
 }
 
 export type PageData = Array<PageInfo>

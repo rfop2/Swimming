@@ -97,7 +97,7 @@ CREATE TABLE "Swimmers" (
   gender VARCHAR(16),
   county VARCHAR(16),
   region VARCHAR(16),
-   active BOOLEAN NOT NULL DEFAULT 1
+  active BOOLEAN NOT NULL DEFAULT 1
 );
 DROP VIEW IF EXISTS SwimmersView;
 CREATE VIEW SwimmersView AS SELECT id, name, birthday, strftime('%Y', 'now') - strftime('%Y', birthday ) AS age, gender, county, region, active FROM "Swimmers"
@@ -120,3 +120,24 @@ CREATE TABLE Individual (
   UNIQUE(created, swimmer, course, stroke, distance),
   FOREIGN KEY (swimmer) REFERENCES "Swimmers"(id)
 );
+CREATE TABLE "Meets" (
+  created DATE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  id VARCHAR(8) NOT NULL PRIMARY KEY,
+  code VARCHAR(16) NOT NULL,
+  date DATE NOT NULL,
+  duration INTEGER NOT NULL,
+  name TEXT NOT NULL,
+  country VARCHAR(16) NOT NULL,
+  region VARCHAR(16) NOT NULL,
+  location VARCHAR(32) NOT NULL,
+  course VARCHAR(8) NOT NULL,
+  level INTEGER NOT NULL,
+  type VARCHAR(16) NOT NULL
+);
+CREATE TABLE "Locations" (
+  created DATE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  location VARCHAR(32) NOT NULL PRIMARY KEY,
+  latitude VARCHAR(16),
+  longitude VARCHAR(16)
+);
+CREATE VIEW MeetsView AS SELECT id, code, date, duration, name, country, region, Meets.location, latitude, longitude, course, level, type FROM "Meets" LEFT JOIN "Locations" ON Meets.location = Locations.location;

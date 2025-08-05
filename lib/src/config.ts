@@ -3,6 +3,7 @@ import { Swimmer } from "./types.js"
 export const DB_DIR = "../db"
 export const DB_PATH = `${DB_DIR}/records.db`
 export const CACHE_DIR = "./cache"
+export const CACHE_TIME = 24
 export const BASE_URL = "https://www.swimmingresults.org"
 
 export const USER_AGENT =
@@ -167,4 +168,25 @@ export const resultsParams = ( swimmer: Swimmer ) => ( {
   // back: "individualbestname",
   tiref: swimmer.id,
   mode: "A",
+} )
+
+export const meetsBaseUrl = "/licensed_meets/"
+
+export const meetsParams = ( page: number, region: string ) => ( {
+  page: String( page ),
+  region,
+  level: "P",
+  month: "P",
+  year: "P",
+} )
+
+export const meetBaseUrl = `${meetsBaseUrl}/meet.php`
+
+export const meetParams = ( page: number, region: string, meet: number ) => ( {
+  meet,
+  page,
+  region,
+  level: "P",
+  month: "P",
+  year: "P",
 } )

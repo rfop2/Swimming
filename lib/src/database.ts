@@ -263,3 +263,60 @@ export const createQualifyingSql =
   time DECIMAL(8,2) NOT NULL DEFAULT 0.00,
   UNIQUE( year, age, gender, course, stroke, distance, area )
 );`
+
+export const insertMeetsSql =
+`INSERT INTO Meets (
+  created,
+  id,
+  code,
+  date,
+  duration,
+  name,
+  country,
+  region,
+  location,
+  course,
+  level,
+  type
+)
+VALUES (
+  :created,
+  :id,
+  :code,
+  :date,
+  :duration,
+  :name,
+  :country,
+  :region,
+  :location,
+  :course,
+  :level,
+  :type
+)
+ON CONFLICT(id) DO UPDATE SET
+  code      = excluded.code,
+  date      = excluded.date,
+  duration  = excluded.duration,
+  name      = excluded.name,
+  country   = excluded.country,
+  region    = excluded.region,
+  location  = excluded.location,
+  course    = excluded.course,
+  level     = excluded.level,
+  type      = excluded.type
+;`
+
+export const insertLocationsSql =
+`INSERT INTO Locations (
+  created,
+  location,
+  latitude,
+  longitude
+)
+VALUES (
+  :created,
+  :location,
+  :latitude,
+  :longitude
+)
+;`
