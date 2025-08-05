@@ -51,7 +51,6 @@ import type {
   IndividualStats,
   LatLon,
   Meet,
-  Meets,
   PageInfo,
   Ranking,
   RankingRow,
@@ -314,7 +313,7 @@ const extractMeetsTableData = ( $: CheerioAPI, table: Cheerio<AnyNode> ) => {
 
 const parseMeets = ( pageInfo: PageInfo, $: CheerioAPI ) => {
   const tables = $( "#eventWrapper > table:nth-child(1)" )
-  const data: Meets = []
+  const data: Array<Partial<Meet>> = []
   const table = extractMeetsTableData( $, $( tables[0] ) )
   if ( table.length ) {
     // Do any conversions
@@ -329,7 +328,7 @@ const parseMeets = ( pageInfo: PageInfo, $: CheerioAPI ) => {
         throw new Error( `Unexpected course '${row.region_level[1]}` )
       }
 
-      const resultRow: Meet = {
+      const resultRow: Partial<Meet> = {
         id: row.meet_name[3],
         code: row.meet_name[1],
         link: row.meet_name[2],
@@ -369,7 +368,7 @@ const geocodeTown = async ( town: string ): Promise<LatLon | undefined> => {
   return latlon
 }
 
-const parseMeet = async ( pageInfo: PageInfo, $: CheerioAPI, meet: Meet ) => {
+const parseMeet = async ( pageInfo: PageInfo, $: CheerioAPI, meet: Partial<Meet> ) => {
   const startElem = $( "div.cl-event-date:nth-child(2)" )
   const startParts = $( startElem ).children().map( ( i, el ) => $( el ).text().trim() ).get()
   const startDate = parse( `${startParts[1]} ${startParts[3]}`, "dd MMM yyyy", now )
@@ -600,7 +599,7 @@ const updateSwimmerData = async ( swimmer: Swimmer ) => {
   updatePerformance( swimmer )
 }
 
-const updateMeet = async ( meet: Meet ) => {
+const updateMeet = async ( meet: Partial<Meet> ) => {
   const page: PageInfo = {
     label: `meets_${meet.id}`,
     url: new URL( `${BASE_URL}${meetsBaseUrl}${meet.link}` ),

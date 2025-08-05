@@ -74,19 +74,17 @@ export interface Meet {
   code: string
   link: string
   date: string
-  duration?: number
+  duration: number
   name: string
   country: string
   region: string
-  location?: string
-  latitude?: number | null
-  longitude?: number | null
+  location: string
+  latitude: number | null
+  longitude: number | null
   course: string
   level: number
   type: string
 }
-
-export type Meets = Array<Meet>
 
 export interface PageInfo {
   label: string
