@@ -13,7 +13,7 @@
     createViewMonthGrid,
     createViewWeek,
   } from "@schedule-x/calendar"
-  import type { CalendarEventExternal } from "@schedule-x/calendar"
+  import type { CalendarApp, CalendarEventExternal } from "@schedule-x/calendar"
   import { createEventModalPlugin } from "@schedule-x/event-modal"
   import { createEventsServicePlugin } from "@schedule-x/events-service"
   import "@schedule-x/theme-default/dist/index.css"
@@ -434,7 +434,7 @@
     <div class="mt-4 flow-root">
       <ClientOnly>
         <ScheduleXCalendar
-          :calendar-app="calendarApp"
+          :calendar-app="calendarApp as CalendarApp"
           :custom-components="customComponents"
         />
       </ClientOnly>
