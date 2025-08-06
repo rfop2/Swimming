@@ -317,4 +317,9 @@
   .sx__month-grid-day {
     min-height: 9em;
   }
+  .course-lc {
+    .sx__month-grid-event-title {
+      font-style: italic;
+    }
+  }
 </style>
