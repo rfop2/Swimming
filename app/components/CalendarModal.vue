@@ -17,7 +17,7 @@
         rel="noopener,noreferrer"
         class=""
       >
-      {{ props.calendarEvent.title }}
+      {{ props.calendarEvent.meet.name }}
     </a>
     </div>
     <div class="sx__has-icon sx__event-modal__time">
