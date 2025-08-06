@@ -120,6 +120,14 @@ CREATE TABLE Individual (
   UNIQUE(created, swimmer, course, stroke, distance),
   FOREIGN KEY (swimmer) REFERENCES "Swimmers"(id)
 );
+DROP TABLE IF EXISTS Locations;
+CREATE TABLE "Locations" (
+  created DATE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  location VARCHAR(32) NOT NULL PRIMARY KEY,
+  latitude VARCHAR(16),
+  longitude VARCHAR(16)
+);
+DROP TABLE IF EXISTS Meets;
 CREATE TABLE "Meets" (
   created DATE NOT NULL DEFAULT CURRENT_TIMESTAMP,
   id VARCHAR(8) NOT NULL PRIMARY KEY,
@@ -134,10 +142,6 @@ CREATE TABLE "Meets" (
   level INTEGER NOT NULL,
   type VARCHAR(16) NOT NULL
 );
-CREATE TABLE "Locations" (
-  created DATE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  location VARCHAR(32) NOT NULL PRIMARY KEY,
-  latitude VARCHAR(16),
-  longitude VARCHAR(16)
-);
-CREATE VIEW MeetsView AS SELECT id, code, date, duration, name, country, region, Meets.location, latitude, longitude, course, level, type FROM "Meets" LEFT JOIN "Locations" ON Meets.location = Locations.location;
+DROP VIEW IF EXISTS MeetsView;
+CREATE VIEW MeetsView AS SELECT id, code, date, duration, name, country, region, Meets.location, latitude, longitude, course, level, type FROM "Meets" LEFT JOIN "Locations" ON Meets.location = Locations.location
+/* MeetsView(id,code,date,duration,name,country,region,location,latitude,longitude,course,level,type) */;
