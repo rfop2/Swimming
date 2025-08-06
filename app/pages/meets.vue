@@ -153,7 +153,7 @@
       start: meet.date,
       end: formatISO( addDays( parse( meet.date, "yyyy-MM-dd", new Date() ), ( meet.duration ?? 1 ) - 1 ), { representation: "date" } ),
       duration: meet.duration as number,
-      title: meet.name,
+      title: `${meet.level}: ${meet.name}`,
       // color: distanceColor( meet.distance ),
       location: `${meet.location} (~${Math.round( meet.distance || 0 )} miles)`,
       description: meet.type,
