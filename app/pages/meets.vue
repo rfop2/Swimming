@@ -110,6 +110,10 @@
       label: "All Distances",
     },
     {
+      value: 25,
+      label: "<25 Miles",
+    },
+    {
       value: 50,
       label: "<50 Miles",
     },
@@ -132,6 +136,8 @@
   const distanceCalendar = ( distance: number | null ) => {
     if ( !distance )
       return "distanceNone"
+    if ( distance < 25 )
+      return "distance25"
     if ( distance < 50 )
       return "distance50"
     if ( distance < 75 )
@@ -206,12 +212,20 @@
       },
     },
     calendars: {
+      distance25: {
+        colorName: "distance25",
+        lightColors: {
+          main: "#a8d5a2",         // soft pastel green
+          container: "#e6f5e4",    // very light green
+          onContainer: "#2f4a2d",  // deep green text
+        }
+      },
       distance50: {
         colorName: "distance50",
         lightColors: {
-          main: "#7cc87c",         // medium pastel green
-          container: "#d5f0d5",    // soft green background
-          onContainer: "#264b26",  // deep green text
+          main: "#c5ce4e",         // yellow-green
+          container: "#f3f7c6",    // pale yellow-green
+          onContainer: "#464b1e",  // dark olive text
         }
       },
       distance75: {
@@ -225,9 +239,9 @@
       distance100: {
         colorName: "distance100",
         lightColors: {
-          main: "#f4a259",         // richer orange
-          container: "#ffe3c7",    // light orange background
-          onContainer: "#5a3200",  // dark orange-brown text
+          main: "#f4a259",         // medium orange
+          container: "#ffe3c7",    // light orange
+          onContainer: "#5a3200",  // dark orange text
         }
       },
       distanceFar: {
