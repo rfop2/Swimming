@@ -84,6 +84,8 @@ export interface Meet {
   course: string
   level: number
   type: string
+  contact?: string
+  email?: string
 }
 
 export interface PageInfo {

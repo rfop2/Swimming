@@ -277,7 +277,9 @@ export const insertMeetsSql =
   location,
   course,
   level,
-  type
+  type,
+  contact,
+  email
 )
 VALUES (
   :created,
@@ -291,7 +293,9 @@ VALUES (
   :location,
   :course,
   :level,
-  :type
+  :type,
+  :contact,
+  :email
 )
 ON CONFLICT(id) DO UPDATE SET
   code      = excluded.code,
@@ -303,7 +307,9 @@ ON CONFLICT(id) DO UPDATE SET
   location  = excluded.location,
   course    = excluded.course,
   level     = excluded.level,
-  type      = excluded.type
+  type      = excluded.type,
+  contact   = excluded.contact,
+  email     = excluded.email
 ;`
 
 export const insertLocationsSql =

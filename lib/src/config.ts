@@ -6,9 +6,6 @@ export const CACHE_DIR = "./cache"
 export const CACHE_TIME = 24
 export const BASE_URL = "https://www.swimmingresults.org"
 
-export const USER_AGENT =
-  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
-
 export const MIN_FETCH_INTERVAL = 30
 export const MAX_FETCH_INTERVAL = 120
 

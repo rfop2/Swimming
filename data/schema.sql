@@ -140,8 +140,10 @@ CREATE TABLE "Meets" (
   location VARCHAR(32) NOT NULL,
   course VARCHAR(8) NOT NULL,
   level INTEGER NOT NULL,
-  type VARCHAR(16) NOT NULL
+  type VARCHAR(16) NOT NULL,
+  contact VARCHAR(32),
+  email VARCHAR(32)
 );
 DROP VIEW IF EXISTS MeetsView;
-CREATE VIEW MeetsView AS SELECT id, code, date, duration, name, country, region, Meets.location, latitude, longitude, course, level, type FROM "Meets" LEFT JOIN "Locations" ON Meets.location = Locations.location
-/* MeetsView(id,code,date,duration,name,country,region,location,latitude,longitude,course,level,type) */;
+CREATE VIEW MeetsView AS SELECT id, code, date, duration, name, country, region, Meets.location, latitude, longitude, course, level, type, contact, email FROM "Meets" LEFT JOIN "Locations" ON Meets.location = Locations.location
+/* MeetsView(id,code,date,duration,name,country,region,location,latitude,longitude,course,level,type,contact,email) */;
