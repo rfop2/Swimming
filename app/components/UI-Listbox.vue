@@ -3,22 +3,26 @@
   import { CheckIcon, ChevronUpDownIcon } from "@heroicons/vue/24/outline"
 
   interface Selection {
-    label: string
+    label?: string
     value: string | number
   }
   const model = defineModel<Selection | Array<Selection>>()
 
   const props = withDefaults( defineProps<{
     options: Array<Selection>
+    label?: string
     multiple?: boolean
+    required?: boolean
     placeholder?: string
   }>(), {
+    label: undefined,
     multiple: false,
+    required: false,
     placeholder: "Select Option",
   } )
 
   const empty = computed( () => Array.isArray( model.value ) ? model.value.length === 0 : !model.value )
-  const prompt = computed( () => empty.value ? props.placeholder : ( props.multiple ? ( ( model.value ?? [] ) as Array<Selection> ).map( item => item.label ).join( ", " ) : ( model.value as Selection ).label ) )
+  const prompt = computed( () => empty.value ? props.placeholder : ( props.multiple ? ( ( model.value ?? [] ) as Array<Selection> ).map( item => item.label ?? item.value ).join( ", " ) : ( model.value as Selection ).label ?? ( model.value as Selection ).value ) )
 </script>
 
 <template>
@@ -26,9 +30,10 @@
     v-model="model"
     as="div"
     :multiple="props.multiple"
+    :required="props.required"
   >
-    <ListboxLabel class="block text-sm font-medium leading-6 text-gray-900">
-      Course
+    <ListboxLabel v-if="props.label" class="block text-sm font-medium leading-6 text-gray-900">
+      {{  props.label }}
     </ListboxLabel>
     <div class="relative mt-2">
       <ListboxButton class="relative w-full cursor-default rounded-md bg-white py-1.5 pl-3 pr-10 text-left text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6">
@@ -54,7 +59,7 @@
             :value="option"
           >
             <li :class="[active ? 'bg-indigo-600 text-white' : 'text-gray-900', 'relative cursor-default select-none py-2 pl-3 pr-9']">
-              <span :class="[selected ? 'font-semibold' : 'font-normal', 'block truncate']">{{ option.label }}</span>
+              <span :class="[selected ? 'font-semibold' : 'font-normal', 'block truncate']">{{ option.label ?? option.value }}</span>
 
               <span
                 v-if="selected"
