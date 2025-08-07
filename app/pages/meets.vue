@@ -189,6 +189,7 @@
 
   const calendarApp = import.meta.client ? createCalendar( {
     selectedDate: formatISO( new Date(), { representation: "date" } ),
+    locale: "en-GB",
     firstDayOfWeek: 1,
     defaultView: "month-grid",
     views: [
