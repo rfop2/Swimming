@@ -1,6 +1,5 @@
 <script setup lang="ts">
   import type { InternalApi } from "nitropack"
-  import { XMarkIcon } from "@heroicons/vue/24/outline"
   import type { CellValueChangedEvent, GetQuickFilterTextParams, IRowNode, NewValueParams, ValueFormatterParams, ValueGetterParams, ValueSetterParams } from "ag-grid-community"
   import "ag-grid-community/styles/ag-grid.css" // Mandatory CSS required by the Data Grid
   import "ag-grid-community/styles/ag-theme-quartz.css" // Optional Theme applied to the Data Grid
@@ -58,6 +57,39 @@
       },
     }
   )
+
+  const filterYear = getYear( addMonths( new Date(), 1 ) )
+
+  const years = Array.from( { length: 6 }, ( _, i ) => filterYear - 3 + i ).map( year => ( { value: year } ) )
+
+  const genders = [
+    {
+      value: "male",
+      label: "Male",
+    },
+    {
+      value: "female",
+      label: "Female",
+    },
+  ]
+
+  const ages = ref<Array<{value: string}>>( [] )
+
+  const selections = ref( {
+    year: years[0],
+    gender: genders[0],
+    age: ages.value[0],
+  } )
+
+  const filteredQualifying = computed( () => ( qualifying.value ?? [] ).filter( row => {
+    if ( row.year !== selections.value.year.value )
+      return false
+    if ( row.gender !== selections.value.gender.value )
+      return false
+    if ( row.age !== selections.value.age.value )
+      return false
+    return true
+  } ) )
 
   const errString = ref<string | null>( null )
 
@@ -173,22 +205,23 @@
     },
   ] )
 
-  const generateQuickFilter = ( swimmer: Swimmer ) => {
-    const filterYear = getYear( addMonths( new Date(), 1 ) )
-    return String( filterYear ) + " " + swimmer.gender + " " + String( getCompetitionAge( parseISO( swimmer.birthday ) ) )
+  const updateFilters = ( swimmer: Swimmer ) => {
+
+    const compAge = getCompetitionAge( parseISO( swimmer.birthday ) )
+    ages.value = Array.from( { length: 4 }, ( _, i ) => compAge - 1 + i ).map( year => ( { value: String( year ) } ) )
+
+    selections.value = {
+      year: years.find( year => year.value === filterYear ) ?? years[0],
+      gender: genders.find( gender => gender.value === swimmer.gender ) ?? genders[0],
+      age: ages.value.find( age => age.value === String( compAge ) ) ?? ages.value[0],
+    }
   }
 
-  const initialFilter = generateQuickFilter( swimmer.value )
-  const quickFilter = ref( initialFilter )
+  updateFilters( swimmer.value )
 
   watch( swimmer, ( newSwimmer ) => {
-    quickFilter.value = generateQuickFilter( newSwimmer )
+    updateFilters( newSwimmer )
   } )
-
-  const quickFilterMatcher = ( quickFilterParts: Array<string>, rowQuickFilterAggregateText: string ) => {
-    return quickFilterParts.every( element => rowQuickFilterAggregateText.split( /\n/ ).includes( element ) )
-    // return quickFilterParts.every( part => rowQuickFilterAggregateText.match( part ) )
-  }
 
   const autoSizeStrategy = {
     type: "fitGridWidth",
@@ -207,32 +240,6 @@
         <p class="mt-2 text-sm text-gray-700">
           County and regional qualifying times for each event
         </p>
-      </div>
-      <div class="sm:flex-auto">
-        <h5 class="text-sm font-medium leading-6 text-gray-900">
-          Filter
-        </h5>
-        <div class="mt-2">
-          <div class="relative">
-            <input
-              id="filter"
-              v-model="quickFilter"
-              type="text"
-              required
-              class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-            >
-            <button
-              type="button"
-              class="absolute top-1/2 right-2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
-              onclick="this.previousElementSibling.value = ''"
-            >
-              <XMarkIcon
-                class="block h-6 w-6"
-                @click="quickFilter=''"
-              />
-            </button>
-          </div>
-        </div>
       </div>
       <div class="mt-4 sm:ml-8 sm:mt-0 sm:flex-none">
         <div class="min-w-24 pt-8">
@@ -259,15 +266,28 @@
         </div>
       </div>
     </div>
+    <div class="border-b border-gray-200 pb-5 sm:flex sm:items-center sm:justify-between">
+      <div class="mt-3">
+        <div class="flex items-center space-x-4">
+          <div class="min-w-48">
+            <UI-Listbox v-model="selections.year" :options="years" label="Year" placeholder="Choose Year"/>
+          </div>
+          <div class="min-w-48">
+            <UI-Listbox v-model="selections.gender" :options="genders" label="Gender" placeholder="Choose Gender"/>
+          </div>
+          <div class="min-w-48">
+            <UI-Listbox v-model="selections.age" :options="ages" label="Age" placeholder="Choose Age"/>
+          </div>
+        </div>
+      </div>
+    </div>
     <div class="mt-4 flow-root">
       <div class="overflow-x-auto">
         <ag-grid-vue
-          :quick-filter-matcher="quickFilterMatcher"
           :auto-size-strategy="autoSizeStrategy"
           :default-col-def="defaultColumnAttrs"
-          :row-data="qualifying"
+          :row-data="filteredQualifying"
           :column-defs="columns"
-          :quick-filter-text="quickFilter"
           dom-layout="autoHeight"
           class="ag-theme-quartz"
           @cell-value-changed="( event: CellValueChangedEvent ) => {
