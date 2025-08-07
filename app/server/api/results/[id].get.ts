@@ -16,6 +16,12 @@ type Params = {
 const selectRecords: Statement<Params, ResultsRow> = db.prepare( "SELECT * FROM Results WHERE swimmer = :id AND course = :course AND stroke = :stroke AND distance = :distance ORDER BY date ASC" )
 
 export default defineEventHandler( async ( event ) => {
+  if ( !event.context.session ) {
+    throw createError( {
+      statusCode: 403
+    } )
+  }
+
   const id = getRouterParam( event, "id" )
   const query = getQuery( event )
   query.id = id

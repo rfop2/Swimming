@@ -10,6 +10,12 @@ db.pragma( "journal_mode = WAL" )
 const selectMaxCreated: Statement<unknown[], { MaxCreated: string }> = db.prepare( "SELECT MAX(created) AS MaxCreated FROM Performance WHERE swimmer = :id" )
 
 export default defineEventHandler( async ( event ) => {
+  if ( !event.context.session ) {
+    throw createError( {
+      statusCode: 403
+    } )
+  }
+
   const id = getRouterParam( event, "id" )
   const result = selectMaxCreated.get( { id } )
   if ( !result?.MaxCreated ) {

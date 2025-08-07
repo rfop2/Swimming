@@ -11,6 +11,12 @@ const selectMaxCreated: Statement<unknown[], { MaxCreated: string }> = db.prepar
 const selectRecords: Statement<{ date: string }, Individual> = db.prepare( "SELECT * FROM Individual WHERE swimmer = :id AND created = :date" )
 
 export default defineEventHandler( async ( event ) => {
+  if ( !event.context.session ) {
+    throw createError( {
+      statusCode: 403
+    } )
+  }
+
   const id = getRouterParam( event, "id" )
   const result = selectMaxCreated.get( { id } )
   if ( !result?.MaxCreated ) {

@@ -9,7 +9,13 @@ db.pragma( "journal_mode = WAL" )
 
 const selectRecords: Statement<unknown[], Meet> = db.prepare( "SELECT * FROM MeetsView" )
 
-export default defineEventHandler( async ( _event ) => {
+export default defineEventHandler( async ( event ) => {
+    if ( !event.context.session ) {
+    throw createError( {
+      statusCode: 403
+    } )
+  }
+
   const data = selectRecords.all()
   return data
 } )

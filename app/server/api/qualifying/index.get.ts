@@ -9,7 +9,13 @@ db.pragma( "journal_mode = WAL" )
 
 const selectRecords: Statement<unknown[], QualifyingRow> = db.prepare( "SELECT * FROM Qualifying" )
 
-export default defineEventHandler( async ( _event ) => {
+export default defineEventHandler( async ( event ) => {
+  if ( !event.context.session ) {
+    throw createError( {
+      statusCode: 403
+    } )
+  }
+
   const data = selectRecords.all()
   return data
 } )
