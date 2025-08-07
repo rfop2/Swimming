@@ -270,13 +270,28 @@
       <div class="mt-3">
         <div class="flex items-center space-x-4">
           <div class="min-w-48">
-            <UI-Listbox v-model="selections.year" :options="years" label="Year" placeholder="Choose Year"/>
+            <UI-Listbox
+              v-model="selections.year"
+              :options="years"
+              label="Year"
+              placeholder="Choose Year"
+            />
           </div>
           <div class="min-w-48">
-            <UI-Listbox v-model="selections.gender" :options="genders" label="Gender" placeholder="Choose Gender"/>
+            <UI-Listbox
+              v-model="selections.gender"
+              :options="genders"
+              label="Gender"
+              placeholder="Choose Gender"
+            />
           </div>
           <div class="min-w-48">
-            <UI-Listbox v-model="selections.age" :options="ages" label="Age" placeholder="Choose Age"/>
+            <UI-Listbox
+              v-model="selections.age"
+              :options="ages"
+              label="Age"
+              placeholder="Choose Age"
+            />
           </div>
         </div>
       </div>
