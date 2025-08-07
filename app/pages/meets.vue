@@ -291,13 +291,13 @@
       <div class="mt-3">
         <div class="flex items-center space-x-4">
           <div class="min-w-48">
-            <UIListbox v-model="selections.course" :options="courses" />
+            <UIListbox v-model="selections.course" :options="courses" label="Course" />
           </div>
           <div class="min-w-72">
-            <UIListbox v-model="selections.level" :options="levels" placeholder="All Levels" multiple/>
+            <UIListbox v-model="selections.level" :options="levels" label="Level" placeholder="All Levels" multiple/>
           </div>
           <div class="min-w-48">
-            <UIListbox v-model="selections.distance" :options="distances" />
+            <UIListbox v-model="selections.distance" :options="distances" label="Distance" />
           </div>
         </div>
       </div>
