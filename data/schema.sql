@@ -2,7 +2,10 @@ DROP TABLE IF EXISTS User;
 CREATE TABLE User (
   id TEXT NOT NULL PRIMARY KEY,
   username TEXT NOT NULL UNIQUE,
-  password_hash TEXT NOT NULL
+  password_hash TEXT NOT NULL,
+  firstName VARCHAR(32) NOT NULL,
+  lastName VARCHAR(32) NOT NULL,
+  location VARCHAR(32) NOT NULL DEFAULT "Malmesbury"
 );
 DROP TABLE IF EXISTS Session;
 CREATE TABLE Session (
@@ -91,16 +94,19 @@ DROP INDEX IF EXISTS idx_date_gender_age_event;
 CREATE INDEX idx_date_gender_age_event ON Rankings( created, gender, age, course, stroke, distance, area );
 DROP TABLE IF EXISTS Swimmers;
 CREATE TABLE "Swimmers" (
+  userId TEXT NOT NULL,
   id VARCHAR(8) NOT NULL PRIMARY KEY,
-  name VARCHAR(32),
-  birthday DATE,
-  gender VARCHAR(16),
+  name VARCHAR(32) NOT NULL,
+  birthday DATE NOT NULL,
+  gender VARCHAR(16) NOT NULL,
   county VARCHAR(16),
   region VARCHAR(16),
-  active BOOLEAN NOT NULL DEFAULT 1
+  active BOOLEAN NOT NULL DEFAULT 1,
+  UNIQUE( userId, id ),
+  FOREIGN KEY (userId) REFERENCES "Users"(id)
 );
 DROP VIEW IF EXISTS SwimmersView;
-CREATE VIEW SwimmersView AS SELECT id, name, birthday, strftime('%Y', 'now') - strftime('%Y', birthday ) AS age, gender, county, region, active FROM "Swimmers"
+CREATE VIEW SwimmersView AS SELECT userId, id, name, birthday, strftime('%Y', 'now') - strftime('%Y', birthday ) AS age, gender, county, region, active FROM "Swimmers"
 /* SwimmersView(id,name,birthday,age,gender,county,region,active) */;
 DROP TABLE IF EXISTS Individual;
 CREATE TABLE Individual (

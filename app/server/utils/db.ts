@@ -20,4 +20,7 @@ export interface DatabaseUser {
   id: string;
   username: string;
   password_hash: string;
+  firstName: string;
+  lastName: string;
+  location: string;
 }
