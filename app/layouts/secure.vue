@@ -40,9 +40,9 @@
     { name: "Meets", href: "/meets" },
   ]
   const userNavigation = [
-    // { name: "Your Profile", href: "#" },
+    { name: "Account", href: "/account" },
     // { name: "Settings", href: "#" },
-    { name: "Sign out", href: "#", click: logout },
+    { name: "Sign out", href: "", click: logout },
   ]
 
   const config = useRuntimeConfig()
@@ -85,14 +85,6 @@
 </script>
 
 <template>
-  <!--
-    This example requires updating your template:
-
-    ```
-    <html class="h-full">
-    <body class="h-full">
-    ```
-  -->
   <div class="min-h-full">
     <Disclosure
       v-slot="{ open }"
@@ -129,7 +121,7 @@
             </div>
           </div>
           <div class="hidden sm:ml-6 sm:flex sm:items-center pt-2">
-            <div class="min-w-36 pr-4">
+            <div class="min-w-64 pr-4">
               <Listbox
                 v-model="swimmer"
                 as="div"
@@ -220,13 +212,15 @@
                   <MenuItem
                     v-for="item in userNavigation"
                     :key="item.name"
-                    v-slot="{ active }"
+                    v-slot="{ active, close }"
                   >
                     <a
-                      href="#"
+                      :href="item.href"
                       :class="[active ? 'bg-gray-100' : '', 'block px-4 py-2 text-sm text-gray-700']"
-                      @click="item.click"
-                    >Sign Out</a>
+                      @click.prevent="item.click ? item.click() : router.push( item.href ); close()"
+                    >
+                      {{ item.name }}
+                    </a>
                   </MenuItem>
                 </MenuItems>
               </transition>
@@ -297,7 +291,7 @@
               as="a"
               :href="item.href"
               class="block px-4 py-2 text-base font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-800"
-              @click="item.click"
+              @click.prevent="item.click ? item.click() : router.push( item.href )"
             >
               {{ item.name }}
             </DisclosureButton>
