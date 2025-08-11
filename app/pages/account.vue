@@ -124,9 +124,24 @@
     console.log( unref( newValues[0] ), unref( newValues[1] ) )
   } )
 
-  const nationalities = Object.entries( NATIONALITIES ).map( ( [ value, label ] ) => ( {
+  const transform = ( input: string ): string => input
+    .toLowerCase()
+    .replace( /_/g, " " )
+    .replace( /\b\w/g, c => c.toUpperCase() )
+
+  const genders = [ {
+                      label: "Male",
+                      value: "male"
+                    },
+                    {
+                      label: "Female",
+                      value: "female"
+                    },
+  ]
+  const nationalities = Object.entries( NATIONALITIES ).map( ( [ value
+                                                                 , label ] ) => ( {
     value,
-    label
+                                                                   label: transform( label ),
   } ) )
   const regions = Object.entries( REGIONS ).map( ( [ value, label ] ) => ( {
     value,
@@ -390,17 +405,9 @@
                         v-if="editing === swimmerIndex"
                         :id="`swimmer-gender-${swimmerIndex}`"
                         v-model="swimmer.value.gender"
-                        :options="[{
-                                     label: 'Male',
-                                     value: 'male'
-                                   },
-                                   {
-                                     label: 'Female',
-                                     value: 'female'
-                                   },
-                        ]"
+                        :options="genders"
                       />
-                      <span v-else>{{ swimmer.value.gender }}</span>
+                      <span v-else>{{ genders.find( item => item.value === swimmer.value.gender )?.label }}</span>
                     </td>
                     <td class="px-3 py-4 text-sm whitespace-nowrap text-gray-500">
                       <UI-Input
@@ -417,7 +424,7 @@
                         v-model="swimmer.value.nationality"
                         :options="nationalities"
                       />
-                      <span v-else>{{ swimmer.value.nationality }}</span>
+                      <span v-else>{{ nationalities.find( item => item.value === swimmer.value.nationality )?.label }}</span>
                     </td>
                     <td class="px-3 py-4 text-sm whitespace-nowrap text-gray-500">
                       <UI-Select
@@ -426,7 +433,7 @@
                         v-model="swimmer.value.region"
                         :options="regions"
                       />
-                      <span v-else>{{ swimmer.value.region }}</span>
+                      <span v-else>{{ regions.find( item => item.value === swimmer.value.region )?.label }}</span>
                     </td>
                     <td class="px-3 py-4 text-sm whitespace-nowrap text-gray-500">
                       <UI-Select
@@ -435,7 +442,7 @@
                         v-model="swimmer.value.county"
                         :options="counties"
                       />
-                      <span v-else>{{ swimmer.value.county }}</span>
+                      <span v-else>{{ counties.find( item => item.value === swimmer.value.county )?.label }}</span>
                     </td>
                     <td class="px-3 py-4 text-sm whitespace-nowrap text-gray-500">
                       <input
