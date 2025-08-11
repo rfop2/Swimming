@@ -340,6 +340,12 @@
                       scope="col"
                       class="py-3.5 pr-3 pl-4 text-left text-sm font-semibold text-gray-900 sm:pl-0"
                     >
+                      Id
+                    </th>
+                    <th
+                      scope="col"
+                      class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
+                    >
                       Name
                     </th>
                     <th
@@ -392,6 +398,15 @@
                     :key="swimmer.value.id"
                   >
                     <td class="py-4 pr-3 pl-4 text-sm font-medium whitespace-nowrap text-gray-900 sm:pl-0">
+                      <input
+                        v-if="editing === swimmerIndex"
+                        :id="`swimmer-id-${swimmerIndex}`"
+                        v-model="swimmer.value.id"
+                        class="block w-full rounded-md bg-white text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
+                      >
+                      <span v-else>{{ swimmer.value.id }}</span>
+                    </td>
+                    <td class="px-3 py-4 text-sm whitespace-nowrap text-gray-500">
                       <input
                         v-if="editing === swimmerIndex"
                         :id="`swimmer-name-${swimmerIndex}`"
