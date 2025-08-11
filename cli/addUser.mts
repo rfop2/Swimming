@@ -46,8 +46,12 @@ db.pragma( "journal_mode = WAL" );
       passwordHash
     )
   } catch ( e ) {
-    if ( e instanceof SqliteError && e.code === "SQLITE_CONSTRAINT_UNIQUE" ) {
+    if ( e instanceof SqliteError ) {
+      if ( e.code === "SQLITE_CONSTRAINT_UNIQUE" ) {
       throw new Error( "Username already used" )
+      } else {
+        throw new Error( `Database error: ${e}` )
+      }
     }
     throw new Error( "An unknown error occurred" )
   }
