@@ -64,11 +64,36 @@
   const [ password, passwordAttrs ] = defineField( "password" )
   const [ confirmPassword, confirmPasswordAttrs ] = defineField( "confirmPassword" )
 
-  const { remove, push, fields } = useFieldArray<Swimmer>( "swimmers" )
+  const { remove, push, update, fields } = useFieldArray<Swimmer>( "swimmers" )
 
   const editing = ref<number | null>( null )
+  const deleting = ref<number | null>( null )
 
   const errString = ref<string | null>( null )
+
+  const swimmerData = ref<string | null>( null )
+  const editSwimmer = ( swimmerIndex: number ) => {
+    editing.value = swimmerIndex
+    swimmerData.value = JSON.stringify( fields.value[swimmerIndex].value )
+  }
+  const resetSwimmer = () => {
+    if ( editing.value !== null ) {
+      if ( !fields.value[editing.value].value.id ) {
+        remove( editing.value )
+      } else if ( swimmerData.value ) {
+        update( editing.value, JSON.parse( swimmerData.value ) )
+        swimmerData.value = null
+      }
+    }
+    editing.value = null
+  }
+
+  const deleteSwimmer = () => {
+    if ( deleting.value !== null ) {
+      remove( deleting.value )
+    }
+    deleting.value = null
+  }
 
   const save = handleSubmit( async ( values ) => {
     try {
@@ -119,14 +144,14 @@
     method="POST"
     @submit.prevent="save"
   >
-    <div class="space-y-12">
+    <div class="space-y-8">
       <div class="border-b border-gray-900/10 pb-12">
         <div class="px-4 sm:px-6 lg:px-8">
           <h2 class="text-base/7 font-semibold text-gray-900">
             Personal Information
           </h2>
           <p class="mt-1 text-sm/6 text-gray-600">
-            Subtext
+            Update your personal details and the swimmers you wish to follow.
           </p>
 
           <div class="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
@@ -252,7 +277,7 @@
       </div>
     </div>
 
-    <div class="border-b border-gray-900/10 pb-12">
+    <div class="border-b border-gray-900/10 pt-8 pb-12">
       <div class="px-4 sm:px-6 lg:px-8">
         <div class="sm:flex sm:items-center">
           <div class="sm:flex-auto">
@@ -434,8 +459,10 @@
                       <div class="flex gap-2 justify-end">
                         <button
                           v-if="editing !== swimmerIndex"
+                          type="button"
+                          :disabled="editing !== null && editing !== swimmerIndex"
                           class="inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                          @click="() => { editing = swimmerIndex }"
+                          @click="() => editSwimmer( swimmerIndex )"
                         >
                           <PencilSquareIcon
                             class="-ml-0.5 size-5"
@@ -446,8 +473,10 @@
                         </button>
                         <button
                           v-if="editing !== swimmerIndex"
+                          type="button"
+                          :disabled="editing !== null && editing !== swimmerIndex"
                           class="inline-flex items-center gap-x-1.5 rounded-md bg-rose-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-rose-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-600"
-                          @click="() => { remove( swimmerIndex )}"
+                          @click="() => { deleting = swimmerIndex }"
                         >
                           <TrashIcon
                             class="-ml-0.5 size-5"
@@ -459,8 +488,9 @@
                       <div class="flex gap-2 justify-end">
                         <button
                           v-if="editing === swimmerIndex"
+                          type="button"
                           class="inline-flex items-center gap-x-1.5 rounded-md bg-lime-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-lime-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lime-600"
-                          @click="() => { editing = swimmerIndex }"
+                          @click="() => { editing = null }"
                         >
                           <CheckIcon
                             class="-ml-0.5 size-5"
@@ -470,8 +500,9 @@
                         </button>
                         <button
                           v-if="editing === swimmerIndex"
+                          type="button"
                           class="inline-flex items-center gap-x-1.5 rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
-                          @click="() => { editing = null }"
+                          @click="() => resetSwimmer()"
                         >
                           <XMarkIcon
                             class="-ml-0.5 size-5"
@@ -495,17 +526,24 @@
         type="button"
         class="text-sm/6 font-semibold text-gray-900 disabled:text-gray-300"
         :disabled="!meta.dirty"
-        @click="() => resetForm()"
+        @click="() => { resetForm(); editing = null; deleting = null }"
       >
         Reset
       </button>
       <button
         type="submit"
-        :disabled="!meta.touched || !meta.valid"
+        :disabled="editing !== null || deleting !== null || !meta.dirty || !meta.valid"
         class="rounded-md bg-indigo-600 disabled:bg-gray-300 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
       >
         Save
       </button>
     </div>
+    <UI-Confirm
+      v-if="deleting !== null"
+      title="Delete swimmer"
+      :text="`Are you sure you want to delete swimmer '${fields[deleting].value.name} from your account?`"
+      confirm-label="Delete"
+      :action="deleteSwimmer"
+    />
   </form>
 </template>
