@@ -29,6 +29,8 @@ export const NATIONALITY = {
   ALL_MEMBERS:  "X",
 }
 
+export const NATIONALITIES = Object.fromEntries( Object.entries( NATIONALITY ).map( ( [ k,v ] ) => [ v,k ] ) )
+
 export const REGIONS = {
   "P": "No Region",
   "A": "East Midland",
