@@ -2,7 +2,7 @@
   import { useForm, useFieldArray } from "vee-validate"
   import { object, array, string, boolean } from "yup"
   import { toTypedSchema } from "@vee-validate/yup"
-  import { CheckIcon, ExclamationTriangleIcon, PencilSquareIcon, TrashIcon, UserPlusIcon, XMarkIcon } from "@heroicons/vue/24/outline"
+  import { CheckIcon, ExclamationTriangleIcon, PencilSquareIcon, TrashIcon, UserPlusIcon, XCircleIcon, XMarkIcon } from "@heroicons/vue/24/outline"
 
   import type { FetchError } from "ofetch"
   import { COUNTIES, NATIONALITIES, REGIONS, type Swimmer } from "lib"
@@ -69,7 +69,7 @@
   const editing = ref<number | null>( null )
   const deleting = ref<number | null>( null )
 
-  const errString = ref<string | null>( null )
+  const errors = reactive<Array<string>>( [] )
 
   const swimmerData = ref<string | null>( null )
   const editSwimmer = ( swimmerIndex: number ) => {
@@ -116,7 +116,7 @@
       await refreshNuxtData()
     } catch ( error ) {
       console.error( "Error", error )
-      errString.value = ( error as FetchError ).message ?? null
+      errors[0] = ( error as FetchError ).message ?? null
     }
   } )
 
@@ -528,12 +528,58 @@
       </div>
     </div>
 
+    <div
+      v-if="errors.length"
+      class="rounded-md bg-red-50 p-4"
+    >
+      <div class="flex">
+        <div class="shrink-0">
+          <XCircleIcon
+            class="size-5 text-red-400"
+            aria-hidden="true"
+          />
+        </div>
+        <div
+          v-if="errors.length===1"
+          class="ml-3"
+        >
+          <h3 class="text-sm font-medium text-red-800">
+            There were errors with your submission
+          </h3>
+          <div class="mt-2 text-sm text-red-700">
+            <p>{{ errors[0] }}</p>
+          </div>
+        </div>
+        <div
+          v-else
+          class="ml-3"
+        >
+          <h3 class="text-sm font-medium text-red-800">
+            There were {{ errors.length }} errors with your submission
+          </h3>
+          <div class="mt-2 text-sm text-red-700">
+            <ul
+              role="list"
+              class="list-disc space-y-1 pl-5"
+            >
+              <li
+                v-for="error in errors"
+                :key="error"
+              >
+                {{ error }}
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="mt-6 flex items-center justify-end gap-x-6">
       <button
         type="button"
         class="text-sm/6 font-semibold text-gray-900 disabled:text-gray-300"
         :disabled="!meta.dirty"
-        @click="() => { resetForm(); editing = null; deleting = null }"
+        @click="() => { resetForm(); editing = null; deleting = null; errors.length = 0 }"
       >
         Reset
       </button>
