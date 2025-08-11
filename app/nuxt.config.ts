@@ -6,7 +6,14 @@ export default defineNuxtConfig( {
 
   modules: [
     "@nuxtjs/tailwindcss",
-    "@nuxt/eslint"
+    "@nuxt/eslint",
+    [
+      "@vee-validate/nuxt",
+      {
+        // disable or enable auto imports
+        autoImports: false,
+      },
+    ],
   ],
 
   runtimeConfig: {
