@@ -110,7 +110,7 @@
         formData.password = unref( password )
         formData.confirmPassword = unref( confirmPassword )
       } */
-      await $fetch( `/api/account/${user.value.username}`, {
+      await $fetch( `/api/account/${user.value.id}`, {
         method: "PUT",
         body: JSON.stringify( values ),
       } )
