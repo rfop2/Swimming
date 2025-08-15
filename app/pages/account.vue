@@ -1,11 +1,12 @@
 <script setup lang="ts">
   import { useForm, useFieldArray } from "vee-validate"
-  import { object, array, string, boolean } from "yup"
+  import { object, array, string, number } from "yup"
   import { toTypedSchema } from "@vee-validate/yup"
   import { CheckIcon, ExclamationTriangleIcon, PencilSquareIcon, TrashIcon, UserPlusIcon, XCircleIcon, XMarkIcon } from "@heroicons/vue/24/outline"
 
   import type { FetchError } from "ofetch"
   import { COUNTIES, NATIONALITIES, REGIONS, type Swimmer } from "lib"
+  import { useDebounceAsync } from "~/composables/useDebounceAsync"
 
   definePageMeta( {
     layout: "secure",
@@ -21,6 +22,14 @@
   if ( locations.value !== null && locations.value.length > 0 ) {
     locationCoords.value = { lat: Number( locations.value[0].lat ), lon: Number( locations.value[0].lon ) }
   }
+
+  const lookupLocation = async ( event: InputEvent ): Promise<string[]> => {
+    const location = ( event.target as HTMLInputElement )?.value
+    const res = await fetch( `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent( location + ", UK" )}` )
+    return await res.json()
+  }
+
+  const checkLocation = useDebounceAsync( lookupLocation, 500 )
 
   const { data: userSwimmers } = await useFetch(
     "/api/swimmers",
@@ -51,7 +60,7 @@
           nationality: string().required(),
           region: string().required(),
           county: string().required(),
-          active: boolean().required(),
+          active: number().oneOf( [ 0, 1 ] ).required(),
         } ) )
       } ),
     ),
@@ -114,16 +123,17 @@
         method: "PUT",
         body: JSON.stringify( values ),
       } )
-      await refreshNuxtData()
+      // await refreshNuxtData()
+      resetForm( { values } )
     } catch ( error ) {
       console.error( "Error", error )
       errors[0] = ( error as FetchError ).message ?? null
     }
   } )
 
-  watch( [ values, meta ], ( newValues ) => {
+  /* watch( [ values, meta ], ( newValues ) => {
     console.log( unref( newValues[0] ), unref( newValues[1] ) )
-  } )
+  } ) */
 
   const transform = ( input: string ): string => input
     .toLowerCase()
@@ -271,6 +281,7 @@
                     type="text"
                     autocomplete="address-level2"
                     class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
+                    @input="checkLocation"
                   >
                   <button
                     type="button"
@@ -318,7 +329,7 @@
                   nationality: '',
                   region: '',
                   county: '',
-                  active: true,
+                  active: 1,
                 });
                 editing = fields.length-1;
               }"
@@ -465,7 +476,8 @@
                         v-if="editing === swimmerIndex"
                         v-model="swimmer.value.active"
                         type="checkbox"
-                        value="1"
+                        :true-value="1"
+                        :false-value="0"
                       >
                       <span v-else>
                         <CheckIcon

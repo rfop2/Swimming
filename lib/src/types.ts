@@ -7,7 +7,7 @@ export interface Swimmer {
   nationality: string
   region: string
   county: string
-  active: boolean
+  active: number
 }
 
 export interface Individual {
