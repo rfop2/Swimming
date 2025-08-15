@@ -1,12 +1,3 @@
-DROP TABLE IF EXISTS User;
-CREATE TABLE User (
-  id TEXT NOT NULL PRIMARY KEY,
-  username TEXT NOT NULL UNIQUE,
-  password_hash TEXT NOT NULL,
-  firstName VARCHAR(32) NOT NULL,
-  lastName VARCHAR(32) NOT NULL,
-  location VARCHAR(32) NOT NULL DEFAULT "Malmesbury"
-);
 DROP TABLE IF EXISTS Session;
 CREATE TABLE Session (
   id TEXT NOT NULL PRIMARY KEY,
@@ -84,30 +75,6 @@ CREATE TABLE "Rankings" (
   time DECIMAL(8,2),
   fina INTEGER
 );
-DROP INDEX IF EXISTS idx_swimmer;
-CREATE INDEX idx_swimmer ON Performance ( swimmer );
-DROP INDEX IF EXISTS idx_results_swimmer;
-CREATE INDEX idx_results_swimmer ON Results ( swimmer );
-DROP INDEX IF EXISTS idx_date_gender_age;
-CREATE INDEX idx_date_gender_age ON Rankings( created, gender, age );
-DROP INDEX IF EXISTS idx_date_gender_age_event;
-CREATE INDEX idx_date_gender_age_event ON Rankings( created, gender, age, course, stroke, distance, area );
-DROP TABLE IF EXISTS Swimmers;
-CREATE TABLE "Swimmers" (
-  userId TEXT NOT NULL,
-  id VARCHAR(8) NOT NULL PRIMARY KEY,
-  name VARCHAR(32) NOT NULL,
-  birthday DATE NOT NULL,
-  gender VARCHAR(16) NOT NULL,
-  county VARCHAR(16),
-  region VARCHAR(16),
-  active BOOLEAN NOT NULL DEFAULT 1,
-  UNIQUE( userId, id ),
-  FOREIGN KEY (userId) REFERENCES "Users"(id)
-);
-DROP VIEW IF EXISTS SwimmersView;
-CREATE VIEW SwimmersView AS SELECT userId, id, name, birthday, strftime('%Y', 'now') - strftime('%Y', birthday ) AS age, gender, county, region, active FROM "Swimmers"
-/* SwimmersView(id,name,birthday,age,gender,county,region,active) */;
 DROP TABLE IF EXISTS Individual;
 CREATE TABLE Individual (
   created DATE NOT NULL,
@@ -146,10 +113,49 @@ CREATE TABLE "Meets" (
   location VARCHAR(32) NOT NULL,
   course VARCHAR(8) NOT NULL,
   level INTEGER NOT NULL,
-  type VARCHAR(16) NOT NULL,
-  contact VARCHAR(32),
-  email VARCHAR(32)
+  type VARCHAR(16) NOT NULL
+, contact VARCHAR(32), email VARCHAR(32));
+DROP TABLE IF EXISTS User;
+CREATE TABLE User (
+  id TEXT NOT NULL PRIMARY KEY,
+  username TEXT NOT NULL UNIQUE,
+  password_hash TEXT NOT NULL,
+  firstName VARCHAR(32) NOT NULL,
+  lastName VARCHAR(32) NOT NULL,
+  location VARCHAR(32) NOT NULL DEFAULT "Malmesbury"
 );
+DROP TABLE IF EXISTS UserSwimmers;
+CREATE TABLE UserSwimmers (
+userId TEXT NOT NULL,
+swimmerId VARCHAR(8) NOT NULL,
+UNIQUE( userId, swimmerId ),
+FOREIGN KEY (userId) REFERENCES "User"(id),
+FOREIGN KEY (swimmerId) REFERENCES "Swimmers"(id)
+);
+DROP TABLE IF EXISTS Swimmers;
+CREATE TABLE "Swimmers" (
+  id VARCHAR(8) NOT NULL PRIMARY KEY,  name VARCHAR(32) NOT NULL,
+  birthday DATE NOT NULL,
+  gender VARCHAR(16) NOT NULL,
+  nationality VARCHAR(16),
+  region VARCHAR(16),
+  county VARCHAR(16),
+  active BOOLEAN NOT NULL DEFAULT 1
+);
+DROP INDEX IF EXISTS idx_swimmer;
+CREATE INDEX idx_swimmer ON Performance ( swimmer );
+DROP INDEX IF EXISTS idx_results_swimmer;
+CREATE INDEX idx_results_swimmer ON Results ( swimmer );
+DROP INDEX IF EXISTS idx_date_gender_age;
+CREATE INDEX idx_date_gender_age ON Rankings( created, gender, age );
+DROP INDEX IF EXISTS idx_date_gender_age_event;
+CREATE INDEX idx_date_gender_age_event ON Rankings( created, gender, age, course, stroke, distance, area );
 DROP VIEW IF EXISTS MeetsView;
 CREATE VIEW MeetsView AS SELECT id, code, date, duration, name, country, region, Meets.location, latitude, longitude, course, level, type, contact, email FROM "Meets" LEFT JOIN "Locations" ON Meets.location = Locations.location
 /* MeetsView(id,code,date,duration,name,country,region,location,latitude,longitude,course,level,type,contact,email) */;
+DROP VIEW IF EXISTS UserSwimmersView;
+CREATE VIEW UserSwimmersView AS SELECT userId, SwimmersView.* FROM UserSwimmers INNER JOIN SwimmersView ON (UserSwimmers.swimmerId = SwimmersView.id)
+/* UserSwimmersView(userId,id,name,birthday,age,gender,nationality,region,county,active) */;
+DROP VIEW IF EXISTS SwimmersView;
+CREATE VIEW SwimmersView AS SELECT id, name, birthday, strftime('%Y', 'now') - strftime('%Y', birthday ) AS age, gender, nationality, region, county, active FROM "Swimmers"
+/* SwimmersView(id,name,birthday,age,gender,nationality,region,county,active) */;
