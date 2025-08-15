@@ -1,5 +1,8 @@
 <script lang="ts" setup>
+  import type { Swimmer } from "lib"
   import type { FetchError } from "ofetch"
+
+  const swimmer = useState<Swimmer>( "swimmer" )
 
   const errString = ref<string | null>( null )
 
@@ -9,7 +12,7 @@
         method: "POST",
         body: new FormData( e.target as HTMLFormElement )
       } )
-      await navigateTo( "/performance" )
+      await navigateTo( swimmer.value ? "/performance" : "/account" )
     } catch ( error ) {
       errString.value = ( error as FetchError ).message ?? null
     }

@@ -127,6 +127,8 @@
   const records = computed( () => {
     try {
       // console.log( "PF", personalRecords.value, performanceRecords.value, qualifyingYearInfo.value )
+      if ( !swimmer.value )
+        return []
 
       const performanceRecordsMap = new Map<string,AreaDetail>( ( performanceRecords.value ?? [] ).map( record => {
         const { course, stroke, distance, area, position, rank, best, best_date, difference } = record

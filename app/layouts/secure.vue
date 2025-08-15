@@ -1,6 +1,7 @@
 <script setup lang="ts">
   import { Disclosure, DisclosureButton, DisclosurePanel, Listbox, ListboxButton, ListboxOption, ListboxOptions, Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/vue"
   import { Bars3Icon, BellIcon, CheckIcon, ChevronUpDownIcon, UserIcon, XMarkIcon } from "@heroicons/vue/24/outline"
+  import type { Swimmer } from "lib"
   import { FetchError } from "ofetch"
 
   const user = useAuthenticatedUser()
@@ -33,30 +34,36 @@
     imageUrl:
       "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80",
   } */
-  const navigation = [
-    { name: "Performance", href: "/performance" },
-    { name: "Results", href: "/results" },
-    { name: "Qualifying", href: "/qualifying" },
-    { name: "Meets", href: "/meets" },
-  ]
-  const userNavigation = [
-    { name: "Account", href: "/account" },
-    // { name: "Settings", href: "#" },
-    { name: "Sign out", href: "", click: logout },
-  ]
-
   const config = useRuntimeConfig()
 
   const { data: swimmers } = await useFetch(
     "/api/swimmers",
   )
 
-  const swimmer = useState( "swimmer", () => ( swimmers.value && swimmers.value[0] ) || { name: "Unknown Swimmer", id: "" } )
+  // const unknownSwimmer = { name: "Unknown Swimmer", id: "" }
+  const swimmer = useState<Swimmer | null>( "swimmer", () => ( swimmers.value && swimmers.value[0] ) || null )
+
+  const navigation = computed( () => [
+    { name: "Performance", href: "/performance", condition: ()=>( !!swimmer.value ) },
+    { name: "Results", href: "/results", condition: ()=>( !!swimmer.value ) },
+    { name: "Qualifying", href: "/qualifying" },
+    { name: "Meets", href: "/meets" },
+  ] )
+
+  const activeNavigation = computed( () => navigation.value.filter( item => !item.condition || ( item.condition )() ) )
+
+  const userNavigation = [
+    { name: "Account", href: "/account" },
+    // { name: "Settings", href: "#" },
+    { name: "Sign out", href: "", click: logout },
+  ]
 
   async function logout() {
     await $fetch( "/api/user/logout", {
       method: "POST"
     } )
+    // clearNuxtState( "swimmer" )
+    swimmer.value = null
     router.push( "/login" )
   }
 
@@ -65,8 +72,7 @@
   watch(
     swimmer,
     async ( newSwimmer ) => {
-      // console.log( "NS", newSwimmer )
-      if ( newSwimmer.id ) {
+      if ( newSwimmer ) {
         try {
           updated.value = await $fetch( `/api/updated/${newSwimmer.id}` )
         } catch ( error ) {
@@ -110,7 +116,7 @@
             </div>
             <div class="hidden sm:-my-px sm:ml-6 sm:flex sm:space-x-8">
               <nuxt-link
-                v-for="item in navigation"
+                v-for="item in activeNavigation"
                 :key="item.name"
                 :href="item.href"
                 :class="[item.href === router.currentRoute.value.name ? 'border-indigo-500 text-gray-900' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700', 'inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium']"
@@ -123,6 +129,7 @@
           <div class="hidden sm:ml-6 sm:flex sm:items-center pt-2">
             <div class="min-w-64 pr-4">
               <Listbox
+                v-if="swimmer"
                 v-model="swimmer"
                 as="div"
               >
@@ -166,6 +173,10 @@
                   </transition>
                 </div>
               </Listbox>
+              <span
+                v-else
+                class="text-red-500"
+              >No Swimmers On Account</span>
             </div>
             <p class="mr-2 text-sm text-gray-700">
               <ClientOnly>Updated: {{ updated }}</ClientOnly>
@@ -249,7 +260,7 @@
       <DisclosurePanel class="sm:hidden">
         <div class="space-y-1 pb-3 pt-2">
           <DisclosureButton
-            v-for="item in navigation"
+            v-for="item in activeNavigation"
             :key="item.name"
             as="a"
             :href="item.href"
