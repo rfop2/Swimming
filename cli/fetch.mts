@@ -10,7 +10,7 @@ import Database from "better-sqlite3"
 
 import {
   CACHE_DIR,
-  CACHE_TIME,
+  DEFAULT_CACHE_TIME,
   MAX_FETCH_INTERVAL,
   MIN_FETCH_INTERVAL,
   DB_PATH,
@@ -401,7 +401,7 @@ const parseMeet = async ( pageInfo: PageInfo, $: CheerioAPI, meet: Partial<Meet>
   await geocodeTown( meet.location )
 }
 
-export const fetchPage = async ( pageInfo: PageInfo ) => {
+export const fetchPage = async ( pageInfo: PageInfo, cacheTime: number = DEFAULT_CACHE_TIME ) => {
   const contentFile = CACHE_DIR + "/" + pageInfo.label
   console.log( `Processing ${pageInfo.label} -> ${pageInfo.url}` )
   try {
@@ -409,7 +409,7 @@ export const fetchPage = async ( pageInfo: PageInfo ) => {
     // Page has been cached
     const age = differenceInHours( Date.now(), stats.mtime )
     console.log( `Cached: ${age}` )
-    if ( age < CACHE_TIME ) {
+    if ( age < cacheTime ) {
       // Page is new enough
       console.log( `Reading ${contentFile}` )
       const content = await readFile( contentFile )
@@ -636,7 +636,7 @@ const updateMeet = async ( meet: Partial<Meet> ) => {
     url: new URL( `${BASE_URL}${meetsBaseUrl}${meet.link}` ),
     type: "meet"
   }
-  const content = await fetchPage( page )
+  const content = await fetchPage( page, 17 * 24 )
   const $ = cheerio.load( content )
 
   await parseMeet( page, $, meet )

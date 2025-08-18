@@ -3,7 +3,7 @@ import { Swimmer } from "./types.js"
 export const DB_DIR = "../db"
 export const DB_PATH = `${DB_DIR}/records.db`
 export const CACHE_DIR = "./cache"
-export const CACHE_TIME = 24
+export const DEFAULT_CACHE_TIME = 3 * 24
 export const BASE_URL = "https://www.swimmingresults.org"
 
 export const MIN_FETCH_INTERVAL = 30
