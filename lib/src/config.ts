@@ -133,7 +133,7 @@ export const POOLS = {
 
 export const globalRankParams = ( swimmer: Swimmer, page = 1 ) => ( {
   Sex: swimmer.gender.substring( 0, 1 ).toUpperCase(),
-  AgeGroup: swimmer.age,
+  AgeGroup: Number( swimmer.age ) > 18 ? "OP" : swimmer.age,
   date: new Date( new Date().getFullYear(), 11, 31 ).toLocaleDateString( "en-GB" ),
   StartNumber: String( ( ( page - 1 ) * 100 ) + 1 ),
   RecordsToView: "100",
