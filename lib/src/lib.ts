@@ -3,7 +3,6 @@ import type { AnyNode } from "domhandler"
 import type { Cheerio, CheerioAPI } from "cheerio"
 import { addMilliseconds, differenceInYears, endOfYear, format, parseISO } from "date-fns"
 import { LatLon, Swimmer } from "./types.js"
-import { BASE_URL } from "./config.js"
 
 const debugEnabled = !!( process.env?.DEBUG === "true" ) || false
 
@@ -199,12 +198,6 @@ export const getSwimmerAge = ( swimmer: Swimmer ): number => {
 export const getSwimmerAgeGroup = ( swimmer: Swimmer ): string => {
   const swimmerAge = getSwimmerAge( swimmer )
   return swimmerAge <= 18 ? String( swimmerAge ) : "OP"
-}
-
-export const createUrl = ( base: string, params: Record<string, string> ) => {
-  const url = new URL( BASE_URL + base )
-  url.search = new URLSearchParams( params ).toString()
-  return url
 }
 
 export const toRadians = ( degrees: number ): number => {
