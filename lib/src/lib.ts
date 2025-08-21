@@ -196,6 +196,11 @@ export const getSwimmerAge = ( swimmer: Swimmer ): number => {
   return getCompetitionAge( parseISO( swimmer.birthday ) )
 }
 
+export const getSwimmerAgeGroup = ( swimmer: Swimmer ): string => {
+  const swimmerAge = getSwimmerAge( swimmer )
+  return swimmerAge <= 18 ? String( swimmerAge ) : "OP"
+}
+
 export const createUrl = ( base: string, params: Record<string, string> ) => {
   const url = new URL( BASE_URL + base )
   url.search = new URLSearchParams( params ).toString()
