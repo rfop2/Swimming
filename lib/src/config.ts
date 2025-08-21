@@ -18,7 +18,7 @@ export const individualParams = ( swimmer: Swimmer ) => ( {
 
 export const rankBaseUrl = "/12months/last12.php"
 
-export const NATIONALITY = {
+export const NATIONALITY: Record<string,string> = {
   BRITISH:  "A",
   ENGLAND:  "E",
   SCOTLAND:  "S",
@@ -31,7 +31,7 @@ export const NATIONALITY = {
 
 export const NATIONALITIES = Object.fromEntries( Object.entries( NATIONALITY ).map( ( [ k,v ] ) => [ v,k ] ) )
 
-export const REGIONS = {
+export const REGIONS: Record<string,string> = {
   "P": "No Region",
   "A": "East Midland",
   "T": "East",
@@ -50,7 +50,7 @@ export const REGIONS = {
   "[MA]": "English Midlands",
 }
 
-export const COUNTIES = {
+export const COUNTIES: Record<string,string> = {
   "XXXX": "No County",
   "BDFT": "Bedfordshire",
   "BSBS": "Berkshire & South Bucks",
