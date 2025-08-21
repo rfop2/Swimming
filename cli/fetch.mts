@@ -33,6 +33,7 @@ import {
   BASE_URL,
   insertMeetsSql,
   insertLocationsSql,
+  getSwimmerAgeGroup,
 } from "lib"
 
 import type {
@@ -60,7 +61,7 @@ db.pragma( "journal_mode = WAL" )
 // swimmerTableCreate.run()
 
 const getSwimmers = db.prepare<unknown[],Swimmer>(
-  "SELECT * FROM SwimmersView WHERE active = 1"
+  "SELECT * FROM Swimmers WHERE active = 1"
 )
 
 const insertIndividualSql =

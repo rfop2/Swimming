@@ -2,7 +2,6 @@ export interface Swimmer {
   id: string
   name: string
   birthday: string
-  age: string
   gender: string
   nationality: string
   region: string

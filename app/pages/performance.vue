@@ -2,7 +2,7 @@
   import type { InternalApi } from "nitropack"
   import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from "@headlessui/vue"
   import { ArrowUturnLeftIcon, LinkIcon, CheckIcon, ChevronUpDownIcon, ChartBarIcon } from "@heroicons/vue/24/outline"
-  import { type Individual, type QualifyingRow, STROKE_DISTANCE, type Swimmer, convertTime, countyRankParams, createUrl, globalRankParams, nationalRankParams, rankBaseUrl, regionalRankParams, secondsToTime, strokeSort } from "lib"
+  import { type Individual, STROKE_DISTANCE, type Swimmer, convertTime, countyRankParams, createUrl, getSwimmerAge, globalRankParams, nationalRankParams, rankBaseUrl, regionalRankParams, secondsToTime, strokeSort } from "lib"
   import { differenceInCalendarMonths, getYear, addMonths } from "date-fns"
 
   definePageMeta( {
@@ -13,16 +13,12 @@
   const swimmer = useState<Swimmer>( "swimmer" )
 
   const qualifyingYear = ref( getYear( addMonths( new Date(), 1 ) ) )
-  const qualifyingAge = computed( () => String( Number( swimmer.value.age ) + ( qualifyingYear.value - getYear( new Date() ) ) ) )
-
-  type QualifyingApiResponse = InternalApi["/api/qualifying"]["get"]
-
-  interface ExtQualifyingRow extends QualifyingRow {
-    scope: string
+  const getQualifyingAge = ( year: number ) => {
+    const age = getSwimmerAge( swimmer.value )
+    const yearAge = age + ( year - getYear( new Date() ) )
+    return yearAge > 18 ? "Open" : String( yearAge )
   }
-
-  // TODO - Change to use one method for identifying regions/counties
-  const areaToScope = ( area: string ) => ( area === "glos" ? "county" : ( area === "sw" ? "regional" : "national" ) )
+  const qualifyingAge = computed( () => getQualifyingAge( qualifyingYear.value ) )
 
   // type QualifyingApiResponse = InternalApi["/api/qualifying"]["get"]
   const { data: qualifyingInfo } = await useFetch(
@@ -54,7 +50,10 @@
   ) )
   )
 
-  const qualifyingYearInfo = computed( () => ( qualifyingInfo.value ?? [] ).map( row => ( { ...row, scope: areaToScope( row.area ) } ) ).filter( row => ( row.year === qualifyingYear.value && row.age === qualifyingAge.value ) ) )
+  const qualifyingYearInfo = computed( () => (
+    qualifyingInfo.value ?? [] )
+    .filter( row => ( row.year === qualifyingYear.value && row.age === qualifyingAge.value ) )
+  )
 
   type PerformanceApiResponse = InternalApi["/api/relative/:id"]["get"]
   interface AreaDetail extends Partial<PerformanceApiResponse[number]> {
@@ -301,7 +300,7 @@
                   :value="year"
                 >
                   <li :class="[active ? 'bg-indigo-600 text-white' : 'text-gray-900', 'relative cursor-default select-none py-2 pl-3 pr-9']">
-                    <span :class="[selected ? 'font-semibold' : 'font-normal', 'block truncate']">{{ year + " / " + String( Number( swimmer.age ) + ( year - getYear( new Date() ) ) ) }}</span>
+                    <span :class="[selected ? 'font-semibold' : 'font-normal', 'block truncate']">{{ year + " / " + getQualifyingAge( year ) }}</span>
 
                     <span
                       v-if="selected"

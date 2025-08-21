@@ -154,8 +154,5 @@ DROP VIEW IF EXISTS MeetsView;
 CREATE VIEW MeetsView AS SELECT id, code, date, duration, name, country, region, Meets.location, latitude, longitude, course, level, type, contact, email FROM "Meets" LEFT JOIN "Locations" ON Meets.location = Locations.location
 /* MeetsView(id,code,date,duration,name,country,region,location,latitude,longitude,course,level,type,contact,email) */;
 DROP VIEW IF EXISTS UserSwimmersView;
-CREATE VIEW UserSwimmersView AS SELECT userId, SwimmersView.* FROM UserSwimmers INNER JOIN SwimmersView ON (UserSwimmers.swimmerId = SwimmersView.id)
+CREATE VIEW UserSwimmersView AS SELECT userId, Swimmers.* FROM UserSwimmers INNER JOIN Swimmers ON (UserSwimmers.swimmerId = Swimmers.id)
 /* UserSwimmersView(userId,id,name,birthday,age,gender,nationality,region,county,active) */;
-DROP VIEW IF EXISTS SwimmersView;
-CREATE VIEW SwimmersView AS SELECT id, name, birthday, strftime('%Y', 'now') - strftime('%Y', birthday ) AS age, gender, nationality, region, county, active FROM "Swimmers"
-/* SwimmersView(id,name,birthday,age,gender,nationality,region,county,active) */;
