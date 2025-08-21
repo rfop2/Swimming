@@ -116,7 +116,9 @@ const saveResults = db.prepare( insertResultsSql )
 
 const saveMeets = db.prepare( insertMeetsSql )
 
-const extractTableData = ( $: CheerioAPI, table: Cheerio<AnyNode> ) => {
+type RowFunction = ( arg0: CheerioAPI, arg1: Cheerio<AnyNode> ) => Record<string,string>
+
+const extractTableData = ( $: CheerioAPI, table: Cheerio<AnyNode>, rowFunc?: RowFunction ) => {
   // const data = await page.evaluate( ( tbody: HTMLTableSectionElement ) => {
   const headers: Array<string> = []
   const dataObject: Array<Record<string, string>> = []
@@ -193,12 +195,22 @@ const parseIndividual = ( pageInfo: PageInfo, $: CheerioAPI ) => {
   return data
 }
 
+const extractSwimmerId = ( $: CheerioAPI, valueCells: Cheerio<AnyNode> ) => {
+  const linkCell = valueCells[1]
+  const anchor = $( linkCell ).find( "a" )[0]
+  const link = $( anchor ).attr( "href" )
+  if ( !link )
+    return { swimmer: "unknown" }
+  const swimmerId = link.match( /tiref=(\d+)/ )?.[1] ?? ""
+  return { swimmer: swimmerId }
+}
+
 const parseRanking = ( pageInfo: PageInfo, $: CheerioAPI ) => {
   const tables = $( "[id='rankTable'] tbody" )
   const data: Ranking = {
     table: [],
   }
-  const table = extractTableData( $, $( tables[0] ) )
+  const table = extractTableData( $, $( tables[0] ), extractSwimmerId )
   if ( table.length ) {
     // Do any conversions
     for ( const row of table ) {
@@ -207,7 +219,7 @@ const parseRanking = ( pageInfo: PageInfo, $: CheerioAPI ) => {
       }
       const rankingRow: RankingRow = {
         rank: Number( row.rank ),
-        name: row.name,
+        swimmer: row.swimmer,
         ranked_club: row.ranked_club,
         yob: Number( row.yob ),
         meet_name: row.meet_name,

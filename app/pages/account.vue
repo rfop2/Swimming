@@ -325,7 +325,6 @@
                   name: '',
                   gender: 'male',
                   birthday: '',
-                  age: '',
                   nationality: '',
                   region: '',
                   county: '',

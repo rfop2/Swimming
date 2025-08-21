@@ -28,7 +28,7 @@ export type IndividualStats = Array<Individual>
 
 export interface RankingRow {
   rank: number
-  name: string
+  swimmer: string
   ranked_club: string
   yob: number
   meet_name: string
