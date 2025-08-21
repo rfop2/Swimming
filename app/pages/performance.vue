@@ -24,19 +24,6 @@
   const { data: qualifyingInfo } = await useFetch(
     // `/api/qualifying/${year}/${AGE}`,
     "/api/qualifying",
-    {
-      transform( records: QualifyingApiResponse ) : Array<ExtQualifyingRow> {
-        const extData = records.map( row => {
-          return {
-            ...row,
-            ...{
-              scope: areaToScope( row.area ),
-            }
-          }
-        } )
-        return extData
-      },
-    }
   )
 
   const qualifyingYears = computed( () => Array.from( ( qualifyingInfo.value ?? [] ).reduce(
@@ -94,10 +81,10 @@
     qualifying: QualifyingType
   }
 
-  const generateRankingUrl = ( swimmer: Swimmer, course: string, stroke: string, distance: string, area: string, page: number ) => {
+  const generateRankingUrl = ( swimmer: Swimmer, course: string, stroke: string, distance: string, scope: string, page: number ) => {
     const stroke_distance = STROKE_DISTANCE[`${stroke}__${distance}`.toLocaleUpperCase() as keyof typeof STROKE_DISTANCE]
     const pool = course.substring( 0, 1 ).toLocaleUpperCase()
-    switch ( area ) {
+    switch ( scope ) {
       case "national" : {
         return createUrl( rankBaseUrl, {
           ...{ Stroke: stroke_distance, Pool: pool },
@@ -120,7 +107,7 @@
         } )
       }
     }
-    throw new Error( `Can't generate ranking url from area ${area}` )
+    throw new Error( `Can't generate ranking url from scope ${scope}` )
   }
 
   const records = computed( () => {
@@ -130,10 +117,10 @@
         return []
 
       const performanceRecordsMap = new Map<string,AreaDetail>( ( performanceRecords.value ?? [] ).map( record => {
-        const { course, stroke, distance, area, position, rank, best, best_date, difference } = record
-        const key = `${distance}_${stroke}_${course}_${area}`
+        const { course, stroke, distance, scope, position, rank, best, best_date, difference } = record
+        const key = `${distance}_${stroke}_${course}_${scope}`
         const page = Math.floor( rank / 100 ) + 1
-        const url = generateRankingUrl( swimmer.value, course, stroke, distance, area, page )
+        const url = generateRankingUrl( swimmer.value, course, stroke, distance, scope, page )
         return [ key, {
           url,
           position,
@@ -271,7 +258,7 @@
           Performance in events relative to the event leader if appearing in top 100 rankings (200 for national) in the last 12 months.
         </p>
       </div>
-      <div class="mt-4 sm:ml-3 sm:mt-0 sm:flex-none max-w-32">
+      <div class="mt-4 sm:ml-3 sm:mt-0 sm:flex-none">
         <Listbox
           v-model="qualifyingYear"
           as="div"

@@ -12,19 +12,22 @@ CREATE TABLE "Qualifying" (
   course VARCHAR(8) NOT NULL,
   stroke VARCHAR(32) NOT NULL,
   distance VARCHAR(8) NOT NULL,
+  scope VARCHAR(16) NOT NULL,
   area VARCHAR(16) NOT NULL,
   gender VARCHAR(16) NOT NULL,
   age  VARCHAR(8) NOT NULL,
   timeString VARCHAR(16) NOT NULL,
   time DECIMAL(8,2) NOT NULL DEFAULT 0.00,
-  UNIQUE( year, age, gender, course, stroke, distance, area )
+  UNIQUE( year, age, gender, course, stroke, distance, scope, area )
 );
 DROP TABLE IF EXISTS Performance;
-CREATE TABLE "Performance" (  created DATE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+CREATE TABLE "Performance" (
+  created DATE NOT NULL DEFAULT CURRENT_TIMESTAMP,
   swimmer VARCHAR(8) NOT NULL,
   course VARCHAR(8),
   stroke VARCHAR(32),
   distance VARCHAR(8),
+  scope VARCHAR(16),
   area VARCHAR(16),
   position INT,
   rank INT,
@@ -33,7 +36,7 @@ CREATE TABLE "Performance" (  created DATE NOT NULL DEFAULT CURRENT_TIMESTAMP,
   time DECIMAL(8,2),
   time_date DATE,
   difference DECIMAL(8,2),
-  UNIQUE( created, swimmer, course, stroke, distance, area ),
+  UNIQUE( created, swimmer, course, stroke, distance, scope, area ),
   FOREIGN KEY (swimmer) REFERENCES "Swimmers"(id)
 );
 DROP TABLE IF EXISTS Results;
@@ -62,6 +65,7 @@ CREATE TABLE "Rankings" (
   course VARCHAR(8) NOT NULL,
   stroke VARCHAR(32),
   distance VARCHAR(8),
+  scope VARCHAR(16),
   area VARCHAR(16),
   rank INTEGER,
   swimmer VARCHAR(8),
@@ -113,8 +117,10 @@ CREATE TABLE "Meets" (
   location VARCHAR(32) NOT NULL,
   course VARCHAR(8) NOT NULL,
   level INTEGER NOT NULL,
-  type VARCHAR(16) NOT NULL
-, contact VARCHAR(32), email VARCHAR(32));
+  type VARCHAR(16) NOT NULL,
+  contact VARCHAR(32),
+  email VARCHAR(32)
+);
 DROP TABLE IF EXISTS User;
 CREATE TABLE User (
   id TEXT NOT NULL PRIMARY KEY,

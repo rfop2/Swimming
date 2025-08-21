@@ -56,10 +56,6 @@ const today = format( now, "yyyy-MM-dd" )
 const db = new Database( DB_PATH )
 db.pragma( "journal_mode = WAL" )
 
-// Create tables, and prepare statements
-// const swimmerTableCreate = db.prepare( createSwimmerSql )
-// swimmerTableCreate.run()
-
 const getSwimmers = db.prepare<unknown[],Swimmer>(
   "SELECT * FROM Swimmers WHERE active = 1"
 )
@@ -100,22 +96,35 @@ const saveIndividual = db.prepare( insertIndividualSql )
 // const rankingsTableCreate = db.prepare( createRankingsSql )
 // rankingsTableCreate.run()
 
-interface RankingRecord extends RankingRow {
+interface RankingRecord {
+  rank: number
   course: string
   stroke: string
   distance: string
+  scope: string
   area: string
+  date: string
+  time: number
 }
 
 const getBestRankingTimes = db.prepare<{date:string,gender:string,age:string},RankingRecord>(
-  "SELECT course, stroke, distance, area, date, MIN(time) as time FROM Rankings WHERE created = :date AND gender = :gender AND age = :age GROUP BY gender, age, course, stroke, distance, area"
+  "SELECT course, stroke, distance, scope, area, date, MIN(time) as time FROM Rankings WHERE created = :date AND gender = :gender AND age = :age GROUP BY gender, age, course, stroke, distance, scope, area"
 )
 
-const getSwimmerRankingTimes = db.prepare<{date:string,name:string},RankingRecord>(
-  "SELECT course, stroke, distance, area, rank, date, time FROM Rankings WHERE created = :date AND name = :name"
+const getSwimmerRankingTimes = db.prepare<{date:string,swimmer:string},RankingRecord>(
+  "SELECT course, stroke, distance, scope, area, rank, date, time FROM Rankings WHERE created = :date AND swimmer = :swimmer"
 )
 
-export const deleteRankingsSql = "DELETE FROM Rankings WHERE created = :created AND gender = :gender AND age = :age"
+export const deleteRankingsSql =
+`DELETE FROM Rankings WHERE
+  created = :created AND
+  gender = :gender AND
+  age = :age AND
+  course = :course AND
+  stroke = :stroke AND
+  distance = :distance AND
+  scope = :scope AND
+  area = :area`
 
 const deleteRankings = db.prepare( deleteRankingsSql )
 
@@ -257,7 +266,7 @@ const extractTableData = ( $: CheerioAPI, table: Cheerio<AnyNode>, rowFunc?: Row
     const row = $( rowElement )
     if ( rowIndex === 0 ) {
       row.find( "th" ).each( ( cellIndex, cellElement ) => {
-        headers.push( $( cellElement ).text().toLowerCase().replace( /\s+/g, "_" ) )
+        headers.push( $( cellElement ).text().toLocaleLowerCase().replace( /\s+/g, "_" ) )
       } )
       return
     }
@@ -276,7 +285,8 @@ const extractTableData = ( $: CheerioAPI, table: Cheerio<AnyNode>, rowFunc?: Row
       }
       rowData[headers[headerIndex++]] = value
     }
-    dataObject.push( rowData )
+    const extraData = rowFunc ? rowFunc( $, valueCells ) : {}
+    dataObject.push( { ...rowData, ...extraData } )
   } )
   return dataObject
 }
@@ -306,7 +316,7 @@ const parseIndividual = ( pageInfo: PageInfo, $: CheerioAPI ) => {
 
       const courseRow: Individual = {
         course,
-        stroke: stroke.replace( /\s/g, "_" ).toLowerCase(),
+        stroke: stroke.replace( /\s/g, "_" ).toLocaleLowerCase(),
         distance: `${distance}m`,
         time: timeToSeconds( course === "lc" ? row.lc_time : row.sc_time ),
         converted_time: timeToSeconds( course === "lc" ? row.converted_to_sc : row.converted_to_lc ),
@@ -398,7 +408,7 @@ const extractMeetsTableData = ( $: CheerioAPI, table: Cheerio<AnyNode> ) => {
     if ( rowIndex === 0 ) {
       row.find( "th" ).each( ( cellIndex, cellElement ) => {
         // console.log( $( cellElement ).text() )
-        headers.push( $( cellElement ).text().trim().toLowerCase().replace( /\W+/g, "_" ) )
+        headers.push( $( cellElement ).text().trim().toLocaleLowerCase().replace( /\W+/g, "_" ) )
       } )
       return
     }
@@ -525,7 +535,7 @@ const parseMeet = async ( pageInfo: PageInfo, $: CheerioAPI, meet: Partial<Meet>
   list
     .children()
     .each( ( _, el ) => {
-      if ( el.tagName.toLowerCase() === "dt" ) {
+      if ( el.tagName.toLocaleLowerCase() === "dt" ) {
         const key = $( el ).text().trim().replace( /\W/g, "" )
         const next = $( el ).next( "dd" )
         const value = next.text().trim()
@@ -548,11 +558,10 @@ export const fetchPage = async ( pageInfo: PageInfo, cacheTime: number = DEFAULT
   try {
     const stats = await stat( contentFile )
     // Page has been cached
-    const age = differenceInHours( Date.now(), stats.mtime )
-    console.log( `Cached: ${age}` )
-    if ( age < cacheTime ) {
+    const fileAge = differenceInHours( Date.now(), stats.mtime )
+    if ( fileAge < cacheTime ) {
       // Page is new enough
-      console.log( `Reading ${contentFile}` )
+      console.log( `Reading ${contentFile}, cached: ${fileAge} hours` )
       const content = await readFile( contentFile )
       return content
     }
@@ -659,7 +668,7 @@ const updateResults = async ( swimmer: Swimmer, individualData: Array<Individual
 const updateRankings = async ( swimmer: Swimmer, individualData: Array<Individual> ) => {
   console.log( `Updating ranking data for swimmer '${swimmer.name}'` )
 
-  deleteRankings.run( { created: today, gender: swimmer.gender, age: swimmer.age } )
+  const ageGroup = getSwimmerAgeGroup( swimmer )
   for ( const event of individualData ) {
     const stroke_distance = STROKE_DISTANCE[`${event.stroke}__${event.distance}`.toLocaleUpperCase() as keyof typeof STROKE_DISTANCE]
     const course = event.course.substring( 0, 1 ).toLocaleUpperCase()
@@ -672,7 +681,7 @@ const updateRankings = async ( swimmer: Swimmer, individualData: Array<Individua
     }
     const pages: Array<PageInfo> = [
       {
-        label: `${event.distance}_${event.stroke}_${swimmer.gender}_${event.course}_${swimmer.age}_national`,
+        label: `${event.distance}_${event.stroke}_${swimmer.gender}_${event.course}_${ageGroup.toLocaleLowerCase()}_national_${swimmer.nationality.toLocaleLowerCase()}`,
         url: createUrl( rankBaseUrl, {
           ...{ Stroke: stroke_distance, Pool: course },
           ...globalRankParams( swimmer ),
@@ -688,7 +697,7 @@ const updateRankings = async ( swimmer: Swimmer, individualData: Array<Individua
         }
       },
       {
-        label: `${event.distance}_${event.stroke}_${swimmer.gender}_${event.course}_${swimmer.age}_regional`,
+        label: `${event.distance}_${event.stroke}_${swimmer.gender}_${event.course}_${ageGroup.toLocaleLowerCase()}_regional_${swimmer.region.toLocaleLowerCase()}`,
         url: createUrl( rankBaseUrl, {
           ...{ Stroke: stroke_distance, Pool: course },
           ...globalRankParams( swimmer ),
@@ -704,7 +713,7 @@ const updateRankings = async ( swimmer: Swimmer, individualData: Array<Individua
         }
       },
       {
-        label: `${event.distance}_${event.stroke}_${swimmer.gender}_${event.course}_${swimmer.age}_county`,
+        label: `${event.distance}_${event.stroke}_${swimmer.gender}_${event.course}_${ageGroup.toLocaleLowerCase()}_county_${swimmer.county.toLocaleLowerCase()}`,
         url: createUrl( rankBaseUrl, {
           ...{ Stroke: stroke_distance, Pool: course },
           ...globalRankParams( swimmer ),
@@ -737,9 +746,10 @@ const updateRankings = async ( swimmer: Swimmer, individualData: Array<Individua
         url.search = new URLSearchParams( params ).toString()
         extraPages.push( Object.assign( {}, page, { label: `${page.label}-2`, url, data: page.data } ) )
       }
+      deleteRankings.run( { created: today, ...page.data } )
     }
 
-    for ( const page of pages ) {
+    for ( const page of pages.concat( extraPages ) ) {
       const content = await fetchPage( page )
       // console.log( inspect( pageData, { depth: 5 } ) )
       const $ = cheerio.load( content )
@@ -755,13 +765,15 @@ const updateRankings = async ( swimmer: Swimmer, individualData: Array<Individua
 const updatePerformance = ( swimmer: Swimmer ) => {
   console.log( `Generating performance data for swimmer '${swimmer.name}'` )
 
+  const ageGroup = getSwimmerAgeGroup( swimmer )
+
   // Now generate the performance records
-  const swimmerTimes = getSwimmerRankingTimes.all( { date: today, name: swimmer.name } )
-  const bestTimes = getBestRankingTimes.all( { date: today, gender: swimmer.gender, age: swimmer.age } )
-  const bestTimesMap = new Map( bestTimes.map( time => [ `${time.course}_${time.stroke}_${time.distance}_${time.area}`, time ] ) )
+  const swimmerTimes = getSwimmerRankingTimes.all( { date: today, swimmer: swimmer.id } )
+  const bestTimes = getBestRankingTimes.all( { date: today, gender: swimmer.gender, age: ageGroup } )
+  const bestTimesMap = new Map( bestTimes.map( time => [ `${time.course}_${time.stroke}_${time.distance}_${time.scope}_${time.area}`, time ] ) )
 
   for ( const swimmerTime of swimmerTimes ) {
-    const raceLabel = `${swimmerTime.course}_${swimmerTime.stroke}_${swimmerTime.distance}_${swimmerTime.area}`
+    const raceLabel = `${swimmerTime.course}_${swimmerTime.stroke}_${swimmerTime.distance}_${swimmerTime.scope}_${swimmerTime.area}`
     const bestTime = bestTimesMap.get( raceLabel )
     if ( !bestTime ) {
       throw new Error( `Unable to find best time record for '${raceLabel}` )
@@ -775,8 +787,8 @@ const updatePerformance = ( swimmer: Swimmer ) => {
       time_date: swimmerTime.date,
       difference: swimmerTime.time - bestTime.time,
     }
-    deletePerformance.run( today, swimmer.id, swimmerTime.course, swimmerTime.stroke, swimmerTime.distance, swimmerTime.area )
-    savePerformance.run( { created: today, swimmer: swimmer.id, course: swimmerTime.course, stroke: swimmerTime.stroke, distance: swimmerTime.distance, area: swimmerTime.area, ...record } )
+    deletePerformance.run( { created: today, swimmer: swimmer.id, ...swimmerTime } )
+    savePerformance.run( { created: today, swimmer: swimmer.id, ...swimmerTime, ...record } )
   }
 }
 

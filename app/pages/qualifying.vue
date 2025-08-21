@@ -4,7 +4,7 @@
   import "ag-grid-community/styles/ag-grid.css" // Mandatory CSS required by the Data Grid
   import "ag-grid-community/styles/ag-theme-quartz.css" // Optional Theme applied to the Data Grid
   import { AgGridVue } from "ag-grid-vue3" // Vue Data Grid Component
-  import { type Swimmer, secondsToTime, strokeSort, timeToSeconds, type QualifyingRow, getCompetitionAge } from "lib"
+  import { type Swimmer, secondsToTime, strokeSort, timeToSeconds, type QualifyingRow, getCompetitionAge, REGIONS, COUNTIES } from "lib"
   import { addMonths, getYear, parseISO } from "date-fns"
   import type { FetchError } from "ofetch"
 
@@ -62,6 +62,21 @@
 
   const years = Array.from( { length: 6 }, ( _, i ) => filterYear - 3 + i ).map( year => ( { value: year } ) )
 
+  const scopes = [
+    {
+      value: "county",
+      label: "County",
+    },
+    {
+      value: "regional",
+      label: "Regional",
+    },
+    {
+      value: "national",
+      label: "National",
+    },
+  ]
+
   const genders = [
     {
       value: "male",
@@ -77,12 +92,19 @@
 
   const selections = ref( {
     year: years[0],
+    scope: scopes[0],
     gender: genders[0],
     age: ages.value[0],
   } )
 
+  const filterArea = computed( () => areaFromScope( selections.value.scope.value ) )
+
   const filteredQualifying = computed( () => ( qualifying.value ?? [] ).filter( row => {
     if ( row.year !== selections.value.year.value )
+      return false
+    if ( row.scope !== selections.value.scope.value )
+      return false
+    if ( row.area !== filterArea.value )
       return false
     if ( row.gender !== selections.value.gender.value )
       return false
@@ -123,16 +145,30 @@
 
   const dirty = ref( false )
 
+  const lookupScope = ( scope: string ) => ( scope.charAt( 0 ).toUpperCase() + scope.slice( 1 ) )
+  const lookupArea = ( scope: string, area: string ) => {
+    if ( scope === "county" )
+      return COUNTIES[area]
+    if ( scope === "regional" )
+      return REGIONS[area]
+    if ( scope === "national" )
+      return ""
+    return "<error>"
+  }
+
   const columns = ref( [
     {
       field: "year",
     },
     {
+      field: "scope",
+      valueFormatter: ( { value }: ValueFormatterParams ) => lookupScope( value ),
+      filterValueGetter: ( params: ValueGetterParams ) => lookupScope( params.data.scope ),
+    },
+    {
       field: "area",
-      valueFormatter: ( { value }: ValueFormatterParams ) => value === "sw" ? "South West" : "Gloucestershire",
-      filterValueGetter: ( params: ValueGetterParams ) => {
-        return params.data.area === "sw" ? "South West" : "Gloucestershire"
-      },
+      valueFormatter: ( { value, data }: ValueFormatterParams ) => lookupArea( data.scope, value ),
+      filterValueGetter: ( params: ValueGetterParams ) => lookupArea( params.data.scope, params.data.area ),
     },
     {
       field: "distance",
@@ -205,13 +241,23 @@
     },
   ] )
 
-  const updateFilters = ( swimmer: Swimmer ) => {
+  const areaFromScope = ( scope: string ) => {
+    if ( scope === "county" )
+      return swimmer.value.county
+    if ( scope === "regional" )
+      return swimmer.value.region
+    if ( scope === "national" )
+      return swimmer.value.nationality
+    return ""
+  }
 
+  const updateFilters = ( swimmer: Swimmer ) => {
     const compAge = getCompetitionAge( parseISO( swimmer.birthday ) )
     ages.value = Array.from( { length: 4 }, ( _, i ) => compAge - 1 + i ).map( year => ( { value: String( year ) } ) )
 
     selections.value = {
       year: years.find( year => year.value === filterYear ) ?? years[0],
+      scope: selections.value.scope,
       gender: genders.find( gender => gender.value === swimmer.gender ) ?? genders[0],
       age: ages.value.find( age => age.value === String( compAge ) ) ?? ages.value[0],
     }
@@ -275,6 +321,14 @@
               :options="years"
               label="Year"
               placeholder="Choose Year"
+            />
+          </div>
+          <div class="min-w-48">
+            <UI-Listbox
+              v-model="selections.scope"
+              :options="scopes"
+              label="Scope"
+              placeholder="Choose Scope"
             />
           </div>
           <div class="min-w-48">
