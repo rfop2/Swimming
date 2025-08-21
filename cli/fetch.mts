@@ -14,16 +14,6 @@ import {
   MAX_FETCH_INTERVAL,
   MIN_FETCH_INTERVAL,
   DB_PATH,
-  // createSwimmerSql,
-  // createIndividualSql,
-  // createPerformanceSql,
-  // createRankingsSql,
-  // createResultsSql,
-  deletePerformanceSql,
-  insertIndividualSql,
-  insertPerformanceSql,
-  insertRankingsSql,
-  insertResultsSql,
   timeToSeconds,
   sleep,
   rng,
@@ -73,8 +63,36 @@ const getSwimmers = db.prepare<unknown[],Swimmer>(
   "SELECT * FROM SwimmersView WHERE active = 1"
 )
 
-// const individualTableCreate = db.prepare( createIndividualSql )
-// individualTableCreate.run()
+const insertIndividualSql =
+`INSERT OR IGNORE INTO Individual (
+  created,
+  swimmer,
+  course,
+  stroke,
+  distance,
+  time,
+  converted_time,
+  wa_pts,
+  date,
+  meet,
+  venue,
+  licence,
+  level
+) VALUES (
+  :created,
+  :swimmer,
+  :course,
+  :stroke,
+  :distance,
+  :time,
+  :converted_time,
+  :wa_pts,
+  :date,
+  :meet,
+  :venue,
+  :licence,
+  :level
+);`
 
 const saveIndividual = db.prepare( insertIndividualSql )
 
@@ -100,17 +118,127 @@ export const deleteRankingsSql = "DELETE FROM Rankings WHERE created = :created 
 
 const deleteRankings = db.prepare( deleteRankingsSql )
 
+const insertRankingsSql =
+`INSERT INTO Rankings (
+  created,
+  gender,
+  age,
+  course,
+  stroke,
+  distance,
+  scope,
+  area,
+  rank,
+  swimmer,
+  ranked_club,
+  yob,
+  meet_name,
+  venue,
+  level,
+  date,
+  time,
+  fina
+) VALUES (
+  :created,
+  :gender,
+  :age,
+  :course,
+  :stroke,
+  :distance,
+  :scope,
+  :area,
+  :rank,
+  :swimmer,
+  :ranked_club,
+  :yob,
+  :meet_name,
+  :venue,
+  :level,
+  :date,
+  :time,
+  :fina
+);`
+
 const saveRankings = db.prepare( insertRankingsSql )
 
-// const performanceTableCreate = db.prepare( createPerformanceSql )
-// performanceTableCreate.run()
+const deletePerformanceSql =
+`DELETE FROM Performance WHERE
+  created = :created AND
+  swimmer = :swimmer AND
+  course = :course AND
+  stroke = :stroke AND
+  distance = :distance AND
+  scope = :scope AND
+  area = :area
+;`
 
 const deletePerformance = db.prepare( deletePerformanceSql )
 
+const insertPerformanceSql =
+`INSERT INTO Performance (
+  created,
+  swimmer,
+  course,
+  stroke,
+  distance,
+  scope,
+  area,
+  position,
+  rank,
+  best,
+  best_date,
+  time,
+  time_date,
+  difference
+) VALUES (
+  :created,
+  :swimmer,
+  :course,
+  :stroke,
+  :distance,
+  :scope,
+  :area,
+  :position,
+  :rank,
+  :best,
+  :best_date,
+  :time,
+  :time_date,
+  :difference
+);`
+
 const savePerformance = db.prepare( insertPerformanceSql )
 
-// const resultsTableCreate = db.prepare( createResultsSql )
-// resultsTableCreate.run()
+const insertResultsSql =
+`INSERT OR IGNORE INTO Results (
+  created,
+  swimmer,
+  course,
+  stroke,
+  distance,
+  time,
+  wa_pts,
+  round,
+  date,
+  meet,
+  venue,
+  club_swam_under,
+  level
+) VALUES (
+  :created,
+  :swimmer,
+  :course,
+  :stroke,
+  :distance,
+  :time,
+  :wa_pts,
+  :round,
+  :date,
+  :meet,
+  :venue,
+  :club_swam_under,
+  :level
+);`
 
 const saveResults = db.prepare( insertResultsSql )
 
