@@ -662,6 +662,13 @@ const updateRankings = async ( swimmer: Swimmer, individualData: Array<Individua
   for ( const event of individualData ) {
     const stroke_distance = STROKE_DISTANCE[`${event.stroke}__${event.distance}`.toLocaleUpperCase() as keyof typeof STROKE_DISTANCE]
     const course = event.course.substring( 0, 1 ).toLocaleUpperCase()
+    const commonData = {
+      gender: swimmer.gender,
+      age: ageGroup,
+      course: event.course,
+      stroke: event.stroke,
+      distance: event.distance,
+    }
     const pages: Array<PageInfo> = [
       {
         label: `${event.distance}_${event.stroke}_${swimmer.gender}_${event.course}_${swimmer.age}_national`,
@@ -670,7 +677,14 @@ const updateRankings = async ( swimmer: Swimmer, individualData: Array<Individua
           ...globalRankParams( swimmer ),
           ...nationalRankParams,
         } ),
-        type: "ranking"
+        type: "ranking",
+        data: {
+          ...commonData,
+          ... {
+            scope: "national",
+            area: swimmer.nationality,
+          }
+        }
       },
       {
         label: `${event.distance}_${event.stroke}_${swimmer.gender}_${event.course}_${swimmer.age}_regional`,
@@ -679,7 +693,14 @@ const updateRankings = async ( swimmer: Swimmer, individualData: Array<Individua
           ...globalRankParams( swimmer ),
           ...{ ...regionalRankParams, ...{ TargetRegion: swimmer.region } }
         } ),
-        type: "ranking"
+        type: "ranking",
+        data: {
+          ...commonData,
+          ... {
+            scope: "regional",
+            area: swimmer.region,
+          }
+        }
       },
       {
         label: `${event.distance}_${event.stroke}_${swimmer.gender}_${event.course}_${swimmer.age}_county`,
@@ -688,7 +709,14 @@ const updateRankings = async ( swimmer: Swimmer, individualData: Array<Individua
           ...globalRankParams( swimmer ),
           ...{ ...countyRankParams, ...{ TargetCounty: swimmer.county } }
         } ),
-        type: "ranking"
+        type: "ranking",
+        data: {
+          ...commonData,
+          ... {
+            scope: "county",
+            area: swimmer.county,
+          }
+        }
       },
     ]
 
@@ -706,7 +734,7 @@ const updateRankings = async ( swimmer: Swimmer, individualData: Array<Individua
       for ( let i = 1; i < pageCount; i++ ) {
         params.set( "StartNumber", String( 1 + ( i * 100 ) ) )
         url.search = new URLSearchParams( params ).toString()
-        extraPages.push( Object.assign( {}, page, { label: `${page.label}-2`, url } ) )
+        extraPages.push( Object.assign( {}, page, { label: `${page.label}-2`, url, data: page.data } ) )
       }
     }
 
@@ -716,16 +744,8 @@ const updateRankings = async ( swimmer: Swimmer, individualData: Array<Individua
       const $ = cheerio.load( content )
 
       const rankingData = parseRanking( page, $ )
-
-      const regexp = new RegExp( `(?<distance>\\d+m)_(?<stroke>\\w+)_${swimmer.gender}_(?<course>.c)_${swimmer.age}(?:_(?<area>\\w+))?(?:-(?<page>\\d+))?` )
-      const matches = page.label.match( regexp )
-      if ( !matches ) {
-        throw new Error( "Can't match ranking on '$page.{label}'" )
-      }
-      const { distance = "", stroke = "", course = "", area = "" } = { ...matches?.groups }
-
       for ( const row of rankingData.table ) {
-        saveRankings.run( { created: today, gender: swimmer.gender, age: swimmer.age, swimmer: "", course, stroke, distance, area, ...row } )
+        saveRankings.run( { created: today, ...page.data, ...row } )
       }
     }
   }

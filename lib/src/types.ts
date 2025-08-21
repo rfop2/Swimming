@@ -94,6 +94,7 @@ export interface PageInfo {
   label: string
   url: URL
   type: "individual" | "ranking" | "results" | "meets" | "meet"
+  data?: Record<string,string | number>
 }
 
 export type PageData = Array<PageInfo>
