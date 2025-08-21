@@ -28,20 +28,15 @@
 
   const router = useRouter()
 
-  /* const user = {
-    name: "Tom Cook",
-    email: "tom@example.com",
-    imageUrl:
-      "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80",
-  } */
   const config = useRuntimeConfig()
 
   const { data: swimmers } = await useFetch(
     "/api/swimmers",
   )
 
-  // const unknownSwimmer = { name: "Unknown Swimmer", id: "" }
-  const swimmer = useState<Swimmer | null>( "swimmer", () => ( swimmers.value && swimmers.value[0] ) || null )
+  const swimmerId = ref< string | null >( ( swimmers.value && swimmers.value.length && swimmers.value[0].id ) || null )
+  const lookupSwimmer = ( id: string | null ) => ( ( swimmers.value || [] ).find( s => s.id === id ) ?? null )
+  const swimmer = useState<Swimmer | null>( "swimmer", () => lookupSwimmer( swimmerId.value ) )
 
   const navigation = computed( () => [
     { name: "Performance", href: "/performance", condition: ()=>( !!swimmer.value ) },
@@ -70,11 +65,12 @@
   const updated = useLastUpdate()
 
   watch(
-    swimmer,
-    async ( newSwimmer ) => {
-      if ( newSwimmer ) {
+    swimmerId,
+    async ( newSwimmerId ) => {
+      if ( newSwimmerId ) {
+        swimmer.value = lookupSwimmer( newSwimmerId )
         try {
-          updated.value = await $fetch( `/api/updated/${newSwimmer.id}` )
+          updated.value = await $fetch( `/api/updated/${newSwimmerId}` )
         } catch ( error ) {
           updated.value = "<error>"
           if ( error instanceof FetchError ) {
@@ -129,13 +125,13 @@
           <div class="hidden sm:ml-6 sm:flex sm:items-center pt-2">
             <div class="min-w-64 pr-4">
               <Listbox
-                v-if="swimmer"
-                v-model="swimmer"
+                v-if="swimmers && swimmers.length"
+                v-model="swimmerId"
                 as="div"
               >
                 <div class="relative">
                   <ListboxButton class="relative w-full cursor-default rounded-md bg-white py-1 pl-3 pr-10 text-left text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6">
-                    <span class="block truncate">{{ swimmer.name }}</span>
+                    <span class="block truncate">{{ swimmer?.name }}</span>
                     <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
                       <ChevronUpDownIcon
                         class="h-5 w-5 text-gray-400"
@@ -154,7 +150,7 @@
                         :key="option.id"
                         v-slot="{ active, selected }"
                         as="template"
-                        :value="option"
+                        :value="option.id"
                       >
                         <li :class="[active ? 'bg-indigo-600 text-white' : 'text-gray-900', 'relative cursor-default select-none py-1 pl-3 pr-9']">
                           <span :class="[selected ? 'font-semibold' : 'font-normal', 'block truncate']">{{ option.name }}</span>
