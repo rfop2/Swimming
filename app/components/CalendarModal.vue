@@ -5,6 +5,21 @@
   const props = defineProps<{
     calendarEvent: CalendarEventExternal
   }>()
+
+  const tagged = ref( props.calendarEvent.meet.tagged )
+
+  watch( tagged, async ( newTagged ) => {
+    if ( newTagged ) {
+      await $fetch( `/api/meets/${props.calendarEvent.meet.id}`, {
+        method: "PATCH",
+      } )
+    } else {
+      await $fetch( `/api/meets/${props.calendarEvent.meet.id}`, {
+        method: "DELETE",
+      } )
+    }
+    await refreshNuxtData( "meets" )
+  } )
 </script>
 
 <template>
@@ -25,6 +40,14 @@
       >
         {{ props.calendarEvent.meet.name }}
       </a>
+      <input
+        v-model="tagged"
+        type="checkbox"
+        :true-value="1"
+        :false-value="0"
+        class="mt-1 size-5 outline-0"
+        title="Add to tagged meets"
+      >
     </div>
     <div class="sx__has-icon sx__event-modal__time">
       <svg
@@ -202,6 +225,9 @@
 </template>
 
 <style lang="scss" scoped>
+.sx__event-modal__title {
+  grid-template-columns: 30px 1fr 24px;
+}
 .sx__event-modal-default {
   max-height: 240px !important;
   height: auto !important;

@@ -35,6 +35,7 @@
   const { data: meets } = await useFetch(
     "/api/meets",
     {
+      key: "meets",
       transform( data: ApiResponse ): Array<ExtMeet> {
         const extData = data.map( row => {
           return {
@@ -126,11 +127,23 @@
       label: "<100 Miles",
     },
   ]
+  const taggings = [
+    {
+      value: 0,
+      label: "All Meets",
+    },
+    {
+      value: 1,
+      label: "Tagged Only",
+    },
+  ]
+
 
   const selections = reactive( {
     course: courses[0],
     level: levels,
     distance: distances[0],
+    tagged: taggings[0],
   } )
 
   const distanceCalendar = ( distance: number | null ) => {
@@ -163,6 +176,7 @@
         additionalClasses: [
           `course-${meet.course}`,
           `level-${meet.level}`,
+          `meet-tagged-${meet.tagged}`
         ],
       },
       calendarId: distanceCalendar( meet.distance ),
@@ -174,6 +188,8 @@
       if ( selections.level.length === 0 || !selections.level.map( level => level.value ).includes( event.meet.level ) )
         return false
       if ( selections.distance.value && event.meet.distance && selections.distance.value < event.meet.distance )
+        return false
+      if ( selections.tagged.value && !event.meet.tagged )
         return false
       return true
     } )
@@ -314,6 +330,13 @@
               label="Distance"
             />
           </div>
+          <div class="min-w-48">
+            <UIListbox
+              v-model="selections.tagged"
+              :options="taggings"
+              label="Tagged"
+            />
+          </div>
         </div>
       </div>
     </div>
@@ -335,6 +358,11 @@
   .course-lc {
     .sx__month-grid-event-title {
       font-style: italic;
+    }
+  }
+  .meet-tagged-1 {
+    .sx__month-grid-event-title {
+      font-weight: bold;
     }
   }
 </style>
