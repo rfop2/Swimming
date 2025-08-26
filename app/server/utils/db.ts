@@ -22,5 +22,7 @@ export interface DatabaseUser {
   password_hash: string;
   firstName: string;
   lastName: string;
+  type: string;
+  admin: boolean;
   location: string;
 }

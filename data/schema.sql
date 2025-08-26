@@ -15,7 +15,7 @@ CREATE TABLE "Qualifying" (
   scope VARCHAR(16) NOT NULL,
   area VARCHAR(16) NOT NULL,
   gender VARCHAR(16) NOT NULL,
-  age  VARCHAR(8) NOT NULL,
+  age VARCHAR(8) NOT NULL,
   timeString VARCHAR(16) NOT NULL,
   time DECIMAL(8,2) NOT NULL DEFAULT 0.00,
   UNIQUE( year, age, gender, course, stroke, distance, scope, area )
@@ -130,6 +130,11 @@ UNIQUE( userId, meetId ),
 FOREIGN KEY (userId) REFERENCES "User"(id),
 FOREIGN KEY (meetId) REFERENCES "Meets"(id)
 );
+DROP TABLE IF EXISTS UserTypes;
+CREATE TABLE UserTypes (
+  type VARCHAR(8) NOT NULL PRIMARY KEY,
+  seq INTEGER NOT NULL UNIQUE
+);
 DROP TABLE IF EXISTS User;
 CREATE TABLE User (
   id TEXT NOT NULL PRIMARY KEY,
@@ -137,7 +142,9 @@ CREATE TABLE User (
   password_hash TEXT NOT NULL,
   firstName VARCHAR(32) NOT NULL,
   lastName VARCHAR(32) NOT NULL,
-  location VARCHAR(32) NOT NULL DEFAULT "Malmesbury"
+  type VARCHAR(16) NOT NULL REFERENCES UserTypes(type)
+  admin INTEGER NOT NULL DEFAULT 0,
+  location VARCHAR(32) NOT NULL
 );
 DROP TABLE IF EXISTS UserSwimmers;
 CREATE TABLE UserSwimmers (
