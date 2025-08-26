@@ -1,4 +1,38 @@
+import type { Statement } from "better-sqlite3"
+import type { QualifyingRow } from "lib"
 import { db } from "~/server/utils/db"
+
+const updateQualifying: Statement<QualifyingRow> = db.prepare(
+`INSERT INTO Qualifying (
+  created,
+  year,
+  course,
+  stroke,
+  distance,
+  scope,
+  area,
+  gender,
+  age,
+  timeString,
+  time
+)
+VALUES (
+  :created,
+  :year,
+  :course,
+  :stroke,
+  :distance,
+  :scope,
+  :area,
+  :gender,
+  :age,
+  :timeString,
+  :time
+)
+ON CONFLICT(year,course,stroke,distance,scope,area,gender,age) DO UPDATE SET
+  time        = excluded.time,
+  timeString  = excluded.timeString
+;` )
 
 export default eventHandler( async ( event ) => {
   if ( !event.context.session ) {
@@ -9,10 +43,8 @@ export default eventHandler( async ( event ) => {
 
   try {
     const saveData = await readBody( event )
-    const sql = "UPDATE Qualifying SET time = :time, timeString = :timeString WHERE year = :year AND course = :course AND stroke = :stroke AND distance = :distance AND area = :area AND gender = :gender AND age = :age"
-    const updateRow = db.prepare( sql )
     for ( const row of saveData ) {
-      updateRow.run( row )
+      updateQualifying.run( row )
     }
   } catch ( error ) {
     console.error( error )

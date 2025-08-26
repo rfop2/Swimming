@@ -4,8 +4,8 @@
   import "ag-grid-community/styles/ag-grid.css" // Mandatory CSS required by the Data Grid
   import "ag-grid-community/styles/ag-theme-quartz.css" // Optional Theme applied to the Data Grid
   import { AgGridVue } from "ag-grid-vue3" // Vue Data Grid Component
-  import { type Swimmer, secondsToTime, strokeSort, timeToSeconds, type QualifyingRow, getCompetitionAge, REGIONS, COUNTIES } from "lib"
-  import { addMonths, getYear, parseISO } from "date-fns"
+  import { type Swimmer, secondsToTime, strokeSort, timeToSeconds, type QualifyingRow, getCompetitionAge, REGIONS, COUNTIES, STROKE_DISTANCE, getSwimmerScopeArea } from "lib"
+  import { addMonths, format, getYear, parseISO } from "date-fns"
   import type { FetchError } from "ofetch"
 
   definePageMeta( {
@@ -15,46 +15,49 @@
 
   const swimmer = useState<Swimmer>( "swimmer" )
 
+  const user = useAuthenticatedUser()
+
   type ApiResponse = InternalApi["/api/qualifying"]["get"]
 
   interface ExtQualifyingRow extends QualifyingRow {
     distanceMetres: number
   }
 
+  const transformQualifying = ( data: ApiResponse ): Array<ExtQualifyingRow> => {
+    const extData = data.map( row => ( {
+      ...row,
+      ...{
+        time: row.time || timeToSeconds( row.timeString ),
+        timeString: row.timeString.replace( /^0+:?/, "" ),
+        distanceMetres: Number( row.distance.replace( /m$/, "" ) )
+      }
+    } ) )
+    extData.sort( ( a, b ) => {
+      if ( a.age < b.age ) {
+        return -1
+      } else if ( a.age > b.age ) {
+        return 1
+      }
+      if ( a.course < b.course ) {
+        return 1
+      } else if ( a.course > b.course ) {
+        return -1
+      }
+      if ( strokeSort[a.stroke] < strokeSort[b.stroke] ) {
+        return -1
+      } else if ( strokeSort[a.stroke] > strokeSort[b.stroke] ) {
+        return 1
+      }
+      return a.distanceMetres - b.distanceMetres
+    } )
+    return extData
+  }
+
   const { data: qualifying } = await useFetch(
     "/api/qualifying",
     {
-      transform( data: ApiResponse ): Array<ExtQualifyingRow> {
-        const extData = data.map( row => {
-          return {
-            ...row,
-            ...{
-              time: row.time || timeToSeconds( row.timeString ),
-              timeString: row.timeString.replace( /^0+:?/, "" ),
-              distanceMetres: Number( row.distance.replace( /m$/, "" ) )
-            }
-          }
-        } )
-        extData.sort( ( a, b ) => {
-          if ( a.age < b.age ) {
-            return -1
-          } else if ( a.age > b.age ) {
-            return 1
-          }
-          if ( a.course < b.course ) {
-            return 1
-          } else if ( a.course > b.course ) {
-            return -1
-          }
-          if ( strokeSort[a.stroke] < strokeSort[b.stroke] ) {
-            return -1
-          } else if ( strokeSort[a.stroke] > strokeSort[b.stroke] ) {
-            return 1
-          }
-          return a.distanceMetres - b.distanceMetres
-        } )
-        return extData
-      },
+      key: "qualifying",
+      transform: transformQualifying,
     }
   )
 
@@ -99,7 +102,9 @@
 
   const filterArea = computed( () => areaFromScope( selections.value.scope.value ) )
 
-  const filteredQualifying = computed( () => ( qualifying.value ?? [] ).filter( row => {
+  const generated = ref<Array<ExtQualifyingRow>>( [] )
+
+  const filteredQualifying = computed( () => ( qualifying.value ?? [] ).concat( generated.value ).filter( row => {
     if ( row.year !== selections.value.year.value )
       return false
     if ( row.scope !== selections.value.scope.value )
@@ -115,8 +120,36 @@
 
   const errString = ref<string | null>( null )
 
+  async function generate( _e: Event ) {
+    const created = format( new Date(), "yyyy-MM-dd" )
+    const generatedData = []
+    for ( const strokeDistance of Object.keys( STROKE_DISTANCE ) ) {
+      const matches = strokeDistance.toLocaleLowerCase().match( /(?<stroke>\w+)__(?<distance>\d+m)$/ )
+      if ( !matches ) {
+        throw new Error( `Can't match stroke/distance on '${strokeDistance}'` )
+      }
+      const { stroke = "", distance = "" } = { ...matches?.groups }
+      generatedData.push( {
+        created,
+        year: selections.value.year.value,
+        course: "lc",
+        stroke,
+        distance,
+        scope: selections.value.scope.value,
+        area: getSwimmerScopeArea( swimmer.value, selections.value.scope.value ),
+        gender: selections.value.gender.value,
+        age: selections.value.age.value,
+        timeString: "0",
+        time: 0
+      } )
+    }
+    generated.value = transformQualifying( generatedData )
+    dirty.value = true
+  }
+
   async function reset( _e: Event ) {
-    await refreshNuxtData()
+    generated.value = []
+    await refreshNuxtData( "qualifying" )
     dirty.value = false
   }
 
@@ -124,9 +157,10 @@
     try {
       await $fetch( "/api/qualifying", {
         method: "PUT",
-        body: JSON.stringify( qualifying.value ),
+        body: JSON.stringify( ( qualifying.value ?? [] ).concat( generated.value.filter( data => data.time > 0 ) ) ),
       } )
-      await refreshNuxtData()
+      await refreshNuxtData( "qualifying" )
+      generated.value = []
       dirty.value = false
     } catch ( error ) {
       console.error( "Error", error )
@@ -145,6 +179,8 @@
 
   const dirty = ref( false )
 
+  useUnsavedWarning( () => dirty.value )
+
   const lookupScope = ( scope: string ) => ( scope.charAt( 0 ).toUpperCase() + scope.slice( 1 ) )
   const lookupArea = ( scope: string, area: string ) => {
     if ( scope === "county" )
@@ -156,7 +192,7 @@
     return "<error>"
   }
 
-  const columns = ref( [
+  const columns = computed( () => [
     {
       field: "year",
     },
@@ -196,7 +232,7 @@
     {
       field: "age",
     },
-    {
+    /* {
       editable: true,
       headerName: "Time",
       cellEditor: "agNumberCellEditor",
@@ -217,9 +253,9 @@
       onCellValueChanged: ( _event: NewValueParams ) => {
         dirty.value = true
       },
-    },
+    }, */
     {
-      editable: true,
+      editable: () => !!user.value.admin,
       headerName: "Time (m:ss.SS)",
       cellEditor: "agTextCellEditor",
       cellEditorParams: { maxLength: 8 },
@@ -287,7 +323,24 @@
           County and regional qualifying times for each event
         </p>
       </div>
-      <div class="mt-4 sm:ml-8 sm:mt-0 sm:flex-none">
+      <div
+        v-if="user.admin && !filteredQualifying.length"
+        class="mt-4 sm:ml-8 sm:mt-0 sm:flex-none"
+      >
+        <div class="min-w-24 pt-8">
+          <button
+            type="button"
+            class="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
+            @click="generate"
+          >
+            Generate
+          </button>
+        </div>
+      </div>
+      <div
+        v-if="user.admin"
+        class="mt-4 sm:ml-4 sm:mt-0 sm:flex-none"
+      >
         <div class="min-w-24 pt-8">
           <button
             type="button"
@@ -299,7 +352,10 @@
           </button>
         </div>
       </div>
-      <div class="mt-4 sm:ml-4 sm:mt-0 sm:flex-none">
+      <div
+        v-if="user.admin"
+        class="mt-4 sm:ml-4 sm:mt-0 sm:flex-none"
+      >
         <div class="min-w-24 pt-8">
           <button
             type="submit"
