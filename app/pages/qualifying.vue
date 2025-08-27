@@ -7,6 +7,7 @@
   import { type Swimmer, secondsToTime, strokeSort, timeToSeconds, type QualifyingRow, getCompetitionAge, REGIONS, COUNTIES, STROKE_DISTANCE, getSwimmerScopeArea } from "lib"
   import { addMonths, format, getYear, parseISO } from "date-fns"
   import type { FetchError } from "ofetch"
+  import { ArrowUturnLeftIcon, CheckIcon, ClipboardDocumentCheckIcon, ClipboardDocumentIcon, ClipboardDocumentListIcon, ClipboardIcon, DocumentPlusIcon, PlusCircleIcon, PlusIcon, TrashIcon } from "@heroicons/vue/24/outline"
 
   definePageMeta( {
     layout: "secure",
@@ -32,24 +33,6 @@
         distanceMetres: Number( row.distance.replace( /m$/, "" ) )
       }
     } ) )
-    extData.sort( ( a, b ) => {
-      if ( a.age < b.age ) {
-        return -1
-      } else if ( a.age > b.age ) {
-        return 1
-      }
-      if ( a.course < b.course ) {
-        return 1
-      } else if ( a.course > b.course ) {
-        return -1
-      }
-      if ( strokeSort[a.stroke] < strokeSort[b.stroke] ) {
-        return -1
-      } else if ( strokeSort[a.stroke] > strokeSort[b.stroke] ) {
-        return 1
-      }
-      return a.distanceMetres - b.distanceMetres
-    } )
     return extData
   }
 
@@ -93,46 +76,135 @@
 
   const ages = ref<Array<{value: string}>>( [] )
 
+  const courses = [
+    {
+      value: "lc",
+      label: "Long",
+    },
+    {
+      value: "sc",
+      label: "Short",
+    },
+  ]
+
   const selections = ref( {
     year: years[0],
     scope: scopes[0],
     gender: genders[0],
     age: ages.value[0],
+    course: courses[0],
   } )
 
   const filterArea = computed( () => areaFromScope( selections.value.scope.value ) )
 
-  const generated = ref<Array<ExtQualifyingRow>>( [] )
+  const added = ref<Array<ExtQualifyingRow>>( [] )
+  const deleted = ref<Array<ExtQualifyingRow>>( [] )
 
-  const filteredQualifying = computed( () => ( qualifying.value ?? [] ).concat( generated.value ).filter( row => {
-    if ( row.year !== selections.value.year.value )
-      return false
-    if ( row.scope !== selections.value.scope.value )
-      return false
-    if ( row.area !== filterArea.value )
-      return false
-    if ( row.gender !== selections.value.gender.value )
-      return false
-    if ( row.age !== selections.value.age.value )
-      return false
-    return true
-  } ) )
+  watch( added, eq => {
+    console.log( "GE", eq )
+  }, { deep: true } )
+  watch( deleted, eq => {
+    console.log( "DE", eq )
+  }, { deep: true } )
+
+  const effectiveQualifying = computed(
+    () =>
+      ( qualifying.value ?? [] )
+        .concat( added.value )
+        .filter(
+          row => !deleted.value.find( deletedRow => JSON.stringify( deletedRow ) === JSON.stringify( row ) )
+        )
+  )
+
+  watch( effectiveQualifying, eq => {
+    console.log( "EQ", eq )
+  }, { deep: true } )
+
+  const filteredQualifying = computed( () => {
+    const filtered = effectiveQualifying.value.filter( row => {
+      if ( row.year !== selections.value.year.value )
+        return false
+      if ( row.scope !== selections.value.scope.value )
+        return false
+      if ( row.area !== filterArea.value )
+        return false
+      if ( row.gender !== selections.value.gender.value )
+        return false
+      if ( row.age !== selections.value.age.value )
+        return false
+      return true
+    } )
+    filtered.sort( ( a, b ) => {
+      if ( a.age < b.age ) {
+        return -1
+      } else if ( a.age > b.age ) {
+        return 1
+      }
+      if ( a.course < b.course ) {
+        return 1
+      } else if ( a.course > b.course ) {
+        return -1
+      }
+      if ( strokeSort[a.stroke] < strokeSort[b.stroke] ) {
+        return -1
+      } else if ( strokeSort[a.stroke] > strokeSort[b.stroke] ) {
+        return 1
+      }
+      return a.distanceMetres - b.distanceMetres
+    } )
+    return filtered
+  } )
+
+  watch( filteredQualifying, eq => {
+    if ( filteredQualifying.value.length > 0 ) {
+      selections.value.course = courses.find( course => course.value === filteredQualifying.value[0].course ) ?? courses[0]
+    }
+    console.log( "FQ", eq )
+  }, { deep: true } )
+
+  const clipboard = ref<Array<ExtQualifyingRow>>( [] )
+
+  watch( clipboard, eq => {
+    console.log( "CB", eq )
+  } )
 
   const errString = ref<string | null>( null )
 
+  async function clear( _e: Event ) {
+    deleted.value = deleted.value.concat( filteredQualifying.value )
+    dirty.value = true
+  }
+
+  async function copy( _e: Event ) {
+    clipboard.value = JSON.parse( JSON.stringify( filteredQualifying.value ) )
+  }
+
+  async function paste( _e: Event ) {
+    for ( const row of clipboard.value ) {
+      added.value.push( { ...row, ...{
+        year: selections.value.year.value,
+        scope: selections.value.scope.value,
+        area: getSwimmerScopeArea( swimmer.value, selections.value.scope.value ),
+        gender: selections.value.gender.value,
+        age: selections.value.age.value,
+      } }  )
+    }
+    dirty.value = true
+  }
+
   async function generate( _e: Event ) {
     const created = format( new Date(), "yyyy-MM-dd" )
-    const generatedData = []
+    const addedData = []
     for ( const strokeDistance of Object.keys( STROKE_DISTANCE ) ) {
       const matches = strokeDistance.toLocaleLowerCase().match( /(?<stroke>\w+)__(?<distance>\d+m)$/ )
       if ( !matches ) {
         throw new Error( `Can't match stroke/distance on '${strokeDistance}'` )
       }
       const { stroke = "", distance = "" } = { ...matches?.groups }
-      generatedData.push( {
+      addedData.push( {
         created,
         year: selections.value.year.value,
-        course: "lc",
+        course: selections.value.course.value,
         stroke,
         distance,
         scope: selections.value.scope.value,
@@ -143,13 +215,46 @@
         time: 0
       } )
     }
-    generated.value = transformQualifying( generatedData )
+    added.value = added.value.concat( transformQualifying( addedData ) )
+    dirty.value = true
+    console.log( addedData )
+  }
+
+  async function complete( _e: Event ) {
+    const created = format( new Date(), "yyyy-MM-dd" )
+    const addedData = []
+    for ( const strokeDistance of Object.keys( STROKE_DISTANCE ) ) {
+      const matches = strokeDistance.toLocaleLowerCase().match( /(?<stroke>\w+)__(?<distance>\d+m)$/ )
+      if ( !matches ) {
+        throw new Error( `Can't match stroke/distance on '${strokeDistance}'` )
+      }
+      const { stroke = "", distance = "" } = { ...matches?.groups }
+      if ( !filteredQualifying.value.find( row => row.stroke === stroke && row.distance === distance ) ) {
+        addedData.push( {
+          created,
+          year: selections.value.year.value,
+          course: selections.value.course.value,
+          stroke,
+          distance,
+          scope: selections.value.scope.value,
+          area: getSwimmerScopeArea( swimmer.value, selections.value.scope.value ),
+          gender: selections.value.gender.value,
+          age: selections.value.age.value,
+          timeString: "0",
+          time: 0
+        } )
+      }
+    }
+    added.value = added.value.concat( transformQualifying( addedData ) )
     dirty.value = true
   }
 
   async function reset( _e: Event ) {
-    generated.value = []
+    added.value = []
     await refreshNuxtData( "qualifying" )
+    deleted.value = []
+    added.value = []
+    clipboard.value = []
     dirty.value = false
   }
 
@@ -157,10 +262,10 @@
     try {
       await $fetch( "/api/qualifying", {
         method: "PUT",
-        body: JSON.stringify( ( qualifying.value ?? [] ).concat( generated.value.filter( data => data.time > 0 ) ) ),
+        body: JSON.stringify( ( qualifying.value ?? [] ).concat( added.value.filter( data => data.time > 0 ) ) ),
       } )
       await refreshNuxtData( "qualifying" )
-      generated.value = []
+      added.value = []
       dirty.value = false
     } catch ( error ) {
       console.error( "Error", error )
@@ -296,6 +401,7 @@
       scope: selections.value.scope,
       gender: genders.find( gender => gender.value === swimmer.gender ) ?? genders[0],
       age: ages.value.find( age => age.value === String( compAge ) ) ?? ages.value[0],
+      course: selections.value.course,
     }
   }
 
@@ -324,54 +430,149 @@
         </p>
       </div>
       <div
-        v-if="user.admin && !filteredQualifying.length"
-        class="mt-4 sm:ml-8 sm:mt-0 sm:flex-none"
-      >
-        <div class="min-w-24 pt-8">
-          <button
-            type="button"
-            class="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
-            @click="generate"
-          >
-            Generate
-          </button>
-        </div>
-      </div>
-      <div
         v-if="user.admin"
-        class="mt-4 sm:ml-4 sm:mt-0 sm:flex-none"
+        class="sm:flex sm:items-end"
       >
-        <div class="min-w-24 pt-8">
-          <button
-            type="button"
-            class="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
-            :disabled="!dirty"
-            @click="reset"
-          >
-            Reset
-          </button>
+        <div
+          v-if="filteredQualifying.length"
+          class="mt-4 sm:ml-4 sm:mt-0 sm:flex-none"
+        >
+          <div class="pt-4">
+            <button
+              type="button"
+              class="inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
+              title="Copy the displayed times"
+              @click="copy"
+            >
+              <ClipboardDocumentIcon
+                v-if="!clipboard.length"
+                class="-ml-0.5 size-5"
+                aria-hidden="true"
+              />
+              <ClipboardDocumentCheckIcon
+                v-else
+                class="-ml-0.5 size-5"
+                aria-hidden="true"
+              />
+              Copy
+            </button>
+          </div>
         </div>
-      </div>
-      <div
-        v-if="user.admin"
-        class="mt-4 sm:ml-4 sm:mt-0 sm:flex-none"
-      >
-        <div class="min-w-24 pt-8">
-          <button
-            type="submit"
-            class="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
-            :disabled="!dirty"
-            @click="save"
-          >
-            Save
-          </button>
+        <div
+          v-if="clipboard.length && !filteredQualifying.length"
+          class="mt-4 sm:ml-4 sm:mt-0 sm:flex-none"
+        >
+          <div class="pt-4">
+            <button
+              type="button"
+              class="inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
+              title="Paste the copied times"
+              @click="paste"
+            >
+              <ClipboardDocumentListIcon
+                class="-ml-0.5 size-5"
+                aria-hidden="true"
+              />
+              Paste
+            </button>
+          </div>
+        </div>
+        <div
+          v-if="filteredQualifying.length"
+          class="mt-4 sm:ml-4 sm:mt-0 sm:flex-none"
+        >
+          <div class="pt-4">
+            <button
+              type="button"
+              class="inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
+              title="Delete all displayed times"
+              @click="clear"
+            >
+              <TrashIcon
+                class="-ml-0.5 size-5"
+                aria-hidden="true"
+              />
+              Delete
+            </button>
+          </div>
+        </div>
+        <div
+          v-if="!filteredQualifying.length"
+          class="mt-4 sm:ml-4 sm:mt-0 sm:flex-none"
+        >
+          <div class="pt-4">
+            <button
+              type="button"
+              class="inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
+              title="Fill with default events"
+              @click="generate"
+            >
+              <DocumentPlusIcon
+                class="-ml-0.5 size-5"
+                aria-hidden="true"
+              />
+              Populate
+            </button>
+          </div>
+        </div>
+        <div
+          v-if="filteredQualifying.length>0 && filteredQualifying.length!==Object.keys(STROKE_DISTANCE).length"
+          class="mt-4 sm:ml-4 sm:mt-0 sm:flex-none"
+        >
+          <div class="pt-4">
+            <button
+              type="button"
+              class="inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
+              title="Add any missing strokes/distances"
+              @click="complete"
+            >
+              <PlusCircleIcon
+                class="-ml-0.5 size-5"
+                aria-hidden="true"
+              />
+              Complete
+            </button>
+          </div>
+        </div>
+        <div class="mt-4 sm:ml-4 sm:mt-0 sm:flex-none">
+          <div class="pt-4">
+            <button
+              type="button"
+              class="inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
+              title="Undo any unsaved edits"
+              :disabled="!dirty"
+              @click="reset"
+            >
+              <ArrowUturnLeftIcon
+                class="-ml-0.5 size-5"
+                aria-hidden="true"
+              />
+              Reset
+            </button>
+          </div>
+        </div>
+        <div class="mt-4 sm:ml-4 sm:mt-0 sm:flex-none">
+          <div class="pt-4">
+            <button
+              type="submit"
+              class="inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
+              :disabled="!dirty"
+              @click="save"
+            >
+              <CheckIcon
+                class="-ml-0.5 size-5"
+                aria-hidden="true"
+              />
+              Save
+            </button>
+          </div>
         </div>
       </div>
     </div>
     <div class="border-b border-gray-200 pb-5 sm:flex sm:items-center sm:justify-between">
       <div class="mt-3">
         <div class="flex items-center space-x-4">
-          <div class="min-w-48">
+          <div class="min-w-24">
             <UI-Listbox
               v-model="selections.year"
               :options="years"
@@ -379,7 +580,7 @@
               placeholder="Choose Year"
             />
           </div>
-          <div class="min-w-48">
+          <div class="min-w-32">
             <UI-Listbox
               v-model="selections.scope"
               :options="scopes"
@@ -387,7 +588,7 @@
               placeholder="Choose Scope"
             />
           </div>
-          <div class="min-w-48">
+          <div class="min-w-28">
             <UI-Listbox
               v-model="selections.gender"
               :options="genders"
@@ -395,12 +596,24 @@
               placeholder="Choose Gender"
             />
           </div>
-          <div class="min-w-48">
+          <div class="min-w-24">
             <UI-Listbox
               v-model="selections.age"
               :options="ages"
               label="Age"
               placeholder="Choose Age"
+            />
+          </div>
+          <div
+            v-if="user.admin"
+            class="min-w-28"
+          >
+            <UI-Listbox
+              v-model="selections.course"
+              :options="courses"
+              label="Course"
+              placeholder="Choose Course"
+              :disabled="filteredQualifying.length>0"
             />
           </div>
         </div>

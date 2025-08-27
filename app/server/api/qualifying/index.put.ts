@@ -2,7 +2,9 @@ import type { Statement } from "better-sqlite3"
 import type { QualifyingRow } from "lib"
 import { db } from "~/server/utils/db"
 
-const updateQualifying: Statement<QualifyingRow> = db.prepare(
+const deleteQualifying: Statement<unknown[],void> = db.prepare( "DELETE FROM Qualifying" )
+
+const updateQualifyingRow: Statement<QualifyingRow> = db.prepare(
 `INSERT INTO Qualifying (
   created,
   year,
@@ -34,6 +36,13 @@ ON CONFLICT(year,course,stroke,distance,scope,area,gender,age) DO UPDATE SET
   timeString  = excluded.timeString
 ;` )
 
+const updateQualifying = db.transaction( ( qualifyingData: Array<QualifyingRow> ) => {
+  deleteQualifying.run()
+  for ( const row of qualifyingData ) {
+    updateQualifyingRow.run( row )
+  }
+} )
+
 export default eventHandler( async ( event ) => {
   if ( !event.context.session ) {
     throw createError( {
@@ -43,9 +52,7 @@ export default eventHandler( async ( event ) => {
 
   try {
     const saveData = await readBody( event )
-    for ( const row of saveData ) {
-      updateQualifying.run( row )
-    }
+    updateQualifying( saveData )
   } catch ( error ) {
     console.error( error )
     throw createError( {
