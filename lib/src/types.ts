@@ -87,6 +87,7 @@ export interface Meet {
   type: string
   contact?: string
   email?: string
+  tagged: number
 }
 
 export interface PageInfo {
