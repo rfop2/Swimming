@@ -116,6 +116,19 @@ export const POOLS = {
   LONG: "L",
 }
 
+export const AGES = [
+  "10",
+  "11",
+  "12",
+  "13",
+  "14",
+  "15",
+  "16",
+  "17",
+  "18",
+  "Open"
+]
+
 export const individualBaseUrl = "/individualbest/personal_best.php"
 
 export const individualParams = ( swimmer: Swimmer ) => ( {

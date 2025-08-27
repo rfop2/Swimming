@@ -4,7 +4,7 @@
   import "ag-grid-community/styles/ag-grid.css" // Mandatory CSS required by the Data Grid
   import "ag-grid-community/styles/ag-theme-quartz.css" // Optional Theme applied to the Data Grid
   import { AgGridVue } from "ag-grid-vue3" // Vue Data Grid Component
-  import { type Swimmer, secondsToTime, strokeSort, timeToSeconds, type QualifyingRow, getCompetitionAge, REGIONS, COUNTIES, STROKE_DISTANCE, getSwimmerScopeArea } from "lib"
+  import { type Swimmer, secondsToTime, strokeSort, timeToSeconds, type QualifyingRow, getCompetitionAge, REGIONS, COUNTIES, NATIONALITIES, STROKE_DISTANCE, getSwimmerScopeArea, AGES } from "lib"
   import { addMonths, format, getYear, parseISO } from "date-fns"
   import type { FetchError } from "ofetch"
   import { ArrowUturnLeftIcon, CheckIcon, ClipboardDocumentCheckIcon, ClipboardDocumentIcon, ClipboardDocumentListIcon, DocumentPlusIcon, PlusCircleIcon, TrashIcon } from "@heroicons/vue/24/outline"
@@ -63,6 +63,16 @@
     },
   ]
 
+  const areasFromScope = ( scope: string ) => {
+    if ( scope === "county" )
+      return Object.entries( COUNTIES ).map( ( [ k, v ] ) => ( { label: v, value: k } ) )
+    if ( scope === "regional" )
+      return Object.entries( REGIONS ).map( ( [ k, v ] ) => ( { label: v, value: k } ) )
+    if ( scope === "national" )
+      return Object.entries( NATIONALITIES ).map( ( [ k, v ] ) => ( { label: v, value: k } ) )
+    return []
+  }
+
   const genders = [
     {
       value: "male",
@@ -74,7 +84,7 @@
     },
   ]
 
-  const ages = ref<Array<{value: string}>>( [] )
+  const ages = ref<Array<{value: string}>>( user.value.admin ? AGES.map( age => ( { value: age } ) ) : [] )
 
   const courses = [
     {
@@ -90,12 +100,15 @@
   const selections = ref( {
     year: years[0],
     scope: scopes[0],
+    area:  { label: "", value: "" },
     gender: genders[0],
     age: ages.value[0],
     course: courses[0],
   } )
 
-  const filterArea = computed( () => areaFromScope( selections.value.scope.value ) )
+  const areas = computed( () => areasFromScope( selections.value.scope.value ) )
+
+  const filterArea = computed( () => selections.value.area.value )
 
   const added = ref<Array<ExtQualifyingRow>>( [] )
   const deleted = ref<Array<ExtQualifyingRow>>( [] )
@@ -184,7 +197,7 @@
       added.value.push( { ...row, ...{
         year: selections.value.year.value,
         scope: selections.value.scope.value,
-        area: getSwimmerScopeArea( swimmer.value, selections.value.scope.value ),
+        area: selections.value.area.value,
         gender: selections.value.gender.value,
         age: selections.value.age.value,
       } }  )
@@ -208,7 +221,7 @@
         stroke,
         distance,
         scope: selections.value.scope.value,
-        area: getSwimmerScopeArea( swimmer.value, selections.value.scope.value ),
+        area: selections.value.area.value,
         gender: selections.value.gender.value,
         age: selections.value.age.value,
         timeString: "0",
@@ -237,7 +250,7 @@
           stroke,
           distance,
           scope: selections.value.scope.value,
-          area: getSwimmerScopeArea( swimmer.value, selections.value.scope.value ),
+          area: selections.value.area.value,
           gender: selections.value.gender.value,
           age: selections.value.age.value,
           timeString: "0",
@@ -293,7 +306,7 @@
     if ( scope === "regional" )
       return REGIONS[area]
     if ( scope === "national" )
-      return ""
+      return NATIONALITIES[area]
     return "<error>"
   }
 
@@ -382,7 +395,7 @@
     },
   ] )
 
-  const areaFromScope = ( scope: string ) => {
+  const swimmerAreaFromScope = ( scope: string ) => {
     if ( scope === "county" )
       return swimmer.value.county
     if ( scope === "regional" )
@@ -392,15 +405,26 @@
     return ""
   }
 
+  const swimmerAreaSelection = ( scope: string ) => {
+    const swimmerArea = swimmerAreaFromScope( scope )
+    return areas.value.find( area => area.value === swimmerArea ) ?? areas.value[0]
+  }
+
   const updateFilters = ( swimmer: Swimmer ) => {
     const compAge = getCompetitionAge( parseISO( swimmer.birthday ) )
-    ages.value = Array.from( { length: 4 }, ( _, i ) => compAge - 1 + i ).map( year => ( { value: String( year ) } ) )
+    const qualifyingAge = compAge < Number( AGES[0] ) ? String( AGES[0] ) : ( compAge > Number( AGES[AGES.length - 2] ) ? "Open" : String( compAge ) )
+    if ( !user.value.admin ) {
+      const ageIndex = AGES.findIndex( age => age === String( qualifyingAge ) )
+      ages.value = AGES.slice( Math.max( ageIndex - 1, 0 ), Math.min( ageIndex + 2, AGES.length ) ).map( age => ( { value: age } ) )
+      console.log( "AV", AGES, compAge, qualifyingAge, ageIndex, ages.value )
+    }
 
     selections.value = {
       year: years.find( year => year.value === filterYear ) ?? years[0],
       scope: selections.value.scope,
+      area: swimmerAreaSelection( selections.value.scope.value ),
       gender: genders.find( gender => gender.value === swimmer.gender ) ?? genders[0],
-      age: ages.value.find( age => age.value === String( compAge ) ) ?? ages.value[0],
+      age: ages.value.find( age => age.value === qualifyingAge ) ?? ages.value[0],
       course: selections.value.course,
     }
   }
@@ -409,6 +433,12 @@
 
   watch( swimmer, ( newSwimmer ) => {
     updateFilters( newSwimmer )
+  } )
+
+  watch( () => selections.value.scope, newScope => {
+    selections.value.area = swimmerAreaSelection( newScope.value )
+  }, {
+    immediate: true,
   } )
 
   const autoSizeStrategy = {
@@ -588,6 +618,17 @@
               placeholder="Choose Scope"
             />
           </div>
+          <div
+            v-if="user.admin"
+            class="min-w-48"
+          >
+            <UI-Listbox
+              v-model="selections.area"
+              :options="areas"
+              label="Area"
+              placeholder="Choose Area"
+            />
+          </div>
           <div class="min-w-28">
             <UI-Listbox
               v-model="selections.gender"
@@ -596,7 +637,7 @@
               placeholder="Choose Gender"
             />
           </div>
-          <div class="min-w-24">
+          <div class="min-w-28">
             <UI-Listbox
               v-model="selections.age"
               :options="ages"
