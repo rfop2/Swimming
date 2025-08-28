@@ -22,7 +22,6 @@
 
   // type QualifyingApiResponse = InternalApi["/api/qualifying"]["get"]
   const { data: qualifyingInfo } = await useFetch(
-    // `/api/qualifying/${year}/${AGE}`,
     "/api/qualifying",
   )
 
@@ -238,9 +237,9 @@
   const rankClass = ( rank?: number ) => {
     if ( rank ) {
       if ( rank <= 10 ) {
-        return "rank-10"
+        return "x-rank-10"
       } else if ( rank <= 20 ) {
-        return "rank-20"
+        return "x-rank-20"
       }
     }
     return null

@@ -1,13 +1,13 @@
 import { defineEventHandler } from "h3"
 import type { Statement } from "better-sqlite3"
 import Database from "better-sqlite3"
-import { DB_PATH, type Meet } from "lib"
+import { DB_PATH } from "lib"
 
 // Create a local database to persist state
 const db = new Database( DB_PATH )
 db.pragma( "journal_mode = WAL" )
 
-const updateMeet: Statement<{ userId: string, meetId: string }, Meet> = db.prepare( "INSERT OR REPLACE INTO UserMeets VALUES( :userId, :meetId, NULL )" )
+const updateMeet: Statement<{ userId: string, meetId: string }> = db.prepare( "INSERT OR REPLACE INTO UserMeets VALUES( :userId, :meetId, NULL )" )
 
 export default defineEventHandler( async ( event ) => {
   if ( !event.context.session || !event.context.user  ) {
