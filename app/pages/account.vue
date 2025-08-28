@@ -1,6 +1,6 @@
 <script setup lang="ts">
   import { useForm, useFieldArray } from "vee-validate"
-  import { object, array, string, number } from "yup"
+  import * as yup from "yup"
   import { toTypedSchema } from "@vee-validate/yup"
   import { CheckIcon, ExclamationTriangleIcon, PencilSquareIcon, TrashIcon, UserPlusIcon, XCircleIcon, XMarkIcon } from "@heroicons/vue/24/outline"
 
@@ -35,35 +35,70 @@
     "/api/swimmers",
   )
 
-  const { values, meta, defineField, resetForm, handleSubmit } = useForm( {
+  const PASSWORD = "************"
+
+  const { values, errors, meta, defineField, resetForm, handleSubmit, validateField } = useForm( {
     initialValues: {
       firstName: user.value.firstName,
       lastName: user.value.lastName,
       username: user.value.username,
       location: user.value.location,
-      password: "************",
-      confirmPassword: "************",
+      password: PASSWORD,
+      confirmPassword: PASSWORD,
       swimmers: userSwimmers.value as Array<Swimmer>,
     },
     validationSchema: toTypedSchema(
-      object( {
-        firstName: string().required(),
-        lastName: string().required(),
-        username: string().required(),
-        location: string().required(),
-        password: string(),
-        confirmPassword: string(),
-        swimmers: array( object( {
-          name: string().required(),
-          gender: string().required(),
-          birthday: string().required(),
-          nationality: string().required(),
-          region: string().required(),
-          county: string().required(),
-          active: number().oneOf( [ 0, 1 ] ).required(),
+      yup.object( {
+        firstName: yup.string().required(),
+        lastName: yup.string().required(),
+        username: yup.string().email().required(),
+        location: yup.string().required(),
+        password: yup.string()
+          .test(
+            "skip-placeholder-validation",
+            "Password must be 8-32 chars, include upper/lowercase, digit & symbol",
+            value => {
+              if ( !value || value === PASSWORD ) return true
+              // Your strict password validation
+              const length = value.length >= 8 && value.length <= 32
+              const lower = /[a-z]/.test( value )
+              const upper = /[A-Z]/.test( value )
+              const digit = /[0-9]/.test( value )
+              const symbol = /[^\w\s]/.test( value )
+              return length && lower && upper && digit && symbol
+            }
+          ),
+
+        confirmPassword: yup.string()
+          .test(
+            "skip-placeholder-validation",
+            "Passwords must match",
+            function( value ) {
+              const { password } = this.parent
+              if ( ( !value || value === PASSWORD ) && ( password === PASSWORD || !password ) ) return true
+              // Confirm password only if password field is not the placeholder
+              return value === password
+            }
+          ),
+        swimmers: yup.array( yup.object( {
+          name: yup.string().required(),
+          gender: yup.string().required(),
+          birthday: yup.string().required(),
+          nationality: yup.string().required(),
+          region: yup.string().required(),
+          county: yup.string().required(),
+          active: yup.number().oneOf( [ 0, 1 ] ).required(),
         } ) )
       } ),
     ),
+  } )
+
+  watch( () => values.confirmPassword, () => {
+    validateField( "password" )
+  } )
+
+  watch( errors, ( newErrors ) => {
+    console.log( "NE", newErrors )
   } )
 
   const [ firstName, firstNameAttrs ] = defineField( "firstName" )
@@ -78,9 +113,31 @@
   const editing = ref<number | null>( null )
   const deleting = ref<number | null>( null )
 
-  const errors = reactive<Array<string>>( [] )
+  const submitErrors = reactive<Array<string>>( [] )
 
   const swimmerData = ref<string | null>( null )
+
+  const foundSwimmer = ref<Partial<Swimmer>>( {} )
+
+  const addSwimmer = () => {
+    const newSwimmer = {
+      ...{
+        id: "",
+        name: "",
+        gender: "male",
+        birthday: "",
+        nationality: "",
+        region: "",
+        county: "",
+        active: 1,
+      },
+      ...foundSwimmer.value
+    }
+    console.log( newSwimmer )
+    push( newSwimmer  )
+    editing.value = fields.value.length - 1
+  }
+
   const editSwimmer = ( swimmerIndex: number ) => {
     editing.value = swimmerIndex
     swimmerData.value = JSON.stringify( fields.value[swimmerIndex].value )
@@ -88,7 +145,7 @@
 
   const resetSwimmer = () => {
     if ( editing.value !== null ) {
-      if ( !fields.value[editing.value].value.id ) {
+      if ( fields.value[editing.value].value.id === foundSwimmer.value.id ) {
         remove( editing.value )
       } else if ( swimmerData.value ) {
         update( editing.value, JSON.parse( swimmerData.value ) )
@@ -127,33 +184,34 @@
       resetForm( { values } )
     } catch ( error ) {
       console.error( "Error", error )
-      errors[0] = ( error as FetchError ).message ?? null
+      submitErrors[0] = ( error as FetchError ).message ?? null
     }
   } )
 
-  /* watch( [ values, meta ], ( newValues ) => {
+  watch( [ values, meta ], ( newValues ) => {
     console.log( unref( newValues[0] ), unref( newValues[1] ) )
-  } ) */
+  } )
 
   const transform = ( input: string ): string => input
     .toLowerCase()
     .replace( /_/g, " " )
     .replace( /\b\w/g, c => c.toUpperCase() )
 
-  const genders = [ {
-                      label: "Male",
-                      value: "male"
-                    },
-                    {
-                      label: "Female",
-                      value: "female"
-                    },
-  ]
-  const nationalities = Object.entries( NATIONALITIES ).map( ( [ value
-                                                                 , label ] ) => ( {
-                                                                   value,
-                                                                   label: transform( label ),
-                                                                 } ) )
+  const genders =
+    [ {
+        label: "Male",
+        value: "male"
+      },
+      {
+        label: "Female",
+        value: "female"
+      },
+    ]
+  const nationalities = Object.entries( NATIONALITIES ).map( (
+    [ value , label ] ) => ( {
+    value,
+    label: transform( label ),
+  } ) )
   const regions = Object.entries( REGIONS ).map( ( [ value, label ] ) => ( {
     value,
     label
@@ -162,6 +220,39 @@
     value,
     label
   } ) )
+
+  const showLookup = ref<boolean>( false )
+  const swimmerId = ref<string>( "" )
+  const lookupSwimmer = async () => {
+    const url = `https://www.swimmingresults.org/biogs/biogs_details.php?tiref=${swimmerId.value}`
+    const doc = await useHtmlFetch( url )
+    if ( doc ) {
+      const idCell = doc.querySelector( "#outerWrapper > div:nth-child(2) > div.boxRepeat.rankingsContent > div > div:nth-child(1) > div > table:nth-child(3) > tbody > tr:nth-child(2) > td:nth-child(2)" )
+      if ( idCell ) {
+        foundSwimmer.value.id = idCell.textContent
+      }
+      const nameCell = doc.querySelector( "#outerWrapper > div:nth-child(2) > div.boxRepeat.rankingsContent > div > div:nth-child(1) > div > table:nth-child(1) > tbody > tr:nth-child(2) > td:nth-child(2)" )
+      if ( nameCell ) {
+        foundSwimmer.value.name = nameCell.textContent
+      }
+      const yearCell = doc.querySelector( "#outerWrapper > div:nth-child(2) > div.boxRepeat.rankingsContent > div > div:nth-child(1) > div > table:nth-child(1) > tbody > tr:nth-child(4) > td:nth-child(2)" )
+      if ( yearCell ) {
+        foundSwimmer.value.birthday = `${yearCell.textContent}-01-01`
+      }
+      const genderCell = doc.querySelector( "#outerWrapper > div:nth-child(2) > div.boxRepeat.rankingsContent > div > div:nth-child(1) > div > table:nth-child(1) > tbody > tr:nth-child(5) > td:nth-child(2)" )
+      if ( genderCell ) {
+        const gender = genderCell.textContent.toLocaleLowerCase()
+        foundSwimmer.value.gender = gender === "female" ? gender : "male"
+      }
+      console.log( "N", foundSwimmer )
+    }
+  }
+  watch( showLookup, ( newValue, oldValue ) => {
+    if ( newValue && !oldValue ) {
+      swimmerId.value = ""
+      foundSwimmer.value = {}
+    }
+  } )
 </script>
 
 <template>
@@ -232,6 +323,7 @@
                   required
                   class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
                 >
+                <span>{{ errors.username }}</span>
               </div>
             </div>
 
@@ -248,6 +340,7 @@
                   type="password"
                   class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
                 >
+                <span>{{ errors.password }}</span>
               </div>
             </div>
 
@@ -264,6 +357,7 @@
                   type="password"
                   class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
                 >
+                <span>{{ errors.confirmPassword }}</span>
               </div>
             </div>
 
@@ -319,19 +413,7 @@
             <button
               type="button"
               class="inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-              @click="() => {
-                push({
-                  id: '',
-                  name: '',
-                  gender: 'male',
-                  birthday: '',
-                  nationality: '',
-                  region: '',
-                  county: '',
-                  active: 1,
-                });
-                editing = fields.length-1;
-              }"
+              @click="showLookup = true"
             >
               <UserPlusIcon
                 class="-ml-0.5 size-5"
@@ -556,7 +638,7 @@
     </div>
 
     <div
-      v-if="errors.length"
+      v-if="submitErrors.length"
       class="rounded-md bg-red-50 p-4"
     >
       <div class="flex">
@@ -567,14 +649,14 @@
           />
         </div>
         <div
-          v-if="errors.length===1"
+          v-if="submitErrors.length===1"
           class="ml-3"
         >
           <h3 class="text-sm font-medium text-red-800">
             There were errors with your submission
           </h3>
           <div class="mt-2 text-sm text-red-700">
-            <p>{{ errors[0] }}</p>
+            <p>{{ submitErrors[0] }}</p>
           </div>
         </div>
         <div
@@ -582,7 +664,7 @@
           class="ml-3"
         >
           <h3 class="text-sm font-medium text-red-800">
-            There were {{ errors.length }} errors with your submission
+            There were {{ submitErrors.length }} errors with your submission
           </h3>
           <div class="mt-2 text-sm text-red-700">
             <ul
@@ -590,7 +672,7 @@
               class="list-disc space-y-1 pl-5"
             >
               <li
-                v-for="error in errors"
+                v-for="error in submitErrors"
                 :key="error"
               >
                 {{ error }}
@@ -606,13 +688,13 @@
         type="button"
         class="text-sm/6 font-semibold text-gray-900 disabled:text-gray-300"
         :disabled="!meta.dirty"
-        @click="() => { resetForm(); editing = null; deleting = null; errors.length = 0 }"
+        @click="() => { resetForm(); editing = null; deleting = null; submitErrors.length = 0 }"
       >
         Reset
       </button>
       <button
         type="submit"
-        :disabled="editing !== null || deleting !== null || !meta.dirty || !meta.valid"
+        :disabled="editing !== null || deleting !== null || !meta.dirty || !!Object.entries(errors).length"
         class="rounded-md bg-indigo-600 disabled:bg-gray-300 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
       >
         Save
@@ -621,9 +703,50 @@
     <UI-Confirm
       v-if="deleting !== null"
       title="Delete swimmer"
-      :text="`Are you sure you want to delete swimmer '${fields[deleting].value.name} from your account?`"
+      :text="`Are you sure you want to delete swimmer '${fields[deleting].value.name}' from your account?`"
       confirm-label="Delete"
       :action="deleteSwimmer"
     />
+    <UI-Dialog
+      v-model="showLookup"
+      title="Lookup swimmer"
+      confirm-label="Select"
+      :confirm-enabled="() => !!foundSwimmer.id"
+      :action="async () => { await addSwimmer() }"
+    >
+      <div class="px-3 py-5 sm:p-6">
+        <div class="mt-2 max-w-xl text-sm text-gray-500">
+          <p>Enter a swimmer id to lookup details.</p>
+        </div>
+        <form class="mt-5 sm:flex sm:items-center">
+          <div class="w-full sm:max-w-xs">
+            <input
+              id="swimmerId"
+              v-model="swimmerId"
+              type="text"
+              aria-label="Swimmer Id"
+              class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600  sm:text-sm/6"
+              placeholder="1234567890"
+            >
+          </div>
+          <button
+            type="button"
+            class="mt-3 inline-flex w-full items-center justify-center rounded-md bg-indigo-50 px-3 py-2 text-sm font-semibold text-indigo-600 shadow-sm hover:bg-indigo-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600  disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed sm:ml-3 sm:mt-0 sm:w-auto"
+            :disabled="!swimmerId.length"
+            @click="lookupSwimmer"
+          >
+            Lookup
+          </button>
+        </form>
+        <div
+          v-if="foundSwimmer.id"
+          class="mt-2 max-w-xl text-sm text-gray-500"
+        >
+          <p>
+            Found - {{ foundSwimmer.name }} ({{ foundSwimmer.birthday?.substring( 0, 4 ) }}) click 'Select' to continue,
+          </p>
+        </div>
+      </div>
+    </UI-Dialog>
   </form>
 </template>

@@ -62,7 +62,7 @@ export default eventHandler( async ( event ) => {
     deleteSwimmers.run( { ...swimmerIdsValues, ...{ userId } } )
 
     const insertSwimmerSql =
-      `INSERT OR IGNORE INTO Swimmers (
+      `INSERT INTO Swimmers (
         id,
         name,
         birthday,
