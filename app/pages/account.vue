@@ -192,11 +192,6 @@
     console.log( unref( newValues[0] ), unref( newValues[1] ) )
   } )
 
-  const transform = ( input: string ): string => input
-    .toLowerCase()
-    .replace( /_/g, " " )
-    .replace( /\b\w/g, c => c.toUpperCase() )
-
   const genders =
     [ {
         label: "Male",
@@ -210,7 +205,7 @@
   const nationalities = Object.entries( NATIONALITIES ).map( (
     [ value , label ] ) => ( {
     value,
-    label: transform( label ),
+    label
   } ) )
   const regions = Object.entries( REGIONS ).map( ( [ value, label ] ) => ( {
     value,

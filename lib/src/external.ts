@@ -14,7 +14,12 @@ export const NATIONALITY: Record<string,string> = {
   ALL_MEMBERS:  "X",
 }
 
-export const NATIONALITIES = Object.fromEntries( Object.entries( NATIONALITY ).map( ( [ k,v ] ) => [ v,k ] ) )
+const transform = ( input: string ): string => input
+  .toLowerCase()
+  .replace( /_/g, " " )
+  .replace( /\b\w/g, c => c.toUpperCase() )
+
+export const NATIONALITIES = Object.fromEntries( Object.entries( NATIONALITY ).map( ( [ k, v ] ) => [ v, transform( k ) ] ) )
 
 export const REGIONS: Record<string,string> = {
   "P": "No Region",
