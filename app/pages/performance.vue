@@ -385,21 +385,21 @@
                 <th
                   scope="col"
                   colSpan="4"
-                  class="!border-l-2 px-1 py-3.5 text-center text-sm font-semibold text-gray-900"
+                  class="!border-l-2 !border-gray-400 px-1 py-3.5 text-center text-sm font-semibold text-gray-900"
                 >
                   County ({{ COUNTIES[swimmer.county] }})
                 </th>
                 <th
                   scope="col"
                   colSpan="4"
-                  class="!border-l-2 px-1 py-3.5 text-center text-sm font-semibold text-gray-900"
+                  class="!border-l-2 !border-gray-400 px-1 py-3.5 text-center text-sm font-semibold text-gray-900"
                 >
                   Regional ({{ REGIONS[swimmer.region] }})
                 </th>
                 <th
                   scope="col"
                   colSpan="4"
-                  class="!border-l-2 px-1 py-3.5 text-center text-sm font-semibold text-gray-900 sm:pr-0"
+                  class="!border-l-2 !border-gray-400 px-1 py-3.5 text-center text-sm font-semibold text-gray-900 sm:pr-0"
                 >
                   National ({{ NATIONALITIES[swimmer.nationality] }})
                 </th>
@@ -407,7 +407,7 @@
               <tr class="divide-x divide-gray-200">
                 <th
                   scope="col"
-                  class="sortable whitespace-nowrap !border-l-2 px-1 py-3.5 text-right text-sm font-semibold text-gray-900"
+                  class="sortable whitespace-nowrap !border-l-2 !border-gray-400 px-1 py-3.5 text-right text-sm font-semibold text-gray-900"
                   @click="updateSort('county_rank')"
                 >
                   <span>Rank</span><i :class="getSortIcon('county_rank')" />
@@ -435,7 +435,7 @@
                 </th>
                 <th
                   scope="col"
-                  class="sortable whitespace-nowrap !border-l-2 px-1 py-3.5 text-right text-sm font-semibold text-gray-900"
+                  class="sortable whitespace-nowrap !border-l-2 !border-gray-400 px-1 py-3.5 text-right text-sm font-semibold text-gray-900"
                   @click="updateSort('regional_rank')"
                 >
                   <span>Rank</span><i :class="getSortIcon('regional_rank')" />
@@ -463,7 +463,7 @@
                 </th>
                 <th
                   scope="col"
-                  class="sortable whitespace-nowrap !border-l-2 px-1 py-3.5 text-right text-sm font-semibold text-gray-900"
+                  class="sortable whitespace-nowrap !border-l-2 !border-gray-400 px-1 py-3.5 text-right text-sm font-semibold text-gray-900"
                   @click="updateSort('national_rank')"
                 >
                   <span>Rank</span><i :class="getSortIcon('national_rank')" />
@@ -523,7 +523,7 @@
                   {{ row.date }}
                 </td>
                 <td
-                  class="whitespace-nowrap !border-l-2 px-2 py-2 text-right text-sm text-gray-900"
+                  class="whitespace-nowrap !border-l-2 !border-gray-400 px-2 py-2 text-right text-sm text-gray-900"
                   :class="rankClass( row.qualifying.county.rank )"
                 >
                   <span class="inline-flex items-baseline">
@@ -548,7 +548,7 @@
                   {{ row.qualifying.county.qualifyTime }}
                 </td>
                 <td
-                  class="whitespace-nowrap !border-l-2 px-2 py-2 text-right text-sm text-gray-900"
+                  class="whitespace-nowrap !border-l-2 !border-gray-400 px-2 py-2 text-right text-sm text-gray-900"
                   :class="rankClass( row.qualifying.regional.rank )"
                 >
                   <span class="inline-flex items-baseline">
@@ -573,7 +573,7 @@
                   {{ row.qualifying.regional.qualifyTime }}
                 </td>
                 <td
-                  class="whitespace-nowrap !border-l-2 px-2 py-2 text-right text-sm text-gray-900"
+                  class="whitespace-nowrap !border-l-2 !border-gray-400 px-2 py-2 text-right text-sm text-gray-900"
                   :class="rankClass( row.qualifying.national.rank )"
                 >
                   <span class="inline-flex items-baseline">
@@ -619,11 +619,11 @@
 }
 
 .qualifiedArea2 {
-  background-color: #f9731630;
+  background-color: #f9741642;
 }
 
 .qualifiedArea3 {
-  background-color: #ef444430;
+  background-color: #ef444459;
 }
 
 .age-0, .age-1, .age-2 {
@@ -651,14 +651,14 @@
 }
 
 .rank-10 {
-  background-color: #a4ccf060;
+  background-color: #9eccf880;
 }
 
 .rank-20 {
-  background-color: #9897ca60;
+  background-color: #3cadfd80;
 }
 
 .rank-50 {
-  background-color: #96609060;
+  background-color: #0058fc63;
 }
 </style>
