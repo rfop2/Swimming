@@ -2,7 +2,7 @@
   import type { InternalApi } from "nitropack"
   import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from "@headlessui/vue"
   import { ArrowUturnLeftIcon, LinkIcon, CheckIcon, ChevronUpDownIcon, ChartBarIcon } from "@heroicons/vue/24/outline"
-  import { type Individual, STROKE_DISTANCE, type Swimmer, convertTime, countyRankParams, createUrl, getSwimmerAge, globalRankParams, nationalRankParams, rankBaseUrl, regionalRankParams, secondsToTime, strokeSort } from "lib"
+  import { COUNTIES, type Individual, NATIONALITIES, REGIONS, STROKE_DISTANCE, type Swimmer, convertTime, countyRankParams, createUrl, getSwimmerAge, globalRankParams, nationalRankParams, rankBaseUrl, regionalRankParams, secondsToTime, strokeSort } from "lib"
   import { differenceInCalendarMonths, getYear, addMonths } from "date-fns"
 
   definePageMeta( {
@@ -237,9 +237,11 @@
   const rankClass = ( rank?: number ) => {
     if ( rank ) {
       if ( rank <= 10 ) {
-        return "x-rank-10"
+        return "rank-10"
       } else if ( rank <= 20 ) {
-        return "x-rank-20"
+        return "rank-20"
+      } else if ( rank <= 50 ) {
+        return "rank-50"
       }
     }
     return null
@@ -254,7 +256,7 @@
           Performance
         </h1>
         <p class="mt-2 text-sm text-gray-700">
-          Performance in events relative to the event leader if appearing in top 100 rankings (200 for national) in the last 12 months.
+          Performance in events relative to the event leader if appearing in top 100 rankings (200 for national) in the last 12 months.<br>
         </p>
       </div>
       <div class="mt-4 sm:ml-3 sm:mt-0 sm:flex-none">
@@ -287,7 +289,6 @@
                 >
                   <li :class="[active ? 'bg-indigo-600 text-white' : 'text-gray-900', 'relative cursor-default select-none py-2 pl-3 pr-9']">
                     <span :class="[selected ? 'font-semibold' : 'font-normal', 'block truncate']">{{ year + " / " + getQualifyingAge( year ) }}</span>
-
                     <span
                       v-if="selected"
                       :class="[active ? 'text-white' : 'text-indigo-600', 'absolute inset-y-0 right-0 flex items-center pr-4']"
@@ -317,6 +318,12 @@
           />
         </button>
       </div>
+    </div>
+    <div class="mt-2 bg-white shadow sm:rounded-lg">
+      <p class="p-4 text-sm text-gray-700">
+        Key &ndash; Best times recorded qualify for <span class="px-2 mr-1 qualifiedArea1" /> county, <span class="px-2 mr-1 qualifiedArea2" /> region, <span class="px-2 mr-1 qualifiedArea3" /> country.
+        Event ranking is in the <span class="px-2 mr-1 rank-10" /> top 10, <span class="px-2 mr-1 rank-20" /> top 20, <span class="px-2 mr-1 rank-50" /> top 50.
+      </p>
     </div>
     <div class="mt-4 flow-root">
       <div class="overflow-x-auto">
@@ -378,29 +385,29 @@
                 <th
                   scope="col"
                   colSpan="4"
-                  class="px-1 py-3.5 text-center text-sm font-semibold text-gray-900"
+                  class="!border-l-2 px-1 py-3.5 text-center text-sm font-semibold text-gray-900"
                 >
-                  County
+                  County ({{ COUNTIES[swimmer.county] }})
                 </th>
                 <th
                   scope="col"
                   colSpan="4"
-                  class="px-1 py-3.5 text-center text-sm font-semibold text-gray-900"
+                  class="!border-l-2 px-1 py-3.5 text-center text-sm font-semibold text-gray-900"
                 >
-                  Regional
+                  Regional ({{ REGIONS[swimmer.region] }})
                 </th>
                 <th
                   scope="col"
                   colSpan="4"
-                  class="px-1 py-3.5 text-center text-sm font-semibold text-gray-900 sm:pr-0"
+                  class="!border-l-2 px-1 py-3.5 text-center text-sm font-semibold text-gray-900 sm:pr-0"
                 >
-                  National
+                  National ({{ NATIONALITIES[swimmer.nationality] }})
                 </th>
               </tr>
               <tr class="divide-x divide-gray-200">
                 <th
                   scope="col"
-                  class="sortable whitespace-nowrap px-1 py-3.5 text-right text-sm font-semibold text-gray-900 border-l-[1px]"
+                  class="sortable whitespace-nowrap !border-l-2 px-1 py-3.5 text-right text-sm font-semibold text-gray-900"
                   @click="updateSort('county_rank')"
                 >
                   <span>Rank</span><i :class="getSortIcon('county_rank')" />
@@ -428,7 +435,7 @@
                 </th>
                 <th
                   scope="col"
-                  class="sortable whitespace-nowrap px-1 py-3.5 text-right text-sm font-semibold text-gray-900"
+                  class="sortable whitespace-nowrap !border-l-2 px-1 py-3.5 text-right text-sm font-semibold text-gray-900"
                   @click="updateSort('regional_rank')"
                 >
                   <span>Rank</span><i :class="getSortIcon('regional_rank')" />
@@ -456,7 +463,7 @@
                 </th>
                 <th
                   scope="col"
-                  class="sortable whitespace-nowrap px-1 py-3.5 text-right text-sm font-semibold text-gray-900"
+                  class="sortable whitespace-nowrap !border-l-2 px-1 py-3.5 text-right text-sm font-semibold text-gray-900"
                   @click="updateSort('national_rank')"
                 >
                   <span>Rank</span><i :class="getSortIcon('national_rank')" />
@@ -506,17 +513,20 @@
                     <LinkIcon class="size-3 text-gray-900" />
                   </nuxt-link>
                 </td>
-                <td class="whitespace-nowrap px-2 py-2 text-right text-sm text-gray-900">
-                  <span :class="`qualifiedArea${row.qualifiedFor}`">{{ row.time ? secondsToTime( row.time ) : '' }}</span>
+                <td
+                  class="whitespace-nowrap px-2 py-2 text-right text-sm text-gray-900"
+                  :class="`qualifiedArea${row.qualifiedFor}`"
+                >
+                  {{ row.time ? secondsToTime( row.time ) : '' }}
                 </td>
                 <td :class="`whitespace-nowrap px-2 py-2 text-right text-sm text-gray-900 opacity-30 age-${row.age}`">
                   {{ row.date }}
                 </td>
-                <td class="whitespace-nowrap px-2 py-2 text-right text-sm text-gray-900">
-                  <span
-                    class="inline-flex items-baseline"
-                    :class="rankClass( row.qualifying.county.rank )"
-                  >
+                <td
+                  class="whitespace-nowrap !border-l-2 px-2 py-2 text-right text-sm text-gray-900"
+                  :class="rankClass( row.qualifying.county.rank )"
+                >
+                  <span class="inline-flex items-baseline">
                     {{ row.qualifying.county.rank }}
                     <a
                       v-if="row.qualifying.county.url"
@@ -537,11 +547,11 @@
                 <td class="whitespace-nowrap px-2 py-2 text-right text-sm text-gray-500">
                   {{ row.qualifying.county.qualifyTime }}
                 </td>
-                <td class="whitespace-nowrap px-2 py-2 text-right text-sm text-gray-900">
-                  <span
-                    class="inline-flex items-baseline"
-                    :class="rankClass( row.qualifying.regional.rank )"
-                  >
+                <td
+                  class="whitespace-nowrap !border-l-2 px-2 py-2 text-right text-sm text-gray-900"
+                  :class="rankClass( row.qualifying.regional.rank )"
+                >
+                  <span class="inline-flex items-baseline">
                     {{ row.qualifying.regional.rank }}
                     <a
                       v-if="row.qualifying.regional.url"
@@ -562,11 +572,11 @@
                 <td class="whitespace-nowrap px-2 py-2 text-right text-sm text-gray-500">
                   {{ row.qualifying.regional.qualifyTime }}
                 </td>
-                <td class="whitespace-nowrap px-2 py-2 text-right text-sm text-gray-900">
-                  <span
-                    class="inline-flex items-baseline"
-                    :class="rankClass( row.qualifying.national.rank )"
-                  >
+                <td
+                  class="whitespace-nowrap !border-l-2 px-2 py-2 text-right text-sm text-gray-900"
+                  :class="rankClass( row.qualifying.national.rank )"
+                >
+                  <span class="inline-flex items-baseline">
                     {{ row.qualifying.national.rank }}
                     <a
                       v-if="row.qualifying.national.url"
@@ -605,15 +615,15 @@
 }
 
 .qualifiedArea1 {
-  color: #22c55e;
+  background-color: #22c55e30;
 }
 
 .qualifiedArea2 {
-  color: #f97316;
+  background-color: #f9731630;
 }
 
 .qualifiedArea3 {
-  color: #ef4444;
+  background-color: #ef444430;
 }
 
 .age-0, .age-1, .age-2 {
@@ -641,10 +651,14 @@
 }
 
 .rank-10 {
-  color: #22c55e;
+  background-color: #a4ccf060;
 }
 
 .rank-20 {
-  color: #f97316;
+  background-color: #9897ca60;
+}
+
+.rank-50 {
+  background-color: #96609060;
 }
 </style>
