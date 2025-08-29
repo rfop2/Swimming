@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+  import { XCircleIcon } from "@heroicons/vue/24/outline"
   import type { Swimmer } from "lib"
   import type { FetchError } from "ofetch"
 
@@ -90,6 +91,28 @@
           </div>
         </div>
 
+        <div
+          v-if="errString"
+          class="rounded-md bg-red-50 p-4"
+        >
+          <div class="flex">
+            <div class="shrink-0">
+              <XCircleIcon
+                class="size-5 text-red-400"
+                aria-hidden="true"
+              />
+            </div>
+            <div class="ml-3">
+              <h3 class="text-sm font-medium text-red-800">
+                Login failed
+              </h3>
+              <div class="mt-2 text-sm text-red-700">
+                <p>Please check your email address and password and try again.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div>
           <button
             type="submit"
@@ -110,7 +133,6 @@
           Contact us for details on how to join
         </nuxt-link>
       </p>
-      {{ errString }}
     </div>
   </div>
 </template>
