@@ -4,7 +4,7 @@
   import "ag-grid-community/styles/ag-grid.css" // Mandatory CSS required by the Data Grid
   import "ag-grid-community/styles/ag-theme-quartz.css" // Optional Theme applied to the Data Grid
   import { AgGridVue } from "ag-grid-vue3" // Vue Data Grid Component
-  import { type Swimmer, secondsToTime, strokeSort, timeToSeconds, type QualifyingRow, getCompetitionAge, REGIONS, COUNTIES, NATIONALITIES, STROKE_DISTANCE, getSwimmerScopeArea, AGES } from "lib"
+  import { type Swimmer, secondsToTime, strokeSort, timeToSeconds, type QualifyingRow, getCompetitionAge, REGIONS, COUNTIES, NATIONALITIES, STROKE_DISTANCE, AGES } from "lib"
   import { addMonths, format, getYear, parseISO } from "date-fns"
   import type { FetchError } from "ofetch"
   import { ArrowUturnLeftIcon, CheckIcon, ClipboardDocumentCheckIcon, ClipboardDocumentIcon, ClipboardDocumentListIcon, DocumentPlusIcon, PlusCircleIcon, TrashIcon } from "@heroicons/vue/24/outline"
@@ -271,12 +271,14 @@
     dirty.value = false
   }
 
+  const saveSuccess = ref( false )
   async function save( _e: Event ) {
     try {
       await $fetch( "/api/qualifying", {
         method: "PUT",
         body: JSON.stringify( ( qualifying.value ?? [] ).concat( added.value.filter( data => data.time > 0 ) ) ),
       } )
+      saveSuccess.value = true
       await refreshNuxtData( "qualifying" )
       added.value = []
       dirty.value = false
@@ -675,5 +677,10 @@
         />
       </div>
     </div>
+    <UI-SuccessNotification
+      v-model="saveSuccess"
+      title="Successfully saved!"
+      text="Qualifying times have been updated."
+    />
   </div>
 </template>
