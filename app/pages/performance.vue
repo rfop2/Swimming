@@ -651,7 +651,7 @@
 }
 
 .rank-10 {
-  background-color: #9eccf880;
+  background-color: #0058fc63;
 }
 
 .rank-20 {
@@ -659,6 +659,6 @@
 }
 
 .rank-50 {
-  background-color: #0058fc63;
+  background-color: #9eccf880;
 }
 </style>
