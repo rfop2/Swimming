@@ -10,6 +10,8 @@ export interface Swimmer {
 }
 
 export interface Individual {
+  created: string
+  swimmer: string
   course: string
   stroke: string
   distance: string
