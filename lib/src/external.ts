@@ -3,6 +3,11 @@ import { getSwimmerAgeGroup } from "./lib.js"
 
 export const BASE_URL = "https://www.swimmingresults.org"
 
+export const COURSES: Record<string,string> = {
+  "lc": "Long Course",
+  "sc": "Short Course",
+}
+
 export const NATIONALITY: Record<string,string> = {
   BRITISH:  "A",
   ENGLAND:  "E",
