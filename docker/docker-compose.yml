@@ -11,6 +11,9 @@ services:
     ports:
       - "3080:3000"
     restart: unless-stopped
+    networks:
+      app:
+        ipv4_address: 192.168.45.3
     tty: true
 
   db:
@@ -28,7 +31,20 @@ services:
       MARIADB_USER: ${MARIADB_USER}
       MARIADB_PASSWORD: ${MARIADB_PASSWORD}
     restart: unless-stopped
+    networks:
+      app:
+        ipv4_address: 192.168.45.2
 
 volumes:
   db-data:
     driver: local
+
+networks:
+  app:
+    driver: bridge
+    enable_ipv6: false
+    ipam:
+      driver: default
+      config:
+        - subnet: 192.168.45.0/24
+          gateway: 192.168.45.1
