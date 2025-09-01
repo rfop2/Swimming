@@ -1,7 +1,7 @@
 <script setup lang="ts">
   import { Listbox, ListboxButton, ListboxLabel, ListboxOption, ListboxOptions } from "@headlessui/vue"
   import { CheckIcon, ChevronUpDownIcon } from "@heroicons/vue/24/outline"
-  import { COURSES, type Individual, STROKE_DISTANCE, type Swimmer, secondsToTime } from "lib"
+  import { COURSES, type IndividualRow, strokes, type Swimmer, secondsToTime } from "lib"
 
   import type { InternalApi } from "nitropack"
 
@@ -10,34 +10,13 @@
     middleware: [ "protected" ]
   } )
 
-  const strokes = [
-    {
-      value: "freestyle",
-      label: "Freestyle",
-    },
-    {
-      value: "breaststroke",
-      label: "Breaststroke",
-    },
-    {
-      value: "butterfly",
-      label: "Butterfly",
-    },
-    {
-      value: "backstroke",
-      label: "Backstroke",
-    },
-    {
-      value: "individual_medley",
-      label: "Individual Medley",
-    },
-  ]
+  const strokeOptions = Object.entries( strokes ).map( ( [ stroke, strokeData ] ) => ( { value: stroke, label: strokeData.label } ) )
 
   const route = useRoute()
   const slug = Array.isArray( route.params.slug ) ? route.params.slug : []
 
   const selections = reactive( {
-    stroke: strokes.find( option => option.value === slug[1] ) ?? strokes[0],
+    stroke: strokeOptions.find( option => option.value === slug[1] ) ?? strokeOptions[0],
   } )
 
   const { data: swimmers } = await useFetch(
@@ -57,24 +36,10 @@
 
   const filteredRecords = computed( () => ( records.value || [] ).filter( record => record.stroke === selections.stroke.value ) )
 
-  const distances = computed( () => {
-    const strokeDistances = []
-    for ( const strokeDistance of Object.keys( STROKE_DISTANCE ) ) {
-      const matches = strokeDistance.toLocaleLowerCase().match( /(?<stroke>\w+)__(?<distance>\d+m)$/ )
-      if ( !matches ) {
-        throw new Error( `Can't match stroke/distance on '${strokeDistance}'` )
-      }
-      const { stroke = "", distance = "" } = { ...matches?.groups }
-      if ( stroke === selections.stroke.value ) {
-        strokeDistances.push( distance )
-      }
-    }
-    console.log( strokeDistances )
-    return strokeDistances
-  } )
+  const distances = computed( () => strokes[selections.stroke.value].distances )
 
   const groupedRecords = computed( () => {
-    const map: Record<string,Record<string,Record<string,Individual | null>>> = {}
+    const map: Record<string,Record<string,Record<string,IndividualRow | null>>> = {}
     for ( const row of filteredRecords.value ) {
       if ( !map[row.swimmer] ) {
         map[row.swimmer] = {}
@@ -86,8 +51,6 @@
     }
     return map
   } )
-  watch( filteredRecords, ( fr ) => console.log( "FR", fr ) )
-  watch( groupedRecords, ( gr ) => console.log( "GR", gr ) )
 </script>
 
 <template>
@@ -130,7 +93,7 @@
                 >
                   <ListboxOptions class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
                     <ListboxOption
-                      v-for="option in strokes"
+                      v-for="option in strokeOptions"
                       :key="option.value"
                       v-slot="{ active, selected }"
                       as="template"
@@ -216,7 +179,9 @@
                 >
                   <span v-if="distanceRow && distanceRow[distance]">
                     {{ secondsToTime( distanceRow[distance].time ) }}
-                    <span v-if="courseRecords[course==='lc'?'sc':'lc'] && courseRecords[course==='lc'?'sc':'lc'][distance] && (courseRecords[course==='lc'?'sc':'lc'][distance]?.converted_time < distanceRow[distance].time)">({{ secondsToTime( courseRecords[course==='lc'?'sc':'lc'][distance]?.converted_time ) }})</span>
+                    <span v-if="(courseRecords[course === 'lc' ? 'sc' : 'lc']?.[distance]?.converted_time ?? Infinity) < distanceRow[distance].time">
+                      ({{ secondsToTime(courseRecords[course === 'lc' ? 'sc' : 'lc']?.[distance]?.converted_time ?? 0) }})
+                    </span>
                   </span>
                 </td>
               </tr>
