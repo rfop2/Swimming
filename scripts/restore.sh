@@ -1,7 +1,8 @@
-#!/usr/bin/env bash
+#!/bin/bash
 REPO_ROOT=$(git rev-parse --show-toplevel)
+cd $REPO_ROOT/docker
 BACKUP_DIR=$REPO_ROOT/backups
-DATABASE_DIR=$REPO_ROOT/db
+DB_CONTAINER=db
 
 if [ -z $1 ]
 then
@@ -16,9 +17,10 @@ then
   exit -1
 fi
 
-echo "Restoring from backup file $backupFile"
-gunzip -c $backupFile \
-  | sqlite3 ${DATABASE_DIR}/records.db
+echo "Restoring from Backup file $backupFile"
+gunzip -c $backupFile | \
+  docker compose exec -T $DB_CONTAINER /bin/bash -c \
+  'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mariadb -uroot "$MYSQL_DATABASE"'
 
 restoreStatus=$?
 if [ $restoreStatus == 0 ]

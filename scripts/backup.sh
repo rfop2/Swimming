@@ -1,17 +1,20 @@
-#!/usr/bin/env bash
+#!/bin/bash
+REPO_ROOT=$(git rev-parse --show-toplevel)
+cd $REPO_ROOT/docker
 if [ -s .env ]
 then
   source .env
 fi
-REPO_ROOT=$(git rev-parse --show-toplevel)
 BACKUP_DIR=$REPO_ROOT/backups
-DATABASE_DIR=$REPO_ROOT/db
-BACKUP_NAME=db
+DB_CONTAINER=db
+BACKUP_NAME="$DB_CONTAINER"
 if [ ! -d $BACKUP_DIR ]
 then
   echo "Can't find $BACKUP_DIR, aborting backup"
   exit -1
 fi
+#BACKUP_USER=$MYSQL_USER
+BACKUP_USER=root
 
 timestamp=`date +"%Y%m%d-%H%M%S"`
 backupFileRoot="${BACKUP_DIR}/backup-${BACKUP_NAME}-"
@@ -19,12 +22,11 @@ backupFile="${backupFileRoot}${timestamp}.sql"
 lastBackupFile=`(ls -t ${backupFileRoot}* 2>/dev/null) | head -1`
 tempBackupFile="temp.sql"
 
-sqlite3 ${DATABASE_DIR}/records.db ".dump" \
-    | sed -E 's/CREATE TABLE( IF NOT EXISTS)? "?(\w+)"?\s+\(/DROP TABLE IF EXISTS \2;\n&/' \
-    | sed -E 's/CREATE VIEW( IF NOT EXISTS)? "?(\w+)"?\s+AS/DROP VIEW IF EXISTS \2;\n&/' \
-    | sed -E 's/CREATE INDEX( IF NOT EXISTS)? "?(\w+)"?\s+ON/DROP INDEX IF EXISTS \2;\n&/' \
-    | sed -e 's/IF NOT EXISTS //' \
-    > ${backupFile}
+dumpCmd="mariadb-dump -u$BACKUP_USER --extended-insert=1 --routines --triggers --single-transaction --quick --skip-comments"
+backupCmd='MYSQL_PWD="$MYSQL_ROOT_PASSWORD"'
+backupCmd+=" ${dumpCmd}"
+backupCmd+=' "$MYSQL_DATABASE"'
+docker compose exec -T $DB_CONTAINER /bin/bash -c "$backupCmd" > $backupFile
 
 if [[ $lastBackupFile ]]
 then
@@ -40,7 +42,7 @@ if [ $diffStatus == 0 ]
 then
   /bin/rm $backupFile
 else
-  [[ -t 1 ]] && echo "Backed up to $backupFile.gz"
+  [[ -t 1 ]] && echo "Backed up to ${backupFile}.gz"
   gzip $backupFile
 fi
 

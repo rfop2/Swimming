@@ -3,14 +3,32 @@ services:
     image: "nuxt-node"
     hostname: "node"
     build: .
-    #working_dir: /home/node/app
     environment:
       - NODE_ENV=production
     volumes:
       - ../app/.output/:/home/node/app
       - ../db:/home/node/db
-    ports: # use if it is necessary to expose the container to the host machine
+    ports:
       - "3080:3000"
     restart: unless-stopped
     tty: true
-    #command: sleep 600
+
+  db:
+    image: mariadb:11.8
+    hostname: db
+    volumes:
+      - ./mariadb/config:/etc/mysql/mariadb.conf.d/:ro
+      - ./mariadb/bootstrap:/docker-entrypoint-initdb.d:ro
+      - db-data:/var/lib/mysql:rw
+    ports:
+      - "3308:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    restart: unless-stopped
+
+volumes:
+  db-data:
+    driver: local

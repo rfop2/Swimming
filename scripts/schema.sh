@@ -1,14 +1,15 @@
-#!/usr/bin/env bash
-
+#!/bin/bash
 REPO_ROOT=$(git rev-parse --show-toplevel)
-cd $REPO_ROOT/data
-
-SCHEMA_FILE=${1:-schema.sql}
-echo "Dumping database schema to ${SCHEMA_FILE}"
-
-sqlite3 ../db/records.db ".schema" \
-    | sed -E 's/CREATE TABLE( IF NOT EXISTS)? "?(\w+)"?\s+\(/DROP TABLE IF EXISTS \2;\n&/' \
-    | sed -E 's/CREATE VIEW( IF NOT EXISTS)? "?(\w+)"?\s+AS/DROP VIEW IF EXISTS \2;\n&/' \
-    | sed -E 's/CREATE INDEX( IF NOT EXISTS)? "?(\w+)"?\s+ON/DROP INDEX IF EXISTS \2;\n&/' \
-    | sed -e 's/IF NOT EXISTS //' \
-    > ${SCHEMA_FILE}
+cd $REPO_ROOT/docker
+SCHEMA_FILE="$REPO_ROOT/data/schema.sql"
+if (( $# > 0 ))
+then
+    SCHEMA_FILE=$1
+fi
+if [ ! -f docker-compose.yml ]
+then
+    echo "Error, this script must be run from a docker directory"
+    exit -1
+fi
+echo "Dumping schema file"
+docker compose exec -T db bash -c 'exec mariadb-dump -u root -p"$MYSQL_ROOT_PASSWORD" --databases "$MYSQL_DATABASE" --add-drop-database --no-data --routines --triggers -r /dev/stdout | sed -E -e "s/ AUTO_INCREMENT=[0-9]+//g"' > $SCHEMA_FILE
