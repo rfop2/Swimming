@@ -2,7 +2,7 @@
   import type { InternalApi } from "nitropack"
   import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from "@headlessui/vue"
   import { ArrowUturnLeftIcon, LinkIcon, CheckIcon, ChevronUpDownIcon, ChartBarIcon } from "@heroicons/vue/24/outline"
-  import { COUNTIES, type Individual, NATIONALITIES, REGIONS, STROKE_DISTANCE, type Swimmer, convertTime, countyRankParams, createUrl, getSwimmerAge, globalRankParams, nationalRankParams, rankBaseUrl, regionalRankParams, secondsToTime, strokeSort } from "lib"
+  import { COUNTIES, type IndividualStats, NATIONALITIES, REGIONS, STROKE_DISTANCE, type Swimmer, convertTime, countyRankParams, createUrl, getSwimmerAge, globalRankParams, nationalRankParams, rankBaseUrl, regionalRankParams, secondsToTime, strokeSort } from "lib"
   import { differenceInCalendarMonths, getYear, addMonths } from "date-fns"
 
   definePageMeta( {
@@ -72,7 +72,7 @@
     }
   )
 
-  interface PersonalQualifyingType extends Individual {
+  interface PersonalQualifyingType extends IndividualStats {
     key: string
     age: number
     distanceMetres: number

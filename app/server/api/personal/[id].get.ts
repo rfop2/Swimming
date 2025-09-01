@@ -1,7 +1,7 @@
 import { defineEventHandler } from "h3"
 import type { Statement } from "better-sqlite3"
 import Database from "better-sqlite3"
-import { DB_PATH, type Individual } from "lib"
+import { DB_PATH, type IndividualRow } from "lib"
 
 // Create a local database to persist state
 const db = new Database( DB_PATH )
@@ -9,7 +9,7 @@ db.pragma( "journal_mode = WAL" )
 
 const selectUserSwimmerIds: Statement<{ userId: string}, { swimmerId: string }> = db.prepare( "SELECT swimmerId FROM UserSwimmers WHERE userId = :userId" )
 const selectMaxCreated: Statement<{ userId: string, swimmerId: string }, { MaxCreated: string }> = db.prepare( "SELECT MAX(created) AS MaxCreated FROM Individual INNER JOIN UserSwimmers ON Individual.swimmer = UserSwimmers.swimmerId AND UserSwimmers.userId = :userId WHERE swimmer = :swimmerId" )
-const selectRecords: Statement<{ userId: string, swimmerId: string, date: string }, Individual> = db.prepare( "SELECT Individual.* FROM Individual INNER JOIN UserSwimmers ON Individual.swimmer = UserSwimmers.swimmerId AND UserSwimmers.userId = :userId WHERE swimmer = :swimmerId AND created = :date" )
+const selectRecords: Statement<{ userId: string, swimmerId: string, date: string }, IndividualRow> = db.prepare( "SELECT Individual.* FROM Individual INNER JOIN UserSwimmers ON Individual.swimmer = UserSwimmers.swimmerId AND UserSwimmers.userId = :userId WHERE swimmer = :swimmerId AND created = :date" )
 
 export default defineEventHandler( async ( event ) => {
   if ( !event.context.session || !event.context.user  ) {

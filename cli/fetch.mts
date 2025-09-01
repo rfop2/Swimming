@@ -37,7 +37,6 @@ import {
 } from "lib"
 
 import type {
-  Individual,
   IndividualStats,
   LatLon,
   Meet,
@@ -294,7 +293,7 @@ const extractTableData = ( $: CheerioAPI, table: Cheerio<AnyNode>, rowFunc?: Row
 const parseIndividual = ( pageInfo: PageInfo, $: CheerioAPI ) => {
   const headers = $( "p.rnk_sj" )
   const tables = $( "[id='rankTable'] tbody" )
-  const data: IndividualStats = []
+  const data: Array<IndividualStats> = []
   tables.each( ( index, table ) => {
     const label = $( headers[index + 1] ).text().trim()
     let course = ""
@@ -314,7 +313,7 @@ const parseIndividual = ( pageInfo: PageInfo, $: CheerioAPI ) => {
       }
       const { distance = "", stroke = "" } = { ...matches?.groups }
 
-      const courseRow: Individual = {
+      const courseRow: IndividualStats = {
         course,
         stroke: stroke.replace( /\s/g, "_" ).toLocaleLowerCase(),
         distance: `${distance}m`,
@@ -625,13 +624,13 @@ const updateIndividual = async ( swimmer: Swimmer ) => {
 
   console.log( `Got records for ${individualData.length} events` )
   for ( const row of individualData ) {
-    saveIndividual.run( { created: today, swimmer: swimmer.id, ...row } )
+    saveIndividual.run( { ...row, created: today, swimmer: swimmer.id } )
   }
 
   return individualData
 }
 
-const updateResults = async ( swimmer: Swimmer, individualData: Array<Individual> ) => {
+const updateResults = async ( swimmer: Swimmer, individualData: Array<IndividualStats> ) => {
   console.log( `Updating results data for swimmer '${swimmer.name}'` )
 
   for ( const event of individualData ) {
@@ -665,7 +664,7 @@ const updateResults = async ( swimmer: Swimmer, individualData: Array<Individual
   }
 }
 
-const updateRankings = async ( swimmer: Swimmer, individualData: Array<Individual> ) => {
+const updateRankings = async ( swimmer: Swimmer, individualData: Array<IndividualStats> ) => {
   console.log( `Updating ranking data for swimmer '${swimmer.name}'` )
 
   const ageGroup = getSwimmerAgeGroup( swimmer )

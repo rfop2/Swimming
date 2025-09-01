@@ -9,9 +9,7 @@ export interface Swimmer {
   active: number
 }
 
-export interface Individual {
-  created: string
-  swimmer: string
+export interface IndividualStats {
   course: string
   stroke: string
   distance: string
@@ -25,7 +23,9 @@ export interface Individual {
   level: number
 }
 
-export type IndividualStats = Array<Individual>
+export interface IndividualRow extends IndividualStats {
+  swimmer: string
+}
 
 export interface RankingRow {
   rank: number
