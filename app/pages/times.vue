@@ -1,7 +1,7 @@
 <script setup lang="ts">
   import { Listbox, ListboxButton, ListboxLabel, ListboxOption, ListboxOptions } from "@headlessui/vue"
   import { CheckIcon, ChevronUpDownIcon } from "@heroicons/vue/24/outline"
-  import { COURSES, type Individual, STROKE_DISTANCE, type Swimmer, convertTime, secondsToTime } from "lib"
+  import { COURSES, type Individual, STROKE_DISTANCE, type Swimmer, secondsToTime } from "lib"
 
   import type { InternalApi } from "nitropack"
 
@@ -82,7 +82,6 @@
       if ( !map[row.swimmer][row.course] ) {
         map[row.swimmer][row.course] = Object.fromEntries( distances.value.map( distance => [ distance, null ] ) )
       }
-      console.log( row.converted_time, convertTime( row.course, row.course === "lc" ? "sc" : "lc", row.stroke, row.distance, row.time ) )
       map[row.swimmer][row.course][row.distance] = row
     }
     return map
@@ -215,9 +214,9 @@
                   :key="distance"
                   class="whitespace-nowrap px-2 py-2 text-right text-sm text-gray-900"
                 >
-                  <span v-if="distanceRow[distance]">
+                  <span v-if="distanceRow && distanceRow[distance]">
                     {{ secondsToTime( distanceRow[distance].time ) }}
-                    <span v-if="courseRecords[course==='lc'?'sc':'lc'][distance] && (courseRecords[course==='lc'?'sc':'lc'][distance]?.converted_time < distanceRow[distance].time)">({{ secondsToTime( courseRecords[course==='lc'?'sc':'lc'][distance]?.converted_time ) }})</span>
+                    <span v-if="courseRecords[course==='lc'?'sc':'lc'] && courseRecords[course==='lc'?'sc':'lc'][distance] && (courseRecords[course==='lc'?'sc':'lc'][distance]?.converted_time < distanceRow[distance].time)">({{ secondsToTime( courseRecords[course==='lc'?'sc':'lc'][distance]?.converted_time ) }})</span>
                   </span>
                 </td>
               </tr>
