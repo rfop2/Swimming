@@ -121,6 +121,29 @@ export const strokeSort: Record<string,number> = {
   individual_medley: 4
 }
 
+const strokeData = Object.entries( STROKE_DISTANCE ).reduce( ( strokes, [ strokeDistance, code ] ) => {
+  const matches = strokeDistance.toLocaleLowerCase().match( /(?<stroke>\w+)__(?<distance>\d+m)$/ )
+  if ( !matches ) {
+    throw new Error( `Can't match stroke/distance on '${strokeDistance}'` )
+  }
+  const { stroke = "", distance = "" } = { ...matches?.groups }
+  if ( !strokes[stroke] ) {
+    strokes[stroke] = {
+      label: stroke.replace( /_/g, " " ).replace( /\b\w/g, char => char.toUpperCase() ),
+      order: strokeSort[stroke],
+      distances: [ distance ],
+      codes: [ code ],
+    }
+  } else {
+    strokes[stroke].distances.push( distance )
+    strokes[stroke].codes.push( code )
+  }
+  return strokes
+}, {} as Record<string,{ label: string, order: number, distances: Array<string>, codes: Array<string>}> )
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export const strokes = Object.fromEntries( Object.entries( strokeData ).sort( ( [ _keyA, valA ], [ _keyB, valB ] ) => valA.order - valB.order ) )
+
 export const POOLS = {
   SHORT: "S",
   LONG: "L",
