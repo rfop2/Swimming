@@ -5,7 +5,6 @@ import { stat, readFile, writeFile } from "fs/promises"
 import type { AnyNode } from "domhandler"
 import * as cheerio from "cheerio"
 import type { Cheerio, CheerioAPI } from "cheerio"
-import Database from "better-sqlite3"
 // import { inspect } from "util"
 
 import {
@@ -13,7 +12,6 @@ import {
   DEFAULT_CACHE_TIME,
   MAX_FETCH_INTERVAL,
   MIN_FETCH_INTERVAL,
-  DB_PATH,
   timeToSeconds,
   sleep,
   rng,
@@ -31,9 +29,9 @@ import {
   meetsBaseUrl,
   meetsParams,
   BASE_URL,
-  insertMeetsSql,
-  insertLocationsSql,
   getSwimmerAgeGroup,
+  prepareStatement,
+  getPool,
 } from "lib"
 
 import type {
@@ -43,21 +41,13 @@ import type {
   PageInfo,
   Ranking,
   RankingRow,
-  Result,
+  ResultData,
   Results,
   Swimmer
 } from "lib"
 
 const now = new Date()
 const today = format( now, "yyyy-MM-dd" )
-
-// Create a local database to persist state
-const db = new Database( DB_PATH )
-db.pragma( "journal_mode = WAL" )
-
-const getSwimmers = db.prepare<unknown[],Swimmer>(
-  "SELECT * FROM Swimmers WHERE active = 1"
-)
 
 const insertIndividualSql =
 `INSERT OR IGNORE INTO Individual (
@@ -90,11 +80,6 @@ const insertIndividualSql =
   :level
 );`
 
-const saveIndividual = db.prepare( insertIndividualSql )
-
-// const rankingsTableCreate = db.prepare( createRankingsSql )
-// rankingsTableCreate.run()
-
 interface RankingRecord {
   rank: number
   course: string
@@ -105,14 +90,6 @@ interface RankingRecord {
   date: string
   time: number
 }
-
-const getBestRankingTimes = db.prepare<{date:string,gender:string,age:string},RankingRecord>(
-  "SELECT course, stroke, distance, scope, area, date, MIN(time) as time FROM Rankings WHERE created = :date AND gender = :gender AND age = :age GROUP BY gender, age, course, stroke, distance, scope, area"
-)
-
-const getSwimmerRankingTimes = db.prepare<{date:string,swimmer:string},RankingRecord>(
-  "SELECT course, stroke, distance, scope, area, rank, date, time FROM Rankings WHERE created = :date AND swimmer = :swimmer"
-)
 
 export const deleteRankingsSql =
 `DELETE FROM Rankings WHERE
@@ -125,7 +102,6 @@ export const deleteRankingsSql =
   scope = :scope AND
   area = :area`
 
-const deleteRankings = db.prepare( deleteRankingsSql )
 
 const insertRankingsSql =
 `INSERT INTO Rankings (
@@ -168,8 +144,6 @@ const insertRankingsSql =
   :fina
 );`
 
-const saveRankings = db.prepare( insertRankingsSql )
-
 const deletePerformanceSql =
 `DELETE FROM Performance WHERE
   created = :created AND
@@ -180,8 +154,6 @@ const deletePerformanceSql =
   scope = :scope AND
   area = :area
 ;`
-
-const deletePerformance = db.prepare( deletePerformanceSql )
 
 const insertPerformanceSql =
 `INSERT INTO Performance (
@@ -216,8 +188,6 @@ const insertPerformanceSql =
   :difference
 );`
 
-const savePerformance = db.prepare( insertPerformanceSql )
-
 const insertResultsSql =
 `INSERT OR IGNORE INTO Results (
   created,
@@ -249,9 +219,67 @@ const insertResultsSql =
   :level
 );`
 
-const saveResults = db.prepare( insertResultsSql )
+const insertMeetsSql =
+`INSERT INTO Meets (
+  created,
+  id,
+  code,
+  date,
+  duration,
+  name,
+  country,
+  region,
+  location,
+  course,
+  level,
+  type,
+  contact,
+  email
+)
+VALUES (
+  :created,
+  :id,
+  :code,
+  :date,
+  :duration,
+  :name,
+  :country,
+  :region,
+  :location,
+  :course,
+  :level,
+  :type,
+  :contact,
+  :email
+)
+ON CONFLICT(id) DO UPDATE SET
+  code      = excluded.code,
+  date      = excluded.date,
+  duration  = excluded.duration,
+  name      = excluded.name,
+  country   = excluded.country,
+  region    = excluded.region,
+  location  = excluded.location,
+  course    = excluded.course,
+  level     = excluded.level,
+  type      = excluded.type,
+  contact   = excluded.contact,
+  email     = excluded.email
+;`
 
-const saveMeets = db.prepare( insertMeetsSql )
+const insertLocationsSql =
+`INSERT INTO Locations (
+  created,
+  location,
+  latitude,
+  longitude
+)
+VALUES (
+  :created,
+  :location,
+  :latitude,
+  :longitude
+);`
 
 type RowFunction = ( arg0: CheerioAPI, arg1: Cheerio<AnyNode> ) => Record<string,string>
 
@@ -380,7 +408,7 @@ const parseResults = ( pageInfo: PageInfo, $: CheerioAPI ) => {
   if ( table.length ) {
     // Do any conversions
     for ( const row of table ) {
-      const resultRow: Result = {
+      const resultRow: ResultData = {
         time: timeToSeconds( row.time ),
         wa_pts: Number( row.wa_pts ),
         round: row.round,
@@ -495,13 +523,14 @@ const parseMeets = ( pageInfo: PageInfo, $: CheerioAPI ) => {
   return data
 }
 
-const getLocation = db.prepare<unknown[],LatLon>(
-  "SELECT Latitude, Longitude FROM Locations WHERE Location = :location"
-)
-const saveLocation = db.prepare( insertLocationsSql )
 
 const geocodeTown = async ( town: string ): Promise<LatLon | undefined> => {
-  let latlon = getLocation.get( { location: town } )
+  const getLocation = prepareStatement<{ location: string },LatLon>(
+    await getPool(),
+    "SELECT Latitude, Longitude FROM Locations WHERE Location = :location"
+  )
+  const saveLocation = prepareStatement( await getPool(), insertLocationsSql )
+  let latlon = await getLocation.get( { location: town } ) as LatLon
   if ( latlon === undefined ) {
     const response = await fetch(
       `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent( town + ", UK" )}`
@@ -509,9 +538,9 @@ const geocodeTown = async ( town: string ): Promise<LatLon | undefined> => {
     const data = await response.json()
     if ( data && data.length > 0 ) {
       latlon = { latitude: Number( data[0].lat ), longitude: Number( data[0].lon ) }
-      saveLocation.run( { created: today, location: town, ...latlon } )
+      await saveLocation.run( { created: today, location: town, ...latlon } )
     } else {
-      saveLocation.run( { created: today, location: town, latitude: null, longitude: null } )
+      await saveLocation.run( { created: today, location: town, latitude: null, longitude: null } )
     }
   }
   return latlon
@@ -623,8 +652,12 @@ const updateIndividual = async ( swimmer: Swimmer ) => {
   const individualData = parseIndividual( page, $ )
 
   console.log( `Got records for ${individualData.length} events` )
+  const saveIndividual = prepareStatement(
+    await getPool(),
+    insertIndividualSql
+  )
   for ( const row of individualData ) {
-    saveIndividual.run( { ...row, created: today, swimmer: swimmer.id } )
+    await saveIndividual.run( { ...row, created: today, swimmer: swimmer.id } )
   }
 
   return individualData
@@ -658,8 +691,9 @@ const updateResults = async ( swimmer: Swimmer, individualData: Array<Individual
       throw new Error( `Can't match results on '${page.label}'` )
     }
 
+    const saveResults = prepareStatement( await getPool(), insertResultsSql )
     for ( const result of resultsData ) {
-      saveResults.run( { created: today, swimmer: swimmer.id, course: event.course, stroke: event.stroke, distance: event.distance, ...result } )
+      await saveResults.run( { created: today, swimmer: swimmer.id, course: event.course, stroke: event.stroke, distance: event.distance, ...result } )
     }
   }
 }
@@ -736,6 +770,7 @@ const updateRankings = async ( swimmer: Swimmer, individualData: Array<Individua
     }
 
     const extraPages = []
+    const deleteRankings = prepareStatement( await getPool(), deleteRankingsSql )
     for ( const page of pages ) {
       const url = new URL( page.url )
       const params = url.searchParams
@@ -745,9 +780,10 @@ const updateRankings = async ( swimmer: Swimmer, individualData: Array<Individua
         url.search = new URLSearchParams( params ).toString()
         extraPages.push( Object.assign( {}, page, { label: `${page.label}-2`, url, data: page.data } ) )
       }
-      deleteRankings.run( { created: today, ...page.data } )
+      await deleteRankings.run( { created: today, ...page.data } )
     }
 
+    const saveRankings = prepareStatement( await getPool(), insertRankingsSql )
     for ( const page of pages.concat( extraPages ) ) {
       const content = await fetchPage( page )
       // console.log( inspect( pageData, { depth: 5 } ) )
@@ -761,16 +797,27 @@ const updateRankings = async ( swimmer: Swimmer, individualData: Array<Individua
   }
 }
 
-const updatePerformance = ( swimmer: Swimmer ) => {
+const updatePerformance = async ( swimmer: Swimmer ) => {
   console.log( `Generating performance data for swimmer '${swimmer.name}'` )
 
   const ageGroup = getSwimmerAgeGroup( swimmer )
 
   // Now generate the performance records
-  const swimmerTimes = getSwimmerRankingTimes.all( { date: today, swimmer: swimmer.id } )
-  const bestTimes = getBestRankingTimes.all( { date: today, gender: swimmer.gender, age: ageGroup } )
+  const getSwimmerRankingTimes = prepareStatement<{date:string,swimmer:string},RankingRecord>(
+    await getPool(),
+    "SELECT course, stroke, distance, scope, area, rank, date, time FROM Rankings WHERE created = :date AND swimmer = :swimmer"
+  )
+  const swimmerTimes = await getSwimmerRankingTimes.all( { date: today, swimmer: swimmer.id } )
+
+  const getBestRankingTimes = prepareStatement<{date:string,gender:string,age:string},RankingRecord>(
+    await getPool(),
+    "SELECT course, stroke, distance, scope, area, date, MIN(time) as time FROM Rankings WHERE created = :date AND gender = :gender AND age = :age GROUP BY gender, age, course, stroke, distance, scope, area"
+  )
+  const bestTimes = await getBestRankingTimes.all( { date: today, gender: swimmer.gender, age: ageGroup } )
   const bestTimesMap = new Map( bestTimes.map( time => [ `${time.course}_${time.stroke}_${time.distance}_${time.scope}_${time.area}`, time ] ) )
 
+  const deletePerformance = prepareStatement( await getPool(), deletePerformanceSql )
+  const savePerformance = prepareStatement( await getPool(), insertPerformanceSql )
   for ( const swimmerTime of swimmerTimes ) {
     const raceLabel = `${swimmerTime.course}_${swimmerTime.stroke}_${swimmerTime.distance}_${swimmerTime.scope}_${swimmerTime.area}`
     const bestTime = bestTimesMap.get( raceLabel )
@@ -786,8 +833,8 @@ const updatePerformance = ( swimmer: Swimmer ) => {
       time_date: swimmerTime.date,
       difference: swimmerTime.time - bestTime.time,
     }
-    deletePerformance.run( { created: today, swimmer: swimmer.id, ...swimmerTime } )
-    savePerformance.run( { created: today, swimmer: swimmer.id, ...swimmerTime, ...record } )
+    await deletePerformance.run( { created: today, swimmer: swimmer.id, ...swimmerTime } )
+    await savePerformance.run( { created: today, swimmer: swimmer.id, ...swimmerTime, ...record } )
   }
 }
 
@@ -836,10 +883,11 @@ const updateMeets = async () => {
     // console.log( meetsData )
     console.log( `Got records for ${meetsData.length} meets` )
 
+    const saveMeets = prepareStatement( await getPool(), insertMeetsSql )
     for ( const meet of meetsData ) {
       await updateMeet( meet )
       // console.log( meet )
-      saveMeets.run( { created: today, ...meet } )
+      await saveMeets.run( { created: today, ...meet } )
     }
 
     if ( pageNo === 1 ) {
@@ -869,7 +917,12 @@ const updateMeets = async () => {
   }) */
 
   try {
-    const swimmers = getSwimmers.all()
+    const getSwimmers = prepareStatement<void,Swimmer>(
+      await getPool(),
+      "SELECT * FROM Swimmers WHERE active = 1"
+    )
+
+    const swimmers = await getSwimmers.all()
     for ( const swimmer of swimmers ) {
       if ( process.argv.length < 3 || process.argv[2] === swimmer.id ) {
         await updateSwimmerData( swimmer )

@@ -1,5 +1,5 @@
-import type { Swimmer } from "lib"
-import { db } from "~/server/utils/db"
+import { getPool, prepareStatement, runTransaction, type Swimmer } from "lib"
+import type { PoolConnection } from "mysql2/promise"
 
 interface UserData {
   username: string
@@ -18,17 +18,18 @@ export default eventHandler( async ( event ) => {
     } )
   }
 
-  const updateUser = db.transaction( ( userId: string, userData: UserData ) => {
-
+  const updateUser = async ( conn: PoolConnection, userId: string, userData: UserData ) => {
     if ( userData.password && userData.confirmPassword ) {
       if ( userData.password === userData.confirmPassword ) {
         if ( userData.password.length >= 8 && userData.password.length <= 32 ) {
           // Ignore it if it's just *s
           if ( !userData.password.match( /^\*+$/ ) ) {
             if ( userData.password.match( /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).+$/ ) ) {
-              const sql = "UPDATE User SET password = :password WHERE id = :userId"
-              const updatePassword = db.prepare( sql )
-              updatePassword.run( { ...userData, ...{ userId } } )
+              const updatePassword = prepareStatement(
+                conn,
+                "UPDATE User SET password = :password WHERE id = :userId"
+              )
+              await updatePassword.run( { ...userData, ...{ userId } } )
             } else {
               throw createError( {
                 message: "Password must contain mixed case letters, numbers and symbols",
@@ -50,16 +51,21 @@ export default eventHandler( async ( event ) => {
       }
     }
 
-    const sql = "UPDATE User SET username = :username, firstName = :firstName, lastName = :lastName, location = :location WHERE id = :userId"
-    const updateUser = db.prepare( sql )
-    updateUser.run( { ...userData, ...{ userId } } )
+    const updateUser = prepareStatement(
+      conn,
+      "UPDATE User SET username = :username, firstName = :firstName, lastName = :lastName, location = :location WHERE id = :userId"
+    )
+    await updateUser.run( { ...userData, ...{ userId } } )
 
     // Now do swimmers
     const swimmerIds = userData.swimmers.map( swimmer => swimmer.id )
     const swimmerIdsSql = swimmerIds.map( ( _, i ) => `:swimmerIds${i}` ).join( ", " )
     const swimmerIdsValues = Object.fromEntries( swimmerIds.map( ( id, i ) => ( [ `swimmerIds${i}`, id ] ) ) )
-    const deleteSwimmers = db.prepare( `DELETE FROM UserSwimmers WHERE userId = :userId AND swimmerId NOT IN (${swimmerIdsSql})` )
-    deleteSwimmers.run( { ...swimmerIdsValues, ...{ userId } } )
+    const deleteSwimmers = prepareStatement(
+      conn,
+      `DELETE FROM UserSwimmers WHERE userId = :userId AND swimmerId NOT IN (${swimmerIdsSql})`
+    )
+    await deleteSwimmers.run( { ...swimmerIdsValues, ...{ userId } } )
 
     const insertSwimmerSql =
       `INSERT INTO Swimmers (
@@ -92,10 +98,10 @@ export default eventHandler( async ( event ) => {
         active      = excluded.active
       ;`
 
-    const insertSwimmer = db.prepare( insertSwimmerSql )
+    const insertSwimmer = prepareStatement( conn, insertSwimmerSql )
     for ( const swimmer of userData.swimmers ) {
       console.log( swimmer )
-      insertSwimmer.run( swimmer )
+      await insertSwimmer.run( swimmer )
     }
 
     const insertUserSwimmerSql =
@@ -107,11 +113,11 @@ export default eventHandler( async ( event ) => {
         :userId,
         :id
       );`
-    const insertUserSwimmer = db.prepare( insertUserSwimmerSql )
+    const insertUserSwimmer = prepareStatement( conn, insertUserSwimmerSql )
     for ( const swimmer of userData.swimmers ) {
-      insertUserSwimmer.run( { userId, id: swimmer.id } )
+      await insertUserSwimmer.run( { userId, id: swimmer.id } )
     }
-  } )
+  }
 
   try {
     const id = getRouterParam( event, "id" )
@@ -123,7 +129,7 @@ export default eventHandler( async ( event ) => {
     }
     const userData = await readBody( event )
 
-    updateUser( id, userData )
+    await runTransaction( await getPool(), updateUser, id, userData )
   } catch ( error ) {
     console.error( error )
     throw createError( {

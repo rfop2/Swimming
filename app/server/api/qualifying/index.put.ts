@@ -1,10 +1,23 @@
-import type { Statement } from "better-sqlite3"
-import type { QualifyingRow } from "lib"
-import { db } from "~/server/utils/db"
+import { getPool, prepareStatement, runTransaction, type QualifyingRow } from "lib"
 
-const deleteQualifying: Statement<unknown[],void> = db.prepare( "DELETE FROM Qualifying" )
+export default eventHandler( async ( event ) => {
+  if ( !event.context.session ) {
+    throw createError( {
+      statusCode: 403
+    } )
+  }
 
-const updateQualifyingRow: Statement<QualifyingRow> = db.prepare(
+  try {
+    const saveData = await readBody( event )
+    await runTransaction(
+      await getPool(),
+      async( conn, qualifyingData: Array<QualifyingRow> ) => {
+        const deleteQualifying = prepareStatement(
+          conn,
+          "DELETE FROM Qualifying"
+        )
+        const updateQualifyingRow = prepareStatement<QualifyingRow>(
+          conn,
 `INSERT INTO Qualifying (
   created,
   year,
@@ -34,25 +47,15 @@ VALUES (
 ON CONFLICT(year,course,stroke,distance,scope,area,gender,age) DO UPDATE SET
   time        = excluded.time,
   timeString  = excluded.timeString
-;` )
-
-const updateQualifying = db.transaction( ( qualifyingData: Array<QualifyingRow> ) => {
-  deleteQualifying.run()
-  for ( const row of qualifyingData ) {
-    updateQualifyingRow.run( row )
-  }
-} )
-
-export default eventHandler( async ( event ) => {
-  if ( !event.context.session ) {
-    throw createError( {
-      statusCode: 403
-    } )
-  }
-
-  try {
-    const saveData = await readBody( event )
-    updateQualifying( saveData )
+;`
+        )
+        await deleteQualifying.run()
+        for ( const row of qualifyingData ) {
+          await updateQualifyingRow.run( row )
+        }
+      },
+      saveData
+    )
   } catch ( error ) {
     console.error( error )
     throw createError( {

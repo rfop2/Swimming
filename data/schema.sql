@@ -238,7 +238,7 @@ DROP TABLE IF EXISTS `Session`;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `Session` (
   `id` varchar(64) NOT NULL,
-  `expires_at` int(11) NOT NULL,
+  `expires_at` datetime NOT NULL,
   `user_id` varchar(16) NOT NULL,
   PRIMARY KEY (`id`),
   KEY `user_id` (`user_id`),
@@ -414,4 +414,4 @@ USE `swimming`;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*M!100616 SET NOTE_VERBOSITY=@OLD_NOTE_VERBOSITY */;
 
--- Dump completed on 2025-09-01 12:28:15
+-- Dump completed on 2025-09-02 15:02:41

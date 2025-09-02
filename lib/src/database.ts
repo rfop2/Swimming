@@ -1,93 +1,90 @@
-import { RankingStats, Result } from "./types.js"
+import { Pool, PoolConnection, ResultSetHeader, RowDataPacket } from "mysql2/promise"
 
-export interface PerformanceRow extends RankingStats {
-  created: string
-  course: string
-  stroke: string
-  distance: string
-  scope: string
-  area: string
+let pool: Pool | null = null
+
+export const getPool = async () => {
+  if ( !pool ) {
+    const mysql = await import( "mysql2/promise" ) // Dynamic import
+    pool = mysql.createPool( {
+      host: process.env.NODE_ENV === "production" ? "db" : "192.168.45.2",
+      user: "swimming",
+      password: "gTM8FfPx6wQL",
+      database: "swimming",
+      namedPlaceholders: true
+    } )
+  }
+  return pool
 }
 
-export interface ResultsRow extends Result {
-  created: string
-  course: string
-  stroke: string
-  distance: string
+// Mimic better-sqlite3 RunResult
+export type RunResult = {
+  affectedRows: number
+  insertId: number
 }
 
-export interface QualifyingRow {
-  created: string
-  year: number
-  course: string
-  stroke: string
-  distance: string
-  scope: string
-  area: string
-  gender: string
-  age: string
-  timeString: string
-  time: number
+export interface MySql2Error extends Error {
+  code?: string;
+  errno?: number;
+  sqlState?: string;
+  sqlMessage?: string;
+  sql?: string;
+  fatal?: boolean;
 }
 
-export const insertMeetsSql =
-`INSERT INTO Meets (
-  created,
-  id,
-  code,
-  date,
-  duration,
-  name,
-  country,
-  region,
-  location,
-  course,
-  level,
-  type,
-  contact,
-  email
-)
-VALUES (
-  :created,
-  :id,
-  :code,
-  :date,
-  :duration,
-  :name,
-  :country,
-  :region,
-  :location,
-  :course,
-  :level,
-  :type,
-  :contact,
-  :email
-)
-ON CONFLICT(id) DO UPDATE SET
-  code      = excluded.code,
-  date      = excluded.date,
-  duration  = excluded.duration,
-  name      = excluded.name,
-  country   = excluded.country,
-  region    = excluded.region,
-  location  = excluded.location,
-  course    = excluded.course,
-  level     = excluded.level,
-  type      = excluded.type,
-  contact   = excluded.contact,
-  email     = excluded.email
-;`
+export const isMySql2Error = ( err: unknown ): err is MySql2Error => {
+  return (
+    typeof err === "object" &&
+    err !== null &&
+    "code" in err &&
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    typeof ( err as any ).code === "string"
+  )
+}
 
-export const insertLocationsSql =
-`INSERT INTO Locations (
-  created,
-  location,
-  latitude,
-  longitude
-)
-VALUES (
-  :created,
-  :location,
-  :latitude,
-  :longitude
-);`
+type Statement<Params, Result = RowDataPacket> = {
+  get: ( params: Params ) => Promise<( Result ) | undefined>;
+  all: ( params?: Params ) => Promise<( Result )[]>;
+  run: ( params?: Params ) => Promise<RunResult>;
+}
+
+// Helper to create a typed statement
+export const prepareStatement = <Params, Result = RowDataPacket>(
+  executor: Pool | PoolConnection,
+  sql: string
+): Statement<Params, Result> => {
+  return {
+    async get( params: Params ) {
+      const [ rows ] = await executor.execute<RowDataPacket[]>( sql, params )
+      return rows[0] as Result | undefined
+    },
+    async all( params?: Params ) {
+      const [ rows ] = await executor.execute<RowDataPacket[]>( sql, params )
+      return rows as ( Result )[]
+    },
+    async run( params?: Params ) {
+      const [ result ] = await executor.execute<ResultSetHeader>( sql, params )
+      return {
+        affectedRows: result.affectedRows,
+        insertId: result.insertId,
+      }
+    },
+  }
+}
+
+export const runTransaction = async <ExtraArgs extends unknown[] = []>(
+  pool: Pool,
+  callback: ( conn: PoolConnection, ...args: ExtraArgs ) => Promise<void>,
+  ...args: ExtraArgs
+) => {
+  const conn = await pool.getConnection()
+  try {
+    await conn.beginTransaction()
+    await callback( conn, ...args )
+    await conn.commit()
+  } catch ( err ) {
+    await conn.rollback()
+    throw err
+  } finally {
+    conn.release()
+  }
+}

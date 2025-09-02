@@ -1,12 +1,7 @@
 #!/usr/bin/env nodemjs
 import { hash } from "@node-rs/argon2"
+import { getPool, isMySql2Error, prepareStatement } from "lib"
 import { generateId } from "lucia"
-import Database, { SqliteError } from "better-sqlite3"
-
-import { DB_PATH } from "lib"
-
-const db = new Database( DB_PATH )
-db.pragma( "journal_mode = WAL" );
 
 ( async () => {
   const args = process.argv.slice( 2 )
@@ -43,20 +38,24 @@ db.pragma( "journal_mode = WAL" );
   const userId = generateId( 15 )
 
   try {
-    db.prepare( "INSERT INTO User ( id, username, password_hash, firstName, lastName, location ) VALUES(?, ?, ?, ?, ?, ?)" ).run(
+    const addUser = prepareStatement(
+      await getPool(),
+      "INSERT INTO User ( id, username, password_hash, firstName, lastName, location ) VALUES( :userId, :username, :passwordHash, :firstName, :lastName, :location )"
+    )
+    await addUser.run( {
       userId,
       username,
       passwordHash,
       firstName,
       lastName,
       location
-    )
+    } )
   } catch ( e ) {
-    if ( e instanceof SqliteError ) {
-      if ( e.code === "SQLITE_CONSTRAINT_UNIQUE" ) {
+    if ( isMySql2Error( e ) ) {
+      if ( e.code === "ER_DUP_ENTRY" ) {
         throw new Error( "Username already used" )
       } else {
-        throw new Error( `Database error: ${e}` )
+        throw new Error( `Database error: ${e.sqlMessage}` )
       }
     }
     throw new Error( "An unknown error occurred" )

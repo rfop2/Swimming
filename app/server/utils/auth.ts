@@ -1,10 +1,17 @@
 import { Lucia } from "lucia"
-import { BetterSqlite3Adapter } from "@lucia-auth/adapter-sqlite"
-import { db } from "./db"
+import { createPool } from "mysql2/promise"
+import { Mysql2Adapter } from "@lucia-auth/adapter-mysql"
+import type { DatabaseUser} from "lib"
 
-import type { DatabaseUser } from "./db"
+const pool = createPool( {
+  host: process.env.NODE_ENV === "production" ? "db" : "192.168.45.2",
+  user: "swimming",
+  password: "gTM8FfPx6wQL",
+  database: "swimming",
+  namedPlaceholders: false, // allows :param style
+} )
 
-const adapter = new BetterSqlite3Adapter( db, {
+const adapter = new Mysql2Adapter( pool, {
   user: "User",
   session: "Session"
 } )
