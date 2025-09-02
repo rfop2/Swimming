@@ -3,7 +3,7 @@
   import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from "@headlessui/vue"
   import { ArrowUturnLeftIcon, LinkIcon, CheckIcon, ChevronUpDownIcon, ChartBarIcon } from "@heroicons/vue/24/outline"
   import { COUNTIES, type IndividualStats, NATIONALITIES, REGIONS, STROKE_DISTANCE, type Swimmer, convertTime, countyRankParams, createUrl, getSwimmerAge, globalRankParams, nationalRankParams, rankBaseUrl, regionalRankParams, secondsToTime, strokeSort } from "lib"
-  import { differenceInCalendarMonths, getYear, addMonths } from "date-fns"
+  import { differenceInCalendarMonths, getYear, addMonths, format } from "date-fns"
 
   definePageMeta( {
     layout: "secure",
@@ -520,7 +520,7 @@
                   {{ row.time ? secondsToTime( row.time ) : '' }}
                 </td>
                 <td :class="`whitespace-nowrap px-2 py-2 text-right text-sm text-gray-900 opacity-30 age-${row.age}`">
-                  {{ row.date }}
+                  {{ format( row.date, "yyyy-MM-dd" ) }}
                 </td>
                 <td
                   class="whitespace-nowrap !border-l-2 !border-gray-400 px-2 py-2 text-right text-sm text-gray-900"

@@ -1,7 +1,7 @@
 <script setup lang="ts">
   import type { InternalApi } from "nitropack"
   import { haversineDistance, type Meet } from "lib"
-  import { addDays, formatISO, parse } from "date-fns"
+  import { addDays, formatISO, parseISO } from "date-fns"
   import { ScheduleXCalendar } from "@schedule-x/vue"
   import {
     createCalendar,
@@ -163,8 +163,8 @@
   const events = computed( () => {
     const calendarEvents = ( meets.value || [] ).map( ( meet ) : CalendarEvent => ( {
       id: meet.id,
-      start: meet.date,
-      end: formatISO( addDays( parse( meet.date, "yyyy-MM-dd", new Date() ), ( meet.duration ?? 1 ) - 1 ), { representation: "date" } ),
+      start: formatISO( parseISO( meet.date ), { representation: "date" } ),
+      end: formatISO( addDays( parseISO( meet.date ), ( meet.duration ?? 1 ) - 1 ), { representation: "date" } ),
       duration: meet.duration as number,
       title: `${meet.level}: ${meet.name}`,
       // color: distanceColor( meet.distance ),

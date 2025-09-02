@@ -71,7 +71,8 @@
       if ( newSwimmerId ) {
         swimmer.value = lookupSwimmer( newSwimmerId )
         try {
-          updated.value = await $fetch( `/api/updated/${newSwimmerId}` )
+          const lastUpdate = await $fetch( `/api/updated/${newSwimmerId}` )
+          updated.value = format( lastUpdate, "yyyy-MM-dd" )
         } catch ( error ) {
           updated.value = "<error>"
           if ( error instanceof FetchError ) {

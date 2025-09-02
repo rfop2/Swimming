@@ -7,6 +7,7 @@
   import "chartjs-adapter-date-fns"
 
   import type { InternalApi } from "nitropack"
+  import { format } from "date-fns"
 
   definePageMeta( {
     layout: "secure",
@@ -437,7 +438,7 @@
               class="divide-x divide-gray-200"
             >
               <td class="whitespace-nowrap py-2 pl-4 pr-3 text-right text-sm font-medium text-gray-900 sm:pl-0">
-                {{ row.date }}
+                {{ format( row.date, "yyyy-MM-dd" ) }}
               </td>
               <td class="whitespace-nowrap p-2 text-right text-sm text-gray-900">
                 {{ row.time ? secondsToTime( row.time ) : '' }}
