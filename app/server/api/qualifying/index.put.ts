@@ -44,9 +44,9 @@ VALUES (
   :timeString,
   :time
 )
-ON CONFLICT(year,course,stroke,distance,scope,area,gender,age) DO UPDATE SET
-  time        = excluded.time,
-  timeString  = excluded.timeString
+ON DUPLICATE KEY UPDATE
+  time        = :time,
+  timeString  = :timeString
 ;`
         )
         await deleteQualifying.run()

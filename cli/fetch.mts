@@ -50,7 +50,7 @@ const now = new Date()
 const today = format( now, "yyyy-MM-dd" )
 
 const insertIndividualSql =
-`INSERT OR IGNORE INTO Individual (
+`INSERT IGNORE INTO Individual (
   created,
   swimmer,
   course,
@@ -189,7 +189,7 @@ const insertPerformanceSql =
 );`
 
 const insertResultsSql =
-`INSERT OR IGNORE INTO Results (
+`INSERT IGNORE INTO Results (
   created,
   swimmer,
   course,
@@ -252,19 +252,19 @@ VALUES (
   :contact,
   :email
 )
-ON CONFLICT(id) DO UPDATE SET
-  code      = excluded.code,
-  date      = excluded.date,
-  duration  = excluded.duration,
-  name      = excluded.name,
-  country   = excluded.country,
-  region    = excluded.region,
-  location  = excluded.location,
-  course    = excluded.course,
-  level     = excluded.level,
-  type      = excluded.type,
-  contact   = excluded.contact,
-  email     = excluded.email
+ON DUPLICATE KEY UPDATE
+  code      = :code,
+  date      = :date,
+  duration  = :duration,
+  name      = :name,
+  country   = :country,
+  region    = :region,
+  location  = :location,
+  course    = :course,
+  level     = :level,
+  type      = :type,
+  contact   = :contact,
+  email     = :email
 ;`
 
 const insertLocationsSql =

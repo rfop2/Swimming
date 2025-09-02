@@ -88,14 +88,14 @@ export default eventHandler( async ( event ) => {
         :county,
         :active
       )
-      ON CONFLICT(id) DO UPDATE SET
-        name        = excluded.name,
-        birthday    = excluded.birthday,
-        gender      = excluded.gender,
-        nationality = excluded.nationality,
-        region      = excluded.region,
-        county      = excluded.county,
-        active      = excluded.active
+      ON DUPLICATE KEY UPDATE
+        name        = :name,
+        birthday    = :birthday,
+        gender      = :gender,
+        nationality = :nationality,
+        region      = :region,
+        county      = :county,
+        active      = :active
       ;`
 
     const insertSwimmer = prepareStatement( conn, insertSwimmerSql )
@@ -105,7 +105,7 @@ export default eventHandler( async ( event ) => {
     }
 
     const insertUserSwimmerSql =
-      `INSERT OR IGNORE INTO UserSwimmers (
+      `INSERT IGNORE INTO UserSwimmers (
         userId,
         swimmerId
       )
