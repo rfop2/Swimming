@@ -1,5 +1,5 @@
 import type { Swimmer } from "lib"
-import { db } from "~/server/utils/db"
+import db from "~/plugins/db"
 
 interface UserData {
   username: string
@@ -18,8 +18,8 @@ export default eventHandler( async ( event ) => {
     } )
   }
 
-  const updateUser = db.transaction( ( userId: string, userData: UserData ) => {
-
+  const updateUser = async ( userId: string, userData: UserData ) => {
+    db.transaction
     if ( userData.password && userData.confirmPassword ) {
       if ( userData.password === userData.confirmPassword ) {
         if ( userData.password.length >= 8 && userData.password.length <= 32 ) {

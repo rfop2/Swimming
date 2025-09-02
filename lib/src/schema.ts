@@ -1,8 +1,8 @@
-import { mysqlTable, varchar, int, text, date, decimal } from "drizzle-orm/mysql-core"
+import { mysqlTable, varchar, int, text, date, decimal, tinyint } from "drizzle-orm/mysql-core"
 
-export const individual = mysqlTable( "Individual", {
+export const Individual = mysqlTable( "Individual", {
   created: date( "created" ).notNull(),
-  swimmer: varchar( "swimmer", { length: 8 } ).notNull().references( () => swimmers.id ),
+  swimmer: varchar( "swimmer", { length: 8 } ).notNull().references( () => Swimmers.id ),
   course: varchar( "course", { length: 8 } ),
   stroke: varchar( "stroke", { length: 32 } ),
   distance: varchar( "distance", { length: 8 } ),
@@ -18,14 +18,14 @@ export const individual = mysqlTable( "Individual", {
 // TODO: UNIQUE INDEX on columns: (idx_swimmer_record, created, swimmer, course, stroke, distance)
 // TODO: INDEX on columns: (swimmer, swimmer)
 
-export const locations = mysqlTable( "Locations", {
+export const Locations = mysqlTable( "Locations", {
   created: date( "created" ).notNull(),
   location: varchar( "location", { length: 32 } ).notNull().primaryKey(),
   latitude: varchar( "latitude", { length: 16 } ),
   longitude: varchar( "longitude", { length: 16 } ),
 } )
 
-export const meets = mysqlTable( "Meets", {
+export const Meets = mysqlTable( "Meets", {
   created: date( "created" ).notNull(),
   id: varchar( "id", { length: 8 } ).notNull().primaryKey(),
   code: varchar( "code", { length: 16 } ).notNull(),
@@ -42,9 +42,9 @@ export const meets = mysqlTable( "Meets", {
   email: varchar( "email", { length: 32 } ),
 } )
 
-export const performance = mysqlTable( "Performance", {
+export const Performance = mysqlTable( "Performance", {
   created: date( "created" ).notNull(),
-  swimmer: varchar( "swimmer", { length: 8 } ).notNull().references( () => swimmers.id ),
+  swimmer: varchar( "swimmer", { length: 8 } ).notNull().references( () => Swimmers.id ),
   course: varchar( "course", { length: 8 } ),
   stroke: varchar( "stroke", { length: 32 } ),
   distance: varchar( "distance", { length: 8 } ),
@@ -61,7 +61,7 @@ export const performance = mysqlTable( "Performance", {
 // TODO: UNIQUE INDEX on columns: (idx_swimmer_event_area, created, swimmer, course, stroke, distance, scope, area)
 // TODO: INDEX on columns: (swimmer, swimmer)
 
-export const qualifying = mysqlTable( "Qualifying", {
+export const Qualifying = mysqlTable( "Qualifying", {
   created: date( "created" ).notNull(),
   year: int( "year" ).notNull(),
   course: varchar( "course", { length: 8 } ).notNull(),
@@ -76,7 +76,7 @@ export const qualifying = mysqlTable( "Qualifying", {
 } )
 // TODO: UNIQUE INDEX on columns: (idx_qualifying, year, age, gender, course, stroke, distance, scope, area)
 
-export const rankings = mysqlTable( "Rankings", {
+export const Rankings = mysqlTable( "Rankings", {
   created: date( "created" ).notNull(),
   gender: varchar( "gender", { length: 16 } ).notNull(),
   age: varchar( "age", { length: 8 } ).notNull(),
@@ -98,9 +98,9 @@ export const rankings = mysqlTable( "Rankings", {
   fina: int( "fina" ),
 } )
 
-export const results = mysqlTable( "Results", {
+export const Results = mysqlTable( "Results", {
   created: date( "created" ).notNull(),
-  swimmer: varchar( "swimmer", { length: 8 } ).notNull().references( () => swimmers.id ),
+  swimmer: varchar( "swimmer", { length: 8 } ).notNull().references( () => Swimmers.id ),
   course: varchar( "course", { length: 8 } ),
   stroke: varchar( "stroke", { length: 32 } ),
   distance: varchar( "distance", { length: 8 } ),
@@ -116,14 +116,14 @@ export const results = mysqlTable( "Results", {
 // TODO: UNIQUE INDEX on columns: (idx_swimmer_event, swimmer, course, stroke, distance, date, round)
 // TODO: INDEX on columns: (idx_results_swimmer, swimmer)
 
-export const session = mysqlTable( "Session", {
+export const Session = mysqlTable( "Session", {
   id: varchar( "id", { length: 64 } ).notNull().primaryKey(),
   expires_at: int( "expires_at" ).notNull(),
-  user_id: varchar( "user_id", { length: 16 } ).notNull().references( () => user.id ),
+  user_id: varchar( "user_id", { length: 16 } ).notNull().references( () => User.id ),
 } )
 // TODO: INDEX on columns: (user_id, user_id)
 
-export const swimmers = mysqlTable( "Swimmers", {
+export const Swimmers = mysqlTable( "Swimmers", {
   id: varchar( "id", { length: 8 } ).notNull().primaryKey(),
   name: varchar( "name", { length: 32 } ).notNull(),
   birthday: date( "birthday" ).notNull(),
@@ -131,37 +131,37 @@ export const swimmers = mysqlTable( "Swimmers", {
   nationality: varchar( "nationality", { length: 16 } ),
   region: varchar( "region", { length: 16 } ),
   county: varchar( "county", { length: 16 } ),
-  active: int( "active" ).notNull(),
+  active: tinyint( "active" ).notNull(),
 } )
 
-export const user = mysqlTable( "User", {
+export const User = mysqlTable( "User", {
   id: varchar( "id", { length: 16 } ).notNull().primaryKey(),
   username: varchar( "username", { length: 32 } ).notNull(),
   password_hash: text( "password_hash" ).notNull(),
   firstName: varchar( "firstName", { length: 32 } ).notNull(),
   lastName: varchar( "lastName", { length: 32 } ).notNull(),
   location: varchar( "location", { length: 32 } ).notNull(),
-  type: varchar( "type", { length: 16 } ).notNull().references( () => userTypes.type ),
+  type: varchar( "type", { length: 16 } ).notNull().references( () => UserTypes.type ),
   admin: int( "admin" ).notNull(),
 } )
 // TODO: UNIQUE INDEX on columns: (username, username)
 // TODO: INDEX on columns: (type, type)
 
-export const userMeets = mysqlTable( "UserMeets", {
-  userId: varchar( "userId", { length: 16 } ).notNull().primaryKey().references( () => user.id ),
-  meetId: varchar( "meetId", { length: 8 } ).notNull().primaryKey().references( () => meets.id ),
+export const UserMeets = mysqlTable( "UserMeets", {
+  userId: varchar( "userId", { length: 16 } ).notNull().primaryKey().references( () => User.id ),
+  meetId: varchar( "meetId", { length: 8 } ).notNull().primaryKey().references( () => Meets.id ),
   swimmerId: varchar( "swimmerId", { length: 8 } ),
 } )
 // TODO: INDEX on columns: (idx_meetId, meetId)
 
-export const userSwimmers = mysqlTable( "UserSwimmers", {
-  userId: varchar( "userId", { length: 16 } ).notNull().references( () => user.id ),
-  swimmerId: varchar( "swimmerId", { length: 8 } ).notNull().references( () => swimmers.id ),
+export const UserSwimmers = mysqlTable( "UserSwimmers", {
+  userId: varchar( "userId", { length: 16 } ).notNull().references( () => User.id ),
+  swimmerId: varchar( "swimmerId", { length: 8 } ).notNull().references( () => Swimmers.id ),
 } )
 // TODO: UNIQUE INDEX on columns: (userId_swimmerId, userId, swimmerId)
 // TODO: INDEX on columns: (swimmerId, swimmerId)
 
-export const userTypes = mysqlTable( "UserTypes", {
+export const UserTypes = mysqlTable( "UserTypes", {
   type: varchar( "type", { length: 8 } ).notNull().primaryKey(),
   seq: int( "seq" ).notNull(),
 } )
@@ -170,19 +170,34 @@ export const userTypes = mysqlTable( "UserTypes", {
 // View UserSwimmersView
 // SQL: select `UserSwimmers`.`userId` AS `userId`,`Swimmers`.`id` AS `id`,`Swimmers`.`name` AS `name`,`Swimmers`.`birthday` AS `birthday`,`Swimmers`.`gender` AS `gender`,`Swimmers`.`nationality` AS `nationality`,`Swimmers`.`region` AS `region`,`Swimmers`.`county` AS `county`,`Swimmers`.`active` AS `active` from (`UserSwimmers` join `Swimmers` on(`UserSwimmers`.`swimmerId` = `Swimmers`.`id`)) */
 // You can use mysqlView("UserSwimmersView", { /* columns */ }) if needed.
+export const UserSwimmersView = mysqlTable(
+  "UserSwimmersView",
+  {
+    userId: varchar( "userId", { length: 16 } ).notNull().references( () => User.id ),
+    id: varchar( "id", { length: 8 } ).notNull(),
+    name: varchar( "name", { length: 32 } ).notNull(),
+    birthday: date( "birthday" ).notNull(),
+    gender: varchar( "gender", { length: 16 } ).notNull(),
+    nationality: varchar( "nationality", { length: 16 } ),
+    region: varchar( "region", { length: 16 } ),
+    county: varchar( "county", { length: 16 } ),
+    active: tinyint( "active" ).notNull(),
+  },
+)
 
 export const schema = {
-  individual,
-  locations,
-  meets,
-  performance,
-  qualifying,
-  rankings,
-  results,
-  session,
-  swimmers,
-  user,
-  userMeets,
-  userSwimmers,
-  userTypes,
+  Individual,
+  Locations,
+  Meets,
+  Performance,
+  Qualifying,
+  Rankings,
+  Results,
+  Session,
+  Swimmers,
+  User,
+  UserMeets,
+  UserSwimmers,
+  UserTypes,
+  UserSwimmersView,
 } as const

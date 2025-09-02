@@ -1,13 +1,9 @@
 import { Lucia } from "lucia"
-import { BetterSqlite3Adapter } from "@lucia-auth/adapter-sqlite"
-import { db } from "./db"
+import { DrizzleMySQLAdapter } from "@lucia-auth/adapter-drizzle"
+import { db, session, user } from "lib"
 
-import type { DatabaseUser } from "./db"
-
-const adapter = new BetterSqlite3Adapter( db, {
-  user: "User",
-  session: "Session"
-} )
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const adapter = new DrizzleMySQLAdapter( db as any, session as any, user as any )
 
 export const lucia = new Lucia( adapter, {
   sessionCookie: {

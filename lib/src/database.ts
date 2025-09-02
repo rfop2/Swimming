@@ -1,4 +1,5 @@
-import { RankingStats, Result } from "./types.js"
+import { drizzle } from "drizzle-orm/mysql2"
+import { schema } from "./schema.js"
 
 export interface PerformanceRow extends RankingStats {
   created: string
@@ -29,6 +30,8 @@ export interface QualifyingRow {
   timeString: string
   time: number
 }
+
+export const db = drizzle( pool, { schema, mode: "default" } )
 
 export const insertMeetsSql =
 `INSERT INTO Meets (
