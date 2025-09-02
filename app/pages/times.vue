@@ -1,7 +1,7 @@
 <script setup lang="ts">
   import { Listbox, ListboxButton, ListboxLabel, ListboxOption, ListboxOptions } from "@headlessui/vue"
   import { CheckIcon, ChevronUpDownIcon } from "@heroicons/vue/24/outline"
-  import { COURSES, type IndividualRow, strokes, type Swimmer, secondsToTime } from "lib"
+  import { COURSES, type IndividualRow, strokes, secondsToTime } from "lib"
 
   import type { InternalApi } from "nitropack"
 
@@ -19,14 +19,8 @@
     stroke: strokeOptions.find( option => option.value === slug[1] ) ?? strokeOptions[0],
   } )
 
-  const { data: swimmers } = await useFetch(
-    "/api/swimmers",
-    {
-      transform( data: Array<Swimmer> ): Record<string,Swimmer> {
-        return Object.fromEntries( data.map( swimmer => [ swimmer.id, swimmer ] ) )
-      }
-    }
-  )
+  const { swimmers } = await useSwimmers()
+  const swimmersMap = computed( () => Object.fromEntries( swimmers.value.map( swimmer => [ swimmer.id, swimmer ] ) ) )
 
   type ApiResponse = InternalApi["/api/personal"]["get"]
 
@@ -164,7 +158,7 @@
                   :rowspan="Object.entries(courseRecords).length"
                   class="whitespace-nowrap px-2 py-2 text-right text-sm text-gray-900"
                 >
-                  {{ swimmers ? swimmers[swimmerId].name : "Unknown swimmer" }}
+                  {{ swimmers ? swimmersMap[swimmerId].name : "Unknown swimmer" }}
                 </td>
                 <td
                   class="whitespace-nowrap px-2 py-2 text-right text-sm text-gray-900"

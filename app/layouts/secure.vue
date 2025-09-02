@@ -1,6 +1,7 @@
 <script setup lang="ts">
   import { Disclosure, DisclosureButton, DisclosurePanel, Listbox, ListboxButton, ListboxOption, ListboxOptions, Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/vue"
   import { Bars3Icon, BellIcon, CheckIcon, ChevronUpDownIcon, UserIcon, XMarkIcon } from "@heroicons/vue/24/outline"
+  import { format } from "date-fns"
   import type { Swimmer } from "lib"
   import { FetchError } from "ofetch"
 
@@ -30,9 +31,7 @@
 
   const config = useRuntimeConfig()
 
-  const { data: swimmers } = await useFetch(
-    "/api/swimmers",
-  )
+  const { swimmers } = await useSwimmers()
 
   const swimmerId = ref< string | null >( ( swimmers.value && swimmers.value.length && swimmers.value[0].id ) || null )
   const lookupSwimmer = ( id: string | null ) => ( ( swimmers.value || [] ).find( s => s.id === id ) ?? null )
