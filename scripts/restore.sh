@@ -20,7 +20,7 @@ fi
 echo "Restoring from Backup file $backupFile"
 gunzip -c $backupFile | \
   docker compose exec -T $DB_CONTAINER /bin/bash -c \
-  'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mariadb -uroot "$MYSQL_DATABASE"'
+  'MARIADB_PWD="$MARIADB_ROOT_PASSWORD" mariadb -uroot "$MARIADB_DATABASE"'
 
 restoreStatus=$?
 if [ $restoreStatus == 0 ]

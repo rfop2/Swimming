@@ -12,4 +12,4 @@ then
     exit -1
 fi
 echo "Dumping schema file"
-docker compose exec -T db bash -c 'exec mariadb-dump -u root -p"$MYSQL_ROOT_PASSWORD" --databases "$MYSQL_DATABASE" --add-drop-database --no-data --routines --triggers -r /dev/stdout | sed -E -e "s/ AUTO_INCREMENT=[0-9]+//g"' > $SCHEMA_FILE
+docker compose exec -T db bash -c 'exec mariadb-dump -u root -p"$MARIADB_ROOT_PASSWORD" --databases "$MARIADB_DATABASE" --add-drop-database --no-data --routines --triggers -r /dev/stdout | sed -E -e "s/ AUTO_INCREMENT=[0-9]+//g"' > $SCHEMA_FILE

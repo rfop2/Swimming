@@ -13,7 +13,7 @@ then
   echo "Can't find $BACKUP_DIR, aborting backup"
   exit -1
 fi
-#BACKUP_USER=$MYSQL_USER
+#BACKUP_USER=$MARIADB_USER
 BACKUP_USER=root
 
 timestamp=`date +"%Y%m%d-%H%M%S"`
@@ -23,9 +23,9 @@ lastBackupFile=`(ls -t ${backupFileRoot}* 2>/dev/null) | head -1`
 tempBackupFile="temp.sql"
 
 dumpCmd="mariadb-dump -u$BACKUP_USER --extended-insert=1 --routines --triggers --single-transaction --quick --skip-comments"
-backupCmd='MYSQL_PWD="$MYSQL_ROOT_PASSWORD"'
+backupCmd='MARIADB_PWD="$MARIADB_ROOT_PASSWORD"'
 backupCmd+=" ${dumpCmd}"
-backupCmd+=' "$MYSQL_DATABASE"'
+backupCmd+=' "$MARIADB_DATABASE"'
 docker compose exec -T $DB_CONTAINER /bin/bash -c "$backupCmd" > $backupFile
 
 if [[ $lastBackupFile ]]
