@@ -57,7 +57,8 @@
     await $fetch( "/api/user/logout", {
       method: "POST"
     } )
-    // clearNuxtState( "swimmer" )
+    clearNuxtState()
+    clearNuxtData()
     swimmer.value = null
     router.push( "/login" )
   }
