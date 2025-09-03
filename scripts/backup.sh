@@ -1,6 +1,4 @@
 #!/bin/bash
-set -euo pipefail
-
 REPO_ROOT=$(git rev-parse --show-toplevel)
 cd $REPO_ROOT/docker
 if [ -s .env ]
@@ -25,24 +23,26 @@ cleanup() {
 }
 trap cleanup EXIT INT TERM
 
-docker compose exec -T "$DB_CONTAINER" /bin/bash -c "umask 077 && cat > '$REMOTE_CNF'" <<EOF
-[client]
-user=$BACKUP_USER
-password=$MARIADB_ROOT_PASSWORD
-EOF
-
 timestamp=`date +"%Y%m%d-%H%M%S"`
 backupFileRoot="${BACKUP_DIR}/backup-${BACKUP_NAME}-"
 backupFile="${backupFileRoot}${timestamp}.sql"
 lastBackupFile=`(ls -t ${backupFileRoot}*.gz 2>/dev/null) | head -1`
 tempBackupFile="temp.sql"
 
+set -euo pipefail
+
+docker compose exec -T "$DB_CONTAINER" /bin/bash -c "umask 077 && cat > '$REMOTE_CNF'" <<EOF
+[client]
+user=$BACKUP_USER
+password=$MARIADB_ROOT_PASSWORD
+EOF
+
 backupCmd="mariadb-dump --defaults-extra-file=$REMOTE_CNF --extended-insert=1 --routines --triggers --single-transaction --quick --skip-comments $MARIADB_DATABASE"
 docker compose exec -T $DB_CONTAINER /bin/bash -c "$backupCmd" > $backupFile
 
 cleanup
-
 set +e
+
 if [[ $lastBackupFile ]]
 then
   gunzip -c $lastBackupFile > $tempBackupFile
