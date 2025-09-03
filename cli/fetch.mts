@@ -351,7 +351,7 @@ const parseIndividual = ( pageInfo: PageInfo, $: CheerioAPI ) => {
         date: format( parse( row.date, "dd/MM/yy", now ), "yyyy-MM-dd" ),
         meet: row.meet,
         venue: row.venue,
-        licence: row.licence,
+        licence: row.licence ?? row.license ?? null,
         level: Number( row.level ),
       }
       data.push( courseRow )
