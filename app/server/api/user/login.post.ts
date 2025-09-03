@@ -7,7 +7,7 @@ export default eventHandler( async ( event ) => {
   if (
     typeof username !== "string" ||
     username.length < 3 ||
-    username.length > 31 ||
+    username.length > 63 ||
     !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test( username )
   ) {
     throw createError( {
