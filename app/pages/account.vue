@@ -31,7 +31,7 @@
 
   const checkLocation = useDebounceAsync( lookupLocation, 500 )
 
-  const { swimmers } = await useSwimmers()
+  const { swimmers, refreshSwimmers } = await useSwimmers()
 
   const PASSWORD = "************"
 
@@ -186,6 +186,7 @@
       } )
       // await refreshNuxtData()
       resetForm( { values } )
+      await refreshSwimmers()
       saveSuccess.value = true
     } catch ( error ) {
       console.error( "Error", error )
