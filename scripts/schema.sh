@@ -1,5 +1,6 @@
 #!/bin/bash
 set -euo pipefail
+set -vx
 
 REPO_ROOT=$(git rev-parse --show-toplevel)
 cd $REPO_ROOT/docker
@@ -30,8 +31,14 @@ cleanup() {
 }
 trap cleanup EXIT INT TERM
 
-dbCmd="mariadb-dump --defaults-extra-file=$REMOTE_CNF dbCmd+="--databases '$MARIADB_DATABASE' --add-drop-database --no-data --routines --triggers -r /dev/stdout"
-dbCmd+=' | sed -E -e "s/ AUTO_INCREMENT=[0-9]+//g"'
-docker compose exec -T db /bin/bash -c $dbCmd > $SCHEMA_FILE
+docker compose exec -T "$DB_CONTAINER" /bin/bash -c "umask 077 && cat > '$REMOTE_CNF'" <<EOF
+[client]
+user=root
+password=$MARIADB_ROOT_PASSWORD
+EOF
+
+dumpCmd="mariadb-dump --defaults-extra-file=$REMOTE_CNF --databases $MARIADB_DATABASE --add-drop-database --no-data --routines --triggers -r /dev/stdout"
+dumpCmd+=' | sed -E -e "s/ AUTO_INCREMENT=[0-9]+//g"'
+docker compose exec -T $DB_CONTAINER /bin/bash -c "$dumpCmd" > $SCHEMA_FILE
 
 cleanup

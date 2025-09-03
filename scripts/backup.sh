@@ -8,7 +8,6 @@ fi
 DB_CONTAINER=db
 BACKUP_DIR=$REPO_ROOT/backups
 BACKUP_NAME="$DB_CONTAINER"
-BACKUP_USER=root
 if [ ! -d $BACKUP_DIR ]
 then
   echo "Can't find $BACKUP_DIR, aborting backup"
@@ -33,7 +32,7 @@ set -euo pipefail
 
 docker compose exec -T "$DB_CONTAINER" /bin/bash -c "umask 077 && cat > '$REMOTE_CNF'" <<EOF
 [client]
-user=$BACKUP_USER
+user=root
 password=$MARIADB_ROOT_PASSWORD
 EOF
 
@@ -48,7 +47,6 @@ then
   gunzip -c $lastBackupFile > $tempBackupFile
   diff -q $backupFile $tempBackupFile > /dev/null
   diffStatus=$?
-  echo $diffStatus
   /bin/rm $tempBackupFile
 else
   # First backup so force the backup to be kept
