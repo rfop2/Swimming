@@ -6,15 +6,16 @@ import { generateId } from "lucia"
 ( async () => {
   const args = process.argv.slice( 2 )
 
-  if ( args.length < 5 ) {
-    throw( "Error, username, password, first and last names and location must be given" )
+  if ( args.length < 6 ) {
+    throw( "Error, username, password, first and last names, type and location must be given" )
   }
 
   const username = args[0]
   const password = args[1]
   const firstName = args[2]
   const lastName = args[3]
-  const location = args[4]
+  const type = args[4]
+  const location = args[5]
 
   if (
     username.length < 3 ||
@@ -40,7 +41,7 @@ import { generateId } from "lucia"
   try {
     const addUser = prepareStatement(
       await getPool(),
-      "INSERT INTO User ( id, username, password_hash, firstName, lastName, location ) VALUES( :userId, :username, :passwordHash, :firstName, :lastName, :location )"
+      "INSERT INTO User ( id, username, password_hash, firstName, lastName, type, location ) VALUES( :userId, :username, :passwordHash, :firstName, :lastName, :type, :location )"
     )
     await addUser.run( {
       userId,
@@ -48,6 +49,7 @@ import { generateId } from "lucia"
       passwordHash,
       firstName,
       lastName,
+      type,
       location
     } )
   } catch ( e ) {
@@ -66,4 +68,5 @@ import { generateId } from "lucia"
 } )().catch( ( error ) => {
   console.error( "Caught error...", error )
   console.trace( error )
+  process.exit( -1 )
 } )
