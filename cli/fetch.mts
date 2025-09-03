@@ -925,6 +925,7 @@ const updateMeets = async () => {
     const swimmers = await getSwimmers.all()
     for ( const swimmer of swimmers ) {
       if ( process.argv.length < 3 || process.argv[2] === swimmer.id ) {
+        swimmer.birthday = format( new Date( swimmer.birthday ), "yyyy-MM-dd" )
         await updateSwimmerData( swimmer )
       }
     }
