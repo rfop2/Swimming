@@ -1,38 +1,54 @@
 #!/bin/bash
+set -euo pipefail
+
 REPO_ROOT=$(git rev-parse --show-toplevel)
 cd $REPO_ROOT/docker
 if [ -s .env ]
 then
   source .env
 fi
-BACKUP_DIR=$REPO_ROOT/backups
 DB_CONTAINER=db
+BACKUP_DIR=$REPO_ROOT/backups
 BACKUP_NAME="$DB_CONTAINER"
+BACKUP_USER=root
 if [ ! -d $BACKUP_DIR ]
 then
   echo "Can't find $BACKUP_DIR, aborting backup"
   exit -1
 fi
-#BACKUP_USER=$MARIADB_USER
-BACKUP_USER=root
+
+# Generate a random path inside the container for safety
+REMOTE_CNF="/tmp/mydump-$$.cnf"
+
+cleanup() {
+  docker compose exec -T "$DB_CONTAINER" rm -f "$REMOTE_CNF" >/dev/null 2>&1 || true
+}
+trap cleanup EXIT INT TERM
+
+docker compose exec -T "$DB_CONTAINER" /bin/bash -c "umask 077 && cat > '$REMOTE_CNF'" <<EOF
+[client]
+user=$BACKUP_USER
+password=$MARIADB_ROOT_PASSWORD
+EOF
 
 timestamp=`date +"%Y%m%d-%H%M%S"`
 backupFileRoot="${BACKUP_DIR}/backup-${BACKUP_NAME}-"
 backupFile="${backupFileRoot}${timestamp}.sql"
-lastBackupFile=`(ls -t ${backupFileRoot}* 2>/dev/null) | head -1`
+lastBackupFile=`(ls -t ${backupFileRoot}*.gz 2>/dev/null) | head -1`
 tempBackupFile="temp.sql"
 
-dumpCmd="mariadb-dump -u$BACKUP_USER --extended-insert=1 --routines --triggers --single-transaction --quick --skip-comments"
-backupCmd='MARIADB_PWD="$MARIADB_ROOT_PASSWORD"'
-backupCmd+=" ${dumpCmd}"
-backupCmd+=' "$MARIADB_DATABASE"'
+backupCmd="mariadb-dump --defaults-extra-file=$REMOTE_CNF --extended-insert=1 --routines --triggers --single-transaction --quick --skip-comments $MARIADB_DATABASE"
 docker compose exec -T $DB_CONTAINER /bin/bash -c "$backupCmd" > $backupFile
 
+cleanup
+
+set +e
 if [[ $lastBackupFile ]]
 then
   gunzip -c $lastBackupFile > $tempBackupFile
   diff -q $backupFile $tempBackupFile > /dev/null
   diffStatus=$?
+  echo $diffStatus
   /bin/rm $tempBackupFile
 else
   # First backup so force the backup to be kept
