@@ -100,7 +100,6 @@ export default eventHandler( async ( event ) => {
 
     const insertSwimmer = prepareStatement( conn, insertSwimmerSql )
     for ( const swimmer of userData.swimmers ) {
-      console.log( swimmer )
       await insertSwimmer.run( swimmer )
     }
 
