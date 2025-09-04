@@ -290,7 +290,11 @@ export const fetchPage = async ( pageInfo: PageInfo, cacheTime: number = DEFAULT
     } else {
       headers.append( "Referer", BASE_URL )
     }
-    const response = await fetch( pageInfo.url, {
+    if ( !process.env.SCRAPER_API_KEY ) {
+      throw new Error( "No SCRAPER_API_KEY found" )
+    }
+    const anonUrl = `https://api.scraperapi.com/?api_key=${process.env.SCRAPER_API_KEY}&url=${pageInfo.url}`
+    const response = await fetch( anonUrl, {
       method: "GET",
       headers,
     } )
