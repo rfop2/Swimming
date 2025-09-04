@@ -1,6 +1,5 @@
 #!/bin/bash
 set -euo pipefail
-set -vx
 
 REPO_ROOT=$(git rev-parse --show-toplevel)
 cd $REPO_ROOT/docker
