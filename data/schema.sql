@@ -254,6 +254,7 @@ DROP TABLE IF EXISTS `Swimmers`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `Swimmers` (
+  `created` timestamp NOT NULL DEFAULT current_timestamp(),
   `id` varchar(8) NOT NULL,
   `name` varchar(32) NOT NULL,
   `birthday` date NOT NULL,
@@ -315,6 +316,7 @@ DROP TABLE IF EXISTS `UserSwimmers`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `UserSwimmers` (
+  `created` timestamp NOT NULL DEFAULT current_timestamp(),
   `userId` varchar(16) NOT NULL,
   `swimmerId` varchar(8) NOT NULL,
   UNIQUE KEY `userId_swimmerId` (`userId`,`swimmerId`),
@@ -414,4 +416,4 @@ USE `swimming`;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*M!100616 SET NOTE_VERBOSITY=@OLD_NOTE_VERBOSITY */;
 
--- Dump completed on 2025-09-02 15:02:41
+-- Dump completed on 2025-09-04 11:39:34
