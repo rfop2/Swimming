@@ -123,6 +123,7 @@ export interface Meet {
 export interface PageInfo {
   label: string
   url: URL
+  referrer?: URL,
   type: "individual" | "ranking" | "results" | "meets" | "meet"
   data?: Record<string,string | number>
 }
