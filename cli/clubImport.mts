@@ -127,7 +127,7 @@ VALUES (
               const swimmer = {
                 id: row.swimmer,
                 name: row.name,
-                birthday: Number( row.yob ) > 20 ? `19${row.yob}-06-01` : `20${row.yob}-06-01`,
+                birthday: Number( row.yob ) > 20 ? `${String( 1900 + Number( row.yob ) )}-06-01` : `${String( 2000 + Number( row.yob ) )}-06-01`,
                 gender: gender === "M" ? "male" : "female",
                 nationality: countryCode,
                 region: regionCode,
