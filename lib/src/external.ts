@@ -1,6 +1,5 @@
 import { IndividualStats, LatLon, Meet, PageInfo, Ranking, RankingRow, ResultData, Results, Swimmer } from "./types.js"
 import { getSwimmerAgeGroup, rng, sleep, timeToSeconds } from "./lib.js"
-import { stat, readFile, writeFile } from "fs/promises"
 import { CACHE_DIR, DEFAULT_CACHE_TIME, MAX_FETCH_INTERVAL, MIN_FETCH_INTERVAL } from "./config.js"
 import { differenceInDays, differenceInHours, format, parse } from "date-fns"
 import type { AnyNode } from "domhandler"
@@ -243,6 +242,9 @@ export const createUrl = ( base: string, params: Record<string, string> ) => {
 }
 
 export const fetchPage = async ( pageInfo: PageInfo, cacheTime: number = DEFAULT_CACHE_TIME ) => {
+  // Dynamic import to avoid browser issues
+  const { stat, readFile, writeFile } = await import( "fs/promises" )
+
   const contentFile = CACHE_DIR + "/" + pageInfo.label
   console.log( `Processing ${pageInfo.label} -> ${pageInfo.url}` )
   try {
