@@ -194,3 +194,43 @@ export const haversineDistance = ( coord1: LatLon, coord2: LatLon ): number => {
 
   return R * c
 }
+
+export class Timer {
+  private startTime: bigint | null = null
+  private elapsedNs: bigint = 0n
+  private running: boolean = false
+
+  start(): void {
+    if ( this.running ) return
+    this.startTime = process.hrtime.bigint()
+    this.running = true
+  }
+
+  stop(): void {
+    if ( !this.running || this.startTime === null ) return
+    const now = process.hrtime.bigint()
+    this.elapsedNs += now - this.startTime
+    this.running = false
+  }
+
+  reset(): void {
+    this.startTime = null
+    this.elapsedNs = 0n
+    this.running = false
+  }
+
+  resume(): void {
+    if ( this.running ) return
+    this.startTime = process.hrtime.bigint()
+    this.running = true
+  }
+
+  elapsedSeconds(): string {
+    let total = this.elapsedNs
+    if ( this.running && this.startTime !== null ) {
+      total += process.hrtime.bigint() - this.startTime
+    }
+    const elapsedMs = Number( total ) / 1e6 // ns → ms
+    return ( elapsedMs / 1000 ).toFixed( 3 )  // seconds with ms precision
+  }
+}

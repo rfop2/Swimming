@@ -1,5 +1,5 @@
 import { IndividualStats, LatLon, Meet, PageInfo, Ranking, RankingRow, ResultData, Results, Swimmer } from "./types.js"
-import { getSwimmerAgeGroup, rng, sleep, timeToSeconds } from "./lib.js"
+import { getSwimmerAgeGroup, rng, sleep, Timer, timeToSeconds } from "./lib.js"
 import { CACHE_DIR } from "./config.js"
 import { differenceInDays, differenceInHours, format, parse } from "date-fns"
 import type { AnyNode } from "domhandler"
@@ -272,7 +272,7 @@ export const fetchPage = async ( pageInfo: PageInfo, cacheTime: number = DEFAULT
     }
   }
   try {
-    console.log( `Fetching ${pageInfo.url}` )
+    process.stdout.write( `Fetching ${pageInfo.url}` )
     const headers = new Headers( {
       "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
       "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
@@ -298,10 +298,18 @@ export const fetchPage = async ( pageInfo: PageInfo, cacheTime: number = DEFAULT
       throw new Error( "No SCRAPER_API_KEY found" )
     }
     const anonUrl = `https://api.scraperapi.com/?api_key=${process.env.SCRAPER_API_KEY}&url=${pageInfo.url}`
+    const timer = new Timer()
+    timer.start()
     const response = await fetch( anonUrl, {
       method: "GET",
       headers,
     } )
+    process.stdout.write( ` - ${timer.elapsedSeconds()}\n` )
+    timer.stop()
+
+    if ( response.status < 200 || response.status >= 300 ) {
+      throw new Error( `Request failed: ${response.statusText} (${response.statusText})` )
+    }
     const content = await response.text()
     await writeFile( contentFile, content )
     if ( MAX_FETCH_INTERVAL ) {
