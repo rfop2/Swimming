@@ -1,3 +1,14 @@
+export interface DatabaseUser {
+  id: string;
+  username: string;
+  password_hash: string;
+  firstName: string;
+  lastName: string;
+  type: string;
+  admin: boolean;
+  location: string;
+}
+
 export interface Swimmer {
   id: string
   name: string
@@ -57,7 +68,16 @@ export interface Ranking {
   stats?: RankingStats
 }
 
-export interface Result {
+export interface PerformanceRow extends RankingStats {
+  created: string
+  course: string
+  stroke: string
+  distance: string
+  scope: string
+  area: string
+}
+
+export interface ResultData {
   time: number
   wa_pts: number
   round: string
@@ -68,7 +88,14 @@ export interface Result {
   level: number
 }
 
-export type Results = Array<Result>
+export type Results = Array<ResultData>
+
+export interface ResultsRow extends ResultData {
+  created: string
+  course: string
+  stroke: string
+  distance: string
+}
 
 export type LatLon = { latitude: number, longitude: number }
 
@@ -100,3 +127,17 @@ export interface PageInfo {
 }
 
 export type PageData = Array<PageInfo>
+
+export interface QualifyingRow {
+  created: string
+  year: number
+  course: string
+  stroke: string
+  distance: string
+  scope: string
+  area: string
+  gender: string
+  age: string
+  timeString: string
+  time: number
+}

@@ -1,7 +1,5 @@
 import { verify } from "@node-rs/argon2"
-import { db } from "~/server/utils/db"
-
-import type { DatabaseUser } from "~/server/utils/db"
+import { type DatabaseUser, getPool, prepareStatement } from "lib"
 
 export default eventHandler( async ( event ) => {
   const formData = await readFormData( event )
@@ -9,7 +7,7 @@ export default eventHandler( async ( event ) => {
   if (
     typeof username !== "string" ||
     username.length < 3 ||
-    username.length > 31 ||
+    username.length > 63 ||
     !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test( username )
   ) {
     throw createError( {
@@ -25,7 +23,8 @@ export default eventHandler( async ( event ) => {
     } )
   }
 
-  const existingUser = db.prepare( "SELECT * FROM User WHERE username = ?" ).get( username ) as
+  const getExistingUser = prepareStatement( await getPool(), "SELECT * FROM User WHERE username = :username" )
+  const existingUser = await getExistingUser.get( { username } ) as
     | DatabaseUser
     | undefined
   if ( !existingUser ) {
@@ -57,6 +56,10 @@ export default eventHandler( async ( event ) => {
     } )
   }
 
+  try {
   const session = await lucia.createSession( existingUser.id, {} )
   appendHeader( event, "Set-Cookie", lucia.createSessionCookie( session.id ).serialize() )
+  } catch ( err ) {
+  console.error( "Session insert failed:", err )
+}
 } )

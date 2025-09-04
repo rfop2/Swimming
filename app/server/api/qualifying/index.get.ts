@@ -1,13 +1,5 @@
 import { defineEventHandler } from "h3"
-import type { Statement } from "better-sqlite3"
-import Database from "better-sqlite3"
-import { DB_PATH, type QualifyingRow } from "lib"
-
-// Create a local database to persist state
-const db = new Database( DB_PATH )
-db.pragma( "journal_mode = WAL" )
-
-const selectRecords: Statement<unknown[], QualifyingRow> = db.prepare( "SELECT * FROM Qualifying" )
+import { getPool, prepareStatement, type QualifyingRow } from "lib"
 
 export default defineEventHandler( async ( event ) => {
   if ( !event.context.session ) {
@@ -15,6 +7,11 @@ export default defineEventHandler( async ( event ) => {
       statusCode: 403
     } )
   }
+
+  const selectRecords = prepareStatement<unknown[], QualifyingRow>(
+    await getPool(),
+    "SELECT * FROM Qualifying"
+  )
 
   const data = selectRecords.all()
   return data

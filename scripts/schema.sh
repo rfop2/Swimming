@@ -1,14 +1,44 @@
-#!/usr/bin/env bash
+#!/bin/bash
+set -euo pipefail
+set -vx
 
 REPO_ROOT=$(git rev-parse --show-toplevel)
-cd $REPO_ROOT/data
+cd $REPO_ROOT/docker
+if [ -s .env ]
+then
+  source .env
+fi
 
-SCHEMA_FILE=${1:-schema.sql}
-echo "Dumping database schema to ${SCHEMA_FILE}"
+DB_CONTAINER=db
 
-sqlite3 ../db/records.db ".schema" \
-    | sed -E 's/CREATE TABLE( IF NOT EXISTS)? "?(\w+)"?\s+\(/DROP TABLE IF EXISTS \2;\n&/' \
-    | sed -E 's/CREATE VIEW( IF NOT EXISTS)? "?(\w+)"?\s+AS/DROP VIEW IF EXISTS \2;\n&/' \
-    | sed -E 's/CREATE INDEX( IF NOT EXISTS)? "?(\w+)"?\s+ON/DROP INDEX IF EXISTS \2;\n&/' \
-    | sed -e 's/IF NOT EXISTS //' \
-    > ${SCHEMA_FILE}
+SCHEMA_FILE="$REPO_ROOT/data/schema.sql"
+if (( $# > 0 ))
+then
+    SCHEMA_FILE=$1
+fi
+if [ ! -f docker-compose.yml ]
+then
+    echo "Error, this script must be run from a docker directory"
+    exit -1
+fi
+echo "Dumping schema file"
+
+# Generate a random path inside the container for safety
+REMOTE_CNF="/tmp/mydump-$$.cnf"
+
+cleanup() {
+  docker compose exec -T "$DB_CONTAINER" rm -f "$REMOTE_CNF" >/dev/null 2>&1 || true
+}
+trap cleanup EXIT INT TERM
+
+docker compose exec -T "$DB_CONTAINER" /bin/bash -c "umask 077 && cat > '$REMOTE_CNF'" <<EOF
+[client]
+user=root
+password=$MARIADB_ROOT_PASSWORD
+EOF
+
+dumpCmd="mariadb-dump --defaults-extra-file=$REMOTE_CNF --databases $MARIADB_DATABASE --add-drop-database --no-data --routines --triggers -r /dev/stdout"
+dumpCmd+=' | sed -E -e "s/ AUTO_INCREMENT=[0-9]+//g"'
+docker compose exec -T $DB_CONTAINER /bin/bash -c "$dumpCmd" > $SCHEMA_FILE
+
+cleanup

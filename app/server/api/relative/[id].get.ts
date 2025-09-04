@@ -1,14 +1,5 @@
 import { defineEventHandler } from "h3"
-import type { Statement } from "better-sqlite3"
-import Database from "better-sqlite3"
-import { DB_PATH, type PerformanceRow } from "lib"
-
-// Create a local database to persist state
-const db = new Database( DB_PATH )
-db.pragma( "journal_mode = WAL" )
-
-const selectMaxCreated: Statement<unknown[], { MaxCreated: string }> = db.prepare( "SELECT MAX(created) AS MaxCreated FROM Performance WHERE swimmer = :id" )
-const selectRecords: Statement<{ date: string }, PerformanceRow> = db.prepare( "SELECT * FROM Performance WHERE swimmer = :id AND created = :date" )
+import { getPool, prepareStatement, type PerformanceRow } from "lib"
 
 export default defineEventHandler( async ( event ) => {
   if ( !event.context.session ) {
@@ -18,12 +9,27 @@ export default defineEventHandler( async ( event ) => {
   }
 
   const id = getRouterParam( event, "id" )
-  const result = selectMaxCreated.get( { id } )
+  if ( !id ) {
+    throw createError( {
+      message: "No swimmer id supplied",
+      status: 403,
+    } )
+  }
+
+  const pool = await getPool()
+
+  const selectMaxCreated = prepareStatement<{ id: string }, { MaxCreated: string }>(
+    pool,
+    "SELECT MAX(created) AS MaxCreated FROM Performance WHERE swimmer = :id"
+  )
+  const result = await selectMaxCreated.get( { id } )
   if ( !result?.MaxCreated ) {
     throw createError( { status: 404, statusText: "No records found"} )
   }
-  const bindParams = { id, date: result.MaxCreated }
-  const data = selectRecords.all( bindParams )
-  // console.log( "Data", data )
+  const selectRecords = prepareStatement<{ id: string, date: string }, PerformanceRow>(
+    pool,
+    "SELECT * FROM Performance WHERE swimmer = :id AND created = :date"
+  )
+  const data = await selectRecords.all( { id, date: result.MaxCreated } )
   return data
 } )

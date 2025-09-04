@@ -31,13 +31,11 @@
 
   const checkLocation = useDebounceAsync( lookupLocation, 500 )
 
-  const { data: userSwimmers } = await useFetch(
-    "/api/swimmers",
-  )
+  const { swimmers, refreshSwimmers } = await useSwimmers()
 
   const PASSWORD = "************"
 
-  const { values, errors, meta, defineField, resetForm, handleSubmit, validateField } = useForm( {
+  const { values, errors, meta, defineField, resetForm, handleSubmit } = useForm( {
     initialValues: {
       firstName: user.value.firstName,
       lastName: user.value.lastName,
@@ -45,7 +43,7 @@
       location: user.value.location,
       password: PASSWORD,
       confirmPassword: PASSWORD,
-      swimmers: userSwimmers.value as Array<Swimmer>,
+      swimmers: swimmers.value,
     },
     validationSchema: toTypedSchema(
       yup.object( {
@@ -98,7 +96,7 @@
   } ) */
 
   watch( errors, ( newErrors ) => {
-    console.log( "NE", newErrors )
+    console.log( "ERR", newErrors )
   } )
 
   const [ firstName, firstNameAttrs ] = defineField( "firstName" )
@@ -188,6 +186,7 @@
       } )
       // await refreshNuxtData()
       resetForm( { values } )
+      await refreshSwimmers()
       saveSuccess.value = true
     } catch ( error ) {
       console.error( "Error", error )

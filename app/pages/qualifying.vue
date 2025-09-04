@@ -168,11 +168,10 @@
     return filtered
   } )
 
-  watch( filteredQualifying, eq => {
-    if ( filteredQualifying.value.length > 0 ) {
-      selections.value.course = courses.find( course => course.value === filteredQualifying.value[0].course ) ?? courses[0]
+  watch( filteredQualifying, fq => {
+    if ( fq.length > 0 ) {
+      selections.value.course = courses.find( course => course.value === fq[0].course ) ?? courses[0]
     }
-    console.log( "FQ", eq )
   }, { deep: true } )
 
   const clipboard = ref<Array<ExtQualifyingRow>>( [] )

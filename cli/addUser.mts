@@ -1,29 +1,25 @@
 #!/usr/bin/env nodemjs
 import { hash } from "@node-rs/argon2"
+import { getPool, isMySql2Error, prepareStatement } from "lib"
 import { generateId } from "lucia"
-import Database, { SqliteError } from "better-sqlite3"
-
-import { DB_PATH } from "lib"
-
-const db = new Database( DB_PATH )
-db.pragma( "journal_mode = WAL" );
 
 ( async () => {
   const args = process.argv.slice( 2 )
 
-  if ( args.length < 5 ) {
-    throw( "Error, username, password, first and last names and location must be given" )
+  if ( args.length < 6 ) {
+    throw( "Error, username, password, first and last names, type and location must be given" )
   }
 
   const username = args[0]
   const password = args[1]
   const firstName = args[2]
   const lastName = args[3]
-  const location = args[4]
+  const type = args[4]
+  const location = args[5]
 
   if (
     username.length < 3 ||
-    username.length > 31 ||
+    username.length > 63 ||
     !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test( username )
   ) {
     throw new Error ( "Invalid username" )
@@ -43,20 +39,25 @@ db.pragma( "journal_mode = WAL" );
   const userId = generateId( 15 )
 
   try {
-    db.prepare( "INSERT INTO User ( id, username, password_hash, firstName, lastName, location ) VALUES(?, ?, ?, ?, ?, ?)" ).run(
+    const addUser = prepareStatement(
+      await getPool(),
+      "INSERT INTO User ( id, username, password_hash, firstName, lastName, type, location ) VALUES( :userId, :username, :passwordHash, :firstName, :lastName, :type, :location )"
+    )
+    await addUser.run( {
       userId,
       username,
       passwordHash,
       firstName,
       lastName,
+      type,
       location
-    )
+    } )
   } catch ( e ) {
-    if ( e instanceof SqliteError ) {
-      if ( e.code === "SQLITE_CONSTRAINT_UNIQUE" ) {
+    if ( isMySql2Error( e ) ) {
+      if ( e.code === "ER_DUP_ENTRY" ) {
         throw new Error( "Username already used" )
       } else {
-        throw new Error( `Database error: ${e}` )
+        throw new Error( `Database error: ${e.sqlMessage}` )
       }
     }
     throw new Error( "An unknown error occurred" )
@@ -67,4 +68,5 @@ db.pragma( "journal_mode = WAL" );
 } )().catch( ( error ) => {
   console.error( "Caught error...", error )
   console.trace( error )
+  process.exit( -1 )
 } )

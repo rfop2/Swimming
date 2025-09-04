@@ -1,6 +1,7 @@
 <script setup lang="ts">
   import { Disclosure, DisclosureButton, DisclosurePanel, Listbox, ListboxButton, ListboxOption, ListboxOptions, Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/vue"
   import { Bars3Icon, BellIcon, CheckIcon, ChevronUpDownIcon, UserIcon, XMarkIcon } from "@heroicons/vue/24/outline"
+  import { format } from "date-fns"
   import type { Swimmer } from "lib"
   import { FetchError } from "ofetch"
 
@@ -30,9 +31,7 @@
 
   const config = useRuntimeConfig()
 
-  const { data: swimmers } = await useFetch(
-    "/api/swimmers",
-  )
+  const { swimmers } = await useSwimmers()
 
   const swimmerId = ref< string | null >( ( swimmers.value && swimmers.value.length && swimmers.value[0].id ) || null )
   const lookupSwimmer = ( id: string | null ) => ( ( swimmers.value || [] ).find( s => s.id === id ) ?? null )
@@ -58,7 +57,8 @@
     await $fetch( "/api/user/logout", {
       method: "POST"
     } )
-    // clearNuxtState( "swimmer" )
+    clearNuxtState()
+    clearNuxtData()
     swimmer.value = null
     router.push( "/login" )
   }
@@ -71,7 +71,8 @@
       if ( newSwimmerId ) {
         swimmer.value = lookupSwimmer( newSwimmerId )
         try {
-          updated.value = await $fetch( `/api/updated/${newSwimmerId}` )
+          const lastUpdate = await $fetch( `/api/updated/${newSwimmerId}` )
+          updated.value = format( lastUpdate, "yyyy-MM-dd" )
         } catch ( error ) {
           updated.value = "<error>"
           if ( error instanceof FetchError ) {
