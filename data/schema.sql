@@ -319,7 +319,7 @@ CREATE TABLE `UserSwimmers` (
   `created` timestamp NOT NULL DEFAULT current_timestamp(),
   `userId` varchar(16) NOT NULL,
   `swimmerId` varchar(8) NOT NULL,
-  UNIQUE KEY `userId_swimmerId` (`userId`,`swimmerId`),
+  PRIMARY KEY (`userId`,`swimmerId`),
   KEY `swimmerId` (`swimmerId`),
   CONSTRAINT `UserSwimmers_ibfk_1` FOREIGN KEY (`userId`) REFERENCES `User` (`id`),
   CONSTRAINT `UserSwimmers_ibfk_2` FOREIGN KEY (`swimmerId`) REFERENCES `Swimmers` (`id`)
@@ -416,4 +416,4 @@ USE `swimming`;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*M!100616 SET NOTE_VERBOSITY=@OLD_NOTE_VERBOSITY */;
 
--- Dump completed on 2025-09-04 11:39:34
+-- Dump completed on 2025-09-04 11:58:36
