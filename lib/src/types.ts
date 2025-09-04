@@ -40,6 +40,7 @@ export interface IndividualRow extends IndividualStats {
 
 export interface RankingRow {
   rank: number
+  name: string
   swimmer: string
   ranked_club: string
   yob: number
