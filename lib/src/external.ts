@@ -1,6 +1,6 @@
 import { IndividualStats, LatLon, Meet, PageInfo, Ranking, RankingRow, ResultData, Results, Swimmer } from "./types.js"
 import { getSwimmerAgeGroup, rng, sleep, timeToSeconds } from "./lib.js"
-import { CACHE_DIR, DEFAULT_CACHE_TIME, MAX_FETCH_INTERVAL, MIN_FETCH_INTERVAL } from "./config.js"
+import { CACHE_DIR } from "./config.js"
 import { differenceInDays, differenceInHours, format, parse } from "date-fns"
 import type { AnyNode } from "domhandler"
 import type { Cheerio, CheerioAPI } from "cheerio"
@@ -241,6 +241,10 @@ export const createUrl = ( base: string, params: Record<string, string> ) => {
   return url
 }
 
+const DEFAULT_CACHE_TIME = Number( process.env.PAGE_CACHE_TIME ?? 24 )
+const MIN_FETCH_INTERVAL = Number( process.env.MIN_FETCH_INTERVAL ?? 0 )
+const MAX_FETCH_INTERVAL = Number( process.env.MAX_FETCH_INTERVAL ?? 0 )
+
 export const fetchPage = async ( pageInfo: PageInfo, cacheTime: number = DEFAULT_CACHE_TIME ) => {
   // Dynamic import to avoid browser issues
   const { stat, readFile, writeFile } = await import( "fs/promises" )
@@ -300,9 +304,11 @@ export const fetchPage = async ( pageInfo: PageInfo, cacheTime: number = DEFAULT
     } )
     const content = await response.text()
     await writeFile( contentFile, content )
-    const timeout = MIN_FETCH_INTERVAL + ( rng() * ( MAX_FETCH_INTERVAL - MIN_FETCH_INTERVAL ) )
-    console.log( `Sleeping for ${timeout.toFixed( 2 )} seconds` )
-    await sleep( timeout )
+    if ( MAX_FETCH_INTERVAL ) {
+      const timeout = MIN_FETCH_INTERVAL + ( rng() * ( MAX_FETCH_INTERVAL - MIN_FETCH_INTERVAL ) )
+      console.log( `Sleeping for ${timeout.toFixed( 2 )} seconds` )
+      await sleep( timeout )
+    }
     return content
   } catch ( error ) {
     console.error( `Failed to fetch ${pageInfo.url}`, error )
