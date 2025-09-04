@@ -15,11 +15,11 @@ export default defineEventHandler( async ( event ) => {
 
   const selectMaxCreated = prepareStatement<{ userId: string, swimmerId: string },{MaxCreated: string}>(
     pool,
-    "SELECT MAX(created) AS MaxCreated FROM Individual INNER JOIN UserSwimmers ON Individual.swimmer = UserSwimmers.swimmerId AND UserSwimmers.userId = :userId WHERE swimmer = :swimmerId",
+    "SELECT MAX(Individual.created) AS MaxCreated FROM Individual INNER JOIN UserSwimmers ON Individual.swimmer = UserSwimmers.swimmerId AND UserSwimmers.userId = :userId WHERE swimmer = :swimmerId",
   )
   const selectRecords = prepareStatement<{ userId: string, swimmerId: string, date: string },IndividualRow>(
     pool,
-    "SELECT Individual.* FROM Individual INNER JOIN UserSwimmers ON Individual.swimmer = UserSwimmers.swimmerId AND UserSwimmers.userId = :userId WHERE swimmer = :swimmerId AND created = :date",
+    "SELECT Individual.* FROM Individual INNER JOIN UserSwimmers ON Individual.swimmer = UserSwimmers.swimmerId AND UserSwimmers.userId = :userId WHERE swimmer = :swimmerId AND Individual.created = :date",
   )
 
   if ( swimmerId ) {
