@@ -1,6 +1,4 @@
 import seedrandom from "seedrandom"
-import type { AnyNode } from "domhandler"
-import type { Cheerio, CheerioAPI } from "cheerio"
 import { addMilliseconds, differenceInYears, endOfYear, format, parseISO } from "date-fns"
 import { LatLon, Swimmer } from "./types.js"
 
@@ -21,40 +19,6 @@ export const shuffle = <T>( array: T[] ) => {
     [ array[i], array[j] ] = [ array[j], array[i] ]
   }
   return array
-}
-
-export const extractTableData = ( $: CheerioAPI, table: Cheerio<AnyNode> ) => {
-  // const data = await page.evaluate( ( tbody: HTMLTableSectionElement ) => {
-  const headers: Array<string> = []
-  const dataObject: Array<Record<string, string>> = []
-
-  let lastRowHeader = ""
-  table.find( "tr" ).each( ( rowIndex, rowElement ) => {
-    const row = $( rowElement )
-    if ( rowIndex === 0 ) {
-      row.find( "th" ).each( ( cellIndex, cellElement ) => {
-        headers.push( $( cellElement ).text().toLowerCase().replace( /\s+/g, "_" ) )
-      } )
-      return
-    }
-
-    const valueCells = row.find( "td" )
-    const rowData: Record<string, string> = {}
-    let headerIndex = 0
-    for ( const valueCell of valueCells ) {
-      let value = $( valueCell ).text().trim()
-      if ( headerIndex === 0 ) {
-        if ( value === "" ) {
-          value = lastRowHeader
-        } else {
-          lastRowHeader = value
-        }
-      }
-      rowData[headers[headerIndex++]] = value
-    }
-    dataObject.push( rowData )
-  } )
-  return dataObject
 }
 
 export const timeToSeconds = ( time: string ): number => {
