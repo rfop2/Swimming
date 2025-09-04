@@ -6,7 +6,9 @@
   "scripts": {
     "build": "npx tsc",
     "watch": "npx tsc --watch",
-    "fetch": "node ./build/fetch.mjs"
+    "fetch": "node ./build/fetch.mjs",
+    "add": "node ./build/addUser.mjs",
+    "import": "node ./build/swimmerImport.mjs"
   },
   "dependencies": {
     "@node-rs/argon2": "^2.0.2",
