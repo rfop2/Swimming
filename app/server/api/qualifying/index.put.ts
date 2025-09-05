@@ -1,3 +1,4 @@
+import { format } from "date-fns"
 import { getPool, prepareStatement, runTransaction, type QualifyingRow } from "lib"
 
 export default eventHandler( async ( event ) => {
@@ -51,6 +52,7 @@ ON DUPLICATE KEY UPDATE
         )
         await deleteQualifying.run()
         for ( const row of qualifyingData ) {
+          row.created = format( row.created, "yyyy-MM-dd" )
           await updateQualifyingRow.run( row )
         }
       },
