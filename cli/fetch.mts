@@ -547,7 +547,11 @@ const updateMeets = async () => {
     for ( const swimmer of swimmers ) {
       if ( process.argv.length < 3 || process.argv[2] === swimmer.id ) {
         swimmer.birthday = format( new Date( swimmer.birthday ), "yyyy-MM-dd" )
-        await updateSwimmerData( swimmer )
+        try {
+          await updateSwimmerData( swimmer )
+        } catch ( e ) {
+          console.error( "Unable to fetch swimmer data, skipping", e )
+        }
       }
     }
     if ( process.argv.length === 3 && process.argv[2] === "meets" ) {
