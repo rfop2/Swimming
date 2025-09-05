@@ -9,8 +9,8 @@ import { getPool, prepareStatement } from "./database.js"
 export const BASE_URL = "https://www.swimmingresults.org"
 
 export const COURSES: Record<string,string> = {
-  "sc": "Short Course",
-  "lc": "Long Course",
+  "sc": "Short",
+  "lc": "Long",
 }
 
 export const NATIONALITY: Record<string,string> = {

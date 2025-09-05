@@ -156,7 +156,7 @@
                 <td
                   v-if="course === Object.keys(courseRecords)[0]"
                   :rowspan="Object.entries(courseRecords).length"
-                  class="whitespace-nowrap px-2 py-2 text-right text-sm text-gray-900"
+                  class="whitespace-wrap sm:whitespace-nowrap px-2 py-2 text-right text-sm text-gray-900"
                 >
                   {{ swimmers ? swimmersMap[swimmerId].name : "Unknown swimmer" }}
                 </td>
@@ -164,7 +164,7 @@
                   class="whitespace-nowrap px-2 py-2 text-right text-sm text-gray-900"
                   :class="['px-2 py-1', course !== Object.keys(courseRecords)[0] ? 'border-l' : '']"
                 >
-                  {{ COURSES[course] }}
+                  {{ COURSES[course] }}<span class="hidden sm:inline"> Course</span>
                 </td>
                 <td
                   v-for="distance in distances"
