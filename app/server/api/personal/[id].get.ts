@@ -19,7 +19,7 @@ export default defineEventHandler( async ( event ) => {
   )
   const selectRecords = prepareStatement<{ userId: string, swimmerId: string, date: string },IndividualRow>(
     pool,
-    "SELECT Individual.* FROM Individual INNER JOIN UserSwimmers ON Individual.swimmer = UserSwimmers.swimmerId AND UserSwimmers.userId = :userId WHERE swimmer = :swimmerId AND Individual.created = :date",
+    "SELECT Individual.* FROM Individual INNER JOIN UserSwimmers ON Individual.swimmer = UserSwimmers.swimmerId AND UserSwimmers.userId = :userId WHERE swimmer = :swimmerId AND Individual.created = :date ORDER BY course DESC, stroke ASC, distance ASC",
   )
 
   if ( swimmerId ) {
