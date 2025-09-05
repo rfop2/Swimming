@@ -1,6 +1,7 @@
 <script setup lang="ts">
   import { Listbox, ListboxButton, ListboxLabel, ListboxOption, ListboxOptions } from "@headlessui/vue"
   import { CheckIcon, ChevronUpDownIcon } from "@heroicons/vue/24/outline"
+  import classNames from "classnames"
   import { COURSES, type IndividualRow, strokes, secondsToTime } from "lib"
 
   import type { InternalApi } from "nitropack"
@@ -151,6 +152,7 @@
                 v-for="(distanceRow,course) in courseRecords"
                 :key="`${course}`"
                 class="divide-x divide-gray-200"
+                :class="classNames({ '!border-t-2 !border-gray-400': course === Object.keys(courseRecords)[0] })"
               >
                 <!-- Only render the first cell once per group, with rowspan -->
                 <td
@@ -173,7 +175,10 @@
                 >
                   <span v-if="distanceRow && distanceRow[distance]">
                     {{ secondsToTime( distanceRow[distance].time ) }}
-                    <span v-if="(courseRecords[course === 'lc' ? 'sc' : 'lc']?.[distance]?.converted_time ?? Infinity) < distanceRow[distance].time">
+                    <span
+                      v-if="(courseRecords[course === 'lc' ? 'sc' : 'lc']?.[distance]?.converted_time ?? Infinity) < distanceRow[distance].time"
+                      class="italic"
+                    >
                       ({{ secondsToTime(courseRecords[course === 'lc' ? 'sc' : 'lc']?.[distance]?.converted_time ?? 0) }})
                     </span>
                   </span>
