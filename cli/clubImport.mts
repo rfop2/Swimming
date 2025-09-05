@@ -1,4 +1,5 @@
 #!/usr/bin/env nodemjs
+import "dotenv/config"
 import * as cheerio from "cheerio"
 import { COUNTIES, createUrl, fetchPage, getPool, isMySql2Error, NATIONALITIES, PageInfo, parseRanking, prepareStatement, rankBaseUrl, REGIONS, runTransaction, STROKE_DISTANCE } from "lib"
 
