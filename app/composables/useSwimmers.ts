@@ -25,6 +25,13 @@ export const useSwimmers = async () => {
         fetchError.value = error.value
       } else {
         swimmers.value = data.value || []
+        swimmers.value.sort( ( a, b ) => {
+          if ( a.name < b.name )
+            return -1
+          else if ( a.name > b.name )
+            return 1
+          return 0
+        } )
       }
     } catch ( err ) {
       fetchError.value = err
