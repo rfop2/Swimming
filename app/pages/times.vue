@@ -2,7 +2,8 @@
   import { Listbox, ListboxButton, ListboxLabel, ListboxOption, ListboxOptions } from "@headlessui/vue"
   import { CheckIcon, ChevronUpDownIcon } from "@heroicons/vue/24/outline"
   import classNames from "classnames"
-  import { COURSES, type IndividualRow, strokes, secondsToTime } from "lib"
+  import { getYear } from "date-fns"
+  import { COURSES, type IndividualRow, strokes, secondsToTime, getSwimmerAgeGroup, convertTime, getSwimmerAge } from "lib"
 
   import type { InternalApi } from "nitropack"
 
@@ -29,12 +30,23 @@
     "/api/personal/",
   )
 
+  // type QualifyingApiResponse = InternalApi["/api/qualifying"]["get"]
+  const { data: qualifyingInfo } = await useFetch(
+    "/api/qualifying",
+  )
+
   const filteredRecords = computed( () => ( records.value || [] ).filter( record => record.stroke === selections.stroke.value ) )
 
   const distances = computed( () => strokes[selections.stroke.value].distances )
 
+  interface  QualifiedRow extends IndividualRow {
+    qualified: string
+    altQualified: string
+  }
+
   const groupedRecords = computed( () => {
-    const map: Record<string,Record<string,Record<string,IndividualRow | null>>> = {}
+    const currentYear = getYear( new Date() )
+    const map: Record<string,Record<string,Record<string,QualifiedRow | null>>> = {}
     for ( const row of filteredRecords.value ) {
       if ( !map[row.swimmer] ) {
         map[row.swimmer] = {}
@@ -42,7 +54,51 @@
       if ( !map[row.swimmer][row.course] ) {
         map[row.swimmer][row.course] = Object.fromEntries( distances.value.map( distance => [ distance, null ] ) )
       }
-      map[row.swimmer][row.course][row.distance] = row
+      const swimmer = swimmersMap.value[row.swimmer]
+      const swimmerAge = getSwimmerAgeGroup( swimmer )
+      const baseQualifyingTimes = ( qualifyingInfo.value ?? [] ).filter( q => {
+        if ( q.year !== currentYear )
+          return false
+        if ( q.stroke !== row.stroke )
+          return false
+        if ( q.distance !== row.distance )
+          return false
+        if ( q.gender !== swimmer.gender )
+          return false
+        if ( q.age !== swimmerAge )
+          return false
+        if ( q.scope === "county" && q.area !== swimmer.county )
+          return false
+        if ( q.scope === "regional" && q.area !== swimmer.region )
+          return false
+        if ( q.scope === "national" && q.area !== swimmer.nationality )
+          return false
+        return true
+      } ).map( ( q ) => ( {
+        ...q,
+        convertedTime: convertTime( q.course, row.course, row.stroke, row.distance, q.time )
+      } ) )
+      const qualifyingTimes = baseQualifyingTimes.filter( q => {
+        return ( Number( row.time ) <= q.convertedTime )
+      } )
+      const qualified =
+        qualifyingTimes.find( q => q.scope === "national" ) ??
+        qualifyingTimes.find( q => q.scope === "regional" ) ??
+        qualifyingTimes.find( q => q.scope === "county" )
+      // console.log( "T", qualifyingTimes.find( q => q.scope === "national" ), qualifyingTimes.find( q => q.scope === "regional" ), qualifyingTimes.find( q => q.scope === "county" ) )
+      const altQualifyingTimes = baseQualifyingTimes.filter( q => {
+        return ( Number( row.time ) <= q.convertedTime )
+      } )
+      const altQualified =
+        altQualifyingTimes.find( q => q.scope === "national" ) ??
+        altQualifyingTimes.find( q => q.scope === "regional" ) ??
+        altQualifyingTimes.find( q => q.scope === "county" )
+      // console.log( unref( swimmer ), unref( row ), "B", unref( baseQualifyingTimes ), "Q", unref( qualifyingTimes ), qualified, "A", unref( altQualifyingTimes ), altQualified )
+      map[row.swimmer][row.course][row.distance] = {
+        ...row,
+        qualified: qualified ? qualified.scope : "none",
+        altQualified: altQualified ? altQualified.scope : "none"
+      }
     }
     return map
   } )
@@ -160,7 +216,7 @@
                   :rowspan="Object.entries(courseRecords).length"
                   class="whitespace-wrap sm:whitespace-nowrap px-2 py-2 text-right text-sm text-gray-900"
                 >
-                  {{ swimmers ? swimmersMap[swimmerId].name : "Unknown swimmer" }}
+                  {{ swimmers ? swimmersMap[swimmerId].name : "Unknown swimmer" }} ({{ getSwimmerAge(swimmersMap[swimmerId]) }})
                 </td>
                 <td
                   class="whitespace-nowrap px-2 py-2 text-right text-sm text-gray-900"
@@ -174,10 +230,11 @@
                   class="whitespace-nowrap px-2 py-2 text-right text-sm text-gray-900"
                 >
                   <span v-if="distanceRow && distanceRow[distance]">
-                    {{ secondsToTime( distanceRow[distance].time ) }}
+                    <span :class="`qualified-${distanceRow[distance].qualified}`">{{ secondsToTime( distanceRow[distance].time ) }}</span>
                     <span
                       v-if="(courseRecords[course === 'lc' ? 'sc' : 'lc']?.[distance]?.converted_time ?? Infinity) < distanceRow[distance].time"
                       class="italic"
+                      :class="`qualified-${courseRecords[course === 'lc' ? 'sc' : 'lc']?.[distance]?.altQualified}`"
                     >
                       ({{ secondsToTime(courseRecords[course === 'lc' ? 'sc' : 'lc']?.[distance]?.converted_time ?? 0) }})
                     </span>
@@ -191,3 +248,19 @@
     </div>
   </div>
 </template>
+
+<style scoped>
+span {
+  &.qualified-county {
+    color: #22c55e;
+  }
+
+  &.qualified-regional {
+    color: #f97416;
+  }
+
+  &.qualified-national {
+    color: #ef4444;
+  }
+}
+</style>
