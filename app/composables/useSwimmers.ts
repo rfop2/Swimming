@@ -26,11 +26,10 @@ export const useSwimmers = async () => {
       } else {
         swimmers.value = data.value || []
         swimmers.value.sort( ( a, b ) => {
-          if ( a.name < b.name )
-            return -1
-          else if ( a.name > b.name )
-            return 1
-          return 0
+          const lastSort = a.lastName.localeCompare( b.lastName )
+          if ( lastSort )
+            return lastSort
+          return a.firstName.localeCompare( b.firstName )
         } )
       }
     } catch ( err ) {
