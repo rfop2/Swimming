@@ -468,7 +468,7 @@ const updateSwimmerData = async ( swimmer: Swimmer ) => {
   await updateResults( swimmer, individualData )
 
   await updateRankings( swimmer, individualData )
-  updatePerformance( swimmer )
+  await updatePerformance( swimmer )
 }
 
 const updateMeet = async ( meet: Partial<Meet> ) => {
