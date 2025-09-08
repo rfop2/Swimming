@@ -4,7 +4,10 @@ services:
     hostname: "node"
     build: .
     environment:
-      - NODE_ENV=production
+      NODE_ENV: production
+      MARIADB_DATABASE: ${MARIADB_DATABASE}
+      MARIADB_USER: ${MARIADB_USER}
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD}
     volumes:
       - ../app/.output/:/home/node/app
     ports:
