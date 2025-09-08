@@ -196,41 +196,55 @@ export const haversineDistance = ( coord1: LatLon, coord2: LatLon ): number => {
 }
 
 export class Timer {
-  private startTime: bigint | null = null
-  private elapsedNs: bigint = 0n
+  private startTime: [number, number] | null = null
+  private elapsedMs: number = 0
   private running: boolean = false
+  private lastLap: [number, number] | null = null
 
   start(): void {
     if ( this.running ) return
-    this.startTime = process.hrtime.bigint()
+    this.startTime = process.hrtime()
+    this.lastLap = this.startTime
     this.running = true
   }
 
   stop(): void {
     if ( !this.running || this.startTime === null ) return
-    const now = process.hrtime.bigint()
-    this.elapsedNs += now - this.startTime
+    const diff = process.hrtime( this.startTime )
+    this.elapsedMs += diff[0] * 1_000 + diff[1] / 1e6 // convert to ms
     this.running = false
   }
 
   reset(): void {
     this.startTime = null
-    this.elapsedNs = 0n
+    this.elapsedMs = 0
     this.running = false
+    this.lastLap = null
   }
 
   resume(): void {
     if ( this.running ) return
-    this.startTime = process.hrtime.bigint()
+    this.startTime = process.hrtime()
+    this.lastLap = this.startTime
     this.running = true
   }
 
-  elapsedSeconds(): string {
-    let total = this.elapsedNs
-    if ( this.running && this.startTime !== null ) {
-      total += process.hrtime.bigint() - this.startTime
+  lap(): number {
+    if ( !this.running || this.lastLap === null ) {
+      throw new Error( "Timer must be running to record a lap" )
     }
-    const elapsedMs = Number( total ) / 1e6 // ns → ms
-    return ( elapsedMs / 1000 ).toFixed( 3 )  // seconds with ms precision
+    const diff = process.hrtime( this.lastLap )
+    const lapMs = diff[0] * 1000 + diff[1] / 1e6
+    this.lastLap = process.hrtime()
+    return lapMs / 1000 // return in seconds
+  }
+
+  elapsedSeconds(): number {
+    let totalMs = this.elapsedMs
+    if ( this.running && this.startTime !== null ) {
+      const diff = process.hrtime( this.startTime )
+      totalMs += diff[0] * 1000 + diff[1] / 1e6
+    }
+    return totalMs / 1000 // return in seconds
   }
 }
