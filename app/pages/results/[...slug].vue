@@ -1,7 +1,7 @@
 <script setup lang="ts">
   import { Listbox, ListboxButton, ListboxLabel, ListboxOption, ListboxOptions } from "@headlessui/vue"
   import { CheckIcon, ChevronUpDownIcon } from "@heroicons/vue/24/outline"
-  import { type Swimmer, secondsToTime } from "lib"
+  import { COURSES, type Swimmer, secondsToTime, strokes } from "lib"
   import { Line } from "vue-chartjs"
   import {  Chart as ChartJS, CategoryScale, LinearScale, TimeScale, PointElement, LineElement, Title, Tooltip, Legend, type ChartData, type ChartOptions, type TooltipItem } from "chart.js"
   import "chartjs-adapter-date-fns"
@@ -14,73 +14,27 @@
     middleware: [ "protected" ]
   } )
 
-  const courses = [
-    {
-      value: "lc",
-      label: "Long",
-    },
-    {
-      value: "sc",
-      label: "Short",
-    }
-  ]
-  const strokes = [
-    {
-      value: "freestyle",
-      label: "Freestyle",
-    },
-    {
-      value: "breaststroke",
-      label: "Breaststroke",
-    },
-    {
-      value: "butterfly",
-      label: "Butterfly",
-    },
-    {
-      value: "backstroke",
-      label: "Backstroke",
-    },
-    {
-      value: "individual_medley",
-      label: "Individual Medley",
-    },
-  ]
-  const distances = [
-    {
-      value: "50m",
-      label: "50m",
-    },
-    {
-      value: "100m",
-      label: "100m",
-    },
-    {
-      value: "200m",
-      label: "200m",
-    },
-    {
-      value: "400m",
-      label: "400m",
-    },
-    {
-      value: "800m",
-      label: "800m",
-    },
-    {
-      value: "1500m",
-      label: "1500m",
-    },
-  ]
-
   const route = useRoute()
   const slug = Array.isArray( route.params.slug ) ? route.params.slug : []
 
+  console.log( "S", slug[1] ?? 0 )
+  const courseOptions = Object.entries( COURSES ).map( ( [ k, v ] ) => ( { value: k, label: v } ) )
+  const strokeOptions = Object.entries( strokes ).map( ( [ k, v ] ) => ( { value: k, label: v.label } ) )
+  const distanceOptions = reactive<{ value: string, label: string }[]>( strokes[slug[1] ?? Object.keys( strokes )[0]].distances.map( d => ( { value: d, label: d } ) ) )
+
   const selections = reactive( {
-    course: courses.find( option => option.value === slug[0] ) ?? courses[1],
-    stroke: strokes.find( option => option.value === slug[1] ) ?? strokes[0],
-    distance: distances.find( option => option.value === slug[2] ) ?? distances[0],
+    course: courseOptions.find( option => option.value === slug[0] ) ?? courseOptions[1],
+    stroke: strokeOptions.find( option => option.value === slug[1] ) ?? strokeOptions[0],
+    distance: distanceOptions.find( option => option.value === slug[2] ) ?? distanceOptions[0]
   } )
+
+  watch( () => selections.stroke, ( newStroke ) => {
+    distanceOptions.length = 0
+    distanceOptions.push( ...strokes[newStroke.value].distances.map( d => ( { value: d, label: d } ) ) )
+    if ( selections.distance.value && !distanceOptions.find( o => o.value === selections.distance.value ) )
+      selections.distance = distanceOptions[0]
+  } )
+
   const query = computed( () => Object.fromEntries( Object.entries( selections ).map( ( [ label, option ] ) => ( [ label, option.value ] ) ) ) )
 
   const rewritten = ref( false )
@@ -231,7 +185,7 @@
                 >
                   <ListboxOptions class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
                     <ListboxOption
-                      v-for="option in courses"
+                      v-for="option in courseOptions"
                       :key="option.value"
                       v-slot="{ active, selected }"
                       as="template"
@@ -281,7 +235,7 @@
                 >
                   <ListboxOptions class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
                     <ListboxOption
-                      v-for="option in strokes"
+                      v-for="option in strokeOptions"
                       :key="option.value"
                       v-slot="{ active, selected }"
                       as="template"
@@ -331,7 +285,7 @@
                 >
                   <ListboxOptions class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
                     <ListboxOption
-                      v-for="option in distances"
+                      v-for="option in distanceOptions"
                       :key="option.value"
                       v-slot="{ active, selected }"
                       as="template"
