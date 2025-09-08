@@ -38,7 +38,7 @@
 
   const qualifyingYearInfo = computed( () => (
     qualifyingInfo.value ?? [] )
-    .filter( row => ( row.year === qualifyingYear.value && row.age === qualifyingAge.value ) )
+    .filter( row => ( row.year === qualifyingYear.value && row.age === qualifyingAge.value && row.gender === swimmer.value.gender ) )
   )
 
   type PerformanceApiResponse = InternalApi["/api/relative/:id"]["get"]
