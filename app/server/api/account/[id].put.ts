@@ -70,7 +70,9 @@ export default eventHandler( async ( event ) => {
     const insertSwimmerSql =
       `INSERT INTO Swimmers (
         id,
-        name,
+        firstName,
+        middleName,
+        lastName,
         birthday,
         gender,
         nationality,
@@ -80,7 +82,9 @@ export default eventHandler( async ( event ) => {
       )
       VALUES (
         :id,
-        :name,
+        :firstName,
+        :middleName,
+        :lastName,
         :birthday,
         :gender,
         :nationality,
@@ -89,7 +93,9 @@ export default eventHandler( async ( event ) => {
         :active
       )
       ON DUPLICATE KEY UPDATE
-        name        = :name,
+        firstName   = :firstName,
+        middleName  = :middleName,
+        lastName    = :lastName,
         birthday    = :birthday,
         gender      = :gender,
         nationality = :nationality,

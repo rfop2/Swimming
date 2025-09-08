@@ -11,7 +11,9 @@ export interface DatabaseUser {
 
 export interface Swimmer {
   id: string
-  name: string
+  fullName?: string
+  firstName: string
+  lastName: string
   birthday: string
   gender: string
   nationality: string

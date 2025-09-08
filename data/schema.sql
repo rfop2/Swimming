@@ -255,15 +255,19 @@ DROP TABLE IF EXISTS `Swimmers`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `Swimmers` (
-  `created` timestamp NOT NULL DEFAULT current_timestamp(),
   `id` varchar(8) NOT NULL,
-  `name` varchar(32) NOT NULL,
+  `fullName` varchar(255) GENERATED ALWAYS AS (concat_ws(' ',`firstName`,`middleName`,`lastName`)) VIRTUAL,
+  `firstName` varchar(32) NOT NULL,
+  `middleName` varchar(32) DEFAULT NULL,
+  `lastName` varchar(32) NOT NULL,
   `birthday` date NOT NULL,
   `gender` varchar(16) NOT NULL,
   `nationality` varchar(16) DEFAULT NULL,
   `region` varchar(16) DEFAULT NULL,
   `county` varchar(16) DEFAULT NULL,
   `active` tinyint(1) NOT NULL DEFAULT 1,
+  `created` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -338,7 +342,10 @@ SET character_set_client = utf8mb4;
 /*!50001 CREATE VIEW `UserSwimmersView` AS SELECT
  1 AS `userId`,
   1 AS `id`,
-  1 AS `name`,
+  1 AS `fullName`,
+  1 AS `firstName`,
+  1 AS `middleName`,
+  1 AS `lastName`,
   1 AS `birthday`,
   1 AS `gender`,
   1 AS `nationality`,
@@ -403,7 +410,7 @@ USE `swimming`;
 /*!50001 SET collation_connection      = utf8mb4_uca1400_ai_ci */;
 /*!50001 CREATE ALGORITHM=UNDEFINED */
 /*!50013 DEFINER=`root`@`%` SQL SECURITY DEFINER */
-/*!50001 VIEW `UserSwimmersView` AS select `UserSwimmers`.`userId` AS `userId`,`Swimmers`.`id` AS `id`,`Swimmers`.`name` AS `name`,`Swimmers`.`birthday` AS `birthday`,`Swimmers`.`gender` AS `gender`,`Swimmers`.`nationality` AS `nationality`,`Swimmers`.`region` AS `region`,`Swimmers`.`county` AS `county`,`Swimmers`.`active` AS `active` from (`UserSwimmers` join `Swimmers` on(`UserSwimmers`.`swimmerId` = `Swimmers`.`id`)) */;
+/*!50001 VIEW `UserSwimmersView` AS select `UserSwimmers`.`userId` AS `userId`,`Swimmers`.`id` AS `id`,`Swimmers`.`fullName` AS `fullName`,`Swimmers`.`firstName` AS `firstName`,`Swimmers`.`middleName` AS `middleName`,`Swimmers`.`lastName` AS `lastName`,`Swimmers`.`birthday` AS `birthday`,`Swimmers`.`gender` AS `gender`,`Swimmers`.`nationality` AS `nationality`,`Swimmers`.`region` AS `region`,`Swimmers`.`county` AS `county`,`Swimmers`.`active` AS `active` from (`UserSwimmers` join `Swimmers` on(`UserSwimmers`.`swimmerId` = `Swimmers`.`id`)) */;
 /*!50001 SET character_set_client      = @saved_cs_client */;
 /*!50001 SET character_set_results     = @saved_cs_results */;
 /*!50001 SET collation_connection      = @saved_col_connection */;

@@ -79,7 +79,8 @@
             }
           ),
         swimmers: yup.array( yup.object( {
-          name: yup.string().required(),
+          firstName: yup.string().required(),
+          lastName: yup.string().required(),
           gender: yup.string().required(),
           birthday: yup.string().required(),
           nationality: yup.string().required(),
@@ -126,7 +127,8 @@
     const newSwimmer = {
       ...{
         id: "",
-        name: "",
+        firstName: "",
+        lastName: "",
         gender: "male",
         birthday: "",
         nationality: "",
@@ -234,7 +236,7 @@
       }
       const nameCell = doc.querySelector( "#outerWrapper > div:nth-child(2) > div.boxRepeat.rankingsContent > div > div:nth-child(1) > div > table:nth-child(1) > tbody > tr:nth-child(2) > td:nth-child(2)" )
       if ( nameCell ) {
-        foundSwimmer.value.name = nameCell.textContent
+        [ foundSwimmer.value.firstName, foundSwimmer.value.lastName ] = nameCell.textContent.split( /\s+/ )
       }
       const yearCell = doc.querySelector( "#outerWrapper > div:nth-child(2) > div.boxRepeat.rankingsContent > div > div:nth-child(1) > div > table:nth-child(1) > tbody > tr:nth-child(4) > td:nth-child(2)" )
       if ( yearCell ) {
@@ -443,7 +445,13 @@
                         scope="col"
                         class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
                       >
-                        Name
+                        First Name
+                      </th>
+                      <th
+                        scope="col"
+                        class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
+                      >
+                        Last Name
                       </th>
                       <th
                         scope="col"
@@ -507,10 +515,19 @@
                         <input
                           v-if="editing === swimmerIndex"
                           :id="`swimmer-name-${swimmerIndex}`"
-                          v-model="swimmer.value.name"
+                          v-model="swimmer.value.firstName"
                           class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
                         >
-                        <span v-else>{{ swimmer.value.name }}</span>
+                        <span v-else>{{ swimmer.value.firstName }}</span>
+                      </td>
+                      <td class="px-2 py-4 text-sm whitespace-nowrap text-gray-500">
+                        <input
+                          v-if="editing === swimmerIndex"
+                          :id="`swimmer-name-${swimmerIndex}`"
+                          v-model="swimmer.value.lastName"
+                          class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
+                        >
+                        <span v-else>{{ swimmer.value.lastName }}</span>
                       </td>
                       <td class="px-2 py-4 text-sm whitespace-nowrap text-gray-500">
                         <UI-Select
@@ -589,7 +606,7 @@
                               aria-hidden="true"
                             />
 
-                            Edit<span class="sr-only">, {{ swimmer.value.name }}</span>
+                            Edit<span class="sr-only">, {{ swimmer.value.fullName }}</span>
                           </button>
                           <button
                             v-if="editing !== swimmerIndex"
@@ -602,7 +619,7 @@
                               class="-ml-0.5 size-5"
                               aria-hidden="true"
                             />
-                            Delete<span class="sr-only">, {{ swimmer.value.name }}</span>
+                            Delete<span class="sr-only">, {{ swimmer.value.fullName }}</span>
                           </button>
                         </div>
                         <div class="flex gap-2 justify-end">
@@ -617,7 +634,7 @@
                               class="-ml-0.5 size-5"
                               aria-hidden="true"
                             />
-                            Update<span class="sr-only">, {{ swimmer.value.name }}</span>
+                            Update<span class="sr-only">, {{ swimmer.value.fullName }}</span>
                           </button>
                           <button
                             v-if="editing === swimmerIndex"
@@ -629,7 +646,7 @@
                               class="-ml-0.5 size-5"
                               aria-hidden="true"
                             />
-                            Cancel<span class="sr-only">, {{ swimmer.value.name }}</span>
+                            Cancel<span class="sr-only">, {{ swimmer.value.fullName }}</span>
                           </button>
                         </div>
                       </td>
@@ -708,7 +725,7 @@
       <UI-Confirm
         v-if="deleting !== null"
         title="Delete swimmer"
-        :text="`Are you sure you want to delete swimmer '${fields[deleting].value.name}' from your account?`"
+        :text="`Are you sure you want to delete swimmer '${fields[deleting].value.fullName}' from your account?`"
         confirm-label="Delete"
         :action="deleteSwimmer"
       />
@@ -748,7 +765,7 @@
             class="mt-2 max-w-xl text-sm text-gray-500"
           >
             <p>
-              Found - {{ foundSwimmer.name }} ({{ foundSwimmer.birthday?.substring( 0, 4 ) }}) click 'Select' to continue,
+              Found - {{ foundSwimmer.firstName }} {{ foundSwimmer.lastName }} ({{ foundSwimmer.birthday?.substring( 0, 4 ) }}) click 'Select' to continue,
             </p>
           </div>
         </div>

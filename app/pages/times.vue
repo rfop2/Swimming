@@ -217,7 +217,7 @@
                   :rowspan="Object.entries(courseRecords).length"
                   class="whitespace-wrap sm:whitespace-nowrap px-2 py-2 text-right text-sm text-gray-900"
                 >
-                  {{ swimmers ? swimmersMap[swimmerId].name : "Unknown swimmer" }} ({{ getSwimmerAge(swimmersMap[swimmerId]) }})
+                  {{ swimmers ? swimmersMap[swimmerId].fullName : "Unknown swimmer" }} ({{ getSwimmerAge(swimmersMap[swimmerId]) }})
                 </td>
                 <td
                   class="whitespace-nowrap px-2 py-2 text-right text-sm text-gray-900"

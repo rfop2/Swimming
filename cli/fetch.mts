@@ -260,7 +260,7 @@ ON DUPLICATE KEY UPDATE
 ;`
 
 const updateIndividual = async ( swimmer: Swimmer ) => {
-  console.log( `Updating individual data for swimmer '${swimmer.name}'` )
+  console.log( `Updating individual data for swimmer '${swimmer.fullName}'` )
 
   const page: PageInfo = {
     label: `individual_${swimmer.id}`,
@@ -286,7 +286,7 @@ const updateIndividual = async ( swimmer: Swimmer ) => {
 }
 
 const updateResults = async ( swimmer: Swimmer, individualData: Array<IndividualStats> ) => {
-  console.log( `Updating results data for swimmer '${swimmer.name}'` )
+  console.log( `Updating results data for swimmer '${swimmer.fullName}'` )
 
   for ( const event of individualData ) {
     const stroke_distance = STROKE_DISTANCE[`${event.stroke}__${event.distance}`.toLocaleUpperCase() as keyof typeof STROKE_DISTANCE]
@@ -321,7 +321,7 @@ const updateResults = async ( swimmer: Swimmer, individualData: Array<Individual
 }
 
 const updateRankings = async ( swimmer: Swimmer, individualData: Array<IndividualStats> ) => {
-  console.log( `Updating ranking data for swimmer '${swimmer.name}'` )
+  console.log( `Updating ranking data for swimmer '${swimmer.fullName}'` )
 
   const ageGroup = getSwimmerAgeGroup( swimmer )
   for ( const event of individualData ) {
@@ -420,7 +420,7 @@ const updateRankings = async ( swimmer: Swimmer, individualData: Array<Individua
 }
 
 const updatePerformance = async ( swimmer: Swimmer ) => {
-  console.log( `Generating performance data for swimmer '${swimmer.name}'` )
+  console.log( `Generating performance data for swimmer '${swimmer.fullName}'` )
 
   const ageGroup = getSwimmerAgeGroup( swimmer )
 
@@ -471,7 +471,7 @@ const updatePerformance = async ( swimmer: Swimmer ) => {
 }
 
 const updateSwimmerData = async ( swimmer: Swimmer ) => {
-  console.log( `Updating data for swimmer '${swimmer.name}'` )
+  console.log( `Updating data for swimmer '${swimmer.fullName}'` )
 
   const individualData = await updateIndividual( swimmer )
 
