@@ -36,7 +36,7 @@ user=root
 password=$MARIADB_ROOT_PASSWORD
 EOF
 
-dumpCmd="mariadb-dump --defaults-extra-file=$REMOTE_CNF --databases $MARIADB_DATABASE --add-drop-database --no-data --routines --triggers -r /dev/stdout"
+dumpCmd="mariadb-dump --defaults-extra-file=$REMOTE_CNF --databases $MARIADB_DATABASE --add-drop-database --no-data --routines --triggers --skip-dump-date -r /dev/stdout"
 dumpCmd+=' | sed -E -e "s/ AUTO_INCREMENT=[0-9]+//g"'
 docker compose exec -T $DB_CONTAINER /bin/bash -c "$dumpCmd" > $SCHEMA_FILE
 
