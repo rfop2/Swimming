@@ -3,7 +3,7 @@
   import { CheckIcon, ChevronUpDownIcon } from "@heroicons/vue/24/outline"
   import classNames from "classnames"
   import { getYear } from "date-fns"
-  import { COURSES, type IndividualRow, strokes, secondsToTime, getSwimmerAgeGroup, convertTime, getSwimmerAge } from "lib"
+  import { COURSES, type IndividualRow, strokes, secondsToTime, getSwimmerAgeGroup, convertTime, getSwimmerAge, type QualifyingRow } from "lib"
 
   import type { InternalApi } from "nitropack"
 
@@ -40,19 +40,19 @@
   const distances = computed( () => strokes[selections.stroke.value].distances )
 
   interface  QualifiedRow extends IndividualRow {
-    qualified: string
-    altQualified: string
+    qualified?: QualifyingRow
+    altQualified?: QualifyingRow
   }
 
   const groupedRecords = computed( () => {
     const currentYear = getYear( new Date() )
-    const map: Record<string,Record<string,Record<string,QualifiedRow | null>>> = {}
+    const map = new Map<string,Map<string,Map<string,QualifiedRow | null>>>()
     for ( const row of filteredRecords.value ) {
-      if ( !map[row.swimmer] ) {
-        map[row.swimmer] = {}
+      if ( !map.has( row.swimmer ) ) {
+        map.set( row.swimmer, new Map() )
       }
-      if ( !map[row.swimmer][row.course] ) {
-        map[row.swimmer][row.course] = Object.fromEntries( distances.value.map( distance => [ distance, null ] ) )
+      if ( !map.get( row.swimmer )?.has( row.course ) ) {
+        map.get( row.swimmer )?.set( row.course, new Map( distances.value.map( distance => [ distance, null ] ) ) )
       }
       const swimmer = swimmersMap.value[row.swimmer]
       const swimmerAge = getSwimmerAgeGroup( swimmer )
@@ -94,13 +94,21 @@
         altQualifyingTimes.find( q => q.scope === "regional" ) ??
         altQualifyingTimes.find( q => q.scope === "county" )
       // console.log( unref( swimmer ), unref( row ), "B", unref( baseQualifyingTimes ), "Q", unref( qualifyingTimes ), qualified, "A", unref( altQualifyingTimes ), altQualified )
-      map[row.swimmer][row.course][row.distance] = {
-        ...row,
-        qualified: qualified ? qualified.scope : "none",
-        altQualified: altQualified ? altQualified.scope : "none"
+      if ( map.get( row.swimmer )?.has( row.course ) ) {
+        map.get( row.swimmer )?.get( row.course )?.set( row.distance, {
+          ...row,
+          qualified,
+          altQualified
+        } )
       }
     }
-    return map
+    const sortedMap = new Map( [ ...map.entries() ].sort( ( [ keyA, _valA ], [ keyB, _valB ] ) => {
+      const lastSort = swimmersMap.value[keyA].lastName.localeCompare( swimmersMap.value[keyB].lastName )
+      if ( lastSort )
+        return lastSort
+      return swimmersMap.value[keyA].firstName.localeCompare( swimmersMap.value[keyB].firstName )
+    } ) )
+    return sortedMap
   } )
 </script>
 
@@ -202,19 +210,19 @@
           </thead>
           <tbody class="divide-y divide-gray-200 bg-white">
             <template
-              v-for="(courseRecords,swimmerId) in groupedRecords"
+              v-for="[swimmerId,courseRecords] in [...groupedRecords]"
               :key="swimmerId"
             >
               <tr
-                v-for="(distanceRow,course) in courseRecords"
+                v-for="[course,distanceRow] in [...courseRecords]"
                 :key="`${course}`"
                 class="divide-x divide-gray-200"
-                :class="classNames({ '!border-t-2 !border-gray-400': course === Object.keys(courseRecords)[0] })"
+                :class="classNames({ '!border-t-2 !border-gray-400': course === courseRecords.keys().next().value })"
               >
                 <!-- Only render the first cell once per group, with rowspan -->
                 <td
-                  v-if="course === Object.keys(courseRecords)[0]"
-                  :rowspan="Object.entries(courseRecords).length"
+                  v-if="course === courseRecords.keys().next().value"
+                  :rowspan="courseRecords.size"
                   class="whitespace-wrap sm:whitespace-nowrap px-2 py-2 text-right text-sm text-gray-900"
                 >
                   {{ swimmers ? swimmersMap[swimmerId].fullName : "Unknown swimmer" }} ({{ getSwimmerAge(swimmersMap[swimmerId]) }})
@@ -230,14 +238,14 @@
                   :key="distance"
                   class="whitespace-nowrap px-2 py-2 text-right text-sm text-gray-900"
                 >
-                  <span v-if="distanceRow && distanceRow[distance]">
-                    <span :class="`qualified-${distanceRow[distance].qualified}`">{{ secondsToTime( distanceRow[distance].time ) }}</span>
+                  <span v-if="distanceRow.get( distance )">
+                    <span :class="`qualified-${distanceRow.get( distance )?.qualified?.scope??'none'}`">{{ secondsToTime( distanceRow.get( distance )?.time ?? 0 ) }}</span>
                     <span
-                      v-if="(courseRecords[course === 'lc' ? 'sc' : 'lc']?.[distance]?.converted_time ?? Infinity) < distanceRow[distance].time"
+                      v-if="(courseRecords.get( course === 'lc' ? 'sc' : 'lc')?.get( distance )?.converted_time ?? Infinity) < (distanceRow?.get( distance )?.time ?? 0)"
                       class="italic"
-                      :class="`qualified-${courseRecords[course === 'lc' ? 'sc' : 'lc']?.[distance]?.altQualified}`"
+                      :class="`qualified-${courseRecords.get( course === 'lc' ? 'sc' : 'lc' )?.get( distance )?.altQualified?.scope??'none'}`"
                     >
-                      ({{ secondsToTime(courseRecords[course === 'lc' ? 'sc' : 'lc']?.[distance]?.converted_time ?? 0) }})
+                      ({{ secondsToTime(courseRecords.get( course === 'lc' ? 'sc' : 'lc' )?.get( distance )?.converted_time ?? 0) }})
                     </span>
                   </span>
                 </td>
