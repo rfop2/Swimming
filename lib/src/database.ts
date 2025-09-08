@@ -16,6 +16,17 @@ export const getPool = async () => {
   return pool
 }
 
+export const closePool = async () => {
+  if ( pool ) {
+    try {
+      await pool.end()
+      console.log( "closePool] Connection pool closed." )
+    } catch ( err ) {
+      console.error( "[closePool] Error closing connection pool:", err )
+    }
+  }
+}
+
 // Mimic better-sqlite3 RunResult
 export type RunResult = {
   affectedRows: number
