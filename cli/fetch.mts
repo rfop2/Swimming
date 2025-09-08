@@ -28,6 +28,7 @@ import {
   parseRanking,
   parseMeet,
   parseMeets,
+  closePool,
 } from "lib"
 
 import type {
@@ -558,29 +559,18 @@ const updateMeets = async () => {
       await updateMeets()
     }
   } catch ( error ) {
-    console.error( "General error", error )
-    process.exit( -1 )
+    console.error( "Error in script", error )
+  } finally {
+    closePool()
   }
-
-  process.exit( 0 )
 } )().catch( ( error ) => {
-  console.error( "Caught error...", error )
-  console.trace( error )
+  console.error( "Uncaught error...", error )
 } )
 
-process.on( "uncaughtException", function ( err ) {
-  console.log( "Possibly uncaught Exception: " + err )
-  console.trace( err )
-  process.exit( -1 )
+process.on( "unhandledRejection", ( reason, promise ) => {
+  console.error( "Unhandled rejection in promise:", reason, promise )
 } )
 
-process.on( "unhandledRejection", function ( reason, p ) {
-  console.log(
-    "Possibly Unhandled Rejection at: Promise ",
-    p,
-    " reason: ",
-    reason,
-  )
-  console.trace( reason )
-  process.exit( -1 )
+process.on( "uncaughtException", ( err ) => {
+  console.error( "Uncaught exception:", err )
 } )
