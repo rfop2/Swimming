@@ -39,8 +39,8 @@
 
   const navigation = computed( () => [
     { name: "Performance", href: "/performance", condition: ()=>( !!swimmer.value ) },
-    { name: "Times", href: "/times" },
     { name: "Results", href: "/results", condition: ()=>( !!swimmer.value ) },
+    { name: "Times", href: "/times" },
     { name: "Qualifying", href: "/qualifying" },
     { name: "Meets", href: "/meets" },
   ] )
