@@ -2,7 +2,7 @@
   import type { InternalApi } from "nitropack"
   import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from "@headlessui/vue"
   import { ArrowUturnLeftIcon, LinkIcon, CheckIcon, ChevronUpDownIcon, ChartBarIcon } from "@heroicons/vue/24/outline"
-  import { COUNTIES, type IndividualStats, NATIONALITIES, REGIONS, STROKE_DISTANCE, type Swimmer, convertTime, countyRankParams, createUrl, getSwimmerAge, globalRankParams, nationalRankParams, rankBaseUrl, regionalRankParams, secondsToTime, strokeSort } from "lib"
+  import { COUNTIES, type IndividualStats, NATIONALITIES, REGIONS, STROKE_DISTANCE, type Swimmer, convertTime, countyRankParams, createUrl, getSwimmerAge, getSwimmerScopeArea, globalRankParams, nationalRankParams, rankBaseUrl, regionalRankParams, secondsToTime, strokeSort } from "lib"
   import { differenceInCalendarMonths, getYear, addMonths, format } from "date-fns"
 
   definePageMeta( {
@@ -153,7 +153,7 @@
             qualifyingRecord.qualifying[scope as keyof QualifyingType] = performanceRecord
           }
           const qualifyingEntry = ( qualifyingYearInfo?.value || [] ).find( entry => (
-            entry.stroke === stroke && entry.distance === distance && entry.scope === scope
+            entry.stroke === stroke && entry.distance === distance && entry.scope === scope && entry.area === getSwimmerScopeArea( swimmer.value, scope )
           ) )
           if ( qualifyingEntry ) {
             const qualifyRaw = qualifyingEntry ? convertTime( qualifyingEntry.course, course, stroke, distance, qualifyingEntry.time ) : undefined
