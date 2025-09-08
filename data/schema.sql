@@ -198,7 +198,8 @@ CREATE TABLE `Rankings` (
   `level` int(11) DEFAULT NULL,
   `date` date DEFAULT NULL,
   `time` decimal(8,2) DEFAULT NULL,
-  `fina` int(11) DEFAULT NULL
+  `fina` int(11) DEFAULT NULL,
+  KEY `idx_group` (`created`,`gender`,`age`,`course`,`stroke`,`distance`,`scope`,`area`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
