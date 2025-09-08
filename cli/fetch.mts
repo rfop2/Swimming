@@ -424,22 +424,32 @@ const updatePerformance = async ( swimmer: Swimmer ) => {
 
   const ageGroup = getSwimmerAgeGroup( swimmer )
 
-  // Now generate the performance records
+  const pool = await getPool()
+  const selectMaxCreated = prepareStatement<{ swimmerId: string },{ MaxCreated: string }>(
+    pool,
+    "SELECT MAX(DATE(created)) AS MaxCreated FROM Rankings WHERE swimmer = :swimmerId",
+  )
+  const result = await selectMaxCreated.get( { swimmerId: swimmer.id } )
+  if ( !result?.MaxCreated ) {
+    throw new Error( `No ranking records found for swimmer '${swimmer.id}'` )
+  }
+
   const getSwimmerRankingTimes = prepareStatement<{date:string,swimmer:string},RankingRecord>(
-    await getPool(),
+    pool,
     "SELECT course, stroke, distance, scope, area, rank, date, time FROM Rankings WHERE created = :date AND swimmer = :swimmer"
   )
-  const swimmerTimes = await getSwimmerRankingTimes.all( { date: today, swimmer: swimmer.id } )
+  const swimmerTimes = await getSwimmerRankingTimes.all( { date: result.MaxCreated, swimmer: swimmer.id } )
 
   const getBestRankingTimes = prepareStatement<{date:string,gender:string,age:string},RankingRecord>(
-    await getPool(),
+    pool,
     "SELECT course, stroke, distance, scope, area, date, MIN(time) as time FROM Rankings WHERE created = :date AND gender = :gender AND age = :age GROUP BY gender, age, course, stroke, distance, scope, area"
   )
-  const bestTimes = await getBestRankingTimes.all( { date: today, gender: swimmer.gender, age: ageGroup } )
+  const bestTimes = await getBestRankingTimes.all( { date: result.MaxCreated, gender: swimmer.gender, age: ageGroup } )
   const bestTimesMap = new Map( bestTimes.map( time => [ `${time.course}_${time.stroke}_${time.distance}_${time.scope}_${time.area}`, time ] ) )
 
-  const deletePerformance = prepareStatement( await getPool(), deletePerformanceSql )
-  const savePerformance = prepareStatement( await getPool(), insertPerformanceSql )
+  // Now generate the performance records
+  const deletePerformance = prepareStatement( pool, deletePerformanceSql )
+  const savePerformance = prepareStatement( pool, insertPerformanceSql )
   for ( const swimmerTime of swimmerTimes ) {
     const raceLabel = `${swimmerTime.course}_${swimmerTime.stroke}_${swimmerTime.distance}_${swimmerTime.scope}_${swimmerTime.area}`
     const bestTime = bestTimesMap.get( raceLabel )
