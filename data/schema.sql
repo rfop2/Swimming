@@ -27,6 +27,43 @@ CREATE DATABASE /*!32312 IF NOT EXISTS*/ `swimming` /*!40100 DEFAULT CHARACTER S
 USE `swimming`;
 
 --
+-- Table structure for table `ClubSwimmers`
+--
+
+DROP TABLE IF EXISTS `ClubSwimmers`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `ClubSwimmers` (
+  `clubId` varchar(8) NOT NULL,
+  `swimmerId` varchar(8) NOT NULL,
+  `created` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`clubId`,`swimmerId`) USING BTREE,
+  KEY `swimmerId` (`swimmerId`),
+  CONSTRAINT `ClubSwimmers_ibfk_1` FOREIGN KEY (`clubId`) REFERENCES `Clubs` (`clubId`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `ClubSwimmers_ibfk_2` FOREIGN KEY (`swimmerId`) REFERENCES `Swimmers` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `Clubs`
+--
+
+DROP TABLE IF EXISTS `Clubs`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `Clubs` (
+  `clubId` varchar(8) NOT NULL,
+  `clubName` varchar(128) NOT NULL,
+  `clubRegion` varchar(8) NOT NULL,
+  `clubCounty` varchar(8) NOT NULL,
+  `meetName` varchar(32) DEFAULT NULL,
+  `created` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
+  KEY `clubId` (`clubId`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
 -- Table structure for table `Individual`
 --
 
