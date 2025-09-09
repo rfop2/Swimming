@@ -1,13 +1,14 @@
 <script setup lang="ts">
   import { Listbox, ListboxButton, ListboxLabel, ListboxOption, ListboxOptions } from "@headlessui/vue"
   import { CheckIcon, ChevronUpDownIcon } from "@heroicons/vue/24/outline"
-  import { COURSES, type Swimmer, secondsToTime, strokes } from "lib"
+  import { COURSES, type Swimmer, convertTime, getSwimmerAgeGroup, secondsToTime, strokes } from "lib"
   import { Line } from "vue-chartjs"
   import {  Chart as ChartJS, CategoryScale, LinearScale, TimeScale, PointElement, LineElement, Title, Tooltip, Legend, type ChartData, type ChartOptions, type TooltipItem } from "chart.js"
   import "chartjs-adapter-date-fns"
+  import annotationPlugin from "chartjs-plugin-annotation"
 
   import type { InternalApi } from "nitropack"
-  import { format } from "date-fns"
+  import { format, getYear } from "date-fns"
 
   definePageMeta( {
     layout: "secure",
@@ -79,6 +80,39 @@
     }
   )
 
+  // type QualifyingApiResponse = InternalApi["/api/qualifying"]["get"]
+  const { data: qualifyingInfo } = await useFetch(
+    "/api/qualifying",
+  )
+
+  const currentYear = getYear( new Date() )
+  const swimmerAge = computed( () => getSwimmerAgeGroup( swimmer.value ) )
+  const qualifyingTimes = computed( () => ( qualifyingInfo.value ?? [] ).filter( q => {
+    if ( q.year !== currentYear )
+      return false
+    if ( q.stroke !== selections.stroke.value )
+      return false
+    if ( q.distance !== selections.distance.value )
+      return false
+    if ( q.gender !== swimmer.value.gender )
+      return false
+    if ( q.age !== swimmerAge.value )
+      return false
+    if ( q.scope === "county" && q.area !== swimmer.value.county )
+      return false
+    if ( q.scope === "regional" && q.area !== swimmer.value.region )
+      return false
+    if ( q.scope === "national" && q.area !== swimmer.value.nationality )
+      return false
+    return true
+  } ).map( ( q ) => ( {
+    ...q,
+    courseTime: convertTime( q.course, selections.course.value, selections.stroke.value, selections.distance.value, q.time )
+  } ) ) )
+  const countyQualifying = computed( () => qualifyingTimes.value.find( q => q.scope === "county" ) )
+  const regionQualifying = computed( () => qualifyingTimes.value.find( q => q.scope === "regional" ) )
+  const nationQualifying = computed( () => qualifyingTimes.value.find( q => q.scope === "national" ) )
+
   const { updateSort, getSortIcon, sortRecords } = useMultiSort<ResultType>()
 
   const sortedRecords = computed( () => sortRecords( records.value as Array<ResultType> ) )
@@ -91,7 +125,8 @@
     LineElement,
     Title,
     Tooltip,
-    Legend
+    Legend,
+    annotationPlugin
   )
 
   const data = computed<ChartData<"line",number[],string>>( () => ( {
@@ -106,7 +141,9 @@
     ]
   } ) )
 
-  const options: ChartOptions<"line"> = {
+  const ucFirst = ( s: string ) => s.charAt( 0 ).toLocaleUpperCase() + s.slice( 1 )
+
+  const options = computed<ChartOptions<"line">>( () => ( {
     responsive: true,
     maintainAspectRatio: false,
     scales: {
@@ -139,9 +176,53 @@
             return `${label}: ${secondsToTime( context.raw as number )}`
           }
         }
+      },
+      annotation: {
+        annotations: {
+          line1: {
+            type: "line",
+            yMin: countyQualifying.value?.courseTime,
+            yMax: countyQualifying.value?.courseTime,
+            borderColor: "#22c55e",
+            borderWidth: 1,
+            label: {
+              display: !!countyQualifying.value,
+              content: ucFirst( countyQualifying.value?.scope ?? "" ),
+              position: "start"
+            },
+            display: !!countyQualifying.value,
+          },
+          zone1: {
+            type: "box",
+            yMin: 0,
+            yMax: countyQualifying.value?.courseTime,
+            backgroundColor: "#22c55e10",
+            display: !!countyQualifying.value,
+          },
+          line2: {
+            type: "line",
+            yMin: regionQualifying.value?.courseTime,
+            yMax: regionQualifying.value?.courseTime,
+            borderColor: "#f97416",
+            borderWidth: 1,
+            label: {
+              display: !!regionQualifying.value,
+              content: ucFirst( regionQualifying.value?.scope ?? "" ),
+              position: "start"
+            },
+            display: !!regionQualifying.value,
+          },
+          zone2: {
+            type: "box",
+            yMin: 0,
+            yMax: regionQualifying.value?.courseTime,
+            backgroundColor: "#f9741610",
+            display: !!regionQualifying.value,
+          },
+        }
       }
     }
-  }
+  } ) )
 
 </script>
 
