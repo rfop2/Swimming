@@ -203,7 +203,7 @@
             borderWidth: 0,
             label: {
               display: true,
-              content: ucFirst( countyQualifying.value?.scope ?? "" ),
+              content: `${ucFirst( countyQualifying.value?.scope ?? "" )}: ${secondsToTime( countyQualifying.value?.courseTime || 0 )}`,
               position: "start",
               backgroundColor: "rgba(255,0,0,0.7)",
               color: "#119e45",
@@ -229,7 +229,7 @@
             borderWidth: 0,
             label: {
               display: true,
-              content: ucFirst( regionQualifying.value?.scope ?? "" ),
+              content: `${ucFirst( regionQualifying.value?.scope ?? "" )}: ${secondsToTime( regionQualifying.value?.courseTime || 0 )}`,
               position: "start",
               backgroundColor: "rgba(0,255,0,0.7)",
               color: "#b65e1f",
