@@ -20,9 +20,8 @@ export const closePool = async () => {
   if ( pool ) {
     try {
       await pool.end()
-      console.log( "closePool] Connection pool closed." )
     } catch ( err ) {
-      console.error( "[closePool] Error closing connection pool:", err )
+      console.error( "Error closing connection pool:", err )
     }
   }
 }
