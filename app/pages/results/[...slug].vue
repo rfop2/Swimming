@@ -151,8 +151,21 @@
   const yMin = computed( () => {
     const minData = Math.min( ...dataValues.value )
     const minValue = Math.min( minData, qualValues.value )
-    const padding = 5   // allow some space for the label
-    return minValue - padding
+
+    // Adaptive padding based on minValue
+    // Small values => small padding, large values => larger padding
+    const padding = Math.max( 2, Math.min( 10, Math.floor( minValue * 0.05 ) ) )
+
+    // Round down to nearest "nice" unit
+    // Example: round down to nearest multiple of 1, 5, 10, 60 seconds etc.
+    // Here we can round down to nearest 1, 5, 10, 30, 60 depending on magnitude
+    let scale = 1
+    if ( minValue > 300 ) scale = 10
+    else if ( minValue > 100 ) scale = 5
+    else if ( minValue > 60 ) scale = 2
+    else scale = 1
+
+    return Math.floor( ( minValue - padding ) / scale ) * scale
   } )
 
   const ucFirst = ( s: string ) => s.charAt( 0 ).toLocaleUpperCase() + s.slice( 1 )
