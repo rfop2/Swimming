@@ -18,13 +18,12 @@
   const route = useRoute()
   const slug = Array.isArray( route.params.slug ) ? route.params.slug : []
 
-  console.log( "S", slug[1] ?? 0 )
   const courseOptions = Object.entries( COURSES ).map( ( [ k, v ] ) => ( { value: k, label: v } ) )
   const strokeOptions = Object.entries( strokes ).map( ( [ k, v ] ) => ( { value: k, label: v.label } ) )
   const distanceOptions = reactive<{ value: string, label: string }[]>( strokes[slug[1] ?? Object.keys( strokes )[0]].distances.map( d => ( { value: d, label: d } ) ) )
 
   const selections = reactive( {
-    course: courseOptions.find( option => option.value === slug[0] ) ?? courseOptions[1],
+    course: courseOptions.find( option => option.value === slug[0] ) ?? courseOptions[0],
     stroke: strokeOptions.find( option => option.value === slug[1] ) ?? strokeOptions[0],
     distance: distanceOptions.find( option => option.value === slug[2] ) ?? distanceOptions[0]
   } )
@@ -111,7 +110,7 @@
   } ) ) )
   const countyQualifying = computed( () => qualifyingTimes.value.find( q => q.scope === "county" ) )
   const regionQualifying = computed( () => qualifyingTimes.value.find( q => q.scope === "regional" ) )
-  const nationQualifying = computed( () => qualifyingTimes.value.find( q => q.scope === "national" ) )
+  // const nationQualifying = computed( () => qualifyingTimes.value.find( q => q.scope === "national" ) )
 
   const { updateSort, getSortIcon, sortRecords } = useMultiSort<ResultType>()
 
@@ -129,6 +128,10 @@
     annotationPlugin
   )
 
+  const dataValues = computed( () =>
+    ( records?.value || [] ).map( record => Number( record.time ) )
+  )
+
   const data = computed<ChartData<"line",number[],string>>( () => ( {
     labels: ( records?.value || [] ).map( record => record.date ),
     datasets: [
@@ -136,10 +139,21 @@
         label: "Time",
         backgroundColor: "#3b82f6",
         // data: ( records?.value || [] ).map( record => ( { x: record.date, y: Number( record.time ) } ) )
-        data: ( records?.value || [] ).map( record => Number( record.time ) )
+        data: dataValues.value,
       }
     ]
   } ) )
+
+  const qualValues = computed( () =>
+    Math.min( ...qualifyingTimes.value.map( q => q.courseTime ) )
+  )
+
+  const yMin = computed( () => {
+    const minData = Math.min( ...dataValues.value )
+    const minValue = Math.min( minData, qualValues.value )
+    const padding = 5   // allow some space for the label
+    return minValue - padding
+  } )
 
   const ucFirst = ( s: string ) => s.charAt( 0 ).toLocaleUpperCase() + s.slice( 1 )
 
@@ -162,7 +176,8 @@
         title: {
           display: true,
           text: "Time"
-        }
+        },
+        min: yMin.value, // use computed minimum
       }
     },
     plugins: {
@@ -179,38 +194,31 @@
       },
       annotation: {
         annotations: {
-          line1: {
-            type: "line",
-            yMin: countyQualifying.value?.courseTime,
-            yMax: countyQualifying.value?.courseTime,
-            borderColor: "#22c55e",
-            borderWidth: 1,
-            label: {
-              display: !!countyQualifying.value,
-              content: ucFirst( countyQualifying.value?.scope ?? "" ),
-              position: "start"
-            },
-            display: !!countyQualifying.value,
-          },
           zone1: {
             type: "box",
             yMin: 0,
             yMax: countyQualifying.value?.courseTime,
             backgroundColor: "#22c55e10",
             display: !!countyQualifying.value,
-          },
-          line2: {
-            type: "line",
-            yMin: regionQualifying.value?.courseTime,
-            yMax: regionQualifying.value?.courseTime,
-            borderColor: "#f97416",
-            borderWidth: 1,
+            borderWidth: 0,
             label: {
-              display: !!regionQualifying.value,
-              content: ucFirst( regionQualifying.value?.scope ?? "" ),
-              position: "start"
-            },
-            display: !!regionQualifying.value,
+              display: true,
+              content: ucFirst( countyQualifying.value?.scope ?? "" ),
+              position: "start",
+              backgroundColor: "rgba(255,0,0,0.7)",
+              color: "#119e45",
+              font: {
+                size: 12,
+                weight: "normal",
+                // family: "Arial"
+              },
+              padding: {
+                top: 4,
+                right: 6,
+                bottom: 4,
+                left: 6
+              },
+            }
           },
           zone2: {
             type: "box",
@@ -218,6 +226,20 @@
             yMax: regionQualifying.value?.courseTime,
             backgroundColor: "#f9741610",
             display: !!regionQualifying.value,
+            borderWidth: 0,
+            label: {
+              display: true,
+              content: ucFirst( regionQualifying.value?.scope ?? "" ),
+              position: "start",
+              backgroundColor: "rgba(0,255,0,0.7)",
+              color: "#b65e1f",
+              font: {
+                size: 12,
+                weight: "normal"
+              },
+              padding: 4,
+              borderRadius: 4
+            }
           },
         }
       }
