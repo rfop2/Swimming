@@ -219,7 +219,7 @@
               content: `${ucFirst( countyQualifying.value?.scope ?? "" )}: ${secondsToTime( countyQualifying.value?.courseTime || 0 )}`,
               position: "start",
               backgroundColor: "rgba(255,0,0,0.7)",
-              color: "#119e45",
+              color: "#137c3a",
               font: {
                 size: 12,
                 weight: "normal",
