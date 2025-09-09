@@ -191,6 +191,16 @@
           text: "Time"
         },
         min: yMin.value, // use computed minimum
+        ticks: {
+          callback: ( value ) => {
+            // Chart.js may pass value as string, convert to number
+            const seconds = Number( value )
+            const mins = Math.floor( seconds / 60 )
+            const secs = Math.floor( seconds % 60 )
+            const paddedSecs = secs.toString().padStart( 2, "0" )
+            return mins > 0 ? `${mins}:${paddedSecs}` : seconds
+          }
+        }
       }
     },
     plugins: {
