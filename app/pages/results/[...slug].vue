@@ -1,13 +1,14 @@
 <script setup lang="ts">
   import { Listbox, ListboxButton, ListboxLabel, ListboxOption, ListboxOptions } from "@headlessui/vue"
   import { CheckIcon, ChevronUpDownIcon } from "@heroicons/vue/24/outline"
-  import { COURSES, type Swimmer, secondsToTime, strokes } from "lib"
+  import { COURSES, type Swimmer, convertTime, getSwimmerAgeGroup, secondsToTime, strokes } from "lib"
   import { Line } from "vue-chartjs"
   import {  Chart as ChartJS, CategoryScale, LinearScale, TimeScale, PointElement, LineElement, Title, Tooltip, Legend, type ChartData, type ChartOptions, type TooltipItem } from "chart.js"
   import "chartjs-adapter-date-fns"
+  import annotationPlugin from "chartjs-plugin-annotation"
 
   import type { InternalApi } from "nitropack"
-  import { format } from "date-fns"
+  import { format, getYear } from "date-fns"
 
   definePageMeta( {
     layout: "secure",
@@ -17,13 +18,12 @@
   const route = useRoute()
   const slug = Array.isArray( route.params.slug ) ? route.params.slug : []
 
-  console.log( "S", slug[1] ?? 0 )
   const courseOptions = Object.entries( COURSES ).map( ( [ k, v ] ) => ( { value: k, label: v } ) )
   const strokeOptions = Object.entries( strokes ).map( ( [ k, v ] ) => ( { value: k, label: v.label } ) )
   const distanceOptions = reactive<{ value: string, label: string }[]>( strokes[slug[1] ?? Object.keys( strokes )[0]].distances.map( d => ( { value: d, label: d } ) ) )
 
   const selections = reactive( {
-    course: courseOptions.find( option => option.value === slug[0] ) ?? courseOptions[1],
+    course: courseOptions.find( option => option.value === slug[0] ) ?? courseOptions[0],
     stroke: strokeOptions.find( option => option.value === slug[1] ) ?? strokeOptions[0],
     distance: distanceOptions.find( option => option.value === slug[2] ) ?? distanceOptions[0]
   } )
@@ -79,6 +79,39 @@
     }
   )
 
+  // type QualifyingApiResponse = InternalApi["/api/qualifying"]["get"]
+  const { data: qualifyingInfo } = await useFetch(
+    "/api/qualifying",
+  )
+
+  const currentYear = getYear( new Date() )
+  const swimmerAge = computed( () => getSwimmerAgeGroup( swimmer.value ) )
+  const qualifyingTimes = computed( () => ( qualifyingInfo.value ?? [] ).filter( q => {
+    if ( q.year !== currentYear )
+      return false
+    if ( q.stroke !== selections.stroke.value )
+      return false
+    if ( q.distance !== selections.distance.value )
+      return false
+    if ( q.gender !== swimmer.value.gender )
+      return false
+    if ( q.age !== swimmerAge.value )
+      return false
+    if ( q.scope === "county" && q.area !== swimmer.value.county )
+      return false
+    if ( q.scope === "regional" && q.area !== swimmer.value.region )
+      return false
+    if ( q.scope === "national" && q.area !== swimmer.value.nationality )
+      return false
+    return true
+  } ).map( ( q ) => ( {
+    ...q,
+    courseTime: convertTime( q.course, selections.course.value, selections.stroke.value, selections.distance.value, q.time )
+  } ) ) )
+  const countyQualifying = computed( () => qualifyingTimes.value.find( q => q.scope === "county" ) )
+  const regionQualifying = computed( () => qualifyingTimes.value.find( q => q.scope === "regional" ) )
+  // const nationQualifying = computed( () => qualifyingTimes.value.find( q => q.scope === "national" ) )
+
   const { updateSort, getSortIcon, sortRecords } = useMultiSort<ResultType>()
 
   const sortedRecords = computed( () => sortRecords( records.value as Array<ResultType> ) )
@@ -91,7 +124,12 @@
     LineElement,
     Title,
     Tooltip,
-    Legend
+    Legend,
+    annotationPlugin
+  )
+
+  const dataValues = computed( () =>
+    ( records?.value || [] ).map( record => Number( record.time ) )
   )
 
   const data = computed<ChartData<"line",number[],string>>( () => ( {
@@ -101,12 +139,38 @@
         label: "Time",
         backgroundColor: "#3b82f6",
         // data: ( records?.value || [] ).map( record => ( { x: record.date, y: Number( record.time ) } ) )
-        data: ( records?.value || [] ).map( record => Number( record.time ) )
+        data: dataValues.value,
       }
     ]
   } ) )
 
-  const options: ChartOptions<"line"> = {
+  const qualValues = computed( () =>
+    Math.min( ...qualifyingTimes.value.map( q => q.courseTime ) )
+  )
+
+  const yMin = computed( () => {
+    const minData = Math.min( ...dataValues.value )
+    const minValue = Math.min( minData, qualValues.value )
+
+    // Adaptive padding based on minValue
+    // Small values => small padding, large values => larger padding
+    const padding = Math.max( 2, Math.min( 10, Math.floor( minValue * 0.05 ) ) )
+
+    // Round down to nearest "nice" unit
+    // Example: round down to nearest multiple of 1, 5, 10, 60 seconds etc.
+    // Here we can round down to nearest 1, 5, 10, 30, 60 depending on magnitude
+    let scale = 1
+    if ( minValue > 300 ) scale = 10
+    else if ( minValue > 100 ) scale = 5
+    else if ( minValue > 60 ) scale = 2
+    else scale = 1
+
+    return Math.floor( ( minValue - padding ) / scale ) * scale
+  } )
+
+  const ucFirst = ( s: string ) => s.charAt( 0 ).toLocaleUpperCase() + s.slice( 1 )
+
+  const options = computed<ChartOptions<"line">>( () => ( {
     responsive: true,
     maintainAspectRatio: false,
     scales: {
@@ -125,7 +189,8 @@
         title: {
           display: true,
           text: "Time"
-        }
+        },
+        min: yMin.value, // use computed minimum
       }
     },
     plugins: {
@@ -139,9 +204,60 @@
             return `${label}: ${secondsToTime( context.raw as number )}`
           }
         }
+      },
+      annotation: {
+        annotations: {
+          zone1: {
+            type: "box",
+            yMin: 0,
+            yMax: countyQualifying.value?.courseTime,
+            backgroundColor: "#22c55e10",
+            display: !!countyQualifying.value,
+            borderWidth: 0,
+            label: {
+              display: true,
+              content: `${ucFirst( countyQualifying.value?.scope ?? "" )}: ${secondsToTime( countyQualifying.value?.courseTime || 0 )}`,
+              position: "start",
+              backgroundColor: "rgba(255,0,0,0.7)",
+              color: "#137c3a",
+              font: {
+                size: 12,
+                weight: "normal",
+                // family: "Arial"
+              },
+              padding: {
+                top: 4,
+                right: 6,
+                bottom: 4,
+                left: 6
+              },
+            }
+          },
+          zone2: {
+            type: "box",
+            yMin: 0,
+            yMax: regionQualifying.value?.courseTime,
+            backgroundColor: "#f9741610",
+            display: !!regionQualifying.value,
+            borderWidth: 0,
+            label: {
+              display: true,
+              content: `${ucFirst( regionQualifying.value?.scope ?? "" )}: ${secondsToTime( regionQualifying.value?.courseTime || 0 )}`,
+              position: "start",
+              backgroundColor: "rgba(0,255,0,0.7)",
+              color: "#b65e1f",
+              font: {
+                size: 12,
+                weight: "normal"
+              },
+              padding: 4,
+              borderRadius: 4
+            }
+          },
+        }
       }
     }
-  }
+  } ) )
 
 </script>
 
