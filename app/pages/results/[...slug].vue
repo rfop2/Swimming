@@ -269,7 +269,7 @@
           Results
         </h1>
         <p class="mt-2 text-sm text-gray-700">
-          Results and progress in each event.
+          Results and progress in each event. Qualifying times are shown where available, adjusted to the selected course.
         </p>
       </div>
     </div>
