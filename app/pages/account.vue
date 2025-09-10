@@ -452,67 +452,67 @@
                     <tr>
                       <th
                         scope="col"
-                        class="py-3.5 pr-3 pl-4 text-left text-sm font-semibold text-gray-900 sm:pl-0"
+                        class="py-3.5 pr-1 pl-2 text-left text-sm font-semibold text-gray-900 sm:pl-0"
                       >
                         Id
                       </th>
                       <th
                         scope="col"
-                        class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
+                        class="px-1 py-3.5 text-left text-sm font-semibold text-gray-900"
                       >
                         First Name
                       </th>
                       <th
                         scope="col"
-                        class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
+                        class="px-1 py-3.5 text-left text-sm font-semibold text-gray-900"
                       >
                         Last Name
                       </th>
                       <th
                         scope="col"
-                        class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
+                        class="px-1 py-3.5 text-left text-sm font-semibold text-gray-900"
                       >
                         Gender
                       </th>
                       <th
                         scope="col"
-                        class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
+                        class="px-1 py-3.5 text-left text-sm font-semibold text-gray-900"
                       >
                         Birthday
                       </th>
                       <th
                         scope="col"
-                        class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
+                        class="px-1 py-3.5 text-left text-sm font-semibold text-gray-900"
                       >
                         Nationality
                       </th>
                       <th
                         scope="col"
-                        class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
+                        class="px-1 py-3.5 text-left text-sm font-semibold text-gray-900"
                       >
                         Region
                       </th>
                       <th
                         scope="col"
-                        class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
+                        class="px-1 py-3.5 text-left text-sm font-semibold text-gray-900"
                       >
                         County
                       </th>
                       <th
                         scope="col"
-                        class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
+                        class="px-1 py-3.5 text-left text-sm font-semibold text-gray-900"
                       >
                         Squad
                       </th>
                       <th
                         scope="col"
-                        class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
+                        class="px-1 py-3.5 text-left text-sm font-semibold text-gray-900"
                       >
                         Active
                       </th>
                       <th
                         scope="col"
-                        class="py-3.5 pr-4 pl-3 sm:pr-0"
+                        class="py-1.5 pr-2 pl-1 sm:pr-0"
                       >
                         <span class="sr-only">Edit</span>
                       </th>
@@ -523,7 +523,7 @@
                       v-for="(swimmer, swimmerIndex) in fields"
                       :key="swimmer.value.id"
                     >
-                      <td class="py-4 pr-2 pl-3 text-sm font-medium whitespace-nowrap text-gray-900 sm:pl-0">
+                      <td class="py-1 pr-1 pl-2 text-sm font-medium whitespace-nowrap text-gray-900 sm:pl-0">
                         <input
                           v-if="editing === swimmerIndex"
                           :id="`swimmer-id-${swimmerIndex}`"
@@ -532,7 +532,7 @@
                         >
                         <span v-else>{{ swimmer.value.id }}</span>
                       </td>
-                      <td class="px-2 py-4 text-sm whitespace-nowrap text-gray-500">
+                      <td class="px-1 py-2 text-sm whitespace-nowrap text-gray-500">
                         <input
                           v-if="editing === swimmerIndex"
                           :id="`swimmer-firstname-${swimmerIndex}`"
@@ -541,7 +541,7 @@
                         >
                         <span v-else>{{ swimmer.value.firstName }}</span>
                       </td>
-                      <td class="px-2 py-4 text-sm whitespace-nowrap text-gray-500">
+                      <td class="px-1 py-2 text-sm whitespace-nowrap text-gray-500">
                         <input
                           v-if="editing === swimmerIndex"
                           :id="`swimmer-lastname-${swimmerIndex}`"
@@ -550,7 +550,7 @@
                         >
                         <span v-else>{{ swimmer.value.lastName }}</span>
                       </td>
-                      <td class="px-2 py-4 text-sm whitespace-nowrap text-gray-500">
+                      <td class="px-1 py-2 text-sm whitespace-nowrap text-gray-500">
                         <UI-Select
                           v-if="editing === swimmerIndex"
                           :id="`swimmer-gender-${swimmerIndex}`"
@@ -559,7 +559,7 @@
                         />
                         <span v-else>{{ genders.find( item => item.value === swimmer.value.gender )?.label }}</span>
                       </td>
-                      <td class="px-2 py-4 text-sm whitespace-nowrap text-gray-500">
+                      <td class="px-1 py-2 text-sm whitespace-nowrap text-gray-500">
                         <UI-Input
                           v-if="editing === swimmerIndex"
                           v-model="swimmer.value.birthday"
@@ -567,7 +567,7 @@
                         />
                         <span v-else>{{ swimmer.value.birthday }}</span>
                       </td>
-                      <td class="px-2 py-4 text-sm whitespace-nowrap text-gray-500">
+                      <td class="px-1 py-2 text-sm whitespace-nowrap text-gray-500">
                         <UI-Select
                           v-if="editing === swimmerIndex"
                           :id="`swimmer-nationality-${swimmerIndex}`"
@@ -576,7 +576,7 @@
                         />
                         <span v-else>{{ nationalities.find( item => item.value === swimmer.value.nationality )?.label }}</span>
                       </td>
-                      <td class="px-2 py-4 text-sm whitespace-nowrap text-gray-500">
+                      <td class="px-1 py-2 text-sm whitespace-nowrap text-gray-500">
                         <UI-Select
                           v-if="editing === swimmerIndex"
                           :id="`swimmer-region-${swimmerIndex}`"
@@ -585,7 +585,7 @@
                         />
                         <span v-else>{{ regions.find( item => item.value === swimmer.value.region )?.label }}</span>
                       </td>
-                      <td class="px-2 py-4 text-sm whitespace-nowrap text-gray-500">
+                      <td class="px-1 py-2 text-sm whitespace-nowrap text-gray-500">
                         <UI-Select
                           v-if="editing === swimmerIndex"
                           :id="`swimmer-county-${swimmerIndex}`"
@@ -594,7 +594,7 @@
                         />
                         <span v-else>{{ counties.find( item => item.value === swimmer.value.county )?.label }}</span>
                       </td>
-                      <td class="px-2 py-4 text-sm whitespace-nowrap text-gray-500">
+                      <td class="px-1 py-2 text-sm whitespace-nowrap text-gray-500">
                         <UI-Combobox
                           v-if="editing === swimmerIndex"
                           :id="`swimmer-squad-${swimmerIndex}`"
@@ -603,7 +603,7 @@
                         />
                         <span v-else>{{ swimmer.value.squad }}</span>
                       </td>
-                      <td class="px-2 py-4 text-sm whitespace-nowrap text-gray-500">
+                      <td class="px-1 py-2 text-sm whitespace-nowrap text-gray-500">
                         <input
                           v-if="editing === swimmerIndex"
                           v-model="swimmer.value.active"
@@ -622,7 +622,7 @@
                           />
                         </span>
                       </td>
-                      <td class="py-4 pr-3 pl-2 text-right text-sm font-medium whitespace-nowrap sm:pr-0">
+                      <td class="py-2 pr-2 pl-1 text-right text-sm font-medium whitespace-nowrap sm:pr-0">
                         <div class="flex gap-2 justify-end">
                           <button
                             v-if="editing !== swimmerIndex"
