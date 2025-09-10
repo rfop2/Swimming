@@ -1,6 +1,4 @@
 <script setup lang="ts">
-  import { Listbox, ListboxButton, ListboxLabel, ListboxOption, ListboxOptions } from "@headlessui/vue"
-  import { CheckIcon, ChevronUpDownIcon } from "@heroicons/vue/24/outline"
   import classNames from "classnames"
   import { getYear } from "date-fns"
   import { COURSES, type IndividualRow, strokes, secondsToTime, getSwimmerAgeGroup, convertTime, getSwimmerAge, type QualifyingRow } from "lib"
@@ -97,6 +95,7 @@
       if ( map.get( row.swimmer )?.has( row.course ) ) {
         map.get( row.swimmer )?.get( row.course )?.set( row.distance, {
           ...row,
+          baseQualifyingTimes,
           qualified,
           altQualified
         } )
@@ -108,6 +107,7 @@
         return lastSort
       return swimmersMap.value[keyA].firstName.localeCompare( swimmersMap.value[keyB].firstName )
     } ) )
+    console.log( "SM", sortedMap )
     return sortedMap
   } )
 </script>
@@ -129,54 +129,12 @@
       <div class="mt-3">
         <div class="flex items-center space-x-4">
           <div class="min-w-72">
-            <Listbox
+            <UI-Listbox
               v-model="selections.stroke"
-              as="div"
-            >
-              <ListboxLabel class="block text-sm font-medium leading-6 text-gray-900">
-                Stroke
-              </ListboxLabel>
-              <div class="relative mt-2">
-                <ListboxButton class="relative w-full cursor-default rounded-md bg-white py-1.5 pl-3 pr-10 text-left text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6">
-                  <span class="block truncate">{{ selections.stroke.label }}</span>
-                  <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
-                    <ChevronUpDownIcon
-                      class="h-5 w-5 text-gray-400"
-                      aria-hidden="true"
-                    />
-                  </span>
-                </ListboxButton>
-                <transition
-                  leave-active-class="transition ease-in duration-100"
-                  leave-from-class="opacity-100"
-                  leave-to-class="opacity-0"
-                >
-                  <ListboxOptions class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
-                    <ListboxOption
-                      v-for="option in strokeOptions"
-                      :key="option.value"
-                      v-slot="{ active, selected }"
-                      as="template"
-                      :value="option"
-                    >
-                      <li :class="[active ? 'bg-indigo-600 text-white' : 'text-gray-900', 'relative cursor-default select-none py-2 pl-3 pr-9']">
-                        <span :class="[selected ? 'font-semibold' : 'font-normal', 'block truncate']">{{ option.label }}</span>
-
-                        <span
-                          v-if="selected"
-                          :class="[active ? 'text-white' : 'text-indigo-600', 'absolute inset-y-0 right-0 flex items-center pr-4']"
-                        >
-                          <CheckIcon
-                            class="h-5 w-5"
-                            aria-hidden="true"
-                          />
-                        </span>
-                      </li>
-                    </ListboxOption>
-                  </ListboxOptions>
-                </transition>
-              </div>
-            </Listbox>
+              :options="strokeOptions"
+              label="Stroke"
+              placeholder="Choose Stroke"
+            />
           </div>
         </div>
       </div>
@@ -239,7 +197,9 @@
                   class="whitespace-nowrap px-2 py-2 text-right text-sm text-gray-900"
                 >
                   <span v-if="distanceRow.get( distance )">
-                    <span :class="`qualified-${distanceRow.get( distance )?.qualified?.scope??'none'}`">{{ secondsToTime( distanceRow.get( distance )?.time ?? 0 ) }}</span>
+                    <UI-Tooltip :text="`Qual - ${distanceRow.get( distance ).baseQualifyingTimes.map( qt => `${qt.scope.charAt(0).toLocaleUpperCase()}: ${secondsToTime( qt.convertedTime )}` ).join( ', ')}`">
+                      <span :class="`qualified-${distanceRow.get( distance )?.qualified?.scope??'none'}`">{{ secondsToTime( distanceRow.get( distance )?.time ?? 0 ) }}</span>
+                    </UI-Tooltip>
                     <span
                       v-if="(courseRecords.get( course === 'lc' ? 'sc' : 'lc')?.get( distance )?.converted_time ?? Infinity) < (distanceRow?.get( distance )?.time ?? 0)"
                       class="italic"
