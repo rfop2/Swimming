@@ -16,6 +16,12 @@ export default defineNuxtConfig( {
     ],
   ],
 
+  vite: {
+    ssr: {
+      external: [ "crypto" ]
+    }
+  },
+
   runtimeConfig: {
     public: {
       appVersion: pkg.version,
