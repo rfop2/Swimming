@@ -89,7 +89,7 @@
           Training targets calculator
         </h1>
         <p class="mt-2 text-sm text-gray-700">
-          Estimated target times for distances at percentage of functional effort pace.
+          Estimated target times for distances at percentage of functional effort pace at {{ baseDistance }}m.
         </p>
       </div>
     </div>
