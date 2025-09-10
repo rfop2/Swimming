@@ -86,18 +86,11 @@
           nationality: yup.string().required(),
           region: yup.string().required(),
           county: yup.string().required(),
+          squad: yup.string(),
           active: yup.number().oneOf( [ 0, 1 ] ).required(),
         } ) )
       } ),
     ),
-  } )
-
-  /* watch( () => values.confirmPassword, () => {
-    validateField( "password" )
-  } ) */
-
-  watch( errors, ( newErrors ) => {
-    console.log( "ERR", newErrors )
   } )
 
   const [ firstName, firstNameAttrs ] = defineField( "firstName" )
@@ -134,6 +127,7 @@
         nationality: "",
         region: "",
         county: "",
+        squad: "",
         active: 1,
       },
       ...foundSwimmer.value
@@ -167,6 +161,19 @@
     deleting.value = null
   }
 
+  const squads = computed( () => Array.from( fields.value.reduce( ( sq, s ) => {
+    if ( s.value.squad )
+      sq.add( s.value.squad )
+    return sq
+  }, new Set<string>() ) ).sort().map( s => ( { label: s, value: s } ) ) )
+  const selectedSquad = ref<{label: string, value: string} | undefined>()
+
+  watch( selectedSquad, ( v ) => {
+    if ( editing.value !== null ) {
+      fields.value[editing.value].value.squad = v?.value ?? ""
+    }
+  } )
+
   const saveSuccess = ref( false )
   const save = handleSubmit( async ( values ) => {
     try {
@@ -182,6 +189,7 @@
         formData.password = unref( password )
         formData.confirmPassword = unref( confirmPassword )
       } */
+      submitErrors.length = 0
       await $fetch( `/api/account/${user.value.id}`, {
         method: "PUT",
         body: JSON.stringify( values ),
@@ -197,7 +205,11 @@
   } )
 
   watch( [ values, meta ], ( newValues ) => {
-    console.log( unref( newValues[0] ), unref( newValues[1] ) )
+    console.log( "VAL", unref( newValues[0] ), "META", unref( newValues[1] ) )
+  } )
+
+  watch( errors, ( newErrors ) => {
+    console.log( "ERR", newErrors )
   } )
 
   const genders =
@@ -487,6 +499,12 @@
                         scope="col"
                         class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
                       >
+                        Squad
+                      </th>
+                      <th
+                        scope="col"
+                        class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
+                      >
                         Active
                       </th>
                       <th
@@ -514,7 +532,7 @@
                       <td class="px-2 py-4 text-sm whitespace-nowrap text-gray-500">
                         <input
                           v-if="editing === swimmerIndex"
-                          :id="`swimmer-name-${swimmerIndex}`"
+                          :id="`swimmer-firstname-${swimmerIndex}`"
                           v-model="swimmer.value.firstName"
                           class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
                         >
@@ -523,7 +541,7 @@
                       <td class="px-2 py-4 text-sm whitespace-nowrap text-gray-500">
                         <input
                           v-if="editing === swimmerIndex"
-                          :id="`swimmer-name-${swimmerIndex}`"
+                          :id="`swimmer-lastname-${swimmerIndex}`"
                           v-model="swimmer.value.lastName"
                           class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
                         >
@@ -574,6 +592,15 @@
                         <span v-else>{{ counties.find( item => item.value === swimmer.value.county )?.label }}</span>
                       </td>
                       <td class="px-2 py-4 text-sm whitespace-nowrap text-gray-500">
+                        <UI-Combobox
+                          v-if="editing === swimmerIndex"
+                          :id="`swimmer-squad-${swimmerIndex}`"
+                          v-model="selectedSquad"
+                          :options="squads"
+                        />
+                        <span v-else>{{ swimmer.value.squad }}</span>
+                      </td>
+                      <td class="px-2 py-4 text-sm whitespace-nowrap text-gray-500">
                         <input
                           v-if="editing === swimmerIndex"
                           v-model="swimmer.value.active"
@@ -606,7 +633,7 @@
                               aria-hidden="true"
                             />
 
-                            Edit<span class="sr-only">, {{ swimmer.value.fullName }}</span>
+                            <span class="sr-only">Edit, {{ swimmer.value.fullName }}</span>
                           </button>
                           <button
                             v-if="editing !== swimmerIndex"
@@ -619,7 +646,7 @@
                               class="-ml-0.5 size-5"
                               aria-hidden="true"
                             />
-                            Delete<span class="sr-only">, {{ swimmer.value.fullName }}</span>
+                            <span class="sr-only">Delete, {{ swimmer.value.fullName }}</span>
                           </button>
                         </div>
                         <div class="flex gap-2 justify-end">
@@ -634,7 +661,7 @@
                               class="-ml-0.5 size-5"
                               aria-hidden="true"
                             />
-                            Update<span class="sr-only">, {{ swimmer.value.fullName }}</span>
+                            <span class="sr-only">Update, {{ swimmer.value.fullName }}</span>
                           </button>
                           <button
                             v-if="editing === swimmerIndex"
@@ -646,7 +673,7 @@
                               class="-ml-0.5 size-5"
                               aria-hidden="true"
                             />
-                            Cancel<span class="sr-only">, {{ swimmer.value.fullName }}</span>
+                            <span class="sr-only">Cancel Editing, {{ swimmer.value.fullName }}</span>
                           </button>
                         </div>
                       </td>

@@ -10,7 +10,7 @@ export default defineEventHandler( async ( event ) => {
 
   const selectRecords = prepareStatement<{ userId: string },Swimmer>(
     await getPool(),
-    "SELECT id, fullName, firstName, middleName, lastName, birthday, gender, nationality, region, county, active FROM UserSwimmersView WHERE userId = :userId AND active = 1"
+    "SELECT id, fullName, firstName, middleName, lastName, birthday, gender, nationality, region, county, squad, active FROM Swimmers INNER JOIN UserSwimmers ON(Swimmers.id = UserSwimmers.swimmerId) WHERE UserSwimmers.userId = :userId"
   )
   const data = await selectRecords.all( { userId: event.context.session.userId } )
   return data

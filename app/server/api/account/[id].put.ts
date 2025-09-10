@@ -110,17 +110,22 @@ export default eventHandler( async ( event ) => {
     }
 
     const insertUserSwimmerSql =
-      `INSERT IGNORE INTO UserSwimmers (
+      `INSERT INTO UserSwimmers (
         userId,
-        swimmerId
+        swimmerId,
+        squad
       )
       VALUES (
         :userId,
-        :id
-      );`
+        :id,
+        :squad
+      )
+      ON DUPLICATE KEY UPDATE
+        squad   = :squad
+      ;`
     const insertUserSwimmer = prepareStatement( conn, insertUserSwimmerSql )
     for ( const swimmer of userData.swimmers ) {
-      await insertUserSwimmer.run( { userId, id: swimmer.id } )
+      await insertUserSwimmer.run( { userId, id: swimmer.id, squad: swimmer.squad } )
     }
   }
 

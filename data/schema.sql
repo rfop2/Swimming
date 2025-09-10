@@ -362,7 +362,7 @@ DROP TABLE IF EXISTS `UserSwimmers`;
 CREATE TABLE `UserSwimmers` (
   `userId` varchar(16) NOT NULL,
   `swimmerId` varchar(8) NOT NULL,
-  `group` varchar(32) DEFAULT NULL,
+  `squad` varchar(32) NOT NULL,
   `created` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
   PRIMARY KEY (`userId`,`swimmerId`),
@@ -381,8 +381,7 @@ DROP TABLE IF EXISTS `UserSwimmersView`;
 SET @saved_cs_client     = @@character_set_client;
 SET character_set_client = utf8mb4;
 /*!50001 CREATE VIEW `UserSwimmersView` AS SELECT
- 1 AS `userId`,
-  1 AS `id`,
+ 1 AS `id`,
   1 AS `fullName`,
   1 AS `firstName`,
   1 AS `middleName`,
@@ -392,6 +391,7 @@ SET character_set_client = utf8mb4;
   1 AS `nationality`,
   1 AS `region`,
   1 AS `county`,
+  1 AS `squad`,
   1 AS `active` */;
 SET character_set_client = @saved_cs_client;
 
@@ -451,7 +451,7 @@ USE `swimming`;
 /*!50001 SET collation_connection      = utf8mb4_uca1400_ai_ci */;
 /*!50001 CREATE ALGORITHM=UNDEFINED */
 /*!50013 DEFINER=`root`@`%` SQL SECURITY DEFINER */
-/*!50001 VIEW `UserSwimmersView` AS select `UserSwimmers`.`userId` AS `userId`,`Swimmers`.`id` AS `id`,`Swimmers`.`fullName` AS `fullName`,`Swimmers`.`firstName` AS `firstName`,`Swimmers`.`middleName` AS `middleName`,`Swimmers`.`lastName` AS `lastName`,`Swimmers`.`birthday` AS `birthday`,`Swimmers`.`gender` AS `gender`,`Swimmers`.`nationality` AS `nationality`,`Swimmers`.`region` AS `region`,`Swimmers`.`county` AS `county`,`Swimmers`.`active` AS `active` from (`UserSwimmers` join `Swimmers` on(`UserSwimmers`.`swimmerId` = `Swimmers`.`id`)) */;
+/*!50001 VIEW `UserSwimmersView` AS select `Swimmers`.`id` AS `id`,`Swimmers`.`fullName` AS `fullName`,`Swimmers`.`firstName` AS `firstName`,`Swimmers`.`middleName` AS `middleName`,`Swimmers`.`lastName` AS `lastName`,`Swimmers`.`birthday` AS `birthday`,`Swimmers`.`gender` AS `gender`,`Swimmers`.`nationality` AS `nationality`,`Swimmers`.`region` AS `region`,`Swimmers`.`county` AS `county`,`UserSwimmers`.`squad` AS `squad`,`Swimmers`.`active` AS `active` from (`UserSwimmers` join `Swimmers` on(`UserSwimmers`.`swimmerId` = `Swimmers`.`id`)) */;
 /*!50001 SET character_set_client      = @saved_cs_client */;
 /*!50001 SET character_set_results     = @saved_cs_results */;
 /*!50001 SET collation_connection      = @saved_col_connection */;

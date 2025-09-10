@@ -19,6 +19,7 @@ export interface Swimmer {
   nationality: string
   region: string
   county: string
+  squad: string
   active: number
 }
 
