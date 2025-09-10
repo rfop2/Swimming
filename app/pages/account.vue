@@ -139,6 +139,9 @@
 
   const editSwimmer = ( swimmerIndex: number ) => {
     editing.value = swimmerIndex
+    if ( squads.value.length ) {
+      selectedSquad.value = squads.value.find( s => s.value === fields.value[swimmerIndex].value.squad )
+    }
     swimmerData.value = JSON.stringify( fields.value[swimmerIndex].value )
   }
 
