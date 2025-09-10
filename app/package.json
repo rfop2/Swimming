@@ -1,6 +1,6 @@
 {
   "name": "swimming-app",
-  "version": "8.7.1",
+  "version": "8.8.0",
   "description": "Swimming performance and qualification monitoring",
   "private": true,
   "type": "module",
