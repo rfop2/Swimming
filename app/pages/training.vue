@@ -20,8 +20,9 @@
   }, new Set<string>() ) ).sort().map( s => ( { label: s, value: s } ) ), { label: "No squad", value: "" } ] )
 
   const strokeOptions = Object.entries( strokes ).map( ( [ k, v ] ) => ( { value: k, label: v.label } ) )
-  const distanceOptions = reactive<{ value: number, label: string }[]>( strokes[slug[1] ?? Object.keys( strokes )[0]].distances.map( d => ( { value: Number( d.replace( /m$/, "" ) ), label: d } ) ) )
   const courseOptions = Object.entries( COURSES ).map( ( [ k, v ] ) => ( { value: k, label: v } ) )
+  const baseDistanceOptions = reactive<{ value: number, label: string }[]>( strokes[slug[1] ?? Object.keys( strokes )[0]].distances.map( d => ( { value: Number( d.replace( /m$/, "" ) ), label: d } ) ) )
+  const targetDistanceOptions = [ 25, 50, 100, 150, 200, 300, 400 ].map( d => ( { label: `${d}m`, value: d } ) )
   const effortOptions = [
     {
       label: "85%",
@@ -53,15 +54,16 @@
     squad: squadOptions.value.find( option => option.value === slug[0] ) ?? squadOptions.value[0],
     stroke: strokeOptions.find( option => option.value === slug[1] ) ?? strokeOptions[0],
     course: courseOptions.find( option => option.value === slug[2] ) ?? courseOptions[0],
-    distance: distanceOptions.find( option => String( option.value ) === slug[3] ) ?? distanceOptions.find( d => d.label === "100m" ) ?? distanceOptions[0],
+    baseDistance: baseDistanceOptions.find( option => String( option.value ) === slug[3] ) ?? baseDistanceOptions.find( d => d.label === "100m" ) ?? baseDistanceOptions[0],
+    targetDistances: targetDistanceOptions.slice( 0, 4 ),
     effort: effortOptions.find( option => option.label === slug[4] ) ?? effortOptions[3]
   } )
 
   watch( () => selections.stroke, ( newStroke ) => {
-    distanceOptions.length = 0
-    distanceOptions.push( ...strokes[newStroke.value].distances.map( d => ( { value: Number( d.replace( /m$/, "" ) ), label: d } ) ) )
-    if ( selections.distance.value && !distanceOptions.find( o => o.value === selections.distance.value ) )
-      selections.distance = distanceOptions[0]
+    baseDistanceOptions.length = 0
+    baseDistanceOptions.push( ...strokes[newStroke.value].distances.map( d => ( { value: Number( d.replace( /m$/, "" ) ), label: d } ) ) )
+    if ( selections.baseDistance.value && !baseDistanceOptions.find( o => o.value === selections.baseDistance.value ) )
+      selections.baseDistance = baseDistanceOptions[0]
   } )
 
   type ApiResponse = InternalApi["/api/personal"]["get"]
@@ -71,7 +73,7 @@
   )
 
   const bestTimes = computed( () => new Map<string,IndividualRow>( ( records.value || [] ).filter( ( r ) =>
-    r.stroke === selections.stroke.value && r.course === selections.course.value && r.distance === selections.distance.label
+    r.stroke === selections.stroke.value && r.course === selections.course.value && r.distance === selections.baseDistance.label
   ).map( record => ( [ record.swimmer, record ] ) ) ) )
 
   // console.log( "bt", bestTimes.value )
@@ -86,10 +88,6 @@
   } ).map( swimmer => ( [ swimmer.id, swimmer ] ) ) ) )
 
   // console.log( "fs", filteredSwimmers.value )
-
-  // const distances = computed( () => strokes[selections.stroke.value].distances )
-  const distances = [ 25, 50, 100, 200, 400 ]
-
 </script>
 
 <template>
@@ -100,13 +98,13 @@
           Training targets calculator
         </h1>
         <p class="mt-2 text-sm text-gray-700">
-          Estimated target times for fractional distances based on fastest recorded time over {{ selections.distance.label }}.
+          Estimated target times for fractional distances based on fastest recorded time over {{ selections.baseDistance.label }}.
         </p>
       </div>
     </div>
     <div class="border-b border-gray-200 pb-5 sm:flex sm:items-center sm:justify-between">
       <div class="flex space-x-4 mt-3 mx-auto">
-        <div class="min-w-64">
+        <div class="min-w-48">
           <UI-Listbox
             v-model="selections.squad"
             :options="squadOptions"
@@ -122,7 +120,7 @@
             placeholder="Choose Stroke"
           />
         </div>
-        <div class="min-w-32">
+        <div class="min-w-28">
           <UI-Listbox
             v-model="selections.course"
             :options="courseOptions"
@@ -132,10 +130,19 @@
         </div>
         <div class="min-w-32">
           <UI-Listbox
-            v-model="selections.distance"
-            :options="distanceOptions"
+            v-model="selections.baseDistance"
+            :options="baseDistanceOptions"
             label="Base Distance"
             placeholder="Choose Distance"
+          />
+        </div>
+        <div class="min-w-32">
+          <UI-Listbox
+            v-model="selections.targetDistances"
+            :options="targetDistanceOptions"
+            multiple
+            label="Target Distances"
+            placeholder="Choose Distances"
           />
         </div>
         <div class="min-w-24">
@@ -163,15 +170,15 @@
                 scope="col"
                 class="whitespace-nowrap align-bottom px-2 py-3.5 text-right text-sm font-semibold text-gray-900"
               >
-                {{ selections.distance.label }} Time
+                {{ selections.baseDistance.label }} Time
               </th>
               <th
-                v-for="distance in distances"
-                :key="distance"
+                v-for="distance in selections.targetDistances"
+                :key="distance.label"
                 scope="col"
                 class="whitespace-nowrap align-bottom px-2 py-3.5 text-right text-sm font-semibold text-gray-900"
               >
-                <span>{{ distance }}m</span>
+                <span>{{ distance.label }}</span>
               </th>
             </tr>
           </thead>
@@ -192,11 +199,11 @@
                 {{ secondsToTime( bestTimes.get( swimmer.id )?.time ?? 0 ) }}
               </td>
               <td
-                v-for="distance in distances"
-                :key="distance"
+                v-for="distance in selections.targetDistances.sort( ( a, b ) => a.value - b.value )"
+                :key="distance.label"
                 class="whitespace-nowrap px-2 py-2 text-right text-sm text-gray-900"
               >
-                {{ secondsToTime( ( ( ( bestTimes.get( swimmer.id )?.time ?? 0 ) * distance ) / ( selections.effort.value * selections.distance.value ) ) ) }}
+                {{ secondsToTime( ( ( ( bestTimes.get( swimmer.id )?.time ?? 0 ) * distance.value ) / ( selections.effort.value * selections.baseDistance.value ) ) ) }}
               </td>
             </tr>
           </tbody>
