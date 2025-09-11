@@ -103,7 +103,7 @@
       </div>
     </div>
     <div class="border-b border-gray-200 pb-5 sm:flex sm:items-center sm:justify-between">
-      <div class="flex space-x-4 mt-3 mx-auto">
+      <div class="flex flex-col space-y-3 sm:flex-row sm:space-y-0 sm:space-x-4 mt-3 mx-auto">
         <div class="min-w-48">
           <UI-Listbox
             v-model="selections.squad"
@@ -155,9 +155,9 @@
         </div>
       </div>
     </div>
-    <div class="overflow-x-auto">
-      <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
-        <table class="min-w-full divide-y divide-gray-300">
+    <div class="overflow-x-auto flex justify-center">
+      <div class="inline-block sm:min-w-full py-2 align-middle sm:px-6 lg:px-8">
+        <table class="sm:min-w-full divide-y divide-gray-300">
           <thead>
             <tr class="divide-x divide-gray-200">
               <th
