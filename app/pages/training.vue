@@ -20,16 +20,9 @@
   }, new Set<string>() ) ).sort().map( s => ( { label: s, value: s } ) ), { label: "No squad", value: "" } ] )
 
   const strokeOptions = Object.entries( strokes ).map( ( [ k, v ] ) => ( { value: k, label: v.label } ) )
+  const distanceOptions = reactive<{ value: number, label: string }[]>( strokes[slug[1] ?? Object.keys( strokes )[0]].distances.map( d => ( { value: Number( d.replace( /m$/, "" ) ), label: d } ) ) )
   const courseOptions = Object.entries( COURSES ).map( ( [ k, v ] ) => ( { value: k, label: v } ) )
   const effortOptions = [
-    {
-      label: "75%",
-      value: 0.75,
-    },
-    {
-      label: "80%",
-      value: 0.8,
-    },
     {
       label: "85%",
       value: 0.85,
@@ -42,13 +35,33 @@
       label: "95%",
       value: 0.95,
     },
+    {
+      label: "100%",
+      value: 1.0,
+    },
+    {
+      label: "105%",
+      value: 1.05,
+    },
+    {
+      label: "110%",
+      value: 1.1,
+    },
   ]
 
   const selections = reactive( {
     squad: squadOptions.value.find( option => option.value === slug[0] ) ?? squadOptions.value[0],
     stroke: strokeOptions.find( option => option.value === slug[1] ) ?? strokeOptions[0],
     course: courseOptions.find( option => option.value === slug[2] ) ?? courseOptions[0],
-    effort: effortOptions.find( option => option.label === slug[3] ) ?? effortOptions[0]
+    distance: distanceOptions.find( option => String( option.value ) === slug[3] ) ?? distanceOptions.find( d => d.label === "100m" ) ?? distanceOptions[0],
+    effort: effortOptions.find( option => option.label === slug[4] ) ?? effortOptions[3]
+  } )
+
+  watch( () => selections.stroke, ( newStroke ) => {
+    distanceOptions.length = 0
+    distanceOptions.push( ...strokes[newStroke.value].distances.map( d => ( { value: Number( d.replace( /m$/, "" ) ), label: d } ) ) )
+    if ( selections.distance.value && !distanceOptions.find( o => o.value === selections.distance.value ) )
+      selections.distance = distanceOptions[0]
   } )
 
   type ApiResponse = InternalApi["/api/personal"]["get"]
@@ -57,10 +70,8 @@
     "/api/personal/",
   )
 
-  const baseDistance = 100
-
   const bestTimes = computed( () => new Map<string,IndividualRow>( ( records.value || [] ).filter( ( r ) =>
-    r.stroke === selections.stroke.value && r.course === selections.course.value && r.distance === `${baseDistance}m`
+    r.stroke === selections.stroke.value && r.course === selections.course.value && r.distance === selections.distance.label
   ).map( record => ( [ record.swimmer, record ] ) ) ) )
 
   // console.log( "bt", bestTimes.value )
@@ -89,7 +100,7 @@
           Training targets calculator
         </h1>
         <p class="mt-2 text-sm text-gray-700">
-          Estimated target times for distances at percentage of functional effort pace over {{ baseDistance }}m.
+          Estimated target times for fractional distances based on fastest recorded time over {{ selections.distance.label }}.
         </p>
       </div>
     </div>
@@ -119,6 +130,14 @@
             placeholder="Choose Course"
           />
         </div>
+        <div class="min-w-32">
+          <UI-Listbox
+            v-model="selections.distance"
+            :options="distanceOptions"
+            label="Base Distance"
+            placeholder="Choose Distance"
+          />
+        </div>
         <div class="min-w-24">
           <UI-Listbox
             v-model="selections.effort"
@@ -144,7 +163,7 @@
                 scope="col"
                 class="whitespace-nowrap align-bottom px-2 py-3.5 text-right text-sm font-semibold text-gray-900"
               >
-                {{ baseDistance }}m Time
+                {{ selections.distance.label }} Time
               </th>
               <th
                 v-for="distance in distances"
@@ -177,7 +196,7 @@
                 :key="distance"
                 class="whitespace-nowrap px-2 py-2 text-right text-sm text-gray-900"
               >
-                {{ secondsToTime( ( ( ( bestTimes.get( swimmer.id )?.time ?? 0 ) * distance ) / ( selections.effort.value * baseDistance ) ) ) }}
+                {{ secondsToTime( ( ( ( bestTimes.get( swimmer.id )?.time ?? 0 ) * distance ) / ( selections.effort.value * selections.distance.value ) ) ) }}
               </td>
             </tr>
           </tbody>
