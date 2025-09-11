@@ -22,7 +22,7 @@
   const strokeOptions = Object.entries( strokes ).map( ( [ k, v ] ) => ( { value: k, label: v.label } ) )
   const courseOptions = Object.entries( COURSES ).map( ( [ k, v ] ) => ( { value: k, label: v } ) )
   const baseDistanceOptions = reactive<{ value: number, label: string }[]>( strokes[slug[1] ?? Object.keys( strokes )[0]].distances.map( d => ( { value: Number( d.replace( /m$/, "" ) ), label: d } ) ) )
-  const targetDistanceOptions = [ 25, 50, 100, 150, 200, 300, 400 ].map( d => ( { label: `${d}m`, value: d } ) )
+  const targetDistanceOptions = [ 25, 50, 75, 100, 150, 200, 300, 400 ].map( d => ( { label: `${d}m`, value: d } ) )
   const effortOptions = [
     {
       label: "85%",
