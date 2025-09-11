@@ -16,18 +16,20 @@
     options: Array<Selection>
     label?: string
     multiple?: boolean
+    multipleLabel?: string
     required?: boolean
     placeholder?: string
   }>(), {
     id: undefined,
     label: undefined,
     multiple: false,
+    multipleLabel: undefined,
     required: false,
     placeholder: "Select Option",
   } )
 
   const empty = computed( () => Array.isArray( model.value ) ? model.value.length === 0 : !model.value )
-  const prompt = computed( () => empty.value ? props.placeholder : ( props.multiple ? ( ( model.value ?? [] ) as Array<Selection> ).map( item => item.label ?? item.value ).join( ", " ) : ( model.value as Selection ).label ?? ( model.value as Selection ).value ) )
+  const prompt = computed( () => empty.value ? props.placeholder : ( props.multiple ? ( props.multipleLabel ?? ( ( model.value ?? [] ) as Array<Selection> ).map( item => item.label ?? item.value ).join( ", " ) ) : ( model.value as Selection ).label ?? ( model.value as Selection ).value ) )
 </script>
 
 <template>
