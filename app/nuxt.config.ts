@@ -37,5 +37,11 @@ export default defineNuxtConfig( {
     "/": { redirect: "/performance" },
   },
 
+  typescript: {
+    tsConfig: {
+      include: [ "types/**/*.d.ts" ]
+    }
+  },
+
   compatibilityDate: "2024-11-21"
 } )

@@ -10,18 +10,13 @@
   } from "@headlessui/vue"
   import classNames from "classnames"
 
-  type Value = string | number
-  interface Selection {
-    label?: string
-    value: Value
-  }
-  const model = defineModel<Selection>()
+  const model = defineModel< UISelection | Array<UISelection> >()
 
   const defaultId = useId()
 
   const props = withDefaults( defineProps<{
     id?: string
-    options: Selection[]
+    options: UISelection[]
     label?: string
     multiple?: boolean
     required?: boolean
@@ -35,7 +30,7 @@
   } )
 
   // const empty = computed( () => Array.isArray( model.value ) ? model.value.length === 0 : !model.value )
-  // const prompt = computed( () => empty.value ? props.placeholder : ( props.multiple ? ( ( model.value ?? [] ) as Array<Selection> ).map( item => item.label ?? item.value ).join( ", " ) : ( model.value as Selection ).label ?? ( model.value as Selection ).value ) )
+  // const prompt = computed( () => empty.value ? props.placeholder : ( props.multiple ? ( ( model.value ?? [] ) as Array<UISelection> ).map( item => item.label ?? item.value ).join( ", " ) : ( model.value as UISelection ).label ?? ( model.value as UISelection ).value ) )
 
   const query = ref( "" )
 
@@ -60,7 +55,7 @@
     <div :class="classNames( 'relative', { 'mt-2': props.label } )">
       <ComboboxInput
         class="block w-full rounded-md bg-white py-1.5 pl-3 pr-12 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
-        :display-value="(option) => (option as Selection).label ?? ''"
+        :display-value="(option) => (option as UISelection).label ?? ''"
         @change="query = $event.target.value"
         @blur="query = ''"
       />

@@ -1,7 +1,7 @@
 <script setup lang="ts">
   import classNames from "classnames"
 
-  interface Selection {
+  interface UISelection {
     label?: string
     value: string | number
   }
@@ -10,7 +10,7 @@
   const defaultId = useId()
 
   const props = withDefaults( defineProps<{
-    options: Array<Selection>
+    options: Array<UISelection>
     id?: string
     label?: string
     required?: boolean

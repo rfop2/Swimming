@@ -3,17 +3,13 @@
   import { CheckIcon, ChevronUpDownIcon } from "@heroicons/vue/24/outline"
   import classNames from "classnames"
 
-  interface Selection {
-    label?: string
-    value: string | number
-  }
-  const model = defineModel<Selection | Array<Selection>>()
+  const model = defineModel< UISelection | Array<UISelection> >()
 
   const defaultId = useId()
 
   const props = withDefaults( defineProps<{
     id?: string
-    options: Array<Selection>
+    options: Array<UISelection>
     label?: string
     multiple?: boolean
     multipleLabel?: string
@@ -29,7 +25,7 @@
   } )
 
   const empty = computed( () => Array.isArray( model.value ) ? model.value.length === 0 : !model.value )
-  const prompt = computed( () => empty.value ? props.placeholder : ( props.multiple ? ( props.multipleLabel ?? ( ( model.value ?? [] ) as Array<Selection> ).map( item => item.label ?? item.value ).join( ", " ) ) : ( model.value as Selection ).label ?? ( model.value as Selection ).value ) )
+  const prompt = computed( () => empty.value ? props.placeholder : ( props.multiple ? ( props.multipleLabel ?? ( ( model.value ?? [] ) as Array<UISelection> ).map( item => item.label ?? item.value ).join( ", " ) ) : ( model.value as UISelection ).label ?? ( model.value as UISelection ).value ) )
 </script>
 
 <template>
