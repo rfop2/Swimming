@@ -16,6 +16,7 @@
   import { createEventsServicePlugin } from "@schedule-x/events-service"
   import "@schedule-x/theme-default/dist/index.css"
   import CalendarModal from "~/components/CalendarModal.vue"
+  import StandardPage from "~/components/StandardPage.vue"
 
   definePageMeta( {
     layout: "secure",
@@ -293,62 +294,51 @@
 </script>
 
 <template>
-  <div>
-    <div class="sm:flex sm:items-center">
-      <div class="sm:flex-auto">
-        <h1 class="text-base font-semibold leading-6 text-gray-900">
-          Meets
-        </h1>
-        <p class="mt-2 text-sm text-gray-700">
-          Forthcoming events and competitions
-        </p>
-      </div>
-    </div>
-    <div class="border-b border-gray-200 pb-5 sm:flex sm:items-center sm:justify-between">
-      <div class="mt-3">
-        <div class="flex items-center space-x-4">
-          <div class="min-w-48">
-            <UIListbox
-              v-model="selections.course"
-              :options="courses"
-              label="Course"
-            />
-          </div>
-          <div class="min-w-72">
-            <UIListbox
-              v-model="selections.level"
-              :options="levels"
-              label="Level"
-              placeholder="All Levels"
-              multiple
-            />
-          </div>
-          <div class="min-w-48">
-            <UIListbox
-              v-model="selections.distance"
-              :options="distances"
-              label="Distance"
-            />
-          </div>
-          <div class="min-w-48">
-            <UIListbox
-              v-model="selections.tagged"
-              :options="taggings"
-              label="Tagged"
-            />
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="mt-4 flow-root">
-      <ClientOnly>
-        <ScheduleXCalendar
-          :calendar-app="calendarApp as CalendarApp"
-          :custom-components="customComponents"
+  <StandardPage
+    title="Meets"
+  >
+    <template #description>
+      Forthcoming events and competitions
+    </template>
+    <template #controls>
+      <div class="min-w-48">
+        <UIListbox
+          v-model="selections.course"
+          :options="courses"
+          label="Course"
         />
-      </ClientOnly>
-    </div>
-  </div>
+      </div>
+      <div class="min-w-72">
+        <UIListbox
+          v-model="selections.level"
+          :options="levels"
+          label="Level"
+          placeholder="All Levels"
+          multiple
+        />
+      </div>
+      <div class="min-w-48">
+        <UIListbox
+          v-model="selections.distance"
+          :options="distances"
+          label="Distance"
+        />
+      </div>
+      <div class="min-w-48">
+        <UIListbox
+          v-model="selections.tagged"
+          :options="taggings"
+          label="Tagged"
+        />
+      </div>
+    </template>
+    <ClientOnly>
+      <ScheduleXCalendar
+        :calendar-app="calendarApp as CalendarApp"
+        :custom-components="customComponents"
+      />
+    </ClientOnly>
+  </StandardPage>
 </template>
 
 <style lang="scss">

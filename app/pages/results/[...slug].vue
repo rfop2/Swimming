@@ -270,13 +270,13 @@
 </script>
 
 <template>
-  <div>
-    <PageHeader
-      title="Results"
-    >
+  <StandardPage
+    title="Results"
+  >
+    <template #description>
       Results and progress in each event. Qualifying times are shown where available, adjusted to the selected course.
-    </PageHeader>
-    <PageControls>
+    </template>
+    <template #controls>
       <div class="min-w-48">
         <UI-Listbox
           v-model="selections.course"
@@ -301,7 +301,7 @@
           placeholder="Choose Distance"
         />
       </div>
-    </PageControls>
+    </template>
     <div
       v-if="data.datasets[0].data.length > 0"
       class="overflow-x-auto"
@@ -409,7 +409,7 @@
         </table>
       </div>
     </div>
-  </div>
+  </StandardPage>
 </template>
 
 <style lang="scss" scoped>

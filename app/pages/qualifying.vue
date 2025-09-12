@@ -450,25 +450,20 @@
 </script>
 
 <template>
-  <div>
-    <div class="sm:flex sm:items-center">
-      <div class="sm:flex-auto">
-        <h1 class="text-base font-semibold leading-6 text-gray-900">
-          Qualifying
-        </h1>
-        <p class="mt-2 text-sm text-gray-700">
-          County and regional qualifying times for each event
-        </p>
-      </div>
-      <div
-        v-if="user.admin"
-        class="sm:flex sm:items-end"
-      >
+  <StandardPage
+    title="Qualifying"
+  >
+    <template #description>
+      <div class="sm:flex sm:justify-between">
+        <div>County and regional qualifying times for each event</div>
         <div
-          v-if="filteredQualifying.length"
-          class="mt-4 sm:ml-4 sm:mt-0 sm:flex-none"
+          v-if="user.admin"
+          class="sm:flex sm:items-end"
         >
-          <div class="pt-4">
+          <div
+            v-if="filteredQualifying.length"
+            class="mt-4 sm:ml-4 sm:mt-0 sm:flex-none"
+          >
             <button
               type="button"
               class="inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
@@ -488,12 +483,10 @@
               Copy
             </button>
           </div>
-        </div>
-        <div
-          v-if="clipboard.length && !filteredQualifying.length"
-          class="mt-4 sm:ml-4 sm:mt-0 sm:flex-none"
-        >
-          <div class="pt-4">
+          <div
+            v-if="clipboard.length && !filteredQualifying.length"
+            class="mt-4 sm:ml-4 sm:mt-0 sm:flex-none"
+          >
             <button
               type="button"
               class="inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
@@ -507,12 +500,10 @@
               Paste
             </button>
           </div>
-        </div>
-        <div
-          v-if="filteredQualifying.length"
-          class="mt-4 sm:ml-4 sm:mt-0 sm:flex-none"
-        >
-          <div class="pt-4">
+          <div
+            v-if="filteredQualifying.length"
+            class="mt-4 sm:ml-4 sm:mt-0 sm:flex-none"
+          >
             <button
               type="button"
               class="inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
@@ -526,12 +517,10 @@
               Delete
             </button>
           </div>
-        </div>
-        <div
-          v-if="!filteredQualifying.length"
-          class="mt-4 sm:ml-4 sm:mt-0 sm:flex-none"
-        >
-          <div class="pt-4">
+          <div
+            v-if="!filteredQualifying.length"
+            class="mt-4 sm:ml-4 sm:mt-0 sm:flex-none"
+          >
             <button
               type="button"
               class="inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
@@ -545,12 +534,10 @@
               Populate
             </button>
           </div>
-        </div>
-        <div
-          v-if="filteredQualifying.length>0 && filteredQualifying.length!==Object.keys(STROKE_DISTANCE).length"
-          class="mt-4 sm:ml-4 sm:mt-0 sm:flex-none"
-        >
-          <div class="pt-4">
+          <div
+            v-if="filteredQualifying.length>0 && filteredQualifying.length!==Object.keys(STROKE_DISTANCE).length"
+            class="mt-4 sm:ml-4 sm:mt-0 sm:flex-none"
+          >
             <button
               type="button"
               class="inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
@@ -564,9 +551,7 @@
               Complete
             </button>
           </div>
-        </div>
-        <div class="mt-4 sm:ml-4 sm:mt-0 sm:flex-none">
-          <div class="pt-4">
+          <div class="mt-4 sm:ml-4 sm:mt-0 sm:flex-none">
             <button
               type="button"
               class="inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
@@ -581,9 +566,7 @@
               Reset
             </button>
           </div>
-        </div>
-        <div class="mt-4 sm:ml-4 sm:mt-0 sm:flex-none">
-          <div class="pt-4">
+          <div class="mt-4 sm:ml-4 sm:mt-0 sm:flex-none">
             <button
               type="submit"
               class="inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
@@ -599,87 +582,81 @@
           </div>
         </div>
       </div>
-    </div>
-    <div class="border-b border-gray-200 pb-5 sm:flex sm:items-center sm:justify-between">
-      <div class="mt-3">
-        <div class="flex items-center space-x-4">
-          <div class="min-w-24">
-            <UI-Listbox
-              v-model="selections.year"
-              :options="years"
-              label="Year"
-              placeholder="Choose Year"
-            />
-          </div>
-          <div class="min-w-32">
-            <UI-Listbox
-              v-model="selections.scope"
-              :options="scopes"
-              label="Scope"
-              placeholder="Choose Scope"
-            />
-          </div>
-          <div
-            v-if="user.admin"
-            class="min-w-48"
-          >
-            <UI-Listbox
-              v-model="selections.area"
-              :options="areas"
-              label="Area"
-              placeholder="Choose Area"
-            />
-          </div>
-          <div class="min-w-28">
-            <UI-Listbox
-              v-model="selections.gender"
-              :options="genders"
-              label="Gender"
-              placeholder="Choose Gender"
-            />
-          </div>
-          <div class="min-w-28">
-            <UI-Listbox
-              v-model="selections.age"
-              :options="ages"
-              label="Age"
-              placeholder="Choose Age"
-            />
-          </div>
-          <div
-            v-if="user.admin"
-            class="min-w-28"
-          >
-            <UI-Listbox
-              v-model="selections.course"
-              :options="courses"
-              label="Course"
-              placeholder="Choose Course"
-              :disabled="filteredQualifying.length>0"
-            />
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="mt-4 flow-root">
-      <div class="overflow-x-auto">
-        <ag-grid-vue
-          :auto-size-strategy="autoSizeStrategy"
-          :default-col-def="defaultColumnAttrs"
-          :row-data="filteredQualifying"
-          :column-defs="columns"
-          dom-layout="autoHeight"
-          class="ag-theme-quartz"
-          @cell-value-changed="( event: CellValueChangedEvent ) => {
-            console.log( 'Data changed', event )
-          }"
+    </template>
+    <template #controls>
+      <div class="min-w-24">
+        <UI-Listbox
+          v-model="selections.year"
+          :options="years"
+          label="Year"
+          placeholder="Choose Year"
         />
       </div>
+      <div class="min-w-32">
+        <UI-Listbox
+          v-model="selections.scope"
+          :options="scopes"
+          label="Scope"
+          placeholder="Choose Scope"
+        />
+      </div>
+      <div
+        v-if="user.admin"
+        class="min-w-48"
+      >
+        <UI-Listbox
+          v-model="selections.area"
+          :options="areas"
+          label="Area"
+          placeholder="Choose Area"
+        />
+      </div>
+      <div class="min-w-28">
+        <UI-Listbox
+          v-model="selections.gender"
+          :options="genders"
+          label="Gender"
+          placeholder="Choose Gender"
+        />
+      </div>
+      <div class="min-w-28">
+        <UI-Listbox
+          v-model="selections.age"
+          :options="ages"
+          label="Age"
+          placeholder="Choose Age"
+        />
+      </div>
+      <div
+        v-if="user.admin"
+        class="min-w-28"
+      >
+        <UI-Listbox
+          v-model="selections.course"
+          :options="courses"
+          label="Course"
+          placeholder="Choose Course"
+          :disabled="filteredQualifying.length>0"
+        />
+      </div>
+    </template>
+    <div class="overflow-x-auto">
+      <ag-grid-vue
+        :auto-size-strategy="autoSizeStrategy"
+        :default-col-def="defaultColumnAttrs"
+        :row-data="filteredQualifying"
+        :column-defs="columns"
+        dom-layout="autoHeight"
+        class="ag-theme-quartz"
+        @cell-value-changed="( event: CellValueChangedEvent ) => {
+          console.log( 'Data changed', event )
+        }"
+      />
     </div>
     <UI-SuccessNotification
       v-model="saveSuccess"
       title="Successfully saved!"
       text="Qualifying times have been updated."
     />
-  </div>
+  </StandardPage>
 </template>
