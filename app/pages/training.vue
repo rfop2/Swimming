@@ -148,8 +148,8 @@
         />
       </div>
     </template>
-    <div class="inline-block sm:min-w-full py-2 align-middle sm:px-6 lg:px-8">
-      <table class="sm:min-w-full divide-y divide-gray-300">
+    <div class="inline-block min-w-full py-2 align-left sm:px-6 lg:px-8">
+      <table class="min-w-full sm:min-w-0 sm:w-3/4 divide-y divide-gray-300">
         <thead>
           <tr class="divide-x divide-gray-200">
             <th
@@ -160,7 +160,7 @@
             </th>
             <th
               scope="col"
-              class="whitespace-nowrap align-bottom px-2 py-3.5 text-right text-sm font-semibold text-gray-900"
+              class="whitespace-nowrap align-bottom !border-r-2 !border-gray-400 px-2 py-3.5 text-right text-sm font-semibold text-gray-900"
             >
               {{ selections.baseDistance.label }} Time
             </th>
@@ -186,7 +186,7 @@
               {{ swimmer.fullName }}
             </td>
             <td
-              class="whitespace-nowrap px-2 py-2 text-right text-sm text-gray-900"
+              class="whitespace-nowrap !border-r-2 !border-gray-400 px-2 py-2 text-right text-sm text-gray-900"
             >
               {{ secondsToTime( bestTimes.get( swimmer.id )?.time ?? 0 ) }}
             </td>
