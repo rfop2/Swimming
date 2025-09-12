@@ -256,6 +256,7 @@
       Performance in events relative to the event leader if appearing in top 100 rankings (200 for national) in the last 12 months.
     </PageHeader>
     <PageControls :border="false">
+      <SwimmerSelector />
       <Listbox
         v-model="qualifyingYear"
         as="div"
