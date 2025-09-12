@@ -59,7 +59,7 @@ CREATE TABLE `Clubs` (
   `meetName` varchar(32) DEFAULT NULL,
   `created` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
-  KEY `clubId` (`clubId`)
+  PRIMARY KEY (`clubId`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
