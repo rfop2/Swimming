@@ -445,7 +445,7 @@
               </th>
               <th
                 scope="col"
-                class="sortable whitespace-nowrap px-1 py-3.5 text-right text-sm font-semibold text-gray-900"
+                class="hidden sortable whitespace-nowrap px-1 py-3.5 text-right text-sm font-semibold text-gray-900"
                 @click="updateSort('national_qualify')"
               >
                 <span>Qual.</span><i :class="getSortIcon('national_qualify')" />
