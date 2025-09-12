@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { COURSES, type Swimmer, convertTime, getSwimmerAgeGroup, secondsToTime, strokes } from "lib"
+  import { COURSES, convertTime, getSwimmerAgeGroup, secondsToTime, strokes, type QualifyingRow } from "lib"
   import { Line } from "vue-chartjs"
   import {  Chart as ChartJS, CategoryScale, LinearScale, TimeScale, PointElement, LineElement, Title, Tooltip, Legend, type ChartData, type ChartOptions, type TooltipItem } from "chart.js"
   import "chartjs-adapter-date-fns"
@@ -33,8 +33,6 @@
       selections.distance = distanceOptions[0]
   } )
 
-  const query = computed( () => Object.fromEntries( Object.entries( selections ).map( ( [ label, option ] ) => ( [ label, option.value ] ) ) ) )
-
   const rewritten = ref( false )
   onMounted( async () => {
     if ( slug.length > 0 && !rewritten.value ) {
@@ -44,7 +42,12 @@
     }
   } )
 
-  const swimmer = useState<Swimmer>( "swimmer" )
+  const swimmer = useSwimmer()
+
+  // type QualifyingApiResponse = InternalApi["/api/qualifying"]["get"]
+  const { data: qualifyingInfo } = await useFetch(
+    "/api/qualifying",
+  )
 
   type ApiResponse = InternalApi["/api/results/:id"]["get"]
   type ResultType = ApiResponse[number]
@@ -52,63 +55,65 @@
     label: string
   } */
 
-  const resultsUrl = computed( ()=> ( `/api/results/${swimmer.value.id}` ) )
-  const { data: records } = await useFetch(
-    resultsUrl,
-    {
-      query: query,
-      watch: [ swimmer, query ],
-      transform( records: ApiResponse ) : Array<ResultType> {
-        records.sort( ( a, b ) => {
-          if ( a.date < b.date ) {
-            return -1
-          } else if ( a.date > b.date ) {
-            return 1
-          }
-          if ( a.round < b.round ) {
-            return 1
-          } else if ( a.round > b.round ) {
-            return -1
-          }
-          return 0
-        } )
-        return records
-      },
+  interface ExtQualifyingRow extends QualifyingRow {
+    courseTime: number
+  }
+
+  const records = ref<ApiResponse>( [] )
+  const qualifyingTimes = ref<ExtQualifyingRow[]>( [] )
+  const countyQualifying = ref<ExtQualifyingRow | undefined>( undefined )
+  const regionQualifying = ref<ExtQualifyingRow | undefined>( undefined )
+
+  // Better type narrowing guard
+  const hasSwimmer = ( s: typeof swimmer ): s is typeof swimmer & { value: NonNullable<typeof s.value> } => s.value != null
+
+  watchEffect( async () => {
+    if ( hasSwimmer( swimmer ) ) {
+      const query = Object.fromEntries( Object.entries( selections ).map( ( [ label, option ] ) => ( [ label, option.value ] ) ) )
+      records.value = await $fetch<ApiResponse>( `/api/results/${swimmer.value.id}`, { query } )
+      records.value.sort( ( a, b ) => {
+        if ( a.date < b.date ) {
+          return -1
+        } else if ( a.date > b.date ) {
+          return 1
+        }
+        if ( a.round < b.round ) {
+          return 1
+        } else if ( a.round > b.round ) {
+          return -1
+        }
+        return 0
+      } )
+
+      const currentYear = getYear( new Date() )
+      const swimmerAge = getSwimmerAgeGroup( swimmer.value )
+      qualifyingTimes.value = ( qualifyingInfo.value ?? [] as QualifyingRow[] ).filter( q => {
+        if ( q.year !== currentYear )
+          return false
+        if ( q.stroke !== selections.stroke.value )
+          return false
+        if ( q.distance !== selections.distance.value )
+          return false
+        if ( q.gender !== swimmer.value.gender )
+          return false
+        if ( q.age !== swimmerAge )
+          return false
+        if ( q.scope === "county" && q.area !== swimmer.value.county )
+          return false
+        if ( q.scope === "regional" && q.area !== swimmer.value.region )
+          return false
+        if ( q.scope === "national" && q.area !== swimmer.value.nationality )
+          return false
+        return true
+      } ).map( ( q ) : ExtQualifyingRow => ( {
+        ...q,
+        courseTime: convertTime( q.course, selections.course.value, selections.stroke.value, selections.distance.value, q.time )
+      } ) )
+      countyQualifying.value = qualifyingTimes.value.find( q => q.scope === "county" )
+      regionQualifying.value = qualifyingTimes.value.find( q => q.scope === "regional" )
+      // const nationQualifying = computed( () => qualifyingTimes.value.find( q => q.scope === "national" ) )
     }
-  )
-
-  // type QualifyingApiResponse = InternalApi["/api/qualifying"]["get"]
-  const { data: qualifyingInfo } = await useFetch(
-    "/api/qualifying",
-  )
-
-  const currentYear = getYear( new Date() )
-  const swimmerAge = computed( () => getSwimmerAgeGroup( swimmer.value ) )
-  const qualifyingTimes = computed( () => ( qualifyingInfo.value ?? [] ).filter( q => {
-    if ( q.year !== currentYear )
-      return false
-    if ( q.stroke !== selections.stroke.value )
-      return false
-    if ( q.distance !== selections.distance.value )
-      return false
-    if ( q.gender !== swimmer.value.gender )
-      return false
-    if ( q.age !== swimmerAge.value )
-      return false
-    if ( q.scope === "county" && q.area !== swimmer.value.county )
-      return false
-    if ( q.scope === "regional" && q.area !== swimmer.value.region )
-      return false
-    if ( q.scope === "national" && q.area !== swimmer.value.nationality )
-      return false
-    return true
-  } ).map( ( q ) => ( {
-    ...q,
-    courseTime: convertTime( q.course, selections.course.value, selections.stroke.value, selections.distance.value, q.time )
-  } ) ) )
-  const countyQualifying = computed( () => qualifyingTimes.value.find( q => q.scope === "county" ) )
-  const regionQualifying = computed( () => qualifyingTimes.value.find( q => q.scope === "regional" ) )
-  // const nationQualifying = computed( () => qualifyingTimes.value.find( q => q.scope === "national" ) )
+  } )
 
   const { updateSort, getSortIcon, sortRecords } = useMultiSort<ResultType>()
 
@@ -277,6 +282,7 @@
       Results and progress in each event. Qualifying times are shown where available, adjusted to the selected course.
     </template>
     <template #controls>
+      <SwimmerSelector />
       <div class="min-w-48">
         <UI-Listbox
           v-model="selections.course"

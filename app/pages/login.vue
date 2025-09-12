@@ -1,9 +1,8 @@
 <script lang="ts" setup>
   import { XCircleIcon } from "@heroicons/vue/24/outline"
-  import type { Swimmer } from "lib"
   import type { FetchError } from "ofetch"
 
-  const swimmer = useState<Swimmer>( "swimmer" )
+  const swimmer = useSwimmer()
 
   const errString = ref<string | null>( null )
 

@@ -1,8 +1,7 @@
 <script setup lang="ts">
   import type { InternalApi } from "nitropack"
-  import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from "@headlessui/vue"
-  import { ArrowUturnLeftIcon, LinkIcon, CheckIcon, ChevronUpDownIcon, ChartBarIcon } from "@heroicons/vue/24/outline"
-  import { COUNTIES, type IndividualStats, NATIONALITIES, REGIONS, STROKE_DISTANCE, type Swimmer, convertTime, countyRankParams, createUrl, getSwimmerAge, getSwimmerScopeArea, globalRankParams, nationalRankParams, rankBaseUrl, regionalRankParams, secondsToTime, strokeSort } from "lib"
+  import { ArrowUturnLeftIcon, LinkIcon, ChartBarIcon } from "@heroicons/vue/24/outline"
+  import { type QualifyingRow, COUNTIES, type IndividualStats, NATIONALITIES, REGIONS, STROKE_DISTANCE, type Swimmer, convertTime, countyRankParams, createUrl, getSwimmerAge, getSwimmerScopeArea, globalRankParams, nationalRankParams, rankBaseUrl, regionalRankParams, secondsToTime, strokeSort } from "lib"
   import { differenceInCalendarMonths, getYear, addMonths, format } from "date-fns"
 
   definePageMeta( {
@@ -10,36 +9,7 @@
     middleware: [ "protected" ]
   } )
 
-  const swimmer = useState<Swimmer>( "swimmer" )
-
-  const qualifyingYear = ref( getYear( addMonths( new Date(), 1 ) ) )
-  const getQualifyingAge = ( year: number ) => {
-    const age = getSwimmerAge( swimmer.value )
-    const yearAge = age + ( year - getYear( new Date() ) )
-    return yearAge > 18 ? "Open" : String( yearAge )
-  }
-  const qualifyingAge = computed( () => getQualifyingAge( qualifyingYear.value ) )
-
-  // type QualifyingApiResponse = InternalApi["/api/qualifying"]["get"]
-  const { data: qualifyingInfo } = await useFetch(
-    "/api/qualifying",
-  )
-
-  const qualifyingYears = computed( () => Array.from( ( qualifyingInfo.value ?? [] ).reduce(
-    ( years, row ) => {
-      if ( !years.has( row.year ) ) {
-        years.add( row.year )
-      }
-      return years
-    },
-    new Set<number>()
-  ) )
-  )
-
-  const qualifyingYearInfo = computed( () => (
-    qualifyingInfo.value ?? [] )
-    .filter( row => ( row.year === qualifyingYear.value && row.age === qualifyingAge.value && row.gender === swimmer.value.gender ) )
-  )
+  const swimmer = await useSwimmer()
 
   type PerformanceApiResponse = InternalApi["/api/relative/:id"]["get"]
   interface AreaDetail extends Partial<PerformanceApiResponse[number]> {
@@ -54,23 +24,57 @@
     national: Partial<AreaDetail>
   }
 
-  const performanceUrl = computed( ()=> ( `/api/relative/${swimmer.value.id}` ) )
-  const { data: performanceRecords } = await useFetch<PerformanceApiResponse>(
-    performanceUrl,
-    {
-      watch: [ swimmer ],
-    }
-  )
+  const performanceRecords = ref<PerformanceApiResponse>( [] )
 
   type PersonalApiResponse = InternalApi["/api/personal/:id"]["get"]
 
-  const personalUrl = computed( ()=> ( `/api/personal/${swimmer.value.id}` ) )
-  const { data: personalRecords } = await useFetch<PersonalApiResponse>(
-    personalUrl,
-    {
-      watch: [ swimmer ],
-    }
+  const personalRecords = ref<PersonalApiResponse>( [] )
+
+  // type QualifyingApiResponse = InternalApi["/api/qualifying"]["get"]
+  const { data: qualifyingInfo } = await useFetch(
+    "/api/qualifying",
   )
+
+  const yearOptions = ref<UISelection[]>( [] )
+  const qualifyingYear = ref<UISelection | undefined>( undefined )
+  const defaultYear = getYear( addMonths( new Date(), 1 ) )
+  const qualifyingYearInfo = ref<QualifyingRow[]>( [] )
+
+  watchEffect( async () => {
+    if ( swimmer.value ) {
+      performanceRecords.value = await $fetch<PerformanceApiResponse>( `/api/relative/${swimmer.value.id}` )
+      personalRecords.value = await $fetch<PersonalApiResponse>( `/api/personal/${swimmer.value.id}` )
+
+      if ( qualifyingInfo.value ) {
+        const getQualifyingAge = ( year: number ) => {
+          const age = getSwimmerAge( swimmer.value as Swimmer )
+          const yearAge = age + ( year - getYear( new Date() ) )
+          return yearAge > 18 ? "Open" : String( yearAge )
+        }
+
+        const qualifyingYears = computed( () => Array.from( ( qualifyingInfo.value ?? [] ).reduce(
+          ( years, row ) => {
+            if ( !years.has( row.year ) ) {
+              years.add( row.year )
+            }
+            return years
+          },
+          new Set<number>()
+        ) ) )
+        yearOptions.value = qualifyingYears.value.map( year => ( { label: `${year} / ${getQualifyingAge( year ) }`, value: year } ) )
+        qualifyingYear.value = yearOptions.value.find( y => y.value === defaultYear ) ?? yearOptions.value[0]
+        if ( qualifyingYear.value ) {
+          const qualifyingAge = getQualifyingAge( Number( qualifyingYear.value.value ) )
+
+          qualifyingYearInfo.value =
+            ( qualifyingInfo.value ?? [] )
+              .filter( row => ( row.year === qualifyingYear.value?.value && row.age === qualifyingAge && row.gender === swimmer.value?.gender ) )
+        }
+      }
+    } else {
+      yearOptions.value = []
+    }
+  } )
 
   interface PersonalQualifyingType extends IndividualStats {
     key: string
@@ -119,7 +123,7 @@
         const { course, stroke, distance, scope, position, rank, best, best_date, difference } = record
         const key = `${distance}_${stroke}_${course}_${scope}`
         const page = Math.floor( rank / 100 ) + 1
-        const url = generateRankingUrl( swimmer.value, course, stroke, distance, scope, page )
+        const url = generateRankingUrl( swimmer.value as Swimmer, course, stroke, distance, scope, page )
         return [ key, {
           url,
           position,
@@ -153,7 +157,7 @@
             qualifyingRecord.qualifying[scope as keyof QualifyingType] = performanceRecord
           }
           const qualifyingEntry = ( qualifyingYearInfo?.value || [] ).find( entry => (
-            entry.stroke === stroke && entry.distance === distance && entry.scope === scope && entry.area === getSwimmerScopeArea( swimmer.value, scope )
+            entry.stroke === stroke && entry.distance === distance && entry.scope === scope && entry.area === getSwimmerScopeArea( swimmer.value as Swimmer, scope )
           ) )
           if ( qualifyingEntry ) {
             const qualifyRaw = qualifyingEntry ? convertTime( qualifyingEntry.course, course, stroke, distance, qualifyingEntry.time ) : undefined
@@ -256,6 +260,7 @@
       Performance in events relative to the event leader if appearing in top 100 rankings (200 for national) in the last 12 months.
     </template>
     <template #controls>
+      <SwimmerSelector :show-label="false" />
       <div class="min-w-32">
         <UI-Listbox
           v-model="qualifyingYear"

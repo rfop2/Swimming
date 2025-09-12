@@ -4,7 +4,7 @@
   import "ag-grid-community/styles/ag-grid.css" // Mandatory CSS required by the Data Grid
   import "ag-grid-community/styles/ag-theme-quartz.css" // Optional Theme applied to the Data Grid
   import { AgGridVue } from "ag-grid-vue3" // Vue Data Grid Component
-  import { type Swimmer, secondsToTime, strokeSort, timeToSeconds, type QualifyingRow, getCompetitionAge, REGIONS, COUNTIES, NATIONALITIES, STROKE_DISTANCE, AGES } from "lib"
+  import { type Swimmer, secondsToTime, strokeSort, timeToSeconds, type QualifyingRow, getCompetitionAge, REGIONS, COUNTIES, NATIONALITIES, STROKE_DISTANCE, AGES, getSwimmerScopeArea } from "lib"
   import { addMonths, format, getYear, parseISO } from "date-fns"
   import type { FetchError } from "ofetch"
   import { ArrowUturnLeftIcon, CheckIcon, ClipboardDocumentCheckIcon, ClipboardDocumentIcon, ClipboardDocumentListIcon, DocumentPlusIcon, PlusCircleIcon, TrashIcon } from "@heroicons/vue/24/outline"
@@ -14,7 +14,7 @@
     middleware: [ "protected" ]
   } )
 
-  const swimmer = useState<Swimmer>( "swimmer" )
+  const swimmer = useSwimmer()
 
   const user = useAuthenticatedUser()
 
@@ -396,18 +396,8 @@
     },
   ] )
 
-  const swimmerAreaFromScope = ( scope: string ) => {
-    if ( scope === "county" )
-      return swimmer.value.county
-    if ( scope === "regional" )
-      return swimmer.value.region
-    if ( scope === "national" )
-      return swimmer.value.nationality
-    return ""
-  }
-
-  const swimmerAreaSelection = ( scope: string ) => {
-    const swimmerArea = swimmerAreaFromScope( scope )
+  const swimmerAreaSelection = ( swimmer: Swimmer, scope: string ) => {
+    const swimmerArea = getSwimmerScopeArea( swimmer, scope )
     return areas.value.find( area => area.value === swimmerArea ) ?? areas.value[0]
   }
 
@@ -423,21 +413,23 @@
     selections.value = {
       year: years.find( year => year.value === filterYear ) ?? years[0],
       scope: selections.value.scope,
-      area: swimmerAreaSelection( selections.value.scope.value ),
+      area: swimmerAreaSelection( swimmer, selections.value.scope.value ),
       gender: genders.find( gender => gender.value === swimmer.gender ) ?? genders[0],
       age: ages.value.find( age => age.value === qualifyingAge ) ?? ages.value[0],
       course: selections.value.course,
     }
   }
 
-  updateFilters( swimmer.value )
-
-  watch( swimmer, ( newSwimmer ) => {
-    updateFilters( newSwimmer )
+  watchEffect( () => {
+    if ( swimmer.value ) {
+      updateFilters( swimmer.value )
+    }
   } )
 
   watch( () => selections.value.scope, newScope => {
-    selections.value.area = swimmerAreaSelection( newScope.value )
+    if ( swimmer.value ) {
+      selections.value.area = swimmerAreaSelection( swimmer.value, newScope.value )
+    }
   }, {
     immediate: true,
   } )
@@ -584,6 +576,7 @@
       </div>
     </template>
     <template #controls>
+      <SwimmerSelector />
       <div class="min-w-24">
         <UI-Listbox
           v-model="selections.year"

@@ -1,35 +1,32 @@
 import { format } from "date-fns"
 import type { Swimmer } from "lib"
 
-export const useSwimmers = async () => {
+export const useSwimmers = () => {
   const swimmers = useState<Swimmer[]>( "swimmers", () => [] )
   const loading = useState<boolean>( "swimmersLoading", () => false )
   const fetchError = useState<unknown>( "swimmersError", () => null )
 
-  // --- Internal fetcher ---
-  const fetchSwimmers = async (): Promise<void> => {
+  const fetchSwimmers = async () => {
+    if ( loading.value ) return
     loading.value = true
     fetchError.value = null
 
     try {
       const { data, error } = await useFetch<Swimmer[]>( "/api/swimmers", {
-        key: "swimmers", // ties to clearNuxtData('swimmers')
+        key: "swimmers",
         transform: ( data ) =>
-          data.map( ( swimmer ) => ( {
-            ...swimmer,
-            birthday: format( new Date( swimmer.birthday ), "yyyy-MM-dd" )
-          } ) )
+          data.map( ( s ) => ( {
+            ...s,
+            birthday: format( new Date( s.birthday ), "yyyy-MM-dd" ),
+          } ) ),
       } )
 
       if ( error.value ) {
         fetchError.value = error.value
       } else {
-        swimmers.value = data.value || []
-        swimmers.value.sort( ( a, b ) => {
+        swimmers.value = ( data.value || [] ).sort( ( a, b ) => {
           const lastSort = a.lastName.localeCompare( b.lastName )
-          if ( lastSort )
-            return lastSort
-          return a.firstName.localeCompare( b.firstName )
+          return lastSort || a.firstName.localeCompare( b.firstName )
         } )
       }
     } catch ( err ) {
@@ -87,7 +84,7 @@ export const useSwimmers = async () => {
 
   // --- Public API ---
   if ( !swimmers.value.length ) {
-    await fetchSwimmers()
+    fetchSwimmers()
   }
 
   return {
