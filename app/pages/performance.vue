@@ -250,81 +250,72 @@
 
 <template>
   <div>
-    <div class="sm:flex sm:items-center">
-      <div class="sm:flex-auto">
-        <h1 class="text-base font-semibold leading-6 text-gray-900">
-          Performance
-        </h1>
-        <p class="mt-2 text-sm text-gray-700">
-          Performance in events relative to the event leader if appearing in top 100 rankings (200 for national) in the last 12 months.<br>
-        </p>
-      </div>
-      <div class="mt-4 sm:ml-3 sm:mt-0 sm:flex-none">
-        <Listbox
-          v-model="qualifyingYear"
-          as="div"
-        >
-          <div class="relative">
-            <ListboxButton class="relative w-full cursor-default rounded-md bg-white py-1.5 pl-3 pr-10 text-left text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6">
-              <span class="block truncate">{{ qualifyingYear + " / " + qualifyingAge }}</span>
-              <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
-                <ChevronUpDownIcon
-                  class="h-5 w-5 text-gray-400"
-                  aria-hidden="true"
-                />
-              </span>
-            </ListboxButton>
-            <transition
-              leave-active-class="transition ease-in duration-100"
-              leave-from-class="opacity-100"
-              leave-to-class="opacity-0"
-            >
-              <ListboxOptions class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
-                <ListboxOption
-                  v-for="year in qualifyingYears"
-                  :key="year"
-                  v-slot="{ active, selected }"
-                  as="template"
-                  :value="year"
-                >
-                  <li :class="[active ? 'bg-indigo-600 text-white' : 'text-gray-900', 'relative cursor-default select-none py-2 pl-3 pr-9']">
-                    <span :class="[selected ? 'font-semibold' : 'font-normal', 'block truncate']">{{ year + " / " + getQualifyingAge( year ) }}</span>
-                    <span
-                      v-if="selected"
-                      :class="[active ? 'text-white' : 'text-indigo-600', 'absolute inset-y-0 right-0 flex items-center pr-4']"
-                    >
-                      <CheckIcon
-                        class="h-5 w-5"
-                        aria-hidden="true"
-                      />
-                    </span>
-                  </li>
-                </ListboxOption>
-              </ListboxOptions>
-            </transition>
-          </div>
-        </Listbox>
-      </div>
-      <div class="mt-4 sm:ml-3 sm:mt-0 sm:flex-none">
-        <button
-          type="button"
-          class="inline-flex items-center gap-x-1.5 rounded-md bg-white px-2 py-1 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
-          @click="resetSort"
-        >
-          <span class="py-1">Reset sort</span>
-          <ArrowUturnLeftIcon
-            class="-mr-0.5 h-5 w-5"
-            aria-hidden="true"
-          />
-        </button>
-      </div>
-    </div>
-    <div class="mt-2 bg-white shadow sm:rounded-lg">
-      <p class="p-4 text-sm text-gray-700">
-        Key &ndash; Best times recorded qualify for <span class="px-2 mr-1 qualifiedArea1" /> county, <span class="px-2 mr-1 qualifiedArea2" /> region, <span class="px-2 mr-1 qualifiedArea3" /> country.
-        Event ranking is in the <span class="px-2 mr-1 rank-10" /> top 10, <span class="px-2 mr-1 rank-20" /> top 20, <span class="px-2 mr-1 rank-50" /> top 50.
-      </p>
-    </div>
+    <PageHeader
+      title="Performance"
+    >
+      Performance in events relative to the event leader if appearing in top 100 rankings (200 for national) in the last 12 months.
+    </PageHeader>
+    <PageControls :border="false">
+      <Listbox
+        v-model="qualifyingYear"
+        as="div"
+      >
+        <div class="relative">
+          <ListboxButton class="relative w-full cursor-default rounded-md bg-white py-1.5 pl-3 pr-10 text-left text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6">
+            <span class="block truncate">{{ qualifyingYear + " / " + qualifyingAge }}</span>
+            <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
+              <ChevronUpDownIcon
+                class="h-5 w-5 text-gray-400"
+                aria-hidden="true"
+              />
+            </span>
+          </ListboxButton>
+          <transition
+            leave-active-class="transition ease-in duration-100"
+            leave-from-class="opacity-100"
+            leave-to-class="opacity-0"
+          >
+            <ListboxOptions class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+              <ListboxOption
+                v-for="year in qualifyingYears"
+                :key="year"
+                v-slot="{ active, selected }"
+                as="template"
+                :value="year"
+              >
+                <li :class="[active ? 'bg-indigo-600 text-white' : 'text-gray-900', 'relative cursor-default select-none py-2 pl-3 pr-9']">
+                  <span :class="[selected ? 'font-semibold' : 'font-normal', 'block truncate']">{{ year + " / " + getQualifyingAge( year ) }}</span>
+                  <span
+                    v-if="selected"
+                    :class="[active ? 'text-white' : 'text-indigo-600', 'absolute inset-y-0 right-0 flex items-center pr-4']"
+                  >
+                    <CheckIcon
+                      class="h-5 w-5"
+                      aria-hidden="true"
+                    />
+                  </span>
+                </li>
+              </ListboxOption>
+            </ListboxOptions>
+          </transition>
+        </div>
+      </Listbox>
+      <button
+        type="button"
+        class="inline-flex items-center gap-x-1.5 rounded-md bg-white px-2 py-1 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+        @click="resetSort"
+      >
+        <span class="py-1 whitespace-nowrap">Reset sort</span>
+        <ArrowUturnLeftIcon
+          class="-mr-0.5 h-5 w-5"
+          aria-hidden="true"
+        />
+      </button>
+    </PageControls>
+    <PageKey>
+      Key &ndash; Best times recorded qualify for <span class="px-2 mr-1 qualifiedArea1" /> county, <span class="px-2 mr-1 qualifiedArea2" /> region, <span class="px-2 mr-1 qualifiedArea3" /> country.
+      Event ranking is in the <span class="px-2 mr-1 rank-10" /> top 10, <span class="px-2 mr-1 rank-20" /> top 20, <span class="px-2 mr-1 rank-50" /> top 50.
+    </PageKey>
     <div class="mt-4 flow-root">
       <div class="overflow-x-auto">
         <div class="inline-block min-w-full py-2 align-middle">
@@ -594,7 +585,7 @@
                 <td class="whitespace-nowrap px-2 py-2 text-right text-sm text-gray-500">
                   {{ row.qualifying.national.difference ? secondsToTime( row.qualifying.national.difference ) : '' }}
                 </td>
-                <td class="whitespace-nowrap py-2 pl-2 pr-1 text-right text-sm text-gray-500 sm:pr-0">
+                <td class="whitespace-nowrap py-2 pl-2 pr-1 text-right text-sm text-gray-500 sm:pr-0 hidden">
                   {{ row.qualifying.national.qualifyTime }}
                 </td>
               </tr>

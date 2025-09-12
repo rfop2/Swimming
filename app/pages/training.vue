@@ -92,16 +92,11 @@
 
 <template>
   <div>
-    <div class="sm:flex sm:items-center">
-      <div class="sm:flex-auto">
-        <h1 class="text-base font-semibold leading-6 text-gray-900">
-          Training targets calculator
-        </h1>
-        <p class="mt-2 text-sm text-gray-700">
-          Estimated target times for fractional distances based on fastest recorded time over {{ selections.baseDistance.label }}.
-        </p>
-      </div>
-    </div>
+    <PageHeader
+      title="Training targets calculator"
+    >
+      Estimated target times for fractional distances based on fastest recorded time over {{ selections.baseDistance.label }}.
+    </PageHeader>
     <div class="border-b border-gray-200 pb-5 sm:flex sm:items-center sm:justify-between">
       <div class="flex flex-col space-y-3 sm:flex-row sm:space-y-0 sm:space-x-4 mt-3 mx-auto">
         <div class="min-w-48">

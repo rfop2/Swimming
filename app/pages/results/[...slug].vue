@@ -1,6 +1,4 @@
 <script setup lang="ts">
-  import { Listbox, ListboxButton, ListboxLabel, ListboxOption, ListboxOptions } from "@headlessui/vue"
-  import { CheckIcon, ChevronUpDownIcon } from "@heroicons/vue/24/outline"
   import { COURSES, type Swimmer, convertTime, getSwimmerAgeGroup, secondsToTime, strokes } from "lib"
   import { Line } from "vue-chartjs"
   import {  Chart as ChartJS, CategoryScale, LinearScale, TimeScale, PointElement, LineElement, Title, Tooltip, Legend, type ChartData, type ChartOptions, type TooltipItem } from "chart.js"
@@ -273,172 +271,37 @@
 
 <template>
   <div>
-    <div class="sm:flex sm:items-center">
-      <div class="sm:flex-auto">
-        <h1 class="text-base font-semibold leading-6 text-gray-900">
-          Results
-        </h1>
-        <p class="mt-2 text-sm text-gray-700">
-          Results and progress in each event. Qualifying times are shown where available, adjusted to the selected course.
-        </p>
+    <PageHeader
+      title="Results"
+    >
+      Results and progress in each event. Qualifying times are shown where available, adjusted to the selected course.
+    </PageHeader>
+    <PageControls>
+      <div class="min-w-48">
+        <UI-Listbox
+          v-model="selections.course"
+          :options="courseOptions"
+          label="Course"
+          placeholder="Choose Course"
+        />
       </div>
-    </div>
-    <div class="border-b border-gray-200 pb-5 sm:flex sm:items-center sm:justify-between">
-      <div class="mt-3">
-        <div class="flex items-center space-x-4">
-          <div class="min-w-48">
-            <Listbox
-              v-model="selections.course"
-              as="div"
-            >
-              <ListboxLabel class="block text-sm font-medium leading-6 text-gray-900">
-                Course
-              </ListboxLabel>
-              <div class="relative mt-2">
-                <ListboxButton class="relative w-full cursor-default rounded-md bg-white py-1.5 pl-3 pr-10 text-left text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6">
-                  <span class="block truncate">{{ selections.course.label }}</span>
-                  <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
-                    <ChevronUpDownIcon
-                      class="h-5 w-5 text-gray-400"
-                      aria-hidden="true"
-                    />
-                  </span>
-                </ListboxButton>
-                <transition
-                  leave-active-class="transition ease-in duration-100"
-                  leave-from-class="opacity-100"
-                  leave-to-class="opacity-0"
-                >
-                  <ListboxOptions class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
-                    <ListboxOption
-                      v-for="option in courseOptions"
-                      :key="option.value"
-                      v-slot="{ active, selected }"
-                      as="template"
-                      :value="option"
-                    >
-                      <li :class="[active ? 'bg-indigo-600 text-white' : 'text-gray-900', 'relative cursor-default select-none py-2 pl-3 pr-9']">
-                        <span :class="[selected ? 'font-semibold' : 'font-normal', 'block truncate']">{{ option.label }}</span>
-
-                        <span
-                          v-if="selected"
-                          :class="[active ? 'text-white' : 'text-indigo-600', 'absolute inset-y-0 right-0 flex items-center pr-4']"
-                        >
-                          <CheckIcon
-                            class="h-5 w-5"
-                            aria-hidden="true"
-                          />
-                        </span>
-                      </li>
-                    </ListboxOption>
-                  </ListboxOptions>
-                </transition>
-              </div>
-            </Listbox>
-          </div>
-          <div class="min-w-72">
-            <Listbox
-              v-model="selections.stroke"
-              as="div"
-            >
-              <ListboxLabel class="block text-sm font-medium leading-6 text-gray-900">
-                Stroke
-              </ListboxLabel>
-              <div class="relative mt-2">
-                <ListboxButton class="relative w-full cursor-default rounded-md bg-white py-1.5 pl-3 pr-10 text-left text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6">
-                  <span class="block truncate">{{ selections.stroke.label }}</span>
-                  <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
-                    <ChevronUpDownIcon
-                      class="h-5 w-5 text-gray-400"
-                      aria-hidden="true"
-                    />
-                  </span>
-                </ListboxButton>
-                <transition
-                  leave-active-class="transition ease-in duration-100"
-                  leave-from-class="opacity-100"
-                  leave-to-class="opacity-0"
-                >
-                  <ListboxOptions class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
-                    <ListboxOption
-                      v-for="option in strokeOptions"
-                      :key="option.value"
-                      v-slot="{ active, selected }"
-                      as="template"
-                      :value="option"
-                    >
-                      <li :class="[active ? 'bg-indigo-600 text-white' : 'text-gray-900', 'relative cursor-default select-none py-2 pl-3 pr-9']">
-                        <span :class="[selected ? 'font-semibold' : 'font-normal', 'block truncate']">{{ option.label }}</span>
-
-                        <span
-                          v-if="selected"
-                          :class="[active ? 'text-white' : 'text-indigo-600', 'absolute inset-y-0 right-0 flex items-center pr-4']"
-                        >
-                          <CheckIcon
-                            class="h-5 w-5"
-                            aria-hidden="true"
-                          />
-                        </span>
-                      </li>
-                    </ListboxOption>
-                  </ListboxOptions>
-                </transition>
-              </div>
-            </Listbox>
-          </div>
-          <div class="min-w-48">
-            <Listbox
-              v-model="selections.distance"
-              as="div"
-            >
-              <ListboxLabel class="block text-sm font-medium leading-6 text-gray-900">
-                Distance
-              </ListboxLabel>
-              <div class="relative mt-2">
-                <ListboxButton class="relative w-full cursor-default rounded-md bg-white py-1.5 pl-3 pr-10 text-left text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6">
-                  <span class="block truncate">{{ selections.distance.label }}</span>
-                  <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
-                    <ChevronUpDownIcon
-                      class="h-5 w-5 text-gray-400"
-                      aria-hidden="true"
-                    />
-                  </span>
-                </ListboxButton>
-                <transition
-                  leave-active-class="transition ease-in duration-100"
-                  leave-from-class="opacity-100"
-                  leave-to-class="opacity-0"
-                >
-                  <ListboxOptions class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
-                    <ListboxOption
-                      v-for="option in distanceOptions"
-                      :key="option.value"
-                      v-slot="{ active, selected }"
-                      as="template"
-                      :value="option"
-                    >
-                      <li :class="[active ? 'bg-indigo-600 text-white' : 'text-gray-900', 'relative cursor-default select-none py-2 pl-3 pr-9']">
-                        <span :class="[selected ? 'font-semibold' : 'font-normal', 'block truncate']">{{ option.label }}</span>
-
-                        <span
-                          v-if="selected"
-                          :class="[active ? 'text-white' : 'text-indigo-600', 'absolute inset-y-0 right-0 flex items-center pr-4']"
-                        >
-                          <CheckIcon
-                            class="h-5 w-5"
-                            aria-hidden="true"
-                          />
-                        </span>
-                      </li>
-                    </ListboxOption>
-                  </ListboxOptions>
-                </transition>
-              </div>
-            </Listbox>
-          </div>
-        </div>
+      <div class="min-w-72">
+        <UI-Listbox
+          v-model="selections.stroke"
+          :options="strokeOptions"
+          label="Stroke"
+          placeholder="Choose Stroke"
+        />
       </div>
-    </div>
+      <div class="min-w-48">
+        <UI-Listbox
+          v-model="selections.distance"
+          :options="distanceOptions"
+          label="Distance"
+          placeholder="Choose Distance"
+        />
+      </div>
+    </PageControls>
     <div
       v-if="data.datasets[0].data.length > 0"
       class="overflow-x-auto"
