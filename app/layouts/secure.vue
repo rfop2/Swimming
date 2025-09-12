@@ -41,6 +41,7 @@
     { name: "Performance", href: "/performance", condition: ()=>( !!swimmer.value ) },
     { name: "Results", href: "/results", condition: ()=>( !!swimmer.value ) },
     { name: "Times", href: "/times" },
+    { name: "Training", href: "/training" },
     { name: "Qualifying", href: "/qualifying" },
     { name: "Meets", href: "/meets" },
   ] )
