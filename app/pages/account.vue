@@ -735,7 +735,7 @@
         </div>
       </div>
 
-      <div class="mt-6 flex items-center justify-end gap-x-6">
+      <div class="fixed bottom-6 right-6 flex gap-x-4 sm:hidden z-50 pl-6 bg-white">
         <button
           type="button"
           class="text-sm/6 font-semibold text-gray-900 disabled:text-gray-300"
@@ -752,6 +752,25 @@
           Save
         </button>
       </div>
+
+      <div class="hidden sm:flex sticky bottom-0 bg-white border-t p-4 justify-end gap-x-6">
+        <button
+          type="button"
+          class="text-sm/6 font-semibold text-gray-900 disabled:text-gray-300"
+          :disabled="!meta.dirty"
+          @click="() => { resetForm(); editing = null; deleting = null; submitErrors.length = 0 }"
+        >
+          Reset
+        </button>
+        <button
+          type="submit"
+          :disabled="editing !== null || deleting !== null || !meta.dirty || !!Object.entries(errors).length"
+          class="rounded-md bg-indigo-600 disabled:bg-gray-300 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+        >
+          Save
+        </button>
+      </div>
+
       <UI-Confirm
         v-if="deleting !== null"
         title="Delete swimmer"
