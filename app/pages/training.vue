@@ -91,121 +91,117 @@
 </script>
 
 <template>
-  <div>
-    <PageHeader
-      title="Training targets calculator"
-    >
+  <StandardPage
+    title="Training targets calculator"
+  >
+    <template #description>
       Estimated target times for fractional distances based on fastest recorded time over {{ selections.baseDistance.label }}.
-    </PageHeader>
-    <div class="border-b border-gray-200 pb-5 sm:flex sm:items-center sm:justify-between">
-      <div class="flex flex-col space-y-3 sm:flex-row sm:space-y-0 sm:space-x-4 mt-3 mx-auto">
-        <div class="min-w-48">
-          <UI-Listbox
-            v-model="selections.squad"
-            :options="squadOptions"
-            label="Squad"
-            placeholder="Choose Squad"
-          />
-        </div>
-        <div class="min-w-48">
-          <UI-Listbox
-            v-model="selections.stroke"
-            :options="strokeOptions"
-            label="Stroke"
-            placeholder="Choose Stroke"
-          />
-        </div>
-        <div class="min-w-28">
-          <UI-Listbox
-            v-model="selections.course"
-            :options="courseOptions"
-            label="Course"
-            placeholder="Choose Course"
-          />
-        </div>
-        <div class="min-w-32">
-          <UI-Listbox
-            v-model="selections.baseDistance"
-            :options="baseDistanceOptions"
-            label="Base Distance"
-            placeholder="Choose Distance"
-          />
-        </div>
-        <div class="min-w-32">
-          <UI-Listbox
-            v-model="selections.targetDistances"
-            :options="targetDistanceOptions"
-            multiple
-            label="Target Distances"
-            placeholder="Choose Distances"
-          />
-        </div>
-        <div class="min-w-24">
-          <UI-Listbox
-            v-model="selections.effort"
-            :options="effortOptions"
-            label="Effort"
-            placeholder="Choose Effort"
-          />
-        </div>
+    </template>
+    <template #controls>
+      <div class="min-w-48">
+        <UI-Listbox
+          v-model="selections.squad"
+          :options="squadOptions"
+          label="Squad"
+          placeholder="Choose Squad"
+        />
       </div>
-    </div>
-    <div class="overflow-x-auto flex justify-center">
-      <div class="inline-block sm:min-w-full py-2 align-middle sm:px-6 lg:px-8">
-        <table class="sm:min-w-full divide-y divide-gray-300">
-          <thead>
-            <tr class="divide-x divide-gray-200">
-              <th
-                scope="col"
-                class="whitespace-nowrap align-bottom pl-4 pr-3 py-3.5 text-right text-sm font-semibold text-gray-900 sm:pl-0"
-              >
-                Swimmer
-              </th>
-              <th
-                scope="col"
-                class="whitespace-nowrap align-bottom px-2 py-3.5 text-right text-sm font-semibold text-gray-900"
-              >
-                {{ selections.baseDistance.label }} Time
-              </th>
-              <th
-                v-for="distance in selections.targetDistances"
-                :key="distance.label"
-                scope="col"
-                class="whitespace-nowrap align-bottom px-2 py-3.5 text-right text-sm font-semibold text-gray-900"
-              >
-                <span>{{ distance.label }}</span>
-              </th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-gray-200 bg-white">
-            <tr
-              v-for="swimmer in filteredSwimmers.values()"
-              :key="swimmer.id"
-              class="divide-x divide-gray-200"
+      <div class="min-w-48">
+        <UI-Listbox
+          v-model="selections.stroke"
+          :options="strokeOptions"
+          label="Stroke"
+          placeholder="Choose Stroke"
+        />
+      </div>
+      <div class="min-w-28">
+        <UI-Listbox
+          v-model="selections.course"
+          :options="courseOptions"
+          label="Course"
+          placeholder="Choose Course"
+        />
+      </div>
+      <div class="min-w-32">
+        <UI-Listbox
+          v-model="selections.baseDistance"
+          :options="baseDistanceOptions"
+          label="Base Distance"
+          placeholder="Choose Distance"
+        />
+      </div>
+      <div class="min-w-32">
+        <UI-Listbox
+          v-model="selections.targetDistances"
+          :options="targetDistanceOptions"
+          multiple
+          label="Target Distances"
+          placeholder="Choose Distances"
+        />
+      </div>
+      <div class="min-w-24">
+        <UI-Listbox
+          v-model="selections.effort"
+          :options="effortOptions"
+          label="Effort"
+          placeholder="Choose Effort"
+        />
+      </div>
+    </template>
+    <div class="inline-block sm:min-w-full py-2 align-middle sm:px-6 lg:px-8">
+      <table class="sm:min-w-full divide-y divide-gray-300">
+        <thead>
+          <tr class="divide-x divide-gray-200">
+            <th
+              scope="col"
+              class="whitespace-nowrap align-bottom pl-4 pr-3 py-3.5 text-right text-sm font-semibold text-gray-900 sm:pl-0"
             >
-              <td
-                class="whitespace-wrap sm:whitespace-nowrap px-2 py-2 text-right text-sm text-gray-900"
-              >
-                {{ swimmer.fullName }}
-              </td>
-              <td
-                class="whitespace-nowrap px-2 py-2 text-right text-sm text-gray-900"
-              >
-                {{ secondsToTime( bestTimes.get( swimmer.id )?.time ?? 0 ) }}
-              </td>
-              <td
-                v-for="distance in selections.targetDistances.sort( ( a, b ) => a.value - b.value )"
-                :key="distance.label"
-                class="whitespace-nowrap px-2 py-2 text-right text-sm text-gray-900"
-              >
-                {{ secondsToTime( ( ( ( bestTimes.get( swimmer.id )?.time ?? 0 ) * distance.value ) / ( selections.effort.value * selections.baseDistance.value ) ) ) }}
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+              Swimmer
+            </th>
+            <th
+              scope="col"
+              class="whitespace-nowrap align-bottom px-2 py-3.5 text-right text-sm font-semibold text-gray-900"
+            >
+              {{ selections.baseDistance.label }} Time
+            </th>
+            <th
+              v-for="distance in selections.targetDistances"
+              :key="distance.label"
+              scope="col"
+              class="whitespace-nowrap align-bottom px-2 py-3.5 text-right text-sm font-semibold text-gray-900"
+            >
+              <span>{{ distance.label }}</span>
+            </th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-200 bg-white">
+          <tr
+            v-for="swimmer in filteredSwimmers.values()"
+            :key="swimmer.id"
+            class="divide-x divide-gray-200"
+          >
+            <td
+              class="whitespace-wrap sm:whitespace-nowrap px-2 py-2 text-right text-sm text-gray-900"
+            >
+              {{ swimmer.fullName }}
+            </td>
+            <td
+              class="whitespace-nowrap px-2 py-2 text-right text-sm text-gray-900"
+            >
+              {{ secondsToTime( bestTimes.get( swimmer.id )?.time ?? 0 ) }}
+            </td>
+            <td
+              v-for="distance in selections.targetDistances.sort( ( a, b ) => a.value - b.value )"
+              :key="distance.label"
+              class="whitespace-nowrap px-2 py-2 text-right text-sm text-gray-900"
+            >
+              {{ secondsToTime( ( ( ( bestTimes.get( swimmer.id )?.time ?? 0 ) * distance.value ) / ( selections.effort.value * selections.baseDistance.value ) ) ) }}
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
-  </div>
+  </StandardPage>
 </template>
 
 <style scoped>
