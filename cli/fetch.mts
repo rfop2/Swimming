@@ -1,6 +1,6 @@
 #!/usr/bin/env nodemjs
 import "dotenv/config"
-import { format } from "date-fns"
+import { format, formatISO } from "date-fns"
 import * as cheerio from "cheerio"
 // import { inspect } from "util"
 
@@ -42,7 +42,7 @@ const now = new Date()
 const today = format( now, "yyyy-MM-dd" )
 
 const insertIndividualSql =
-`INSERT IGNORE INTO Individual (
+  `INSERT IGNORE INTO Individual (
   created,
   swimmer,
   course,
@@ -84,7 +84,7 @@ interface RankingRecord {
 }
 
 export const deleteRankingsSql =
-`DELETE FROM Rankings WHERE
+  `DELETE FROM Rankings WHERE
   created = :created AND
   gender = :gender AND
   age = :age AND
@@ -94,9 +94,8 @@ export const deleteRankingsSql =
   scope = :scope AND
   area = :area`
 
-
 const insertRankingsSql =
-`INSERT INTO Rankings (
+  `INSERT INTO Rankings (
   created,
   gender,
   age,
@@ -137,7 +136,7 @@ const insertRankingsSql =
 );`
 
 const deletePerformanceSql =
-`DELETE FROM Performance WHERE
+  `DELETE FROM Performance WHERE
   created = :created AND
   swimmer = :swimmer AND
   course = :course AND
@@ -148,7 +147,7 @@ const deletePerformanceSql =
 ;`
 
 const insertPerformanceSql =
-`INSERT INTO Performance (
+  `INSERT INTO Performance (
   created,
   swimmer,
   course,
@@ -181,7 +180,7 @@ const insertPerformanceSql =
 );`
 
 const insertResultsSql =
-`INSERT IGNORE INTO Results (
+  `INSERT IGNORE INTO Results (
   created,
   swimmer,
   course,
@@ -212,7 +211,7 @@ const insertResultsSql =
 );`
 
 const insertMeetsSql =
-`INSERT INTO Meets (
+  `INSERT INTO Meets (
   created,
   id,
   code,
@@ -487,7 +486,7 @@ const updateMeet = async ( meet: Partial<Meet> ) => {
     url: new URL( `${BASE_URL}${meetsBaseUrl}${meet.link}` ),
     type: "meet"
   }
-  const content = await fetchPage( page, 17 * 24 )
+  const content = await fetchPage( page )
   const $ = cheerio.load( content )
 
   await parseMeet( page, $, meet )
@@ -495,6 +494,11 @@ const updateMeet = async ( meet: Partial<Meet> ) => {
 
 const updateMeets = async () => {
   console.log( "Updating meets" )
+
+  const pool = await getPool()
+  const selectMeets = prepareStatement<unknown[],Meet>( pool, "SELECT * FROM Meets" )
+  const meets = await selectMeets.all()
+  const meetsMap = new Map<Meet["id"],Meet>( meets.map( m => ( [ m.id, m ] ) ) )
 
   const region = "P"
 
@@ -515,11 +519,36 @@ const updateMeets = async () => {
     // console.log( meetsData )
     console.log( `Got records for ${meetsData.length} meets` )
 
-    const saveMeets = prepareStatement( await getPool(), insertMeetsSql )
+    const saveMeets = prepareStatement( pool, insertMeetsSql )
     for ( const meet of meetsData ) {
-      await updateMeet( meet )
-      // console.log( meet )
-      await saveMeets.run( { created: today, ...meet } )
+      let fetchMeet = true
+      if ( !meet.id ) {
+        throw new Error( "Meet has no id" )
+      }
+      const dbMeet = meetsMap.get( meet.id )
+      if ( dbMeet ) {
+        if (
+          meet.name !== dbMeet.name
+          || !meet.code?.includes( dbMeet.code, 1 )
+          || meet.date !== formatISO( dbMeet.date, { representation: "date" } )
+          || meet.country !== dbMeet.country
+          || meet.region !== dbMeet.region
+          || meet.course !== dbMeet.course
+          || meet.level !== dbMeet.level
+          || meet.type !== dbMeet.type
+        ) {
+          console.log( "Updated meet", meet, dbMeet )
+        } else {
+          fetchMeet = false
+        }
+      } else {
+        console.log( "New meet", meet )
+      }
+      if ( fetchMeet ) {
+        await updateMeet( meet )
+        // console.log( meet )
+        await saveMeets.run( { created: today, ...meet } )
+      }
     }
 
     if ( pageNo === 1 ) {
