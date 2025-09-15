@@ -140,7 +140,7 @@
   ]
 
 
-  const selections = reactive( {
+  const selections = usePersistedState( "meets-selection",  {
     course: courses[0],
     level: levels,
     distance: distances[0],

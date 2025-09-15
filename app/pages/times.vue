@@ -23,7 +23,7 @@
     return sq
   }, new Set<string>() ) ).sort().map( s => ( { label: s, value: s } ) ), { label: "No squad", value: "" } ] )
 
-  const selections = reactive( {
+  const selections = usePersistedState( "times-selection", {
     squad: squadOptions.value.find( option => option.value === slug[0] ) ?? squadOptions.value[0],
     stroke: strokeOptions.find( option => option.value === slug[1] ) ?? strokeOptions[0],
   } )
@@ -137,7 +137,7 @@
           placeholder="Choose Squad"
         />
       </div>
-      <div class="min-w-72">
+      <div class="min-w-48">
         <UI-Listbox
           v-model="selections.stroke"
           :options="strokeOptions"

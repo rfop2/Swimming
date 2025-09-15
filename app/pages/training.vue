@@ -50,7 +50,7 @@
     },
   ]
 
-  const selections = reactive( {
+  const selections = usePersistedState( "training-selection", {
     squad: squadOptions.value.find( option => option.value === slug[0] ) ?? squadOptions.value[0],
     stroke: strokeOptions.find( option => option.value === slug[1] ) ?? strokeOptions[0],
     course: courseOptions.find( option => option.value === slug[2] ) ?? courseOptions[0],
