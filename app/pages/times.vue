@@ -15,12 +15,22 @@
   const route = useRoute()
   const slug = Array.isArray( route.params.slug ) ? route.params.slug : []
 
+  const { swimmers } = await useSwimmers()
+
+  const squadOptions = computed( () => [ { label: "All Swimmers", value: "*" }, ...Array.from( swimmers.value.reduce( ( sq, s ) => {
+    if ( s.squad )
+      sq.add( s.squad )
+    return sq
+  }, new Set<string>() ) ).sort().map( s => ( { label: s, value: s } ) ), { label: "No squad", value: "" } ] )
+
   const selections = reactive( {
+    squad: squadOptions.value.find( option => option.value === slug[0] ) ?? squadOptions.value[0],
     stroke: strokeOptions.find( option => option.value === slug[1] ) ?? strokeOptions[0],
   } )
 
-  const { swimmers } = await useSwimmers()
-  const swimmersMap = computed( () => Object.fromEntries( swimmers.value.map( swimmer => [ swimmer.id, swimmer ] ) ) )
+  const filteredSwimmers = computed( () => ( swimmers.value || [] ).filter( swimmer => selections.squad.value === "*" || swimmer.squad === selections.squad.value ) )
+
+  const swimmersMap = computed( () => Object.fromEntries( filteredSwimmers.value.map( swimmer => [ swimmer.id, swimmer ] ) ) )
 
   type ApiResponse = InternalApi["/api/personal"]["get"]
 
@@ -33,7 +43,7 @@
     "/api/qualifying",
   )
 
-  const filteredRecords = computed( () => ( records.value || [] ).filter( record => record.stroke === selections.stroke.value ) )
+  const filteredRecords = computed( () => ( records.value || [] ).filter( record => record.stroke === selections.stroke.value && swimmersMap.value[record.swimmer] ) )
 
   const distances = computed( () => strokes[selections.stroke.value].distances )
 
@@ -119,6 +129,14 @@
       Times in colour are inside consideration times for <span class="qualified-county">county</span>, <span class="qualified-regional">region</span>, <span class="qualified-national">country</span>.
     </template>
     <template #controls>
+      <div class="min-w-48">
+        <UI-Listbox
+          v-model="selections.squad"
+          :options="squadOptions"
+          label="Squad"
+          placeholder="Choose Squad"
+        />
+      </div>
       <div class="min-w-72">
         <UI-Listbox
           v-model="selections.stroke"
