@@ -3,6 +3,7 @@
   import { ArrowUturnLeftIcon, LinkIcon, ChartBarIcon } from "@heroicons/vue/24/outline"
   import { type QualifyingRow, COUNTIES, type IndividualStats, NATIONALITIES, REGIONS, STROKE_DISTANCE, type Swimmer, convertTime, countyRankParams, createUrl, getSwimmerAge, getSwimmerScopeArea, globalRankParams, nationalRankParams, rankBaseUrl, regionalRankParams, secondsToTime, strokeSort } from "lib"
   import { differenceInCalendarMonths, getYear, addMonths, format } from "date-fns"
+  import { FetchError } from "ofetch"
 
   definePageMeta( {
     layout: "secure",
