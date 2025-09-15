@@ -1,5 +1,5 @@
 import { IndividualStats, LatLon, Meet, PageInfo, Ranking, RankingRow, ResultData, Results, Swimmer } from "./types.js"
-import { getSwimmerAgeGroup, rng, sleep, Timer, timeToSeconds } from "./lib.js"
+import { getSwimmerAgeGroup, sleep, Timer, timeToSeconds } from "./lib.js"
 import { CACHE_DIR } from "./config.js"
 import { differenceInDays, differenceInHours, format, parse } from "date-fns"
 import type { AnyNode } from "domhandler"
@@ -248,6 +248,8 @@ const MAX_FETCH_INTERVAL = Number( process.env.MAX_FETCH_INTERVAL ?? 0 )
 export const fetchPage = async ( pageInfo: PageInfo, cacheTime: number = DEFAULT_CACHE_TIME ) => {
   // Dynamic import to avoid browser issues
   const { stat, readFile, writeFile } = await import( "fs/promises" )
+  const seedrandom = await import( "seedrandom" ) // Dynamic import
+  const rng = seedrandom.default()
 
   const contentFile = CACHE_DIR + "/" + pageInfo.label
   console.log( `Processing ${pageInfo.label} -> ${pageInfo.url}` )

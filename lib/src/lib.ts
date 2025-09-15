@@ -1,4 +1,3 @@
-import seedrandom from "seedrandom"
 import { addMilliseconds, differenceInYears, endOfYear, format, parseISO } from "date-fns"
 import { LatLon, Swimmer } from "./types.js"
 
@@ -10,7 +9,6 @@ export const debug = ( ...args: unknown[] ) => {
   }
 }
 
-export const rng = seedrandom()
 export const sleep = ( timeout: number ) => new Promise( r => setTimeout( r, timeout * 1_000 ) )
 
 export const shuffle = <T>( array: T[] ) => {
