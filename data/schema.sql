@@ -114,7 +114,6 @@ DROP TABLE IF EXISTS `Meets`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `Meets` (
-  `created` date NOT NULL DEFAULT current_timestamp(),
   `id` varchar(8) NOT NULL,
   `code` varchar(16) NOT NULL,
   `date` date NOT NULL,
@@ -128,6 +127,8 @@ CREATE TABLE `Meets` (
   `type` varchar(16) NOT NULL,
   `contact` varchar(128) DEFAULT NULL,
   `email` varchar(32) DEFAULT NULL,
+  `created` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;

@@ -496,9 +496,10 @@ const updateMeets = async () => {
   console.log( "Updating meets" )
 
   const pool = await getPool()
-  const selectMeets = prepareStatement<unknown[],Meet>( pool, "SELECT * FROM Meets" )
+  const selectMeets = prepareStatement<unknown[],Meet>( pool, "SELECT * FROM Meets WHERE date > CURDATE()" )
   const meets = await selectMeets.all()
   const meetsMap = new Map<Meet["id"],Meet>( meets.map( m => ( [ m.id, m ] ) ) )
+  const fetchedMeets = new Set<Meet["id"]>()
 
   const region = "P"
 
@@ -525,6 +526,7 @@ const updateMeets = async () => {
       if ( !meet.id ) {
         throw new Error( "Meet has no id" )
       }
+      fetchedMeets.add( meet.id )
       const dbMeet = meetsMap.get( meet.id )
       if ( dbMeet ) {
         if (
@@ -566,6 +568,12 @@ const updateMeets = async () => {
       // console.log( "Got", currPage, maxPages )
     }
   } while ( ++pageNo <= numPages )
+  const deletedMeets = new Set( meetsMap.keys() ).difference( fetchedMeets )
+  const deleteMeet = prepareStatement<{ meetId: string }>( pool, "DELETE FROM Meets WHERE id = :meetId" )
+  for ( const meetId of deletedMeets ) {
+    console.log( `Deleting meet ${meetId}` )
+    await deleteMeet.run( { meetId } )
+  }
 };
 
 ( async () => {
