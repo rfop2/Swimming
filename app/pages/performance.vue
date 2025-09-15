@@ -42,8 +42,30 @@
 
   watchEffect( async () => {
     if ( swimmer.value ) {
-      performanceRecords.value = await $fetch<PerformanceApiResponse>( `/api/relative/${swimmer.value.id}` )
-      personalRecords.value = await $fetch<PersonalApiResponse>( `/api/personal/${swimmer.value.id}` )
+      try {
+        performanceRecords.value = await $fetch<PerformanceApiResponse>( `/api/relative/${swimmer.value.id}` )
+      } catch ( error ) {
+        if ( error instanceof FetchError ) {
+          const apiError = error as FetchError
+          if ( apiError.status === 404 ) {
+            performanceRecords.value = []
+          } else {
+            throw error
+          }
+        }
+      }
+      try {
+        personalRecords.value = await $fetch<PersonalApiResponse>( `/api/personal/${swimmer.value.id}` )
+      } catch ( error ) {
+        if ( error instanceof FetchError ) {
+          const apiError = error as FetchError
+          if ( apiError.status === 404 ) {
+            personalRecords.value = []
+          } else {
+            throw error
+          }
+        }
+      }
 
       if ( qualifyingInfo.value ) {
         const getQualifyingAge = ( year: number ) => {
