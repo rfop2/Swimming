@@ -52,9 +52,6 @@
   ]
 
   const { updateAvailable, newVersion } = useVersionCheck()
-  watchEffect( () => {
-    console.log( "Update", updateAvailable, newVersion )
-  } )
 
   const reload = () => {
     window.location.reload()
