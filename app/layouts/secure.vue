@@ -1,6 +1,6 @@
 <script setup lang="ts">
   import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/vue"
-  import { Bars3Icon, BellIcon, UserIcon, XMarkIcon } from "@heroicons/vue/24/outline"
+  import { ArrowPathIcon, Bars3Icon, BellIcon, InformationCircleIcon, UserIcon, XMarkIcon } from "@heroicons/vue/24/outline"
 
   const user = useAuthenticatedUser()
 
@@ -51,6 +51,15 @@
     { name: "Sign out", href: "", click: logout },
   ]
 
+  const { updateAvailable, newVersion } = useVersionCheck()
+  watchEffect( () => {
+    console.log( "Update", updateAvailable, newVersion )
+  } )
+
+  const reload = () => {
+    window.location.reload()
+  }
+
   async function logout() {
     await $fetch( "/api/user/logout", {
       method: "POST"
@@ -72,6 +81,38 @@
       class="border-b border-gray-200 bg-white"
     >
       <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <!-- Update Banner -->
+        <div
+          v-if="updateAvailable"
+          class="mx-auto max-w-7xl rounded-md bg-blue-50 p-4"
+        >
+          <div class="flex">
+            <div class="shrink-0">
+              <InformationCircleIcon
+                class="size-5 text-blue-400"
+                aria-hidden="true"
+              />
+            </div>
+            <div class="ml-3 flex-1 md:flex md:justify-between">
+              <p class="text-sm text-blue-700">
+                A new version is available. Click reload to update to {{ newVersion }}.
+              </p>
+              <p class="mt-3 text-sm md:ml-6 md:mt-0">
+                <button
+                  type="button"
+                  class="inline-flex items-center gap-x-1.5 whitespace-nowrap font-medium text-blue-700 hover:text-blue-600"
+                  @click="reload"
+                >
+                  <span class="whitespace-nowrap">Reload</span>
+                  <ArrowPathIcon
+                    class="-mr-0.5 h-4 w-4"
+                    aria-hidden="true"
+                  />
+                </button>
+              </p>
+            </div>
+          </div>
+        </div>
         <div class="flex h-16 justify-between">
           <div class="flex">
             <div class="flex flex-shrink-0 items-center">
