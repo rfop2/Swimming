@@ -41,7 +41,7 @@
         class="mb-8"
       >
         <h2 class="text-xl font-semibold mt-3 mb-2">
-          Version {{ entry.version }} - {{ entry.date }}
+          Version {{ entry.title }} - {{ entry.niceDate }}
         </h2>
         <ul class="list-disc list-inside space-y-1">
           <li
