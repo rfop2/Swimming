@@ -207,6 +207,8 @@
     }
   } )
 
+  useUnsavedWarning( () => meta.value.dirty )
+
   watch( [ values, meta ], ( newValues ) => {
     console.log( "VAL", unref( newValues[0] ), "META", unref( newValues[1] ) )
   } )
