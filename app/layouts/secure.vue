@@ -41,6 +41,7 @@
     { name: "Training", href: "/training" },
     { name: "Qualifying", href: "/qualifying" },
     { name: "Meets", href: "/meets" },
+    { name: "Import", href: "/import" },
   ] )
 
   const activeNavigation = computed( () => navigation.value.filter( item => !item.condition || ( item.condition )() ) )
