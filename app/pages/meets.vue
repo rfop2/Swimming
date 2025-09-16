@@ -140,12 +140,12 @@
   ]
 
 
-  const selections = usePersistedState( "meets-selection",  {
+  const { state: selections } = usePersisted( "meets-selection",  {
     course: courses[0],
     level: levels,
     distance: distances[0],
     tagged: taggings[0],
-  } )
+  }, "reactive" )
 
   const distanceCalendar = ( distance: number | null ) => {
     if ( !distance )

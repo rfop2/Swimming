@@ -20,11 +20,11 @@
   const strokeOptions = Object.entries( strokes ).map( ( [ k, v ] ) => ( { value: k, label: v.label } ) )
   const distanceOptions = reactive<{ value: string, label: string }[]>( strokes[slug[1] ?? Object.keys( strokes )[0]].distances.map( d => ( { value: d, label: d } ) ) )
 
-  const selections = reactive( {
+  const { state: selections, ready } = usePersisted( "results-selection", {
     course: courseOptions.find( option => option.value === slug[0] ) ?? courseOptions[0],
     stroke: strokeOptions.find( option => option.value === slug[1] ) ?? strokeOptions[0],
     distance: distanceOptions.find( option => option.value === slug[2] ) ?? distanceOptions[0]
-  } )
+  }, "reactive" )
 
   watch( () => selections.stroke, ( newStroke ) => {
     distanceOptions.length = 0
@@ -42,7 +42,7 @@
     }
   } )
 
-  const swimmer = useSwimmer()
+  const { swimmer } = useSwimmer()
 
   // type QualifyingApiResponse = InternalApi["/api/qualifying"]["get"]
   const { data: qualifyingInfo } = await useFetch(

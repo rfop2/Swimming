@@ -10,7 +10,7 @@
     middleware: [ "protected" ]
   } )
 
-  const swimmer = await useSwimmer()
+  const { swimmer } = await useSwimmer()
 
   type PerformanceApiResponse = InternalApi["/api/relative/:id"]["get"]
   interface AreaDetail extends Partial<PerformanceApiResponse[number]> {

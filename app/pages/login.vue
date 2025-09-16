@@ -2,7 +2,7 @@
   import { XCircleIcon } from "@heroicons/vue/24/outline"
   import type { FetchError } from "ofetch"
 
-  const swimmer = useSwimmer()
+  const { swimmer } = useSwimmer()
 
   const errString = ref<string | null>( null )
 

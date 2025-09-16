@@ -14,7 +14,7 @@
     middleware: [ "protected" ]
   } )
 
-  const swimmer = useSwimmer()
+  const { swimmer } = useSwimmer()
 
   const user = useAuthenticatedUser()
 

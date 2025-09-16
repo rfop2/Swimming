@@ -50,14 +50,14 @@
     },
   ]
 
-  const selections = usePersistedState( "training-selection", {
+  const { state: selections } = usePersisted( "training-selection", {
     squad: squadOptions.value.find( option => option.value === slug[0] ) ?? squadOptions.value[0],
     stroke: strokeOptions.find( option => option.value === slug[1] ) ?? strokeOptions[0],
     course: courseOptions.find( option => option.value === slug[2] ) ?? courseOptions[0],
     baseDistance: baseDistanceOptions.find( option => String( option.value ) === slug[3] ) ?? baseDistanceOptions.find( d => d.label === "100m" ) ?? baseDistanceOptions[0],
     targetDistances: targetDistanceOptions.slice( 0, 4 ),
     effort: effortOptions.find( option => option.label === slug[4] ) ?? effortOptions[3]
-  } )
+  }, "reactive" )
 
   watch( () => selections.stroke, ( newStroke ) => {
     baseDistanceOptions.length = 0

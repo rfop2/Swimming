@@ -12,11 +12,11 @@
   } )
 
   const { swimmers } = await useSwimmers()
-  const swimmer = await useSwimmer()
+  const { swimmer, setSwimmer } = await useSwimmer()
   const swimmersMap = new Map<Swimmer["id"],Swimmer>( swimmers.value.map( s => ( [ s.id, s ] ) ) )
 
   const swimmerOptions = computed( () => swimmers.value.map( s => ( { label: s.fullName, value: s.id } ) ) )
-  const selectedSwimmer = useState( "selectedSwimmer", () => swimmerOptions.value[0] || undefined )
+  const selectedSwimmer = ref( swimmerOptions.value.find( so => so.value === swimmer.value?.id ) ?? swimmerOptions.value[0] ?? undefined )
 
   const updated = useLastUpdate()
 
@@ -24,7 +24,7 @@
     selectedSwimmer,
     async ( newSwimmer ) => {
       if ( newSwimmer && newSwimmer.value ) {
-        swimmer.value = swimmersMap.get( String( newSwimmer.value ) )
+        setSwimmer( swimmersMap.get( String( newSwimmer.value ) ) )
         try {
           const lastUpdate = await $fetch( `/api/updated/${newSwimmer.value}` )
           updated.value = format( lastUpdate, "yyyy-MM-dd" )

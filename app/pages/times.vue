@@ -23,10 +23,10 @@
     return sq
   }, new Set<string>() ) ).sort().map( s => ( { label: s, value: s } ) ), { label: "No squad", value: "" } ] )
 
-  const selections = usePersistedState( "times-selection", {
+  const { state: selections } = usePersisted( "times-selection", {
     squad: squadOptions.value.find( option => option.value === slug[0] ) ?? squadOptions.value[0],
     stroke: strokeOptions.find( option => option.value === slug[1] ) ?? strokeOptions[0],
-  } )
+  }, "reactive" )
 
   const filteredSwimmers = computed( () => ( swimmers.value || [] ).filter( swimmer => selections.squad.value === "*" || swimmer.squad === selections.squad.value ) )
 
