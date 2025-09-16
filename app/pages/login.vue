@@ -2,6 +2,13 @@
   import { XCircleIcon } from "@heroicons/vue/24/outline"
   import type { FetchError } from "ofetch"
 
+  useHead( {
+    title: "Login",
+    meta: [
+      { name: "description", content: "Site login page" }
+    ]
+  } )
+
   const { swimmer } = useSwimmer()
 
   const errString = ref<string | null>( null )

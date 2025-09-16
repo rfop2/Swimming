@@ -10,6 +10,13 @@
     middleware: [ "protected" ]
   } )
 
+  useHead( {
+    title: "Performance",
+    meta: [
+      { name: "description", content: "Swimmer times relative to other swimmers and qualification times" }
+    ]
+  } )
+
   const { swimmer } = await useSwimmer()
 
   type PerformanceApiResponse = InternalApi["/api/relative/:id"]["get"]

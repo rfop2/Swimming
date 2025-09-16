@@ -14,6 +14,13 @@
     middleware: [ "protected" ]
   } )
 
+  useHead( {
+    title: "Qualifying",
+    meta: [
+      { name: "description", content: "View and manage county and regional qualifying times" }
+    ]
+  } )
+
   const { swimmer } = useSwimmer()
 
   const user = useAuthenticatedUser()

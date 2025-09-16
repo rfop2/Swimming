@@ -23,6 +23,13 @@
     middleware: [ "protected" ]
   } )
 
+  useHead( {
+    title: "Meets",
+    meta: [
+      { name: "description", content: "View swim event and meets schedule" }
+    ]
+  } )
+
   type ApiResponse = InternalApi["/api/meets"]["get"]
 
   interface ExtMeet extends Meet {

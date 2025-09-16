@@ -13,6 +13,13 @@
     middleware: [ "protected" ]
   } )
 
+  useHead( {
+    title: "Results",
+    meta: [
+      { name: "description", content: "Swimmer event results and history" }
+    ]
+  } )
+
   const route = useRoute()
   const slug = Array.isArray( route.params.slug ) ? route.params.slug : []
 

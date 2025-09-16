@@ -5,7 +5,7 @@
   const user = useAuthenticatedUser()
 
   useHead( {
-    title: "Swimming",
+    title: "Swim.Racing",
     meta: [
       { name: "description", content: "Swimming stats." }
     ],

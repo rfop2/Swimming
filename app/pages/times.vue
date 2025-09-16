@@ -10,6 +10,13 @@
     middleware: [ "protected" ]
   } )
 
+  useHead( {
+    title: "Times",
+    meta: [
+      { name: "description", content: "Swimmer best times by stroke and distance" }
+    ]
+  } )
+
   const strokeOptions = Object.entries( strokes ).map( ( [ stroke, strokeData ] ) => ( { value: stroke, label: strokeData.label } ) )
 
   const route = useRoute()

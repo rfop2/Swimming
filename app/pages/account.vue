@@ -13,6 +13,13 @@
     middleware: [ "protected" ]
   } )
 
+  useHead( {
+    title: "Account",
+    meta: [
+      { name: "description", content: "Edit account details and manage swimmers" }
+    ]
+  } )
+
   const user = useAuthenticatedUser()
 
   const { data: locations } = await useFetch<Array<{lat:string,lon:string}>>(

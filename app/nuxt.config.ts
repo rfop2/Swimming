@@ -14,7 +14,26 @@ export default defineNuxtConfig( {
         autoImports: false,
       },
     ],
+    "@nuxtjs/seo",
   ],
+
+  app: {
+    head: {
+      meta: [
+        {
+          "charset": "utf-8"
+        }
+      ]
+    },
+  },
+
+  site: {
+    url: "https://swim.racing",
+    name: "Swim.Racing",
+    description: "Swimmer and swim club management and performance tracking",
+    defaultLocale: "en", // not needed if you have @nuxtjs/i18n installed
+    indexable: process.env.NODE_ENV === "production",
+  },
 
   vite: {
     ssr: {

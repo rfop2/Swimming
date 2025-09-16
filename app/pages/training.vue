@@ -8,6 +8,13 @@
     middleware: [ "protected" ]
   } )
 
+  useHead( {
+    title: "Training",
+    meta: [
+      { name: "description", content: "Swimmer target times based on previous performance" }
+    ]
+  } )
+
   const route = useRoute()
   const slug = Array.isArray( route.params.slug ) ? route.params.slug : []
 
