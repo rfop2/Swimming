@@ -29,6 +29,7 @@ import {
   parseMeet,
   parseMeets,
   closePool,
+  fetchPages,
 } from "lib"
 
 import type {
@@ -307,11 +308,42 @@ const updateResults = async ( swimmer: Swimmer, individualData: Array<Individual
 
     const resultsData = parseResults( page, $ )
 
-    const regexp = new RegExp( `(?<distance>\\d+m)_(?<stroke>\\w+)_(?<course>.c)_${swimmer.id}$` )
-    const matches = page.label.match( regexp )
-    if ( !matches ) {
-      throw new Error( `Can't match results on '${page.label}'` )
+    const saveResults = prepareStatement( await getPool(), insertResultsSql )
+    for ( const result of resultsData ) {
+      await saveResults.run( { created: today, swimmer: swimmer.id, course: event.course, stroke: event.stroke, distance: event.distance, ...result } )
     }
+  }
+}
+
+const updateResultsBatch = async ( swimmer: Swimmer, individualData: Array<IndividualStats> ) => {
+  console.log( `Updating results data for swimmer '${swimmer.fullName}'` )
+
+  const pages = new Map<string,PageInfo>()
+  for ( const event of individualData ) {
+    const stroke_distance = STROKE_DISTANCE[`${event.stroke}__${event.distance}`.toLocaleUpperCase() as keyof typeof STROKE_DISTANCE]
+    const course = event.course.substring( 0, 1 ).toLocaleUpperCase()
+
+    const page: PageInfo = {
+      label: `${event.distance}_${event.stroke}_${event.course}_${swimmer.id}`,
+      url: createUrl( resultsBaseUrl, {
+        ...resultsParams( swimmer ),
+        ...{ tstroke: stroke_distance, tcourse: course },
+      } ),
+      type: "results",
+      data: event,
+    }
+    pages.set( page.url.toString(), page )
+  }
+  const responses = await fetchPages( pages )
+  for ( const [ url, content ] of responses.entries() ) {
+    // console.log( inspect( pageData, { depth: 5 } ) )
+    const page = pages.get( url )
+    if ( !page )
+      throw new Error( `Can't find page with url '${url}'` )
+    const event = page.data as IndividualStats
+    const $ = cheerio.load( content )
+
+    const resultsData = parseResults( page as PageInfo, $ )
 
     const saveResults = prepareStatement( await getPool(), insertResultsSql )
     for ( const result of resultsData ) {
@@ -402,7 +434,7 @@ const updateRankings = async ( swimmer: Swimmer, individualData: Array<Individua
         url.search = new URLSearchParams( params ).toString()
         extraPages.push( Object.assign( {}, page, { label: `${page.label}-2`, url, data: page.data } ) )
       }
-      await deleteRankings.run( { created: today, ...page.data } )
+      await deleteRankings.run( { created: today, ...( page.data as object ) } )
     }
 
     const saveRankings = prepareStatement( await getPool(), insertRankingsSql )
@@ -413,7 +445,7 @@ const updateRankings = async ( swimmer: Swimmer, individualData: Array<Individua
 
       const rankingData = parseRanking( page, $ )
       for ( const row of rankingData.table ) {
-        saveRankings.run( { created: today, ...page.data, ...row } )
+        saveRankings.run( { created: today, ...( page.data as object ), ...row } )
       }
     }
   }
@@ -475,7 +507,8 @@ const updateSwimmerData = async ( swimmer: Swimmer, relative: boolean ) => {
 
   const individualData = await updateIndividual( swimmer )
 
-  await updateResults( swimmer, individualData )
+  // await updateResults( swimmer, individualData )
+  await updateResultsBatch( swimmer, individualData )
 
   if ( relative ) {
     await updateRankings( swimmer, individualData )
