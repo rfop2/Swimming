@@ -37,6 +37,7 @@ import type {
   PageInfo,
   Swimmer
 } from "lib"
+import { Command } from "commander"
 
 const now = new Date()
 const today = format( now, "yyyy-MM-dd" )
@@ -469,15 +470,17 @@ const updatePerformance = async ( swimmer: Swimmer ) => {
   }
 }
 
-const updateSwimmerData = async ( swimmer: Swimmer ) => {
+const updateSwimmerData = async ( swimmer: Swimmer, relative: boolean ) => {
   console.log( `Updating data for swimmer '${swimmer.fullName}'` )
 
   const individualData = await updateIndividual( swimmer )
 
   await updateResults( swimmer, individualData )
 
-  await updateRankings( swimmer, individualData )
-  await updatePerformance( swimmer )
+  if ( relative ) {
+    await updateRankings( swimmer, individualData )
+    await updatePerformance( swimmer )
+  }
 }
 
 const updateMeet = async ( meet: Partial<Meet> ) => {
@@ -574,35 +577,51 @@ const updateMeets = async () => {
     console.log( `Deleting meet ${meetId}` )
     await deleteMeet.run( { meetId } )
   }
-};
+}
+
+// Extract options in a typed way
+interface CliOptions {
+  mode?: "swimmers" | "meets"
+  ids?: string[]
+  relative: boolean
+}
 
 ( async () => {
-  // const getopts = require( "getopts" )
-  /* const options = getopts(process.argv.slice(2), {
-    alias: {
-      pages: ["p"],
-      actions: "a",
-    },
-  }) */
+  const program = new Command()
+
+  program
+    .name( "fetch" )
+    .description( "Fetch data from source site" )
+
+  program.option( "-m, --mode <mode>", "fetch mode 'swimmer' or 'meets'" )
+  program.option( "-i, --ids <ids...>", "fetch data for specified swimmers only" )
+  program.option( "-r, --relative", "fetch data relative to other swimmers alongside basic info", false )
+
+  // Parse argv
+  program.parse( process.argv )
+
+  const options = program.opts<CliOptions>()
 
   try {
-    const getSwimmers = prepareStatement<void,Swimmer>(
-      await getPool(),
-      "SELECT * FROM Swimmers WHERE active = 1"
-    )
+    if ( !options.mode || options.mode === "swimmers" ) {
+      const getSwimmers = prepareStatement<void,Swimmer>(
+        await getPool(),
+        "SELECT * FROM Swimmers WHERE active = 1"
+      )
 
-    const swimmers = await getSwimmers.all()
-    for ( const swimmer of swimmers ) {
-      if ( process.argv.length < 3 || process.argv[2] === swimmer.id ) {
-        swimmer.birthday = format( new Date( swimmer.birthday ), "yyyy-MM-dd" )
-        try {
-          await updateSwimmerData( swimmer )
-        } catch ( e ) {
-          console.error( "Unable to fetch swimmer data, skipping", e )
+      const swimmers = await getSwimmers.all()
+      for ( const swimmer of swimmers ) {
+        if ( !options.ids || options.ids.find( s => s === swimmer.id ) ) {
+          swimmer.birthday = format( new Date( swimmer.birthday ), "yyyy-MM-dd" )
+          try {
+            await updateSwimmerData( swimmer, !!options.relative )
+          } catch ( e ) {
+            console.error( "Unable to fetch swimmer data, skipping", e )
+          }
         }
       }
     }
-    if ( process.argv.length === 3 && process.argv[2] === "meets" ) {
+    if ( !options.mode || options.mode === "meets" ) {
       await updateMeets()
     }
   } catch ( error ) {
