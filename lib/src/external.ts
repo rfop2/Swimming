@@ -3,7 +3,7 @@ import { getSwimmerAgeGroup, sleep, Timer, timeToSeconds } from "./lib.js"
 import { CACHE_DIR } from "./config.js"
 import { differenceInDays, differenceInHours, format, parse } from "date-fns"
 import type { AnyNode } from "domhandler"
-import type { Cheerio, CheerioAPI } from "cheerio"
+import { stringStream, type Cheerio, type CheerioAPI } from "cheerio"
 import { getPool, prepareStatement } from "./database.js"
 
 export const BASE_URL = "https://www.swimmingresults.org"
@@ -310,7 +310,7 @@ export const fetchPage = async ( pageInfo: PageInfo, cacheTime: number = DEFAULT
     timer.stop()
 
     if ( response.status < 200 || response.status >= 300 ) {
-      throw new Error( `Request failed: ${response.statusText} (${response.statusText})` )
+      throw new Error( `Request failed: ${response.status} (${response.statusText})` )
     }
     const content = await response.text()
     await writeFile( contentFile, content )
@@ -321,9 +321,117 @@ export const fetchPage = async ( pageInfo: PageInfo, cacheTime: number = DEFAULT
     }
     return content
   } catch ( error ) {
-    console.error( `Failed to fetch ${pageInfo.url}`, error )
+    console.error( `\nFailed to fetch ${pageInfo.url}`, error )
     throw error
   }
+}
+
+interface PageStatus {
+  id: string
+  status: string
+  statusUrl: string
+  url: string
+  response?: Record<string,unknown>
+  body?: string
+  statusCode?: string
+}
+
+export const fetchPages = async ( pages: Map<string,PageInfo>, cacheTime: number = DEFAULT_CACHE_TIME ) => {
+  // Dynamic import to avoid browser issues
+  const { stat, readFile, writeFile } = await import( "fs/promises" )
+
+  console.log( `Getting content for ${pages.size} pages` )
+
+  const responses: Map<string,string> = new Map()
+  for ( const pageInfo of pages.values() ) {
+    const contentFile = CACHE_DIR + "/" + pageInfo.label
+    console.log( `Processing ${pageInfo.label} -> ${pageInfo.url}` )
+    try {
+      const stats = await stat( contentFile )
+      // Page has been cached
+      const fileAge = differenceInHours( Date.now(), stats.mtime )
+      if ( fileAge < cacheTime ) {
+        // Page is new enough
+        console.log( `Reading ${contentFile}, cached: ${fileAge} hours` )
+        const content = await readFile( contentFile )
+        responses.set( pageInfo.url.toString(), String( content ) )
+      }
+    } catch ( error ) {
+      if ( error instanceof Error && ( error as NodeJS.ErrnoException ).code ) {
+        const err = error as NodeJS.ErrnoException
+        if ( err.code !== "ENOENT" ) {
+          console.error( `Error code: ${err.code} - ${err.message}` )
+        }
+      } else {
+        console.error( "Unknown error:", error )
+      }
+    }
+  }
+  const fetchPages = new Map( pages )
+  for ( const url of responses.keys() ) {
+    fetchPages.delete( url )
+  }
+
+  if ( fetchPages.size ) {
+    try {
+      process.stdout.write( `Submitting request for ${fetchPages.size} pages` )
+      if ( !process.env.SCRAPER_API_KEY ) {
+        throw new Error( "No SCRAPER_API_KEY found" )
+      }
+      const scraperUrl = "https://async.scraperapi.com/batchjobs"
+      const timer = new Timer()
+      timer.start()
+      const response = await fetch( scraperUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify( {
+          apiKey: process.env.SCRAPER_API_KEY,
+          country_code: "gb",
+          urls: Array.from( fetchPages.values() ).map( p => String( p.url ) ),
+        } )
+      } )
+      process.stdout.write( ` - ${timer.elapsedSeconds().toFixed( 2 )}\n` )
+
+      if ( response.status < 200 || response.status >= 300 ) {
+        throw new Error( `Request failed: ${response.status} (${response.statusText})` )
+      }
+      const pageStatuses: PageStatus[] = await response.json()
+      const jobs = new Map<string,PageStatus>( pageStatuses.map( ps => [ ps.url, ps ] ) )
+      while( jobs.size ) {
+        sleep( 1 )
+        console.log( `Checking status of ${jobs.size} requests` )
+        for ( const job of jobs.values() ) {
+          process.stdout.write( `Checking status of '${job.url}'` )
+          timer.lap()
+          const response = await fetch( job.statusUrl )
+          const jobStatus = await response.json()
+          if ( jobStatus.status === "finished" ) {
+            process.stdout.write( " - finished" )
+            if ( jobStatus.response.statusCode < 200 || jobStatus.response.statusCode >= 300 ) {
+              throw new Error( `Request failed for '${jobStatus.url}': ${jobStatus.response.statusCode} (${jobStatus.response.statusText})` )
+            }
+            responses.set( jobStatus.url, jobStatus.response.body )
+            const contentFile = CACHE_DIR + "/" + pages.get( job.url )?.label
+            await writeFile( contentFile, jobStatus.response.body )
+            jobs.delete( jobStatus.url )
+          } else if ( jobStatus.status === "running" ) {
+            process.stdout.write( " - running" )
+          } else {
+            console.log( "Unexpected job status", jobStatus )
+          }
+          process.stdout.write( ` - ${timer.elapsedSeconds().toFixed( 2 )} (${timer.lap().toFixed(2)})\n` )
+        }
+      }
+      console.log( `Content fetched in ${timer.elapsedSeconds().toFixed( 2 )} - ${(timer.elapsedSeconds()/pages.size).toFixed(2)}/page` )
+      timer.stop()
+    } catch ( error ) {
+      console.error( `\nFailed to fetch ${fetchPages.size} urls`, error )
+      throw error
+    }
+  }
+  return responses
 }
 
 type RowFunction = ( arg0: CheerioAPI, arg1: Cheerio<AnyNode> ) => Record<string,string>
@@ -570,7 +678,7 @@ export const parseMeets = ( pageInfo: PageInfo, $: CheerioAPI ) => {
 }
 
 const insertLocationsSql =
-`INSERT INTO Locations (
+  `INSERT INTO Locations (
   created,
   location,
   latitude,

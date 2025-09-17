@@ -29,6 +29,7 @@ import {
   parseMeet,
   parseMeets,
   closePool,
+  fetchPages,
 } from "lib"
 
 import type {
@@ -37,6 +38,7 @@ import type {
   PageInfo,
   Swimmer
 } from "lib"
+import { Command } from "commander"
 
 const now = new Date()
 const today = format( now, "yyyy-MM-dd" )
@@ -306,11 +308,42 @@ const updateResults = async ( swimmer: Swimmer, individualData: Array<Individual
 
     const resultsData = parseResults( page, $ )
 
-    const regexp = new RegExp( `(?<distance>\\d+m)_(?<stroke>\\w+)_(?<course>.c)_${swimmer.id}$` )
-    const matches = page.label.match( regexp )
-    if ( !matches ) {
-      throw new Error( `Can't match results on '${page.label}'` )
+    const saveResults = prepareStatement( await getPool(), insertResultsSql )
+    for ( const result of resultsData ) {
+      await saveResults.run( { created: today, swimmer: swimmer.id, course: event.course, stroke: event.stroke, distance: event.distance, ...result } )
     }
+  }
+}
+
+const updateResultsBatch = async ( swimmer: Swimmer, individualData: Array<IndividualStats> ) => {
+  console.log( `Updating results data for swimmer '${swimmer.fullName}'` )
+
+  const pages = new Map<string,PageInfo>()
+  for ( const event of individualData ) {
+    const stroke_distance = STROKE_DISTANCE[`${event.stroke}__${event.distance}`.toLocaleUpperCase() as keyof typeof STROKE_DISTANCE]
+    const course = event.course.substring( 0, 1 ).toLocaleUpperCase()
+
+    const page: PageInfo = {
+      label: `${event.distance}_${event.stroke}_${event.course}_${swimmer.id}`,
+      url: createUrl( resultsBaseUrl, {
+        ...resultsParams( swimmer ),
+        ...{ tstroke: stroke_distance, tcourse: course },
+      } ),
+      type: "results",
+      data: event,
+    }
+    pages.set( page.url.toString(), page )
+  }
+  const responses = await fetchPages( pages )
+  for ( const [ url, content ] of responses.entries() ) {
+    // console.log( inspect( pageData, { depth: 5 } ) )
+    const page = pages.get( url )
+    if ( !page )
+      throw new Error( `Can't find page with url '${url}'` )
+    const event = page.data as IndividualStats
+    const $ = cheerio.load( content )
+
+    const resultsData = parseResults( page as PageInfo, $ )
 
     const saveResults = prepareStatement( await getPool(), insertResultsSql )
     for ( const result of resultsData ) {
@@ -401,7 +434,7 @@ const updateRankings = async ( swimmer: Swimmer, individualData: Array<Individua
         url.search = new URLSearchParams( params ).toString()
         extraPages.push( Object.assign( {}, page, { label: `${page.label}-2`, url, data: page.data } ) )
       }
-      await deleteRankings.run( { created: today, ...page.data } )
+      await deleteRankings.run( { created: today, ...( page.data as object ) } )
     }
 
     const saveRankings = prepareStatement( await getPool(), insertRankingsSql )
@@ -412,7 +445,7 @@ const updateRankings = async ( swimmer: Swimmer, individualData: Array<Individua
 
       const rankingData = parseRanking( page, $ )
       for ( const row of rankingData.table ) {
-        saveRankings.run( { created: today, ...page.data, ...row } )
+        saveRankings.run( { created: today, ...( page.data as object ), ...row } )
       }
     }
   }
@@ -469,15 +502,18 @@ const updatePerformance = async ( swimmer: Swimmer ) => {
   }
 }
 
-const updateSwimmerData = async ( swimmer: Swimmer ) => {
+const updateSwimmerData = async ( swimmer: Swimmer, relative: boolean ) => {
   console.log( `Updating data for swimmer '${swimmer.fullName}'` )
 
   const individualData = await updateIndividual( swimmer )
 
-  await updateResults( swimmer, individualData )
+  // await updateResults( swimmer, individualData )
+  await updateResultsBatch( swimmer, individualData )
 
-  await updateRankings( swimmer, individualData )
-  await updatePerformance( swimmer )
+  if ( relative ) {
+    await updateRankings( swimmer, individualData )
+    await updatePerformance( swimmer )
+  }
 }
 
 const updateMeet = async ( meet: Partial<Meet> ) => {
@@ -574,35 +610,51 @@ const updateMeets = async () => {
     console.log( `Deleting meet ${meetId}` )
     await deleteMeet.run( { meetId } )
   }
-};
+}
+
+// Extract options in a typed way
+interface CliOptions {
+  mode?: "swimmers" | "meets"
+  ids?: string[]
+  relative: boolean
+}
 
 ( async () => {
-  // const getopts = require( "getopts" )
-  /* const options = getopts(process.argv.slice(2), {
-    alias: {
-      pages: ["p"],
-      actions: "a",
-    },
-  }) */
+  const program = new Command()
+
+  program
+    .name( "fetch" )
+    .description( "Fetch data from source site" )
+
+  program.option( "-m, --mode <mode>", "fetch mode 'swimmer' or 'meets'" )
+  program.option( "-i, --ids <ids...>", "fetch data for specified swimmers only" )
+  program.option( "-r, --relative", "fetch data relative to other swimmers alongside basic info", false )
+
+  // Parse argv
+  program.parse( process.argv )
+
+  const options = program.opts<CliOptions>()
 
   try {
-    const getSwimmers = prepareStatement<void,Swimmer>(
-      await getPool(),
-      "SELECT * FROM Swimmers WHERE active = 1"
-    )
+    if ( !options.mode || options.mode === "swimmers" ) {
+      const getSwimmers = prepareStatement<void,Swimmer>(
+        await getPool(),
+        "SELECT * FROM Swimmers WHERE active = 1"
+      )
 
-    const swimmers = await getSwimmers.all()
-    for ( const swimmer of swimmers ) {
-      if ( process.argv.length < 3 || process.argv[2] === swimmer.id ) {
-        swimmer.birthday = format( new Date( swimmer.birthday ), "yyyy-MM-dd" )
-        try {
-          await updateSwimmerData( swimmer )
-        } catch ( e ) {
-          console.error( "Unable to fetch swimmer data, skipping", e )
+      const swimmers = await getSwimmers.all()
+      for ( const swimmer of swimmers ) {
+        if ( !options.ids || options.ids.find( s => s === swimmer.id ) ) {
+          swimmer.birthday = format( new Date( swimmer.birthday ), "yyyy-MM-dd" )
+          try {
+            await updateSwimmerData( swimmer, !!options.relative )
+          } catch ( e ) {
+            console.error( "Unable to fetch swimmer data, skipping", e )
+          }
         }
       }
     }
-    if ( process.argv.length === 3 && process.argv[2] === "meets" ) {
+    if ( !options.mode || options.mode === "meets" ) {
       await updateMeets()
     }
   } catch ( error ) {

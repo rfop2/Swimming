@@ -128,7 +128,7 @@ export interface PageInfo {
   url: URL
   referrer?: URL,
   type: "individual" | "ranking" | "results" | "meets" | "meet"
-  data?: Record<string,string | number>
+  data?: unknown
 }
 
 export type PageData = Array<PageInfo>
