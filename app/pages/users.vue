@@ -1,6 +1,7 @@
 <script setup lang="ts">
   import { CheckIcon, PencilSquareIcon, TrashIcon, UserPlusIcon } from "@heroicons/vue/24/outline"
   import { format } from "date-fns"
+  import type { User } from "lucia"
 
   definePageMeta( {
     layout: "secure",
@@ -66,11 +67,11 @@
             <button
               type="button"
               class="inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+              @click="addUser"
             >
               <UserPlusIcon
                 class="-ml-0.5 size-5"
                 aria-hidden="true"
-                @click="addUser"
               />
               Add user
             </button>
@@ -162,7 +163,7 @@
                       {{ user.type }}
                     </td>
                     <td class="px-1 py-2 text-sm whitespace-nowrap text-gray-500">
-                      {{ format( user.created, "dd/MM/yyyy" ) }}
+                      {{ format( user.created as string, "dd/MM/yyyy" ) }}
                     </td>
                     <td class="px-1 py-2 text-sm whitespace-nowrap text-gray-500">
                       <CheckIcon
@@ -207,7 +208,7 @@
         <UI-Confirm
           v-if="deleting !== null"
           title="Delete user"
-          :text="`Are you sure you want to delete user '${users[deleting].username}' from the site?`"
+          :text="`Are you sure you want to delete user '${(users as User[])[deleting].username}' from the site?`"
           confirm-label="Delete"
           :action="deleteUser"
         />

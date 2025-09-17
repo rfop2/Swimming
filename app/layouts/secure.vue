@@ -31,6 +31,7 @@
   type NavOption = {
     name: string
     href: string
+    click?: () => unknown
     condition?: () => boolean
   }
 
@@ -45,11 +46,14 @@
 
   const activeNavigation = computed( () => navigation.value.filter( item => !item.condition || ( item.condition )() ) )
 
-  const userNavigation = [
+  const userNavigation = computed<NavOption[]>( () => [
     { name: "Account", href: "/account" },
+    { name: "Users", href: "/users", condition: () => !!Number( user.value.admin ) },
     // { name: "Settings", href: "#" },
     { name: "Sign out", href: "", click: logout },
-  ]
+  ] )
+
+  const activeUserNavigation = computed( () => userNavigation.value.filter( item => !item.condition || ( item.condition )() ) )
 
   const { updateAvailable, newVersion } = useVersionCheck()
 
@@ -179,7 +183,7 @@
               >
                 <MenuItems class="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                   <MenuItem
-                    v-for="item in userNavigation"
+                    v-for="item in activeUserNavigation"
                     :key="item.name"
                     v-slot="{ active, close }"
                   >
@@ -255,7 +259,7 @@
           </div>
           <div class="mt-3 space-y-1">
             <DisclosureButton
-              v-for="item in userNavigation"
+              v-for="item in activeUserNavigation"
               :key="item.name"
               as="a"
               :href="item.href"

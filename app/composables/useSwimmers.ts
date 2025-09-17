@@ -1,10 +1,10 @@
 import { format } from "date-fns"
 import type { Swimmer } from "lib"
 
-export const useSwimmers = () => {
-  const swimmers = useState<Swimmer[]>( "swimmers", () => [] )
-  const loading = useState<boolean>( "swimmersLoading", () => false )
-  const fetchError = useState<unknown>( "swimmersError", () => null )
+export const useSwimmers = ( userId?: string ) => {
+  const swimmers = useState<Swimmer[]>( `swimmers-${userId}`, () => [] )
+  const loading = useState<boolean>( `swimmersLoading-${userId}`, () => false )
+  const fetchError = useState<unknown>( `swimmersError-${userId}`, () => null )
 
   const fetchSwimmers = async () => {
     if ( loading.value ) return
@@ -12,8 +12,8 @@ export const useSwimmers = () => {
     fetchError.value = null
 
     try {
-      const { data, error } = await useFetch<Swimmer[]>( "/api/swimmers", {
-        key: "swimmers",
+      const { data, error } = await useFetch<Swimmer[]>( `/api/swimmers/${userId ?? ""}`, {
+        key: `swimmers-${userId}`,
         transform: ( data ) =>
           data.map( ( s ) => ( {
             ...s,

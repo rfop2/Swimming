@@ -12,7 +12,7 @@ interface UserData {
 }
 
 export default eventHandler( async ( event ) => {
-  if ( !event.context.session ) {
+  if ( !event.context.session || !event.context.user ) {
     throw createError( {
       statusCode: 403
     } )
@@ -130,16 +130,23 @@ export default eventHandler( async ( event ) => {
   }
 
   try {
-    const id = getRouterParam( event, "id" )
-    if ( !id ) {
+    const userId = getRouterParam( event, "id" )
+    if ( !userId ) {
       throw createError( {
         message: "No user id found",
         statusCode: 400
       } )
     }
+
+    if ( userId !== event.context.user.id && !Number( event.context.user.admin ) ) {
+      throw createError( {
+        statusCode: 403
+      } )
+    }
+
     const userData = await readBody( event )
 
-    await runTransaction( await getPool(), updateUser, id, userData )
+    await runTransaction( await getPool(), updateUser, userId, userData )
   } catch ( error ) {
     console.error( error )
     throw createError( {

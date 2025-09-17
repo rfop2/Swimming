@@ -7,17 +7,17 @@
   import type { FetchError } from "ofetch"
   import { COUNTIES, NATIONALITIES, REGIONS, type Swimmer } from "lib"
   import { useDebounceAsync } from "~/composables/useDebounceAsync"
+  import type { User } from "lucia"
 
-  const props = withDefaults( defineProps<{
-    id?: string
-  }>(), {
-    id: undefined,
-  } )
-
-  const user = useAuthenticatedUser()
+  const props = defineProps<{
+    user: User
+    swimmers: Swimmer[]
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    saveFn: ( values: any ) => void
+  }>()
 
   const { data: locations } = await useFetch<Array<{lat:string,lon:string}>>(
-    `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent( user.value.location + ", UK" )}`
+    `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent( props.user.location + ", UK" )}`
   )
   const locationCoords = ref<{lat?: number, lon?: number}>( {} )
   if ( locations.value !== null && locations.value.length > 0 ) {
@@ -32,19 +32,17 @@
 
   const checkLocation = useDebounceAsync( lookupLocation, 500 )
 
-  const { swimmers, refreshSwimmers } = await useSwimmers()
-
   const PASSWORD = "************"
 
   const { values, errors, meta, defineField, resetForm, handleSubmit } = useForm( {
     initialValues: {
-      firstName: user.value.firstName,
-      lastName: user.value.lastName,
-      username: user.value.username,
-      location: user.value.location,
+      firstName: props.user.firstName,
+      lastName: props.user.lastName,
+      username: props.user.username,
+      location: props.user.location,
       password: PASSWORD,
       confirmPassword: PASSWORD,
-      swimmers: swimmers.value,
+      swimmers: props.swimmers,
     },
     validationSchema: toTypedSchema(
       yup.object( {
@@ -179,28 +177,11 @@
   } )
 
   const saveSuccess = ref( false )
-  const save = handleSubmit( async ( values ) => {
+  const save = handleSubmit( async () => {
     try {
-      /* const formData: UserUpdate = {
-        firstName: unref( firstName ),
-        lastName: unref( lastName ),
-        username: unref( username ),
-        location: unref( location ),
-      }
-      if ( password.value && !password.value.match( /^\*+$/ )
-        && confirmPassword.value && !confirmPassword.value.match( /^\*+$/ )
-        && password.value === confirmPassword.value ) {
-        formData.password = unref( password )
-        formData.confirmPassword = unref( confirmPassword )
-      } */
       submitErrors.length = 0
-      await $fetch( `/api/account/${user.value.id}`, {
-        method: "PUT",
-        body: JSON.stringify( values ),
-      } )
-      // await refreshNuxtData()
+      await props.saveFn( values )
       resetForm( { values } )
-      await refreshSwimmers()
       saveSuccess.value = true
     } catch ( error ) {
       console.error( "Error", error )
