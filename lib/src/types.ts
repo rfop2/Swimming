@@ -1,12 +1,13 @@
 export interface DatabaseUser {
-  id: string;
-  username: string;
-  password_hash: string;
-  firstName: string;
-  lastName: string;
-  type: string;
-  admin: boolean;
-  location: string;
+  id: string
+  username: string
+  password_hash: string
+  firstName: string
+  lastName: string
+  location: string
+  type: string
+  admin: boolean
+  created?: Date
 }
 
 export interface Swimmer {
