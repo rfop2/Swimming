@@ -404,6 +404,7 @@ export const fetchPages = async ( pages: Map<string,PageInfo>, cacheTime: number
         console.log( `Checking status of ${jobs.size} requests` )
         for ( const job of jobs.values() ) {
           process.stdout.write( `Checking status of '${job.url}'` )
+          timer.lap()
           const response = await fetch( job.statusUrl )
           const jobStatus = await response.json()
           if ( jobStatus.status === "finished" ) {
@@ -420,10 +421,10 @@ export const fetchPages = async ( pages: Map<string,PageInfo>, cacheTime: number
           } else {
             console.log( "Unexpected job status", jobStatus )
           }
-          process.stdout.write( ` - ${timer.elapsedSeconds().toFixed( 2 )}\n` )
+          process.stdout.write( ` - ${timer.elapsedSeconds().toFixed( 2 )} (${timer.lap().toFixed(2)})\n` )
         }
       }
-      console.log( `Content fetched in ${timer.elapsedSeconds().toFixed( 2 )}` )
+      console.log( `Content fetched in ${timer.elapsedSeconds().toFixed( 2 )} - ${(timer.elapsedSeconds()/pages.size).toFixed(2)}/page` )
       timer.stop()
     } catch ( error ) {
       console.error( `\nFailed to fetch ${fetchPages.size} urls`, error )
