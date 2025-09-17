@@ -298,23 +298,12 @@
           placeholder="Choose Year"
         />
       </div>
-      <button
-        type="button"
-        class="inline-flex items-center gap-x-1.5 rounded-md bg-white px-2 py-1 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
-        @click="resetSort"
-      >
-        <span class="py-1 whitespace-nowrap">Reset sort</span>
-        <ArrowUturnLeftIcon
-          class="-mr-0.5 h-5 w-5"
-          aria-hidden="true"
-        />
-      </button>
     </template>
     <template #key>
       Key &ndash; Best times recorded qualify for <span class="px-2 mr-1 qualifiedArea1" /> county, <span class="px-2 mr-1 qualifiedArea2" /> region, <span class="px-2 mr-1 qualifiedArea3" /> country.
       Event ranking is in the <span class="px-2 mr-1 rank-10" /> top 10, <span class="px-2 mr-1 rank-20" /> top 20, <span class="px-2 mr-1 rank-50" /> top 50.
     </template>
-    <div class="overflow-x-auto">
+    <div>
       <div
         v-if="swimmer"
         class="inline-block min-w-full py-2 align-middle"
@@ -325,26 +314,23 @@
               <th
                 scope="col"
                 rowSpan="2"
-                class="sortable whitespace-nowrap align-bottom pl-2 pr-1 py-3.5 text-right text-sm font-semibold text-gray-900 sm:pl-0"
-                @click="updateSort('distanceMetres')"
+                class="whitespace-nowrap align-bottom pl-2 pr-1 py-3.5 text-right text-sm font-semibold text-gray-900 sm:pl-0"
               >
-                <span>Dist.</span><i :class="getSortIcon('distanceMetres')" />
+                Dist.
               </th>
               <th
                 scope="col"
                 rowSpan="2"
-                class="sortable whitespace-nowrap align-bottom px-1 py-3.5 text-left text-sm font-semibold text-gray-900"
-                @click="updateSort('stroke')"
+                class="whitespace-nowrap align-bottom px-1 py-3.5 text-left text-sm font-semibold text-gray-900"
               >
-                <span>Stroke</span><i :class="getSortIcon('stroke')" />
+                Stroke
               </th>
               <th
                 scope="col"
                 rowSpan="2"
-                class="sortable whitespace-nowrap align-bottom px-1 py-3.5 text-left text-sm font-semibold text-gray-900"
-                @click="updateSort('course')"
+                class="whitespace-nowrap align-bottom px-1 py-3.5 text-left text-sm font-semibold text-gray-900"
               >
-                <span>Course</span><i :class="getSortIcon('course')" />
+                Course
               </th>
               <th
                 scope="col"
@@ -360,10 +346,9 @@
               <th
                 scope="col"
                 rowSpan="2"
-                class="sortable whitespace-nowrap align-bottom px-1 py-3.5 text-right text-sm font-semibold text-gray-900"
-                @click="updateSort('time')"
+                class="whitespace-nowrap align-bottom px-1 py-3.5 text-right text-sm font-semibold text-gray-900"
               >
-                <span>Time</span><i :class="getSortIcon('time')" />
+                Time
               </th>
               <th
                 scope="col"
@@ -398,87 +383,69 @@
             <tr class="divide-x divide-gray-200">
               <th
                 scope="col"
-                class="sortable whitespace-nowrap !border-l-2 !border-gray-400 px-1 py-3.5 text-right text-sm font-semibold text-gray-900"
-                @click="updateSort('county_rank')"
+                class="whitespace-nowrap !border-l-2 !border-gray-400 px-1 py-3.5 text-right text-sm font-semibold text-gray-900"
               >
-                <span>Rank</span><i :class="getSortIcon('county_rank')" />
+                Rank
               </th>
               <th
                 scope="col"
-                class="sortable whitespace-nowrap px-1 py-3.5 text-right text-sm font-semibold text-gray-900"
-                @click="updateSort('county_best')"
+                class="whitespace-nowrap px-1 py-3.5 text-right text-sm font-semibold text-gray-900"
               >
-                <span>Lead</span><i :class="getSortIcon('county_best')" />
+                Lead
               </th>
               <th
                 scope="col"
-                class="sortable whitespace-nowrap px-1 py-3.5 text-right text-sm font-semibold text-gray-900"
-                @click="updateSort('county_diff')"
+                class="whitespace-nowrap px-1 py-3.5 text-right text-sm font-semibold text-gray-900"
               >
-                <span>Diff</span><i :class="getSortIcon('county_diff')" />
+                Diff
               </th>
               <th
                 scope="col"
-                class="sortable whitespace-nowrap px-1 py-3.5 text-right text-sm font-semibold text-gray-900"
-                @click="updateSort('county_qualify')"
+                class="whitespace-nowrap px-1 py-3.5 text-right text-sm font-semibold text-gray-900"
               >
-                <span>Qual.</span><i :class="getSortIcon('county_qualify')" />
+                Qual.
               </th>
               <th
                 scope="col"
-                class="sortable whitespace-nowrap !border-l-2 !border-gray-400 px-1 py-3.5 text-right text-sm font-semibold text-gray-900"
-                @click="updateSort('regional_rank')"
+                class="whitespace-nowrap !border-l-2 !border-gray-400 px-1 py-3.5 text-right text-sm font-semibold text-gray-900"
               >
-                <span>Rank</span><i :class="getSortIcon('regional_rank')" />
+                Rank
               </th>
               <th
                 scope="col"
-                class="sortable whitespace-nowrap px-1 py-3.5 text-right text-sm font-semibold text-gray-900"
-                @click="updateSort('regional_best')"
+                class="whitespace-nowrap px-1 py-3.5 text-right text-sm font-semibold text-gray-900"
               >
-                <span>Lead</span><i :class="getSortIcon('regional_best')" />
+                Lead
               </th>
               <th
                 scope="col"
-                class="sortable whitespace-nowrap px-1 py-3.5 text-right text-sm font-semibold text-gray-900"
-                @click="updateSort('regional_diff')"
+                class="whitespace-nowrap px-1 py-3.5 text-right text-sm font-semibold text-gray-900"
               >
-                <span>Diff</span><i :class="getSortIcon('regional_diff')" />
+                Diff
               </th>
               <th
                 scope="col"
-                class="sortable whitespace-nowrap px-1 py-3.5 text-right text-sm font-semibold text-gray-900"
-                @click="updateSort('regional_qualify')"
+                class="whitespace-nowrap px-1 py-3.5 text-right text-sm font-semibold text-gray-900"
               >
-                <span>Qual.</span><i :class="getSortIcon('regional_qualify')" />
+                Qual.
               </th>
               <th
                 scope="col"
-                class="sortable whitespace-nowrap !border-l-2 !border-gray-400 px-1 py-3.5 text-right text-sm font-semibold text-gray-900"
-                @click="updateSort('national_rank')"
+                class="whitespace-nowrap !border-l-2 !border-gray-400 px-1 py-3.5 text-right text-sm font-semibold text-gray-900"
               >
-                <span>Rank</span><i :class="getSortIcon('national_rank')" />
+                Rank
               </th>
               <th
                 scope="col"
-                class="sortable whitespace-nowrap px-1 py-3.5 text-right text-sm font-semibold text-gray-900"
-                @click="updateSort('national_best')"
+                class="whitespace-nowrap px-1 py-3.5 text-right text-sm font-semibold text-gray-900"
               >
-                <span>Lead</span><i :class="getSortIcon('national_best')" />
+                Lead
               </th>
               <th
                 scope="col"
-                class="sortable whitespace-nowrap px-1 py-3.5 text-right text-sm font-semibold text-gray-900"
-                @click="updateSort('national_diff')"
+                class="whitespace-nowrap pl-1 pr-2 py-3.5 text-right text-sm font-semibold text-gray-900"
               >
-                <span>Diff</span><i :class="getSortIcon('national_diff')" />
-              </th>
-              <th
-                scope="col"
-                class="hidden sortable whitespace-nowrap px-1 py-3.5 text-right text-sm font-semibold text-gray-900"
-                @click="updateSort('national_qualify')"
-              >
-                <span>Qual.</span><i :class="getSortIcon('national_qualify')" />
+                Diff
               </th>
             </tr>
           </thead>
@@ -582,11 +549,8 @@
               <td class="whitespace-nowrap px-2 py-2 text-right text-sm text-gray-500">
                 <span class="tooltip">{{ row.qualifying.national.best ? secondsToTime( row.qualifying.national.best ) : '' }}<span class="tooltip-text">{{ row.qualifying.national.best_date }}</span></span>
               </td>
-              <td class="whitespace-nowrap px-2 py-2 text-right text-sm text-gray-500">
+              <td class="whitespace-nowrap px-2 pl-2 pr-1 text-right text-sm text-gray-500">
                 {{ row.qualifying.national.difference ? secondsToTime( row.qualifying.national.difference ) : '' }}
-              </td>
-              <td class="whitespace-nowrap py-2 pl-2 pr-1 text-right text-sm text-gray-500 sm:pr-0 hidden">
-                {{ row.qualifying.national.qualifyTime }}
               </td>
             </tr>
           </tbody>
