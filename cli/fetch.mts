@@ -369,6 +369,7 @@ const updateRankings = async ( swimmer: Swimmer, individualData: Array<Individua
 
   await runTransaction( await getPool(), async ( conn: PoolConnection, swimmer: Swimmer, individualData: IndividualStats[] ) => {
     const ageGroup = getSwimmerAgeGroup( swimmer )
+    const batchPages = new Map<string,PageInfo>()
     for ( const event of individualData ) {
       const stroke_distance = STROKE_DISTANCE[`${event.stroke}__${event.distance}`.toLocaleUpperCase() as keyof typeof STROKE_DISTANCE]
       const course = event.course.substring( 0, 1 ).toLocaleUpperCase()
@@ -436,7 +437,6 @@ const updateRankings = async ( swimmer: Swimmer, individualData: Array<Individua
         C: 1,
       }
 
-      const batchPages = new Map<string,PageInfo>()
       const extraPages = []
       const deleteRankings = prepareStatement( conn, deleteRankingsSql )
       for ( const page of pages ) {
@@ -454,8 +454,6 @@ const updateRankings = async ( swimmer: Swimmer, individualData: Array<Individua
         await deleteRankings.run( page.data as object )
       }
 
-      const saveRankings = prepareStatement( conn, insertRankingsSql )
-
       /* for ( const page of pages.concat( extraPages ) ) {
         const content = await fetchPage( page )
         // console.log( inspect( pageData, { depth: 5 } ) )
@@ -467,22 +465,25 @@ const updateRankings = async ( swimmer: Swimmer, individualData: Array<Individua
           saveRankings.run( { ...( page.data as object ), ...row, position: ( ( pageNo - 1 ) * 100 ) + ( index + 1 ) } )
         }
       } */
+    }
 
-      const responses = await fetchPages( batchPages )
-      for ( const [ url, content ] of responses.entries() ) {
-        // console.log( inspect( pageData, { depth: 5 } ) )
-        const page = batchPages.get( url )
-        if ( !page )
-          throw new Error( `Can't find page with url '${url}'` )
-        const $ = cheerio.load( content )
+    const saveRankings = prepareStatement( conn, insertRankingsSql )
 
-        const rankingData = parseRanking( page, $ )
-        const pageNo = ( page.data as { pageNo?: number } ).pageNo ?? 1
-        for ( const [ index, row ] of rankingData.table.entries() ) {
-          saveRankings.run( { ...( page.data as object ), ...row, position: ( ( pageNo - 1 ) * 100 ) + ( index + 1 ) } )
-        }
+    const responses = await fetchPages( batchPages )
+    for ( const [ url, content ] of responses.entries() ) {
+      // console.log( inspect( pageData, { depth: 5 } ) )
+      const page = batchPages.get( url )
+      if ( !page )
+        throw new Error( `Can't find page with url '${url}'` )
+      const $ = cheerio.load( content )
+
+      const rankingData = parseRanking( page, $ )
+      const pageNo = ( page.data as { pageNo?: number } ).pageNo ?? 1
+      for ( const [ index, row ] of rankingData.table.entries() ) {
+        saveRankings.run( { ...( page.data as object ), ...row, position: ( ( pageNo - 1 ) * 100 ) + ( index + 1 ) } )
       }
     }
+
   }, swimmer, individualData )
 }
 
