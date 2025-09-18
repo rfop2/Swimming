@@ -208,7 +208,7 @@ function resetUpload() {
                     <div
                         v-if="selectedLayoutIndex !== null && selections.year.value && selections.scope.value && selections.area.value">
                         <button @click="sendFile" class="mb-4 px-4 py-2 bg-blue-600 text-white rounded">
-                            Send
+                            Upload
                         </button>
                     </div>
 
