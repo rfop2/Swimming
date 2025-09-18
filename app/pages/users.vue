@@ -17,7 +17,7 @@
 
   const currentUser = useAuthenticatedUser()
 
-  const { data: users } = await useFetch(
+  const { data: users, refresh: refreshUsers } = await useFetch(
     "/api/users"
   )
 
@@ -39,12 +39,19 @@
 
   const deleting = ref<number | null>( null )
 
-  const deleteUser = () => {
+  const deleteUser = async () => {
     if ( !users.value )
       return
     if ( deleting.value !== null ) {
-      // remove( deleting.value )
-      console.log( "Delete", users.value[deleting.value] )
+      const userToDelete = users.value[deleting.value]
+      console.log( "Delete", userToDelete )
+      await $fetch(
+        `/api/user/${userToDelete.id}`,
+        {
+          method: "DELETE"
+        }
+      )
+      await refreshUsers()
     }
     deleting.value = null
   }

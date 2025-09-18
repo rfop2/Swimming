@@ -15,7 +15,7 @@ export default defineEventHandler( async ( event ) => {
     } )
   }
 
-  const selectRecords = prepareStatement<{ userId: string },Swimmer>(
+  const selectRecords = prepareStatement<{ userId: string }, Swimmer>(
     await getPool(),
     "SELECT id, fullName, firstName, middleName, lastName, birthday, gender, nationality, region, county, squad, active FROM Swimmers INNER JOIN UserSwimmers ON(Swimmers.id = UserSwimmers.swimmerId) WHERE UserSwimmers.userId = :userId"
   )

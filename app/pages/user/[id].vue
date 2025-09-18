@@ -16,9 +16,25 @@
   const route = useRoute()
   const userId = route.params.id
 
-  const { data: user } = await useFetch<User>(
-    `/api/user/${userId}`
-  )
+  const user = await ( async () => {
+    if ( userId === "0" ) {
+      const user = ref<User | null>( {
+        id: "0",
+        username: "",
+        firstName: "",
+        lastName: "",
+        location: "",
+        type: "",
+        admin: false
+      } as User )
+      return Promise.resolve( user )
+    } else {
+      const { data: user } = await useFetch<User>(
+        `/api/user/${userId}`
+      )
+      return user
+    }
+  } )()
 
   if ( !user.value ) {
     throw createError( `Can't load user '${userId}'` )
@@ -27,10 +43,17 @@
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const saveUser = async ( values: any ) => {
-    await $fetch( `/api/user/${user.value?.id}`, {
-      method: "PUT",
-      body: JSON.stringify( values ),
-    } )
+    if ( user.value?.id === "0" ) {
+      await $fetch( `/api/user/${user.value?.id}`, {
+        method: "POST",
+        body: JSON.stringify( values ),
+      } )
+    } else {
+      await $fetch( `/api/user/${user.value?.id}`, {
+        method: "PUT",
+        body: JSON.stringify( values ),
+      } )
+    }
     // await refreshNuxtData()
     await refreshSwimmers()
   }

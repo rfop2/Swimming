@@ -1,3 +1,4 @@
+import { hash } from "@node-rs/argon2"
 import { getPool, prepareStatement, runTransaction, type Swimmer } from "lib"
 import type { PoolConnection } from "mysql2/promise"
 
@@ -25,11 +26,19 @@ export default eventHandler( async ( event ) => {
           // Ignore it if it's just *s
           if ( !userData.password.match( /^\*+$/ ) ) {
             if ( userData.password.match( /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).+$/ ) ) {
+              const passwordHash = await hash( userData.password, {
+                // recommended minimum parameters
+                memoryCost: 19456,
+                timeCost: 2,
+                outputLen: 32,
+                parallelism: 1
+              } )
+
               const updatePassword = prepareStatement(
                 conn,
-                "UPDATE User SET password = :password WHERE id = :userId"
+                "UPDATE User SET password = :passwordHash WHERE id = :userId"
               )
-              await updatePassword.run( { ...userData, ...{ userId } } )
+              await updatePassword.run( { passwordHash, ...{ userId } } )
             } else {
               throw createError( {
                 message: "Password must contain mixed case letters, numbers and symbols",

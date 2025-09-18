@@ -16,10 +16,13 @@
     saveFn: ( values: any ) => void
   }>()
 
-  const { data: locations } = await useFetch<Array<{lat:string,lon:string}>>(
+  const currentUser = useAuthenticatedUser()
+  const isAdmin = !!Number( currentUser.value.admin )
+
+  const { data: locations } = await useFetch<Array<{ lat: string, lon: string }>>(
     `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent( props.user.location + ", UK" )}`
   )
-  const locationCoords = ref<{lat?: number, lon?: number}>( {} )
+  const locationCoords = ref<{ lat?: number, lon?: number }>( {} )
   if ( locations.value !== null && locations.value.length > 0 ) {
     locationCoords.value = { lat: Number( locations.value[0].lat ), lon: Number( locations.value[0].lon ) }
   }
@@ -39,9 +42,10 @@
       firstName: props.user.firstName,
       lastName: props.user.lastName,
       username: props.user.username,
+      password: props.user.id !== "0" ? PASSWORD : "",
+      confirmPassword: props.user.id !== "0" ? PASSWORD : "",
       location: props.user.location,
-      password: PASSWORD,
-      confirmPassword: PASSWORD,
+      type: props.user.type,
       swimmers: props.swimmers,
     },
     validationSchema: toTypedSchema(
@@ -49,7 +53,6 @@
         firstName: yup.string().label( "First name" ).required(),
         lastName: yup.string().label( "Last name" ).required(),
         username: yup.string().email().label( "Email address" ).required(),
-        location: yup.string().label( "Town/city" ).required(),
         password: yup.string()
           .test(
             "skip-placeholder-validation",
@@ -65,7 +68,6 @@
               return length && lower && upper && digit && symbol
             }
           ),
-
         confirmPassword: yup.string()
           .test(
             "skip-placeholder-validation",
@@ -77,6 +79,8 @@
               return value === password
             }
           ),
+        location: yup.string().label( "Town/city" ).required(),
+        type: yup.string().label( "Type" ),
         swimmers: yup.array( yup.object( {
           firstName: yup.string().required(),
           lastName: yup.string().required(),
@@ -95,9 +99,30 @@
   const [ firstName, firstNameAttrs ] = defineField( "firstName" )
   const [ lastName, lastNameAttrs ] = defineField( "lastName" )
   const [ username, usernameAttrs ] = defineField( "username" )
-  const [ location, locationAttrs ] = defineField( "location" )
   const [ password, passwordAttrs ] = defineField( "password" )
   const [ confirmPassword, confirmPasswordAttrs ] = defineField( "confirmPassword" )
+  const [ location, locationAttrs ] = defineField( "location" )
+  const [ type, typeAttrs ] = defineField( "type" )
+
+  // Should come from DB
+  const userTypes =
+    [ {
+        label: "Parent",
+        value: "parent"
+      },
+      {
+        label: "Trainer",
+        value: "trainer"
+      },
+      {
+        label: "Club",
+        value: "club"
+      },
+      {
+        label: "Other",
+        value: "other"
+      },
+    ]
 
   const { remove, push, update, fields } = useFieldArray<Swimmer>( "swimmers" )
 
@@ -132,7 +157,7 @@
       ...foundSwimmer.value
     }
     console.log( newSwimmer )
-    push( newSwimmer  )
+    push( newSwimmer )
     editing.value = fields.value.length - 1
   }
 
@@ -168,7 +193,7 @@
       sq.add( s.value.squad )
     return sq
   }, new Set<string>() ) ).sort().map( s => ( { label: s, value: s } ) ) )
-  const selectedSquad = ref<{label: string, value: string} | undefined>()
+  const selectedSquad = ref<{ label: string, value: string } | undefined>()
 
   watch( selectedSquad, ( v ) => {
     if ( editing.value !== null ) {
@@ -210,7 +235,7 @@
       },
     ]
   const nationalities = Object.entries( NATIONALITIES ).map( (
-    [ value , label ] ) => ( {
+    [ value, label ] ) => ( {
     value,
     label
   } ) )
@@ -396,6 +421,18 @@
                   </button>
                 </div>
               </div>
+            </div>
+            <div
+              v-if="isAdmin"
+              class="sm:col-span-1"
+            >
+              <UI-Select
+                id="type"
+                v-model="type"
+                label="Type"
+                v-bind="typeAttrs"
+                :options="userTypes"
+              />
             </div>
           </div>
         </div>
