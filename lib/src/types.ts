@@ -43,6 +43,7 @@ export interface IndividualRow extends IndividualStats {
 }
 
 export interface RankingRow {
+  position: number
   rank: number
   name: string
   swimmer: string

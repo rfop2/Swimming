@@ -1,4 +1,5 @@
 import { Pool, PoolConnection, ResultSetHeader, RowDataPacket } from "mysql2/promise"
+export type { Pool, PoolConnection }
 
 let pool: Pool | null = null
 

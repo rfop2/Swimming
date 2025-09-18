@@ -537,6 +537,7 @@ export const parseRanking = ( pageInfo: PageInfo, $: CheerioAPI ) => {
         continue
       }
       const rankingRow: RankingRow = {
+        position: 0,
         rank: Number( row.rank ),
         name: row.name,
         swimmer: row.swimmer,

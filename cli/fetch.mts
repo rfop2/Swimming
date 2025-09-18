@@ -2,6 +2,7 @@
 import "dotenv/config"
 import { format, formatISO } from "date-fns"
 import * as cheerio from "cheerio"
+
 // import { inspect } from "util"
 
 import {
@@ -30,22 +31,20 @@ import {
   parseMeets,
   closePool,
   fetchPages,
+  runTransaction,
 } from "lib"
 
 import type {
   IndividualStats,
   Meet,
   PageInfo,
+  PoolConnection,
   Swimmer
 } from "lib"
 import { Command } from "commander"
 
-const now = new Date()
-const today = format( now, "yyyy-MM-dd" )
-
 const insertIndividualSql =
-  `INSERT IGNORE INTO Individual (
-  created,
+  `INSERT INTO Individual (
   swimmer,
   course,
   stroke,
@@ -59,7 +58,6 @@ const insertIndividualSql =
   licence,
   level
 ) VALUES (
-  :created,
   :swimmer,
   :course,
   :stroke,
@@ -87,7 +85,6 @@ interface RankingRecord {
 
 export const deleteRankingsSql =
   `DELETE FROM Rankings WHERE
-  created = :created AND
   gender = :gender AND
   age = :age AND
   course = :course AND
@@ -98,7 +95,6 @@ export const deleteRankingsSql =
 
 const insertRankingsSql =
   `INSERT INTO Rankings (
-  created,
   gender,
   age,
   course,
@@ -106,6 +102,7 @@ const insertRankingsSql =
   distance,
   scope,
   area,
+  position,
   rank,
   swimmer,
   ranked_club,
@@ -117,7 +114,6 @@ const insertRankingsSql =
   time,
   fina
 ) VALUES (
-  :created,
   :gender,
   :age,
   :course,
@@ -125,6 +121,7 @@ const insertRankingsSql =
   :distance,
   :scope,
   :area,
+  :position,
   :rank,
   :swimmer,
   :ranked_club,
@@ -139,7 +136,6 @@ const insertRankingsSql =
 
 const deletePerformanceSql =
   `DELETE FROM Performance WHERE
-  created = :created AND
   swimmer = :swimmer AND
   course = :course AND
   stroke = :stroke AND
@@ -150,14 +146,12 @@ const deletePerformanceSql =
 
 const insertPerformanceSql =
   `INSERT INTO Performance (
-  created,
   swimmer,
   course,
   stroke,
   distance,
   scope,
   area,
-  position,
   rank,
   best,
   best_date,
@@ -165,14 +159,12 @@ const insertPerformanceSql =
   time_date,
   difference
 ) VALUES (
-  :created,
   :swimmer,
   :course,
   :stroke,
   :distance,
   :scope,
   :area,
-  :position,
   :rank,
   :best,
   :best_date,
@@ -182,8 +174,7 @@ const insertPerformanceSql =
 );`
 
 const insertResultsSql =
-  `INSERT IGNORE INTO Results (
-  created,
+  `INSERT INTO Results (
   swimmer,
   course,
   stroke,
@@ -197,7 +188,6 @@ const insertResultsSql =
   club_swam_under,
   level
 ) VALUES (
-  :created,
   :swimmer,
   :course,
   :stroke,
@@ -214,7 +204,6 @@ const insertResultsSql =
 
 const insertMeetsSql =
   `INSERT INTO Meets (
-  created,
   id,
   code,
   date,
@@ -230,7 +219,6 @@ const insertMeetsSql =
   email
 )
 VALUES (
-  :created,
   :id,
   :code,
   :date,
@@ -274,232 +262,251 @@ const updateIndividual = async ( swimmer: Swimmer ) => {
 
   const individualData = parseIndividual( page, $ )
 
-  console.log( `Got records for ${individualData.length} events` )
-  const saveIndividual = prepareStatement(
-    await getPool(),
-    insertIndividualSql
-  )
-  for ( const row of individualData ) {
-    await saveIndividual.run( { ...row, created: today, swimmer: swimmer.id } )
-  }
+  await runTransaction( await getPool(), async ( conn: PoolConnection, individualData: IndividualStats[] ) => {
+    console.log( `Got records for ${individualData.length} events` )
+    const deleteIndividual = prepareStatement<{id: string}>(
+      conn,
+      "DELETE FROM Individual WHERE swimmer = :id"
+    )
+    deleteIndividual.run( swimmer )
+    const saveIndividual = prepareStatement(
+      conn,
+      insertIndividualSql
+    )
+    for ( const row of individualData ) {
+      await saveIndividual.run( { ...row, swimmer: swimmer.id } )
+    }
+  }, individualData )
 
   return individualData
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const updateResults = async ( swimmer: Swimmer, individualData: Array<IndividualStats> ) => {
   console.log( `Updating results data for swimmer '${swimmer.fullName}'` )
 
-  for ( const event of individualData ) {
-    const stroke_distance = STROKE_DISTANCE[`${event.stroke}__${event.distance}`.toLocaleUpperCase() as keyof typeof STROKE_DISTANCE]
-    const course = event.course.substring( 0, 1 ).toLocaleUpperCase()
+  await runTransaction( await getPool(), async ( conn: PoolConnection, individualData: IndividualStats[] ) => {
+    for ( const event of individualData ) {
+      const stroke_distance = STROKE_DISTANCE[`${event.stroke}__${event.distance}`.toLocaleUpperCase() as keyof typeof STROKE_DISTANCE]
+      const course = event.course.substring( 0, 1 ).toLocaleUpperCase()
 
-    const page: PageInfo = {
-      label: `${event.distance}_${event.stroke}_${event.course}_${swimmer.id}`,
-      url: createUrl( resultsBaseUrl, {
-        ...resultsParams( swimmer ),
-        ...{ tstroke: stroke_distance, tcourse: course },
-      } ),
-      type: "results"
+      const page: PageInfo = {
+        label: `${event.distance}_${event.stroke}_${event.course}_${swimmer.id}`,
+        url: createUrl( resultsBaseUrl, {
+          ...resultsParams( swimmer ),
+          ...{ tstroke: stroke_distance, tcourse: course },
+        } ),
+        type: "results"
+      }
+
+      const content = await fetchPage( page )
+      // console.log( inspect( pageData, { depth: 5 } ) )
+      const $ = cheerio.load( content )
+
+      const resultsData = parseResults( page, $ )
+
+      const deleteResults = prepareStatement<{id: string}>(
+        conn,
+        "DELETE FROM Results WHERE swimmer = :id"
+      )
+      deleteResults.run( swimmer )
+
+      const saveResults = prepareStatement( conn, insertResultsSql )
+      for ( const result of resultsData ) {
+        await saveResults.run( { swimmer: swimmer.id, course: event.course, stroke: event.stroke, distance: event.distance, ...result } )
+      }
     }
-
-    const content = await fetchPage( page )
-    // console.log( inspect( pageData, { depth: 5 } ) )
-    const $ = cheerio.load( content )
-
-    const resultsData = parseResults( page, $ )
-
-    const saveResults = prepareStatement( await getPool(), insertResultsSql )
-    for ( const result of resultsData ) {
-      await saveResults.run( { created: today, swimmer: swimmer.id, course: event.course, stroke: event.stroke, distance: event.distance, ...result } )
-    }
-  }
+  }, individualData )
 }
 
 const updateResultsBatch = async ( swimmer: Swimmer, individualData: Array<IndividualStats> ) => {
   console.log( `Updating results data for swimmer '${swimmer.fullName}'` )
 
-  const pages = new Map<string,PageInfo>()
-  for ( const event of individualData ) {
-    const stroke_distance = STROKE_DISTANCE[`${event.stroke}__${event.distance}`.toLocaleUpperCase() as keyof typeof STROKE_DISTANCE]
-    const course = event.course.substring( 0, 1 ).toLocaleUpperCase()
+  await runTransaction( await getPool(), async ( conn: PoolConnection, individualData: IndividualStats[] ) => {
+    const pages = new Map<string,PageInfo>()
+    for ( const event of individualData ) {
+      const stroke_distance = STROKE_DISTANCE[`${event.stroke}__${event.distance}`.toLocaleUpperCase() as keyof typeof STROKE_DISTANCE]
+      const course = event.course.substring( 0, 1 ).toLocaleUpperCase()
 
-    const page: PageInfo = {
-      label: `${event.distance}_${event.stroke}_${event.course}_${swimmer.id}`,
-      url: createUrl( resultsBaseUrl, {
-        ...resultsParams( swimmer ),
-        ...{ tstroke: stroke_distance, tcourse: course },
-      } ),
-      type: "results",
-      data: event,
+      const page: PageInfo = {
+        label: `${event.distance}_${event.stroke}_${event.course}_${swimmer.id}`,
+        url: createUrl( resultsBaseUrl, {
+          ...resultsParams( swimmer ),
+          ...{ tstroke: stroke_distance, tcourse: course },
+        } ),
+        type: "results",
+        data: event,
+      }
+      pages.set( page.url.toString(), page )
     }
-    pages.set( page.url.toString(), page )
-  }
-  const responses = await fetchPages( pages )
-  for ( const [ url, content ] of responses.entries() ) {
+    const responses = await fetchPages( pages )
+    for ( const [ url, content ] of responses.entries() ) {
     // console.log( inspect( pageData, { depth: 5 } ) )
-    const page = pages.get( url )
-    if ( !page )
-      throw new Error( `Can't find page with url '${url}'` )
-    const event = page.data as IndividualStats
-    const $ = cheerio.load( content )
+      const page = pages.get( url )
+      if ( !page )
+        throw new Error( `Can't find page with url '${url}'` )
+      const event = page.data as IndividualStats
+      const $ = cheerio.load( content )
 
-    const resultsData = parseResults( page as PageInfo, $ )
+      const resultsData = parseResults( page as PageInfo, $ )
 
-    const saveResults = prepareStatement( await getPool(), insertResultsSql )
-    for ( const result of resultsData ) {
-      await saveResults.run( { created: today, swimmer: swimmer.id, course: event.course, stroke: event.stroke, distance: event.distance, ...result } )
+      const deleteResults = prepareStatement<{id: string}>(
+        conn,
+        "DELETE FROM Results WHERE swimmer = :id"
+      )
+      deleteResults.run( swimmer )
+
+      const saveResults = prepareStatement( conn, insertResultsSql )
+      for ( const result of resultsData ) {
+        await saveResults.run( { swimmer: swimmer.id, course: event.course, stroke: event.stroke, distance: event.distance, ...result } )
+      }
     }
-  }
+  }, individualData )
 }
 
 const updateRankings = async ( swimmer: Swimmer, individualData: Array<IndividualStats> ) => {
   console.log( `Updating ranking data for swimmer '${swimmer.fullName}'` )
 
-  const ageGroup = getSwimmerAgeGroup( swimmer )
-  for ( const event of individualData ) {
-    const stroke_distance = STROKE_DISTANCE[`${event.stroke}__${event.distance}`.toLocaleUpperCase() as keyof typeof STROKE_DISTANCE]
-    const course = event.course.substring( 0, 1 ).toLocaleUpperCase()
-    const commonData = {
-      gender: swimmer.gender,
-      age: ageGroup,
-      course: event.course,
-      stroke: event.stroke,
-      distance: event.distance,
-    }
-    const pages: Array<PageInfo> = [
-      {
-        label: `${event.distance}_${event.stroke}_${swimmer.gender}_${event.course}_${ageGroup.toLocaleLowerCase()}_national_${swimmer.nationality.toLocaleLowerCase()}`,
-        url: createUrl( rankBaseUrl, {
-          ...{ Stroke: stroke_distance, Pool: course },
-          ...globalRankParams( swimmer ),
-          ...nationalRankParams,
-        } ),
-        type: "ranking",
-        data: {
-          ...commonData,
-          ... {
-            scope: "national",
-            area: swimmer.nationality,
-          }
-        }
-      },
-      {
-        label: `${event.distance}_${event.stroke}_${swimmer.gender}_${event.course}_${ageGroup.toLocaleLowerCase()}_regional_${swimmer.region.toLocaleLowerCase()}`,
-        url: createUrl( rankBaseUrl, {
-          ...{ Stroke: stroke_distance, Pool: course },
-          ...globalRankParams( swimmer ),
-          ...{ ...regionalRankParams, ...{ TargetRegion: swimmer.region } }
-        } ),
-        type: "ranking",
-        data: {
-          ...commonData,
-          ... {
-            scope: "regional",
-            area: swimmer.region,
-          }
-        }
-      },
-      {
-        label: `${event.distance}_${event.stroke}_${swimmer.gender}_${event.course}_${ageGroup.toLocaleLowerCase()}_county_${swimmer.county.toLocaleLowerCase()}`,
-        url: createUrl( rankBaseUrl, {
-          ...{ Stroke: stroke_distance, Pool: course },
-          ...globalRankParams( swimmer ),
-          ...{ ...countyRankParams, ...{ TargetCounty: swimmer.county } }
-        } ),
-        type: "ranking",
-        data: {
-          ...commonData,
-          ... {
-            scope: "county",
-            area: swimmer.county,
-          }
-        }
-      },
-    ]
-
-    const pageCounts = {
-      N: 2,
-      D: 1,
-      C: 1,
-    }
-
-    const extraPages = []
-    const deleteRankings = prepareStatement( await getPool(), deleteRankingsSql )
-    for ( const page of pages ) {
-      const url = new URL( page.url )
-      const params = url.searchParams
-      const pageCount = pageCounts[params.get( "Level" ) as keyof typeof pageCounts]
-      for ( let i = 1; i < pageCount; i++ ) {
-        params.set( "StartNumber", String( 1 + ( i * 100 ) ) )
-        url.search = new URLSearchParams( params ).toString()
-        extraPages.push( Object.assign( {}, page, { label: `${page.label}-2`, url, data: page.data } ) )
+  await runTransaction( await getPool(), async ( conn: PoolConnection, swimmer: Swimmer, individualData: IndividualStats[] ) => {
+    const ageGroup = getSwimmerAgeGroup( swimmer )
+    for ( const event of individualData ) {
+      const stroke_distance = STROKE_DISTANCE[`${event.stroke}__${event.distance}`.toLocaleUpperCase() as keyof typeof STROKE_DISTANCE]
+      const course = event.course.substring( 0, 1 ).toLocaleUpperCase()
+      const commonData = {
+        gender: swimmer.gender,
+        age: ageGroup,
+        course: event.course,
+        stroke: event.stroke,
+        distance: event.distance,
       }
-      await deleteRankings.run( { created: today, ...( page.data as object ) } )
-    }
+      const pages: Array<PageInfo> = [
+        {
+          label: `${event.distance}_${event.stroke}_${swimmer.gender}_${event.course}_${ageGroup.toLocaleLowerCase()}_national_${swimmer.nationality.toLocaleLowerCase()}`,
+          url: createUrl( rankBaseUrl, {
+            ...{ Stroke: stroke_distance, Pool: course },
+            ...globalRankParams( swimmer ),
+            ...nationalRankParams,
+          } ),
+          type: "ranking",
+          data: {
+            ...commonData,
+            ... {
+              scope: "national",
+              area: swimmer.nationality,
+            }
+          }
+        },
+        {
+          label: `${event.distance}_${event.stroke}_${swimmer.gender}_${event.course}_${ageGroup.toLocaleLowerCase()}_regional_${swimmer.region.toLocaleLowerCase()}`,
+          url: createUrl( rankBaseUrl, {
+            ...{ Stroke: stroke_distance, Pool: course },
+            ...globalRankParams( swimmer ),
+            ...{ ...regionalRankParams, ...{ TargetRegion: swimmer.region } }
+          } ),
+          type: "ranking",
+          data: {
+            ...commonData,
+            ... {
+              scope: "regional",
+              area: swimmer.region,
+            }
+          }
+        },
+        {
+          label: `${event.distance}_${event.stroke}_${swimmer.gender}_${event.course}_${ageGroup.toLocaleLowerCase()}_county_${swimmer.county.toLocaleLowerCase()}`,
+          url: createUrl( rankBaseUrl, {
+            ...{ Stroke: stroke_distance, Pool: course },
+            ...globalRankParams( swimmer ),
+            ...{ ...countyRankParams, ...{ TargetCounty: swimmer.county } }
+          } ),
+          type: "ranking",
+          data: {
+            ...commonData,
+            ... {
+              scope: "county",
+              area: swimmer.county,
+            }
+          }
+        },
+      ]
 
-    const saveRankings = prepareStatement( await getPool(), insertRankingsSql )
-    for ( const page of pages.concat( extraPages ) ) {
-      const content = await fetchPage( page )
-      // console.log( inspect( pageData, { depth: 5 } ) )
-      const $ = cheerio.load( content )
+      const pageCounts = {
+        N: 2,
+        D: 1,
+        C: 1,
+      }
 
-      const rankingData = parseRanking( page, $ )
-      for ( const row of rankingData.table ) {
-        saveRankings.run( { created: today, ...( page.data as object ), ...row } )
+      const extraPages = []
+      const deleteRankings = prepareStatement( conn, deleteRankingsSql )
+      for ( const page of pages ) {
+        const url = new URL( page.url )
+        const params = url.searchParams
+        const pageCount = pageCounts[params.get( "Level" ) as keyof typeof pageCounts]
+        for ( let i = 1; i < pageCount; i++ ) {
+          params.set( "StartNumber", String( 1 + ( i * 100 ) ) )
+          url.search = new URLSearchParams( params ).toString()
+          extraPages.push( Object.assign( {}, page, { label: `${page.label}-${i + 1}`, url, data: { ...( page.data as object ), pageNo: i + 1 } } ) )
+        }
+        await deleteRankings.run( page.data as object )
+      }
+
+      const saveRankings = prepareStatement( conn, insertRankingsSql )
+      for ( const page of pages.concat( extraPages ) ) {
+        const content = await fetchPage( page )
+        // console.log( inspect( pageData, { depth: 5 } ) )
+        const $ = cheerio.load( content )
+
+        const rankingData = parseRanking( page, $ )
+        const pageNo = ( page.data as { pageNo?: number } ).pageNo ?? 1
+        for ( const [ index, row ] of rankingData.table.entries() ) {
+          saveRankings.run( { ...( page.data as object ), ...row, position: ( ( pageNo - 1 ) * 100 ) + ( index + 1 ) } )
+        }
       }
     }
-  }
+  }, swimmer, individualData )
 }
 
 const updatePerformance = async ( swimmer: Swimmer ) => {
   console.log( `Generating performance data for swimmer '${swimmer.fullName}'` )
 
-  const ageGroup = getSwimmerAgeGroup( swimmer )
+  await runTransaction( await getPool(), async ( conn: PoolConnection, swimmer: Swimmer ) => {
 
-  const pool = await getPool()
-  const selectMaxCreated = prepareStatement<{ swimmerId: string },{ MaxCreated: string }>(
-    pool,
-    "SELECT MAX(DATE(created)) AS MaxCreated FROM Rankings WHERE swimmer = :swimmerId",
-  )
-  const result = await selectMaxCreated.get( { swimmerId: swimmer.id } )
-  if ( !result?.MaxCreated ) {
-    throw new Error( `No ranking records found for swimmer '${swimmer.id}'` )
-  }
+    const ageGroup = getSwimmerAgeGroup( swimmer )
 
-  const getSwimmerRankingTimes = prepareStatement<{date:string,swimmer:string},RankingRecord>(
-    pool,
-    "SELECT course, stroke, distance, scope, area, rank, date, time FROM Rankings WHERE created = :date AND swimmer = :swimmer"
-  )
-  const swimmerTimes = await getSwimmerRankingTimes.all( { date: result.MaxCreated, swimmer: swimmer.id } )
+    const getSwimmerRankingTimes = prepareStatement<{swimmer:string},RankingRecord>(
+      conn,
+      "SELECT course, stroke, distance, scope, area, rank, date, time FROM Rankings WHERE swimmer = :swimmer"
+    )
+    const swimmerTimes = await getSwimmerRankingTimes.all( { swimmer: swimmer.id } )
 
-  const getBestRankingTimes = prepareStatement<{date:string,gender:string,age:string},RankingRecord>(
-    pool,
-    "SELECT course, stroke, distance, scope, area, date, MIN(time) as time FROM Rankings WHERE created = :date AND gender = :gender AND age = :age GROUP BY gender, age, course, stroke, distance, scope, area"
-  )
-  const bestTimes = await getBestRankingTimes.all( { date: result.MaxCreated, gender: swimmer.gender, age: ageGroup } )
-  const bestTimesMap = new Map( bestTimes.map( time => [ `${time.course}_${time.stroke}_${time.distance}_${time.scope}_${time.area}`, time ] ) )
+    const getBestRankingTimes = prepareStatement<{gender:string,age:string},RankingRecord>(
+      conn,
+      "SELECT course, stroke, distance, scope, area, date, MIN(time) as time FROM Rankings WHERE gender = :gender AND age = :age GROUP BY gender, age, course, stroke, distance, scope, area"
+    )
+    const bestTimes = await getBestRankingTimes.all( { gender: swimmer.gender, age: ageGroup } )
+    const bestTimesMap = new Map( bestTimes.map( time => [ `${time.course}_${time.stroke}_${time.distance}_${time.scope}_${time.area}`, time ] ) )
 
-  // Now generate the performance records
-  const deletePerformance = prepareStatement( pool, deletePerformanceSql )
-  const savePerformance = prepareStatement( pool, insertPerformanceSql )
-  for ( const swimmerTime of swimmerTimes ) {
-    const raceLabel = `${swimmerTime.course}_${swimmerTime.stroke}_${swimmerTime.distance}_${swimmerTime.scope}_${swimmerTime.area}`
-    const bestTime = bestTimesMap.get( raceLabel )
-    if ( !bestTime ) {
-      throw new Error( `Unable to find best time record for '${raceLabel}` )
+    // Now generate the performance records
+    const deletePerformance = prepareStatement( conn, deletePerformanceSql )
+    const savePerformance = prepareStatement( conn, insertPerformanceSql )
+    for ( const swimmerTime of swimmerTimes ) {
+      const raceLabel = `${swimmerTime.course}_${swimmerTime.stroke}_${swimmerTime.distance}_${swimmerTime.scope}_${swimmerTime.area}`
+      const bestTime = bestTimesMap.get( raceLabel )
+      if ( !bestTime ) {
+        throw new Error( `Unable to find best time record for '${raceLabel}` )
+      }
+      const record = {
+        rank: swimmerTime.rank,
+        best: bestTime.time,
+        best_date: bestTime.date,
+        time: swimmerTime.time,
+        time_date: swimmerTime.date,
+        difference: swimmerTime.time - bestTime.time,
+      }
+      await deletePerformance.run( { swimmer: swimmer.id, ...swimmerTime } )
+      await savePerformance.run( { swimmer: swimmer.id, ...swimmerTime, ...record } )
     }
-    const record = {
-      position: 0,
-      rank: swimmerTime.rank,
-      best: bestTime.time,
-      best_date: bestTime.date,
-      time: swimmerTime.time,
-      time_date: swimmerTime.date,
-      difference: swimmerTime.time - bestTime.time,
-    }
-    await deletePerformance.run( { created: today, swimmer: swimmer.id, ...swimmerTime } )
-    await savePerformance.run( { created: today, swimmer: swimmer.id, ...swimmerTime, ...record } )
-  }
+  }, swimmer )
 }
 
 const updateSwimmerData = async ( swimmer: Swimmer, relative: boolean ) => {
@@ -514,6 +521,12 @@ const updateSwimmerData = async ( swimmer: Swimmer, relative: boolean ) => {
     await updateRankings( swimmer, individualData )
     await updatePerformance( swimmer )
   }
+
+  const swimmerUpdate = prepareStatement(
+    await getPool(),
+    "UPDATE Swimmers SET lastUpdateTime = NOW(), lastUpdateType = :type WHERE id = :id",
+  )
+  await swimmerUpdate.run( { ...swimmer, type: relative ? "full" : "lite"} )
 }
 
 const updateMeet = async ( meet: Partial<Meet> ) => {
@@ -585,7 +598,7 @@ const updateMeets = async () => {
       if ( fetchMeet ) {
         await updateMeet( meet )
         // console.log( meet )
-        await saveMeets.run( { created: today, ...meet } )
+        await saveMeets.run( meet )
       }
     }
 
