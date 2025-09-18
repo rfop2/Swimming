@@ -2,7 +2,7 @@ import { defineEventHandler } from "h3"
 import { getPool, prepareStatement, type Meet } from "lib"
 
 export default defineEventHandler( async ( event ) => {
-  if ( !event.context.session || !event.context.user  ) {
+  if ( !event.context.session || !event.context.user ) {
     throw createError( {
       statusCode: 403
     } )

@@ -30,6 +30,7 @@ export const lucia = new Lucia( adapter, {
       type: attributes.type,
       admin: attributes.admin,
       location: attributes.location,
+      created: attributes.created,
     }
   }
 } )
