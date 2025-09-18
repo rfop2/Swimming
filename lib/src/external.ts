@@ -400,7 +400,7 @@ export const fetchPages = async ( pages: Map<string,PageInfo>, cacheTime: number
       const pageStatuses: PageStatus[] = await response.json()
       const jobs = new Map<string,PageStatus>( pageStatuses.map( ps => [ ps.url, ps ] ) )
       while( jobs.size ) {
-        sleep( 1 )
+        sleep( Math.max( 1, jobs.size / 5 ) )
         console.log( `Checking status of ${jobs.size} requests` )
         for ( const job of jobs.values() ) {
           process.stdout.write( `Checking status of '${job.url}'` )

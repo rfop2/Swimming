@@ -436,24 +436,44 @@ const updateRankings = async ( swimmer: Swimmer, individualData: Array<Individua
         C: 1,
       }
 
+      const batchPages = new Map<string,PageInfo>()
       const extraPages = []
       const deleteRankings = prepareStatement( conn, deleteRankingsSql )
       for ( const page of pages ) {
+        batchPages.set( page.url.toString(), page )
         const url = new URL( page.url )
         const params = url.searchParams
         const pageCount = pageCounts[params.get( "Level" ) as keyof typeof pageCounts]
         for ( let i = 1; i < pageCount; i++ ) {
           params.set( "StartNumber", String( 1 + ( i * 100 ) ) )
           url.search = new URLSearchParams( params ).toString()
-          extraPages.push( Object.assign( {}, page, { label: `${page.label}-${i + 1}`, url, data: { ...( page.data as object ), pageNo: i + 1 } } ) )
+          const extraPage = Object.assign( {}, page, { label: `${page.label}-${i + 1}`, url, data: { ...( page.data as object ), pageNo: i + 1 } } )
+          extraPages.push( extraPage )
+          batchPages.set( url.toString(), extraPage )
         }
         await deleteRankings.run( page.data as object )
       }
 
       const saveRankings = prepareStatement( conn, insertRankingsSql )
-      for ( const page of pages.concat( extraPages ) ) {
+
+      /* for ( const page of pages.concat( extraPages ) ) {
         const content = await fetchPage( page )
         // console.log( inspect( pageData, { depth: 5 } ) )
+        const $ = cheerio.load( content )
+
+        const rankingData = parseRanking( page, $ )
+        const pageNo = ( page.data as { pageNo?: number } ).pageNo ?? 1
+        for ( const [ index, row ] of rankingData.table.entries() ) {
+          saveRankings.run( { ...( page.data as object ), ...row, position: ( ( pageNo - 1 ) * 100 ) + ( index + 1 ) } )
+        }
+      } */
+
+      const responses = await fetchPages( batchPages )
+      for ( const [ url, content ] of responses.entries() ) {
+        // console.log( inspect( pageData, { depth: 5 } ) )
+        const page = batchPages.get( url )
+        if ( !page )
+          throw new Error( `Can't find page with url '${url}'` )
         const $ = cheerio.load( content )
 
         const rankingData = parseRanking( page, $ )
@@ -512,21 +532,33 @@ const updatePerformance = async ( swimmer: Swimmer ) => {
 const updateSwimmerData = async ( swimmer: Swimmer, relative: boolean ) => {
   console.log( `Updating data for swimmer '${swimmer.fullName}'` )
 
+  // const pool = await getPool()
+
+  // const selectUpdateType = prepareStatement<{id: string},{ updateType?: string}>( pool, "SELECT updateType FROM Swimmers WHERE id = :id" )
+  // const updateInfo = await selectUpdateType.get( swimmer )
+
+  const swimmerUpdate = prepareStatement(
+    await getPool(),
+    "UPDATE Swimmers SET updateStatus = 'progress' WHERE id = :id",
+  )
+  await swimmerUpdate.run( { ...swimmer, type: relative ? "full" : "basic"} )
+
   const individualData = await updateIndividual( swimmer )
 
   // await updateResults( swimmer, individualData )
   await updateResultsBatch( swimmer, individualData )
 
-  if ( relative ) {
+  const updateType = relative ? "full" : "basic"
+  if ( updateType === "full" ) {
     await updateRankings( swimmer, individualData )
     await updatePerformance( swimmer )
   }
 
-  const swimmerUpdate = prepareStatement(
+  const swimmerLastUpdate = prepareStatement(
     await getPool(),
-    "UPDATE Swimmers SET lastUpdateTime = NOW(), lastUpdateType = :type WHERE id = :id",
+    "UPDATE Swimmers SET updateStatus = NULL, updateType = NULL, lastUpdateTime = NOW(), lastUpdateType = :type WHERE id = :id",
   )
-  await swimmerUpdate.run( { ...swimmer, type: relative ? "full" : "lite"} )
+  await swimmerLastUpdate.run( { ...swimmer, type: updateType } )
 }
 
 const updateMeet = async ( meet: Partial<Meet> ) => {
@@ -629,6 +661,7 @@ const updateMeets = async () => {
 interface CliOptions {
   mode?: "swimmers" | "meets"
   ids?: string[]
+  queue: boolean
   relative: boolean
 }
 
@@ -641,6 +674,7 @@ interface CliOptions {
 
   program.option( "-m, --mode <mode>", "fetch mode 'swimmer' or 'meets'" )
   program.option( "-i, --ids <ids...>", "fetch data for specified swimmers only" )
+  program.option( "-q, --queue", "fetch data for swimmers with pending updates only" )
   program.option( "-r, --relative", "fetch data relative to other swimmers alongside basic info", false )
 
   // Parse argv
@@ -654,13 +688,14 @@ interface CliOptions {
         await getPool(),
         "SELECT * FROM Swimmers WHERE active = 1"
       )
-
+      const selectUpdateType = prepareStatement<{id: string},{ updateStatus?: string, updateType?: string}>( await getPool(), "SELECT updateStatus, updateType FROM Swimmers WHERE id = :id AND updateStatus = 'pending' AND updateType IS NOT NULL" )
       const swimmers = await getSwimmers.all()
       for ( const swimmer of swimmers ) {
-        if ( !options.ids || options.ids.find( s => s === swimmer.id ) ) {
+        const updateInfo = await selectUpdateType.get( swimmer )
+        if ( ( options.queue && !!updateInfo?.updateType ) || ( !options.queue && ( !options.ids || options.ids.find( s => s === swimmer.id ) ) ) ) {
           swimmer.birthday = format( new Date( swimmer.birthday ), "yyyy-MM-dd" )
           try {
-            await updateSwimmerData( swimmer, !!options.relative )
+            await updateSwimmerData( swimmer, updateInfo?.updateType === "full" || !!options.relative )
           } catch ( e ) {
             console.error( "Unable to fetch swimmer data, skipping", e )
           }

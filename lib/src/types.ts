@@ -22,6 +22,10 @@ export interface Swimmer {
   county: string
   squad: string
   active: number
+  updateStatus?: "pending" | "progress"
+  updateType?: "basic" | "full"
+  lastUpdateTime?: Date
+  lastUpdateType?: "basic" | "full"
 }
 
 export interface IndividualStats {

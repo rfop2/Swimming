@@ -12,19 +12,19 @@ export default defineEventHandler( async ( event ) => {
   if ( !id ) {
     throw createError( {
       message: "No swimmer id supplied",
-      status: 403,
+      status: 400,
     } )
   }
 
-  const selectMaxCreated = prepareStatement<{ id: string }, { MaxCreated: string }>(
+  const selectLastUpdate = prepareStatement<{ id: string }, { lastUpdateTime: Date | null }>(
     await getPool(),
-    "SELECT MAX(created) AS MaxCreated FROM Performance WHERE swimmer = :id"
+    "SELECT lastUpdateTime FROM Swimmers WHERE id = :id"
   )
-  const result = await selectMaxCreated.get( { id } )
+  const result = await selectLastUpdate.get( { id } )
 
-  if ( !result?.MaxCreated ) {
+  if ( !result?.lastUpdateTime ) {
     throw createError( { status: 404, statusText: "No records found" } )
   }
   // console.log( "Data", data )
-  return result.MaxCreated
+  return result.lastUpdateTime
 } )
