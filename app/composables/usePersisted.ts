@@ -1,7 +1,7 @@
 type PersistedMode = "reactive" | "state"
 
 type UsePersistedReturn<T, M extends PersistedMode> =
-  M extends "reactive" ? { state: T; ready: Ref<boolean> } : { state: Ref<T>; ready: Ref<boolean> }
+  M extends "reactive" ? { state: T, ready: Ref<boolean> } : { state: Ref<T>, ready: Ref<boolean> }
 
 export const usePersisted = <T, M extends PersistedMode = "state">(
   key: string,

@@ -13,7 +13,7 @@
 
   const { swimmers } = await useSwimmers()
   const { swimmer, setSwimmer } = await useSwimmer()
-  const swimmersMap = new Map<Swimmer["id"],Swimmer>( swimmers.value.map( s => ( [ s.id, s ] ) ) )
+  const swimmersMap = new Map<Swimmer["id"], Swimmer>( swimmers.value.map( s => ( [ s.id, s ] ) ) )
 
   const swimmerOptions = computed( () => swimmers.value.map( s => ( { label: s.fullName, value: s.id } ) ) )
   const selectedSwimmer = ref( swimmerOptions.value.find( so => so.value === swimmer.value?.id ) ?? swimmerOptions.value[0] ?? undefined )

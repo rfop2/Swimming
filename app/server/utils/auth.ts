@@ -1,7 +1,7 @@
 import { Lucia } from "lucia"
 import { createPool } from "mysql2/promise"
 import { Mysql2Adapter } from "@lucia-auth/adapter-mysql"
-import type { DatabaseUser} from "lib"
+import type { DatabaseUser } from "lib"
 
 const pool = createPool( {
   host: process.env.NODE_ENV === "production" ? "db" : "192.168.45.2",
@@ -37,7 +37,7 @@ export const lucia = new Lucia( adapter, {
 
 declare module "lucia" {
   interface Register {
-    Lucia: typeof lucia;
-    DatabaseUserAttributes: Omit<DatabaseUser, "id">;
+    Lucia: typeof lucia
+    DatabaseUserAttributes: Omit<DatabaseUser, "id">
   }
 }

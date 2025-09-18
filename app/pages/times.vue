@@ -54,14 +54,14 @@
 
   const distances = computed( () => strokes[selections.stroke.value].distances )
 
-  interface  QualifiedRow extends IndividualRow {
+  interface QualifiedRow extends IndividualRow {
     qualified?: QualifyingRow
     altQualified?: QualifyingRow
   }
 
   const groupedRecords = computed( () => {
     const currentYear = getYear( new Date() )
-    const map = new Map<string,Map<string,Map<string,QualifiedRow | null>>>()
+    const map = new Map<string, Map<string, Map<string, QualifiedRow | null>>>()
     for ( const row of filteredRecords.value ) {
       if ( !map.has( row.swimmer ) ) {
         map.set( row.swimmer, new Map() )

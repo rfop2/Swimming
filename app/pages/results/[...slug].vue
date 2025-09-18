@@ -1,7 +1,7 @@
 <script setup lang="ts">
   import { COURSES, convertTime, getSwimmerAgeGroup, secondsToTime, strokes, type QualifyingRow } from "lib"
   import { Line } from "vue-chartjs"
-  import {  Chart as ChartJS, CategoryScale, LinearScale, TimeScale, PointElement, LineElement, Title, Tooltip, Legend, type ChartData, type ChartOptions, type TooltipItem } from "chart.js"
+  import { Chart as ChartJS, CategoryScale, LinearScale, TimeScale, PointElement, LineElement, Title, Tooltip, Legend, type ChartData, type ChartOptions, type TooltipItem } from "chart.js"
   import "chartjs-adapter-date-fns"
   import annotationPlugin from "chartjs-plugin-annotation"
 
@@ -27,7 +27,7 @@
   const strokeOptions = Object.entries( strokes ).map( ( [ k, v ] ) => ( { value: k, label: v.label } ) )
   const distanceOptions = reactive<{ value: string, label: string }[]>( strokes[slug[1] ?? Object.keys( strokes )[0]].distances.map( d => ( { value: d, label: d } ) ) )
 
-  const { state: selections, ready } = usePersisted( "results-selection", {
+  const { state: selections } = usePersisted( "results-selection", {
     course: courseOptions.find( option => option.value === slug[0] ) ?? courseOptions[0],
     stroke: strokeOptions.find( option => option.value === slug[1] ) ?? strokeOptions[0],
     distance: distanceOptions.find( option => option.value === slug[2] ) ?? distanceOptions[0]
@@ -112,7 +112,7 @@
         if ( q.scope === "national" && q.area !== swimmer.value.nationality )
           return false
         return true
-      } ).map( ( q ) : ExtQualifyingRow => ( {
+      } ).map( ( q ): ExtQualifyingRow => ( {
         ...q,
         courseTime: convertTime( q.course, selections.course.value, selections.stroke.value, selections.distance.value, q.time )
       } ) )
@@ -142,7 +142,7 @@
     ( records?.value || [] ).map( record => Number( record.time ) )
   )
 
-  const data = computed<ChartData<"line",number[],string>>( () => ( {
+  const data = computed<ChartData<"line", number[], string>>( () => ( {
     labels: ( records?.value || [] ).map( record => record.date ),
     datasets: [
       {

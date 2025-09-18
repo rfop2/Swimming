@@ -3,7 +3,7 @@
   import { CheckIcon, ChevronUpDownIcon } from "@heroicons/vue/24/outline"
   import classNames from "classnames"
 
-  const model = defineModel< UISelection | Array<UISelection> >()
+  const model = defineModel<UISelection | Array<UISelection>>()
 
   const defaultId = useId()
 

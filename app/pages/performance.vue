@@ -1,6 +1,6 @@
 <script setup lang="ts">
   import type { InternalApi } from "nitropack"
-  import { ArrowUturnLeftIcon, LinkIcon, ChartBarIcon } from "@heroicons/vue/24/outline"
+  import { LinkIcon, ChartBarIcon } from "@heroicons/vue/24/outline"
   import { type QualifyingRow, COUNTIES, type IndividualStats, NATIONALITIES, REGIONS, STROKE_DISTANCE, type Swimmer, convertTime, countyRankParams, createUrl, getSwimmerAge, getSwimmerScopeArea, globalRankParams, nationalRankParams, rankBaseUrl, regionalRankParams, secondsToTime, strokeSort } from "lib"
   import { differenceInCalendarMonths, getYear, addMonths, format } from "date-fns"
   import { FetchError } from "ofetch"
@@ -91,7 +91,7 @@
           },
           new Set<number>()
         ) ) )
-        yearOptions.value = qualifyingYears.value.map( year => ( { label: `${year} / ${getQualifyingAge( year ) }`, value: year } ) )
+        yearOptions.value = qualifyingYears.value.map( year => ( { label: `${year} / ${getQualifyingAge( year )}`, value: year } ) )
         qualifyingYear.value = yearOptions.value.find( y => y.value === defaultYear ) ?? yearOptions.value[0]
         if ( qualifyingYear.value ) {
           const qualifyingAge = getQualifyingAge( Number( qualifyingYear.value.value ) )
@@ -149,7 +149,7 @@
       if ( !swimmer.value )
         return []
 
-      const performanceRecordsMap = new Map<string,AreaDetail>( ( performanceRecords.value ?? [] ).map( record => {
+      const performanceRecordsMap = new Map<string, AreaDetail>( ( performanceRecords.value ?? [] ).map( record => {
         const { course, stroke, distance, scope, position, rank, best, best_date, difference } = record
         const key = `${distance}_${stroke}_${course}_${scope}`
         const page = Math.floor( rank / 100 ) + 1
@@ -263,7 +263,7 @@
 
   type RecordKey = typeof flattenedRecords["value"][number]
 
-  const { updateSort, getSortIcon, sortRecords, resetSort } = useMultiSort<RecordKey>()
+  const { updateSort, getSortIcon, sortRecords } = useMultiSort<RecordKey>()
 
   const sortedRecords = computed( () => sortRecords( flattenedRecords.value ) )
   // console.log( "SR", sortedRecords )

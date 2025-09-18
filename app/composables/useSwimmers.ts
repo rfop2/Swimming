@@ -14,8 +14,8 @@ export const useSwimmers = ( userId?: string ) => {
     try {
       const { data, error } = await useFetch<Swimmer[]>( `/api/swimmers/${userId ?? ""}`, {
         key: `swimmers-${userId}`,
-        transform: ( data ) =>
-          data.map( ( s ) => ( {
+        transform: data =>
+          data.map( s => ( {
             ...s,
             birthday: format( new Date( s.birthday ), "yyyy-MM-dd" ),
           } ) ),

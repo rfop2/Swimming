@@ -79,13 +79,13 @@
     "/api/personal/",
   )
 
-  const bestTimes = computed( () => new Map<string,IndividualRow>( ( records.value || [] ).filter( ( r ) =>
+  const bestTimes = computed( () => new Map<string, IndividualRow>( ( records.value || [] ).filter( ( r ) =>
     r.stroke === selections.stroke.value && r.course === selections.course.value && r.distance === selections.baseDistance.label
   ).map( record => ( [ record.swimmer, record ] ) ) ) )
 
   // console.log( "bt", bestTimes.value )
 
-  const filteredSwimmers = computed( () => new Map<string,Swimmer>( ( swimmers.value || [] ).filter( swimmer => {
+  const filteredSwimmers = computed( () => new Map<string, Swimmer>( ( swimmers.value || [] ).filter( swimmer => {
     // Filter by squad
     if ( selections.squad.value !== "*" && swimmer.squad !== selections.squad.value )
       return false

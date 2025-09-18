@@ -3,7 +3,7 @@ import { getSwimmerAgeGroup, sleep, Timer, timeToSeconds } from "./lib.js"
 import { CACHE_DIR } from "./config.js"
 import { differenceInDays, differenceInHours, format, parse } from "date-fns"
 import type { AnyNode } from "domhandler"
-import { stringStream, type Cheerio, type CheerioAPI } from "cheerio"
+import type { Cheerio, CheerioAPI } from "cheerio"
 import { getPool, prepareStatement } from "./database.js"
 
 export const BASE_URL = "https://www.swimmingresults.org"
@@ -421,10 +421,10 @@ export const fetchPages = async ( pages: Map<string,PageInfo>, cacheTime: number
           } else {
             console.log( "Unexpected job status", jobStatus )
           }
-          process.stdout.write( ` - ${timer.elapsedSeconds().toFixed( 2 )} (${timer.lap().toFixed(2)})\n` )
+          process.stdout.write( ` - ${timer.elapsedSeconds().toFixed( 2 )} (${timer.lap().toFixed( 2 )})\n` )
         }
       }
-      console.log( `Content fetched in ${timer.elapsedSeconds().toFixed( 2 )} - ${(timer.elapsedSeconds()/pages.size).toFixed(2)}/page` )
+      console.log( `Content fetched in ${timer.elapsedSeconds().toFixed( 2 )} - ${( timer.elapsedSeconds() / pages.size ).toFixed( 2 )}/page` )
       timer.stop()
     } catch ( error ) {
       console.error( `\nFailed to fetch ${fetchPages.size} urls`, error )

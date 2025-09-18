@@ -49,7 +49,7 @@ export const useMultiSort = <T>() => {
     } )
   }
 
- const resetSort = () => {
+  const resetSort = () => {
     multiSortMeta.value = []
   }
 

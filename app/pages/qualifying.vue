@@ -91,7 +91,7 @@
     },
   ]
 
-  const ages = ref<Array<{value: string}>>( user.value.admin ? AGES.map( age => ( { value: age } ) ) : [] )
+  const ages = ref<Array<{ value: string }>>( user.value.admin ? AGES.map( age => ( { value: age } ) ) : [] )
 
   const courses = [
     {
@@ -107,7 +107,7 @@
   const selections = ref( {
     year: years[0],
     scope: scopes[0],
-    area:  { label: "", value: "" },
+    area: { label: "", value: "" },
     gender: genders[0],
     age: ages.value[0],
     course: courses[0],
@@ -206,7 +206,7 @@
         area: selections.value.area.value,
         gender: selections.value.gender.value,
         age: selections.value.age.value,
-      } }  )
+      } } )
     }
     dirty.value = true
   }

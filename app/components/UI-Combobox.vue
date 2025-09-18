@@ -10,7 +10,7 @@
   } from "@headlessui/vue"
   import classNames from "classnames"
 
-  const model = defineModel< UISelection | Array<UISelection> >()
+  const model = defineModel<UISelection | Array<UISelection>>()
 
   const defaultId = useId()
 

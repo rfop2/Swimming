@@ -23,7 +23,7 @@ export default defineEventHandler( async ( event ) => {
   const result = await selectMaxCreated.get( { id } )
 
   if ( !result?.MaxCreated ) {
-    throw createError( { status: 404, statusText: "No records found"} )
+    throw createError( { status: 404, statusText: "No records found" } )
   }
   // console.log( "Data", data )
   return result.MaxCreated

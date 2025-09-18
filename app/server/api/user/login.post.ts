@@ -5,10 +5,10 @@ export default eventHandler( async ( event ) => {
   const formData = await readFormData( event )
   const username = formData.get( "username" )
   if (
-    typeof username !== "string" ||
-    username.length < 3 ||
-    username.length > 63 ||
-    !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test( username )
+    typeof username !== "string"
+    || username.length < 3
+    || username.length > 63
+    || !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test( username )
   ) {
     throw createError( {
       message: "Invalid username",
@@ -25,8 +25,8 @@ export default eventHandler( async ( event ) => {
 
   const getExistingUser = prepareStatement( await getPool(), "SELECT * FROM User WHERE username = :username" )
   const existingUser = await getExistingUser.get( { username } ) as
-    | DatabaseUser
-    | undefined
+    DatabaseUser |
+    undefined
   if ( !existingUser ) {
     throw createError( {
       message: "Incorrect username or password",
@@ -57,9 +57,9 @@ export default eventHandler( async ( event ) => {
   }
 
   try {
-  const session = await lucia.createSession( existingUser.id, {} )
-  appendHeader( event, "Set-Cookie", lucia.createSessionCookie( session.id ).serialize() )
+    const session = await lucia.createSession( existingUser.id, {} )
+    appendHeader( event, "Set-Cookie", lucia.createSessionCookie( session.id ).serialize() )
   } catch ( err ) {
-  console.error( "Session insert failed:", err )
-}
+    console.error( "Session insert failed:", err )
+  }
 } )
