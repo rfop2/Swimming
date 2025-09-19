@@ -31,7 +31,7 @@ export function parseSwimmingPdf(text: string) {
         });
     };
 
-    const isTime = (t: string) => /\d+\.\d/.test(t); 
+    const isTime = (t: string) => /\d+\.\d/.test(t);
 
     for (let i = 0; i < rawLines.length; i++) {
         const parts = rawLines[i].split(/\s+/).filter(Boolean);
@@ -61,7 +61,7 @@ export function parseSwimmingPdf(text: string) {
                 const nextAnchorIdx = nextParts.findIndex((p, idx) =>
                     /^\d{2,4}$/.test(p) && isStrokeWord(nextParts[idx + 1])
                 );
-                if (nextAnchorIdx !== -1) break; 
+                if (nextAnchorIdx !== -1) break;
                 maleTokens = maleTokens.concat(nextParts.filter(isTime));
                 j++;
             }
@@ -203,6 +203,44 @@ export function parseSwimmingPdfLayout3(text: string) {
     return normalizeLayout3(events);
 }
 
+export const normalizeTime3 = (time: string | null): string => {
+    if (!time) return "0.00";
+    const dotCount = (time.match(/\./g) || []).length;
+
+    if (dotCount === 1) {
+        return time;
+    }
+
+    if (dotCount >= 2) {
+        const parts = time.split(".");
+        const minutes = parseInt(parts[0], 10) || 0;
+        const seconds = parseInt(parts[1], 10) || 0;
+
+        const hh = "00";
+        const mm = String(minutes).padStart(2, "0");
+        const ss = String(seconds).padStart(2, "0");
+
+        return `${hh}:${mm}:${ss}`;
+    }
+
+    // se vier no formato com ":", trata normal
+    const parts = time.split(":");
+    if (parts.length === 2) {
+        const minutes = parseInt(parts[0], 10) || 0;
+        const seconds = parseInt(parts[1], 10) || 0;
+        return `00:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+    }
+
+    if (parts.length === 3) {
+        const hours = parseInt(parts[0], 10) || 0;
+        const minutes = parseInt(parts[1], 10) || 0;
+        const seconds = parseInt(parts[2], 10) || 0;
+        return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+    }
+
+    return time;
+};
+
 export function normalizeLayout3(events: any[]) {
     const normalized: any[] = [];
 
@@ -238,7 +276,7 @@ export function normalizeLayout3(events: any[]) {
                     distance: event.distance,
                     stroke: stroke,
                     age: "10",
-                    time: t.time
+                    time: normalizeTime3(t.time)
                 });
                 normalized.push({
                     gender: event.gender,
@@ -246,7 +284,7 @@ export function normalizeLayout3(events: any[]) {
                     distance: event.distance,
                     stroke: stroke,
                     age: "11",
-                    time: t.time
+                    time: normalizeTime3(t.time)
                 });
             } else if (age === "17/OV") {
                 normalized.push({
@@ -255,7 +293,7 @@ export function normalizeLayout3(events: any[]) {
                     distance: event.distance,
                     stroke: stroke,
                     age: "17+",
-                    time: t.time
+                    time: normalizeTime3(t.time)
                 });
             } else {
                 normalized.push({
@@ -264,7 +302,7 @@ export function normalizeLayout3(events: any[]) {
                     distance: event.distance,
                     stroke: stroke,
                     age,
-                    time: t.time
+                    time: normalizeTime3(t.time)
                 });
             }
         });
