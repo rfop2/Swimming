@@ -685,9 +685,10 @@
                     <td class="py-2 pr-2 pl-1 text-right text-sm font-medium whitespace-nowrap sm:pr-0">
                       <div class="flex gap-2 justify-end">
                         <button
-                          v-if="!editing && !swimmer.value.updateStatus"
+                          v-if="editing === null && !swimmer.value.updateStatus"
+                          :disabled="meta.dirty"
                           type="button"
-                          class="inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                          class="inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
                           @click="() => fetchSwimmer( swimmerIndex )"
                         >
                           <ArrowPathIcon
@@ -697,9 +698,10 @@
                           <span class="sr-only">Refresh, {{ swimmer.value.fullName }}</span>
                         </button>
                         <button
-                          v-if="!editing && swimmer.value.updateStatus"
+                          v-if="editing === null && swimmer.value.updateStatus"
+                          :disabled="meta.dirty"
                           type="button"
-                          class="inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                          class="inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
                           @click="() => fetchSwimmer( swimmerIndex, true )"
                         >
                           <XMarkIcon
