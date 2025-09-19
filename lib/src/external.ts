@@ -306,7 +306,7 @@ export const fetchPage = async ( pageInfo: PageInfo, cacheTime: number = DEFAULT
       method: "GET",
       headers,
     } )
-    process.stdout.write( ` - ${timer.elapsedSeconds()}\n` )
+    process.stdout.write( ` - ${timer.elapsedSeconds().toFixed( 2 )}\n` )
     timer.stop()
 
     if ( response.status < 200 || response.status >= 300 ) {
