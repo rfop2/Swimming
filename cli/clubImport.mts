@@ -45,7 +45,7 @@ import { COUNTIES, createUrl, fetchPage, getPool, isMySql2Error, NATIONALITIES, 
   }
 
   const insertSwimmerSql =
-`INSERT IGNORE INTO Swimmers (
+    `INSERT IGNORE INTO Swimmers (
   id,
   name,
   birthday,
@@ -76,12 +76,22 @@ ON DUPLICATE KEY UPDATE
 ;`
 
   const insertUserSwimmerSql =
-`INSERT IGNORE INTO UserSwimmers (
+    `INSERT IGNORE INTO UserSwimmers (
   userId,
   swimmerId
 )
 VALUES (
   :userId,
+  :swimmerId
+);`
+
+  const insertClubSwimmerSql =
+    `INSERT IGNORE INTO ClubSwimmers (
+  clubId,
+  swimmerId
+)
+VALUES (
+  :clubId,
   :swimmerId
 );`
 
@@ -124,6 +134,7 @@ VALUES (
           await runTransaction( await getPool(), async ( conn ) => {
             const insertSwimmer = prepareStatement( conn, insertSwimmerSql )
             const insertUserSwimmer = prepareStatement( conn, insertUserSwimmerSql )
+            const insertClubSwimmer = prepareStatement( conn, insertClubSwimmerSql )
             for ( const row of rankingData.table ) {
               const swimmer = {
                 id: row.swimmer,
@@ -137,6 +148,7 @@ VALUES (
               }
               await insertSwimmer.run( swimmer )
               await insertUserSwimmer.run( { userId: user.id, swimmerId: row.swimmer } )
+              await insertClubSwimmer.run( { clubId: clubCode, swimmerId: row.swimmer } )
             }
           }  )
         }
