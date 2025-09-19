@@ -1,4 +1,4 @@
-import { IndividualStats, LatLon, Meet, PageInfo, Ranking, RankingRow, ResultData, Results, Swimmer } from "./types.js"
+import type { IndividualStats, LatLon, Meet, PageInfo, Ranking, RankingRow, ResultData, Results, Swimmer } from "./types.js"
 import { getSwimmerAgeGroup, sleep, Timer, timeToSeconds } from "./lib.js"
 import { CACHE_DIR } from "./config.js"
 import { differenceInDays, differenceInHours, format, parse } from "date-fns"
@@ -400,7 +400,7 @@ export const fetchPages = async ( pages: Map<string,PageInfo>, cacheTime: number
       const pageStatuses: PageStatus[] = await response.json()
       const jobs = new Map<string,PageStatus>( pageStatuses.map( ps => [ ps.url, ps ] ) )
       while( jobs.size ) {
-        sleep( Math.max( 1, jobs.size / 5 ) )
+        await sleep( Math.max( 1, jobs.size / 5 ) )
         console.log( `Checking status of ${jobs.size} requests` )
         for ( const job of jobs.values() ) {
           process.stdout.write( `Checking status of '${job.url}'` )
