@@ -665,7 +665,7 @@ interface CliOptions {
     .name( "fetch" )
     .description( "Fetch data from source site" )
 
-  program.option( "-m, --mode <mode>", "fetch mode 'swimmer' or 'meets'" )
+  program.option( "-m, --mode <mode>", "fetch mode 'swimmers' or 'meets'" )
   program.option( "-i, --ids <ids...>", "fetch data for specified swimmers only" )
   program.option( "-q, --queue", "fetch data for swimmers with pending updates only" )
   program.option( "-r, --relative", "fetch data relative to other swimmers alongside basic info", false )
