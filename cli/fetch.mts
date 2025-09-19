@@ -691,6 +691,12 @@ interface CliOptions {
             await updateSwimmerData( swimmer, updateInfo?.updateType === "full" || !!options.relative )
           } catch ( e ) {
             console.error( "Unable to fetch swimmer data, skipping", e )
+            const swimmerLastUpdate = prepareStatement(
+              await getPool(),
+              "UPDATE Swimmers SET updateStatus = 'error' WHERE id = :id",
+            )
+            await swimmerLastUpdate.run( swimmer )
+
           }
         }
       }
