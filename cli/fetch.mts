@@ -134,15 +134,7 @@ const insertRankingsSql =
   :fina
 );`
 
-const deletePerformanceSql =
-  `DELETE FROM Performance WHERE
-  swimmer = :swimmer AND
-  course = :course AND
-  stroke = :stroke AND
-  distance = :distance AND
-  scope = :scope AND
-  area = :area
-;`
+const deletePerformanceSql = "DELETE FROM Performance WHERE swimmer = :id"
 
 const insertPerformanceSql =
   `INSERT INTO Performance (
@@ -509,6 +501,7 @@ const updatePerformance = async ( swimmer: Swimmer ) => {
 
     // Now generate the performance records
     const deletePerformance = prepareStatement( conn, deletePerformanceSql )
+    await deletePerformance.run( swimmer )
     const savePerformance = prepareStatement( conn, insertPerformanceSql )
     for ( const swimmerTime of swimmerTimes ) {
       const raceLabel = `${swimmerTime.course}_${swimmerTime.stroke}_${swimmerTime.distance}_${swimmerTime.scope}_${swimmerTime.area}`
@@ -524,7 +517,6 @@ const updatePerformance = async ( swimmer: Swimmer ) => {
         time_date: swimmerTime.date,
         difference: swimmerTime.time - bestTime.time,
       }
-      await deletePerformance.run( { swimmer: swimmer.id, ...swimmerTime } )
       await savePerformance.run( { swimmer: swimmer.id, ...swimmerTime, ...record } )
     }
   }, swimmer )
