@@ -15,7 +15,6 @@ definePageMeta({
     middleware: ["protected"]
 })
 
-
 const filterYear = getYear(addMonths(new Date(), 1))
 const years = Array.from({ length: 6 }, (_, i) => filterYear - 3 + i).map(year => ({ value: year }))
 const scopes = [
