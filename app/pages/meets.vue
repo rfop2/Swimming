@@ -1,6 +1,6 @@
 <script setup lang="ts">
   import type { InternalApi } from "nitropack"
-  import { haversineDistance, type Meet } from "lib"
+  import { haversineDistance, type Club, type Meet } from "lib"
   import { addDays, formatISO, parseISO } from "date-fns"
   import { ScheduleXCalendar } from "@schedule-x/vue"
   import {
@@ -30,21 +30,20 @@
     ]
   } )
 
-  type ApiResponse = InternalApi["/api/meets"]["get"]
+  const baseLocation = {
+    latitude: 51.5844700, longitude: -2.0982042
+  }
 
   interface ExtMeet extends Meet {
     distance: number | null
   }
 
-  const baseLocation = {
-    latitude: 51.5844700, longitude: -2.0982042
-  }
-
+  type MeetApiResponse = InternalApi["/api/meets"]["get"]
   const { data: meets } = await useFetch(
     "/api/meets",
     {
       key: "meets",
-      transform( data: ApiResponse ): Array<ExtMeet> {
+      transform( data: MeetApiResponse ): Array<ExtMeet> {
         const extData = data.map( row => {
           return {
             ...row,
@@ -74,6 +73,12 @@
       },
     }
   )
+
+  const { data: clubs } = await useFetch<Club[]>(
+    "/api/clubs",
+  )
+
+  const clubOptions = computed( () => ( [ { label: "All Clubs", value: "XXXX" } ].concat( ( clubs?.value ?? [] ).map( c => ( { label: c.clubName, value: c.clubId } ) ) ) ) )
 
   interface CalendarEvent extends CalendarEventExternal {
     duration: number
@@ -149,6 +154,7 @@
   const { state: selections } = usePersisted( "meets-selection", {
     course: courses[0],
     level: levels,
+    club: { label: "All Clubs", value: "XXXX" },
     distance: distances[0],
     tagged: taggings[0],
   }, "reactive" )
@@ -326,14 +332,21 @@
             multiple
           />
         </div>
-        <div class="min-w-48">
+        <div class="min-w-64">
+          <UIListbox
+            v-model="selections.club"
+            :options="clubOptions"
+            label="Club"
+          />
+        </div>
+        <div class="min-w-36">
           <UIListbox
             v-model="selections.distance"
             :options="distances"
             label="Distance"
           />
         </div>
-        <div class="min-w-48">
+        <div class="min-w-36">
           <UIListbox
             v-model="selections.tagged"
             :options="taggings"
