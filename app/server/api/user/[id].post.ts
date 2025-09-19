@@ -16,7 +16,7 @@ interface UserData {
 export default eventHandler( async ( event ) => {
   if ( !event.context.session || !event.context.user ) {
     throw createError( {
-      statusCode: 403
+      status: 403
     } )
   }
 
@@ -28,7 +28,7 @@ export default eventHandler( async ( event ) => {
     ) {
       throw createError( {
         message: "Username must be a valid email address between 8 and 64 characters long",
-        statusCode: 400
+        status: 400
       } )
     }
 
@@ -40,20 +40,20 @@ export default eventHandler( async ( event ) => {
             if ( !userData.password.match( /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).+$/ ) ) {
               throw createError( {
                 message: "Password must contain mixed case letters, numbers and symbols",
-                statusCode: 400
+                status: 400
               } )
             }
           }
         } else {
           throw createError( {
             message: "Password must be 8-32 characters long",
-            statusCode: 400
+            status: 400
           } )
         }
       } else {
         throw createError( {
           message: "Passwords do not match",
-          statusCode: 400
+          status: 400
         } )
       }
     }
@@ -74,24 +74,26 @@ export default eventHandler( async ( event ) => {
         await getPool(),
         "INSERT INTO User ( id, username, password_hash, firstName, lastName, type, location ) VALUES( :userId, :username, :passwordHash, :firstName, :lastName, :type, :location )"
       )
+      console.log( { ...userData, userId, passwordHash } )
       await addUser.run( { ...userData, userId, passwordHash } )
     } catch ( e ) {
+      console.error( e )
       if ( isMySql2Error( e ) ) {
         if ( e.code === "ER_DUP_ENTRY" ) {
           throw createError( {
             message: "Username already used",
-            statusCode: 400
+            status: 400
           } )
         } else {
           throw createError( {
             message: `Database error: ${e.sqlMessage}`,
-            statusCode: 400
+            status: 400
           } )
         }
       }
       throw createError( {
         message: "An unknown error occurred",
-        statusCode: 400
+        status: 400
       } )
     }
     console.log( "User created" )
@@ -164,13 +166,13 @@ export default eventHandler( async ( event ) => {
     if ( !userId ) {
       throw createError( {
         message: "No user id found",
-        statusCode: 400
+        status: 400
       } )
     }
 
     if ( userId !== event.context.user.id && !Number( event.context.user.admin ) ) {
       throw createError( {
-        statusCode: 403
+        status: 403
       } )
     }
 
@@ -181,7 +183,7 @@ export default eventHandler( async ( event ) => {
     console.error( error )
     throw createError( {
       message: "Unable to create user record",
-      statusCode: 500
+      status: 500
     } )
   }
 } )

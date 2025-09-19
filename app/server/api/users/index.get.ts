@@ -5,7 +5,7 @@ import type { User } from "lucia"
 export default defineEventHandler( async ( event ) => {
   if ( !event.context.session || !event.context.user?.admin ) {
     throw createError( {
-      statusCode: 403
+      status: 403
     } )
   }
 

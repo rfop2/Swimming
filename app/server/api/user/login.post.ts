@@ -12,14 +12,14 @@ export default eventHandler( async ( event ) => {
   ) {
     throw createError( {
       message: "Invalid username",
-      statusCode: 400
+      status: 400
     } )
   }
   const password = formData.get( "password" )
   if ( typeof password !== "string" || password.length < 6 || password.length > 255 ) {
     throw createError( {
       message: "Invalid password",
-      statusCode: 400
+      status: 400
     } )
   }
 
@@ -30,7 +30,7 @@ export default eventHandler( async ( event ) => {
   if ( !existingUser ) {
     throw createError( {
       message: "Incorrect username or password",
-      statusCode: 400
+      status: 400
     } )
   }
 
@@ -52,7 +52,7 @@ export default eventHandler( async ( event ) => {
     // If usernames are public, you can outright tell the user that the username is invalid.
     throw createError( {
       message: "Incorrect username or password",
-      statusCode: 400
+      status: 400
     } )
   }
 

@@ -4,7 +4,7 @@ import { getPool, prepareStatement, runTransaction, type QualifyingRow } from "l
 export default eventHandler( async ( event ) => {
   if ( !event.context.session ) {
     throw createError( {
-      statusCode: 403
+      status: 403
     } )
   }
 
@@ -62,7 +62,7 @@ ON DUPLICATE KEY UPDATE
     console.error( error )
     throw createError( {
       message: "Unable to update qualifying times",
-      statusCode: 500
+      status: 500
     } )
   }
 } )

@@ -4,7 +4,7 @@ import { getPool, prepareStatement } from "lib"
 export default defineEventHandler( async ( event ) => {
   if ( !event.context.session || !event.context.user ) {
     throw createError( {
-      statusCode: 403
+      status: 403
     } )
   }
 
@@ -12,7 +12,7 @@ export default defineEventHandler( async ( event ) => {
   if ( !meetId ) {
     throw createError( {
       message: "No meet id supplied",
-      status: 403,
+      status: 400,
     } )
   }
   try {
@@ -25,7 +25,7 @@ export default defineEventHandler( async ( event ) => {
     console.error( error )
     throw createError( {
       message: "Unable to update user meets",
-      statusCode: 500
+      status: 500
     } )
   }
 } )

@@ -4,7 +4,7 @@ import { getPool, prepareStatement } from "lib"
 export default defineEventHandler( async ( event ) => {
   if ( !event.context.session || !event.context.user ) {
     throw createError( {
-      statusCode: 403
+      status: 403
     } )
   }
 
@@ -28,7 +28,7 @@ export default defineEventHandler( async ( event ) => {
     console.error( error )
     throw createError( {
       message: "Unable to modify swimmer update",
-      statusCode: 500
+      status: 500
     } )
   }
 } )

@@ -4,7 +4,7 @@ import { getPool, prepareStatement, type IndividualRow } from "lib"
 export default defineEventHandler( async ( event ) => {
   if ( !event.context.session || !event.context.user ) {
     throw createError( {
-      statusCode: 403
+      status: 403
     } )
   }
 

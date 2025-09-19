@@ -15,7 +15,7 @@ interface UserData {
 export default eventHandler( async ( event ) => {
   if ( !event.context.session || !event.context.user ) {
     throw createError( {
-      statusCode: 403
+      status: 403
     } )
   }
 
@@ -42,20 +42,20 @@ export default eventHandler( async ( event ) => {
             } else {
               throw createError( {
                 message: "Password must contain mixed case letters, numbers and symbols",
-                statusCode: 400
+                status: 400
               } )
             }
           }
         } else {
           throw createError( {
             message: "Password must be 8-32 characters long",
-            statusCode: 400
+            status: 400
           } )
         }
       } else {
         throw createError( {
           message: "Passwords do not match",
-          statusCode: 400
+          status: 400
         } )
       }
     }
@@ -143,13 +143,13 @@ export default eventHandler( async ( event ) => {
     if ( !userId ) {
       throw createError( {
         message: "No user id found",
-        statusCode: 400
+        status: 400
       } )
     }
 
     if ( userId !== event.context.user.id && !Number( event.context.user.admin ) ) {
       throw createError( {
-        statusCode: 403
+        status: 403
       } )
     }
 
@@ -160,7 +160,7 @@ export default eventHandler( async ( event ) => {
     console.error( error )
     throw createError( {
       message: "Unable to update user record",
-      statusCode: 500
+      status: 500
     } )
   }
 } )

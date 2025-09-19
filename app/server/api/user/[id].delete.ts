@@ -4,21 +4,21 @@ import { getPool, prepareStatement } from "lib"
 export default defineEventHandler( async ( event ) => {
   if ( !event.context.session || !event.context.user ) {
     throw createError( {
-      statusCode: 403
+      status: 403
     } )
   }
 
   const userId = getRouterParam( event, "id" )
   if ( !userId || !Number( event.context.user.admin ) ) {
     throw createError( {
-      statusCode: 403
+      status: 403
     } )
   }
 
   if ( userId === event.context.user.id ) {
     throw createError( {
       message: "Can't delete current logged in user",
-      statusCode: 403
+      status: 400
     } )
   }
 

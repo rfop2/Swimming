@@ -4,7 +4,10 @@ export default defineEventHandler( async ( event ) => {
   const url = query.url as string
 
   if ( !url ) {
-    throw createError( { statusCode: 400, statusMessage: "Missing url parameter" } )
+    throw createError( {
+      status: 400,
+      message: "Missing url parameter"
+    } )
   }
 
   try {
@@ -16,13 +19,19 @@ export default defineEventHandler( async ( event ) => {
     } )
 
     if ( !res.ok ) {
-      throw createError( { statusCode: res.status, statusMessage: res.statusText } )
+      throw createError( {
+        status: res.status,
+        message: res.statusText
+      } )
     }
 
     const html = await res.text()
     return { html }
   } catch ( err ) {
     console.error( err )
-    throw createError( { statusCode: 500, statusMessage: "Failed to fetch external HTML" } )
+    throw createError( {
+      status: 500,
+      message: "Failed to fetch external HTML"
+    } )
   }
 } )

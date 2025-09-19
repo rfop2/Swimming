@@ -10,7 +10,7 @@ type Params = {
 export default defineEventHandler( async ( event ) => {
   if ( !event.context.session ) {
     throw createError( {
-      statusCode: 403
+      status: 403
     } )
   }
 
@@ -18,7 +18,7 @@ export default defineEventHandler( async ( event ) => {
   if ( !id ) {
     throw createError( {
       message: "No swimmer id supplied",
-      status: 403,
+      status: 400,
     } )
   }
   const selectRecords = prepareStatement<Params, ResultsRow>(

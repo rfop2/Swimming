@@ -4,14 +4,14 @@ import { getPool, prepareStatement, type Swimmer } from "lib"
 export default defineEventHandler( async ( event ) => {
   if ( !event.context.session || !event.context.user ) {
     throw createError( {
-      statusCode: 403
+      status: 403
     } )
   }
 
   const userId = getRouterParam( event, "id" )
   if ( userId && !Number( event.context.user.admin ) ) {
     throw createError( {
-      statusCode: 403
+      status: 403
     } )
   }
 
