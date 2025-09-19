@@ -47,7 +47,8 @@ import { COUNTIES, createUrl, fetchPage, getPool, isMySql2Error, NATIONALITIES, 
   const insertSwimmerSql =
     `INSERT IGNORE INTO Swimmers (
   id,
-  name,
+  firstName,
+  lastName,
   birthday,
   gender,
   nationality,
@@ -57,7 +58,8 @@ import { COUNTIES, createUrl, fetchPage, getPool, isMySql2Error, NATIONALITIES, 
 )
 VALUES (
   :id,
-  :name,
+  :firstName,
+  :lastName,
   :birthday,
   :gender,
   :nationality,
@@ -66,7 +68,8 @@ VALUES (
   :active
 )
 ON DUPLICATE KEY UPDATE
-  name        = :name,
+  firstName   = :firstName,
+  lastName    = :lastName,
   birthday    = :birthday,
   gender      = :gender,
   nationality = :nationality,
@@ -132,13 +135,16 @@ VALUES (
           const rankingData = parseRanking( page, $ )
 
           await runTransaction( await getPool(), async ( conn ) => {
+            const clubId = clubCode.substring( 0, 4 )
             const insertSwimmer = prepareStatement( conn, insertSwimmerSql )
             const insertUserSwimmer = prepareStatement( conn, insertUserSwimmerSql )
             const insertClubSwimmer = prepareStatement( conn, insertClubSwimmerSql )
             for ( const row of rankingData.table ) {
+              const [ firstName, lastName ] = row.name.split( /\s+/ )
               const swimmer = {
                 id: row.swimmer,
-                name: row.name,
+                firstName,
+                lastName,
                 birthday: Number( row.yob ) > 20 ? `${String( 1900 + Number( row.yob ) )}-06-01` : `${String( 2000 + Number( row.yob ) )}-06-01`,
                 gender: gender === "M" ? "male" : "female",
                 nationality: countryCode,
@@ -148,7 +154,7 @@ VALUES (
               }
               await insertSwimmer.run( swimmer )
               await insertUserSwimmer.run( { userId: user.id, swimmerId: row.swimmer } )
-              await insertClubSwimmer.run( { clubId: clubCode, swimmerId: row.swimmer } )
+              await insertClubSwimmer.run( { clubId, swimmerId: row.swimmer } )
             }
           }  )
         }
@@ -157,14 +163,14 @@ VALUES (
   } catch ( e ) {
     if ( isMySql2Error( e ) ) {
       if ( e.code === "ER_DUP_ENTRY" ) {
-        throw new Error( "Username already used" )
+        throw new Error( "Duplicate key error" )
       } else {
         throw new Error( `Database error: ${e.sqlMessage}` )
       }
     }
     throw new Error( "An unknown error occurred" )
   }
-  console.log( "User created" )
+  console.log( "Club import completed" )
   process.exit( 0 )
 
 } )().catch( ( error ) => {
