@@ -258,6 +258,7 @@ CREATE TABLE `Results` (
   `course` varchar(8) NOT NULL,
   `stroke` varchar(32) NOT NULL,
   `distance` varchar(8) NOT NULL,
+  `seq` int(11) NOT NULL,
   `time` decimal(8,2) DEFAULT NULL,
   `wa_pts` int(11) DEFAULT NULL,
   `round` varchar(8) NOT NULL,
@@ -268,7 +269,7 @@ CREATE TABLE `Results` (
   `level` int(11) DEFAULT NULL,
   `created` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
-  PRIMARY KEY (`swimmer`,`course`,`stroke`,`distance`,`round`,`date`,`meet`(32)),
+  PRIMARY KEY (`swimmer`,`course`,`stroke`,`distance`,`seq`) USING BTREE,
   KEY `idx_results_swimmer` (`swimmer`),
   CONSTRAINT `Results_ibfk_1` FOREIGN KEY (`swimmer`) REFERENCES `Swimmers` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
@@ -310,7 +311,7 @@ CREATE TABLE `Swimmers` (
   `region` varchar(16) DEFAULT NULL,
   `county` varchar(16) DEFAULT NULL,
   `active` tinyint(1) NOT NULL DEFAULT 1,
-  `updateStatus` enum('pending','progress') DEFAULT NULL,
+  `updateStatus` enum('pending','progress','error') DEFAULT NULL,
   `updateType` varchar(16) DEFAULT NULL,
   `lastUpdateTime` timestamp NULL DEFAULT NULL,
   `lastUpdateType` varchar(16) DEFAULT NULL,

@@ -171,6 +171,7 @@ const insertResultsSql =
   course,
   stroke,
   distance,
+  seq,
   time,
   wa_pts,
   round,
@@ -184,6 +185,7 @@ const insertResultsSql =
   :course,
   :stroke,
   :distance,
+  :seq,
   :time,
   :wa_pts,
   :round,
@@ -332,6 +334,11 @@ const updateResultsBatch = async ( swimmer: Swimmer, individualData: Array<Indiv
       pages.set( page.url.toString(), page )
     }
     const responses = await fetchPages( pages )
+    const deleteResults = prepareStatement<{id: string}>(
+      conn,
+      "DELETE FROM Results WHERE swimmer = :id"
+    )
+    deleteResults.run( swimmer )
     for ( const [ url, content ] of responses.entries() ) {
     // console.log( inspect( pageData, { depth: 5 } ) )
       const page = pages.get( url )
@@ -342,15 +349,9 @@ const updateResultsBatch = async ( swimmer: Swimmer, individualData: Array<Indiv
 
       const resultsData = parseResults( page as PageInfo, $ )
 
-      const deleteResults = prepareStatement<{id: string}>(
-        conn,
-        "DELETE FROM Results WHERE swimmer = :id"
-      )
-      deleteResults.run( swimmer )
-
       const saveResults = prepareStatement( conn, insertResultsSql )
-      for ( const result of resultsData ) {
-        await saveResults.run( { swimmer: swimmer.id, course: event.course, stroke: event.stroke, distance: event.distance, ...result } )
+      for ( const [ index, result ] of resultsData.entries() ) {
+        await saveResults.run( { swimmer: swimmer.id, course: event.course, stroke: event.stroke, distance: event.distance, seq: index + 1, ...result } )
       }
     }
   }, individualData )
@@ -682,6 +683,10 @@ interface CliOptions {
         "SELECT * FROM Swimmers WHERE active = 1"
       )
       const selectUpdateType = prepareStatement<{id: string},{ updateStatus?: string, updateType?: string}>( await getPool(), "SELECT updateStatus, updateType FROM Swimmers WHERE id = :id AND updateStatus = 'pending' AND updateType IS NOT NULL" )
+      const swimmerUpdateError = prepareStatement(
+        await getPool(),
+        "UPDATE Swimmers SET updateStatus = 'error' WHERE id = :id",
+      )
       const swimmers = await getSwimmers.all()
       for ( const swimmer of swimmers ) {
         const updateInfo = await selectUpdateType.get( swimmer )
@@ -691,12 +696,7 @@ interface CliOptions {
             await updateSwimmerData( swimmer, updateInfo?.updateType === "full" || !!options.relative )
           } catch ( e ) {
             console.error( "Unable to fetch swimmer data, skipping", e )
-            const swimmerLastUpdate = prepareStatement(
-              await getPool(),
-              "UPDATE Swimmers SET updateStatus = 'error' WHERE id = :id",
-            )
-            await swimmerLastUpdate.run( swimmer )
-
+            await swimmerUpdateError.run( swimmer )
           }
         }
       }
