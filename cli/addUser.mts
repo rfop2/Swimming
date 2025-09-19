@@ -1,4 +1,5 @@
 #!/usr/bin/env nodemjs
+import "dotenv/config"
 import { hash } from "@node-rs/argon2"
 import { getPool, isMySql2Error, prepareStatement } from "lib"
 import { generateId } from "lucia"
