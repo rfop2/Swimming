@@ -133,10 +133,10 @@
         Not a member?
         {{ ' ' }}
         <nuxt-link
-          href="/contact"
+          href="/register"
           class="font-semibold leading-6 text-indigo-600 hover:text-indigo-500"
         >
-          Contact us for details on how to join
+          Register to apply for an account.
         </nuxt-link>
       </p>
     </div>
