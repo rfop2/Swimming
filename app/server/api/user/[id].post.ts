@@ -71,10 +71,9 @@ export default eventHandler( async ( event ) => {
 
     try {
       const addUser = prepareStatement(
-        await getPool(),
+        conn,
         "INSERT INTO User ( id, username, password_hash, firstName, lastName, type, location ) VALUES( :userId, :username, :passwordHash, :firstName, :lastName, :type, :location )"
       )
-      console.log( { ...userData, userId, passwordHash } )
       await addUser.run( { ...userData, userId, passwordHash } )
     } catch ( e ) {
       console.error( e )
