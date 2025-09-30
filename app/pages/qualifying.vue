@@ -64,10 +64,10 @@
       value: "regional",
       label: "Regional",
     },
-    {
+    /* {
       value: "national",
       label: "National",
-    },
+    }, */
   ]
 
   const areasFromScope = ( scope: string ) => {

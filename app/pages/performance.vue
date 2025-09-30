@@ -1,7 +1,7 @@
 <script setup lang="ts">
   import type { InternalApi } from "nitropack"
   import { LinkIcon, ChartBarIcon } from "@heroicons/vue/24/outline"
-  import { type QualifyingRow, COUNTIES, type IndividualStats, NATIONALITIES, REGIONS, STROKE_DISTANCE, type Swimmer, convertTime, countyRankParams, createUrl, getSwimmerAge, getSwimmerScopeArea, globalRankParams, nationalRankParams, rankBaseUrl, regionalRankParams, secondsToTime, strokeSort } from "lib"
+  import { type QualifyingRow, COUNTIES, type IndividualStats, /* NATIONALITIES,*/ REGIONS, STROKE_DISTANCE, type Swimmer, convertTime, countyRankParams, createUrl, getSwimmerAge, getSwimmerScopeArea, globalRankParams, nationalRankParams, rankBaseUrl, regionalRankParams, secondsToTime, strokeSort } from "lib"
   import { differenceInCalendarMonths, getYear, addMonths, format } from "date-fns"
   import { FetchError } from "ofetch"
 
@@ -372,13 +372,13 @@
               >
                 Regional ({{ REGIONS[swimmer.region] }})
               </th>
-              <th
+              <!--<th
                 scope="col"
                 colSpan="4"
                 class="!border-l-2 !border-gray-400 px-1 py-3.5 text-center text-sm font-semibold text-gray-900 sm:pr-0"
               >
                 National ({{ NATIONALITIES[swimmer.nationality] }})
-              </th>
+              </th>-->
             </tr>
             <tr class="divide-x divide-gray-200">
               <th
@@ -429,7 +429,7 @@
               >
                 Qual.
               </th>
-              <th
+              <!--<th
                 scope="col"
                 class="whitespace-nowrap !border-l-2 !border-gray-400 px-1 py-3.5 text-right text-sm font-semibold text-gray-900"
               >
@@ -446,7 +446,7 @@
                 class="whitespace-nowrap pl-1 pr-2 py-3.5 text-right text-sm font-semibold text-gray-900"
               >
                 Diff
-              </th>
+              </th>-->
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-200 bg-white">
@@ -530,7 +530,7 @@
               <td class="whitespace-nowrap px-2 py-2 text-right text-sm text-gray-500">
                 {{ row.qualifying.regional.qualifyTime }}
               </td>
-              <td
+              <!--<td
                 class="whitespace-nowrap !border-l-2 !border-gray-400 px-2 py-2 text-right text-sm text-gray-900"
                 :class="rankClass( row.qualifying.national.rank )"
               >
@@ -551,7 +551,7 @@
               </td>
               <td class="whitespace-nowrap px-2 pl-2 pr-1 text-right text-sm text-gray-500">
                 {{ row.qualifying.national.difference ? secondsToTime( row.qualifying.national.difference ) : '' }}
-              </td>
+              </td>-->
             </tr>
           </tbody>
         </table>
