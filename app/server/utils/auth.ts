@@ -5,9 +5,9 @@ import type { DatabaseUser } from "lib"
 
 const pool = createPool( {
   host: process.env.NODE_ENV === "production" ? "db" : "192.168.45.2",
-  user: "swimming",
-  password: "gTM8FfPx6wQL",
-  database: "swimming",
+  user: process.env.MARIADB_USER,
+  password: process.env.MARIADB_PASSWORD,
+  database: process.env.MARIADB_DATABASE,
   namedPlaceholders: false, // allows :param style
 } )
 
