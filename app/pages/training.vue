@@ -195,14 +195,14 @@
             <td
               class="whitespace-nowrap !border-r-2 !border-gray-400 px-2 py-2 text-right text-sm text-gray-900"
             >
-              {{ secondsToTime( bestTimes.get( swimmer.id )?.time ?? 0 ) }}
+              {{ secondsToTime( bestTimes.get( swimmer.id )?.time ?? 0, 1 ) }}
             </td>
             <td
               v-for="distance in selections.targetDistances.sort( ( a, b ) => a.value - b.value )"
               :key="distance.label"
               class="whitespace-nowrap px-2 py-2 text-right text-sm text-gray-900"
             >
-              {{ secondsToTime( ( ( ( bestTimes.get( swimmer.id )?.time ?? 0 ) * distance.value ) / ( selections.effort.value * selections.baseDistance.value ) ) ) }}
+              {{ secondsToTime( ( ( ( bestTimes.get( swimmer.id )?.time ?? 0 ) * distance.value ) / ( selections.effort.value * selections.baseDistance.value ) ), 1 ) }}
             </td>
           </tr>
         </tbody>
