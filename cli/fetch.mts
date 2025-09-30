@@ -242,7 +242,7 @@ ON DUPLICATE KEY UPDATE
   email     = :email
 ;`
 
-const updateIndividual = async ( swimmer: Swimmer ) => {
+const updateIndividual = async ( swimmer: Swimmer, force: boolean ) => {
   console.log( `Updating individual data for swimmer '${swimmer.fullName}'` )
 
   const page: PageInfo = {
@@ -250,7 +250,7 @@ const updateIndividual = async ( swimmer: Swimmer ) => {
     url: createUrl( individualBaseUrl, individualParams( swimmer ) ),
     type: "individual"
   }
-  const content = await fetchPage( page )
+  const content = await fetchPage( page, force ? 0 : undefined )
   // console.log( inspect( pageData, { depth: 5 } ) )
   const $ = cheerio.load( content )
 
@@ -313,7 +313,7 @@ const updateResults = async ( swimmer: Swimmer, individualData: Array<Individual
   }, individualData )
 }
 
-const updateResultsBatch = async ( swimmer: Swimmer, individualData: Array<IndividualStats> ) => {
+const updateResultsBatch = async ( swimmer: Swimmer, individualData: Array<IndividualStats>, force: boolean ) => {
   console.log( `Updating results data for swimmer '${swimmer.fullName}'` )
 
   await runTransaction( await getPool(), async ( conn: PoolConnection, individualData: IndividualStats[] ) => {
@@ -333,7 +333,7 @@ const updateResultsBatch = async ( swimmer: Swimmer, individualData: Array<Indiv
       }
       pages.set( page.url.toString(), page )
     }
-    const responses = await fetchPages( pages )
+    const responses = await fetchPages( pages, force ? 0 : undefined )
     const deleteResults = prepareStatement<{id: string}>(
       conn,
       "DELETE FROM Results WHERE swimmer = :id"
@@ -357,7 +357,7 @@ const updateResultsBatch = async ( swimmer: Swimmer, individualData: Array<Indiv
   }, individualData )
 }
 
-const updateRankings = async ( swimmer: Swimmer, individualData: Array<IndividualStats> ) => {
+const updateRankings = async ( swimmer: Swimmer, individualData: Array<IndividualStats>, force: boolean ) => {
   console.log( `Updating ranking data for swimmer '${swimmer.fullName}'` )
 
   await runTransaction( await getPool(), async ( conn: PoolConnection, swimmer: Swimmer, individualData: IndividualStats[] ) => {
@@ -462,7 +462,7 @@ const updateRankings = async ( swimmer: Swimmer, individualData: Array<Individua
 
     const saveRankings = prepareStatement( conn, insertRankingsSql )
 
-    const responses = await fetchPages( batchPages )
+    const responses = await fetchPages( batchPages, force ? 0 : undefined )
     for ( const [ url, content ] of responses.entries() ) {
       // console.log( inspect( pageData, { depth: 5 } ) )
       const page = batchPages.get( url )
@@ -487,11 +487,11 @@ const updatePerformance = async ( swimmer: Swimmer ) => {
 
     const ageGroup = getSwimmerAgeGroup( swimmer )
 
-    const getSwimmerRankingTimes = prepareStatement<{swimmer:string},RankingRecord>(
+    const getSwimmerRankingTimes = prepareStatement<{swimmer:string,gender:string,age:string},RankingRecord>(
       conn,
-      "SELECT course, stroke, distance, scope, area, rank, date, time FROM Rankings WHERE swimmer = :swimmer"
+      "SELECT course, stroke, distance, scope, area, rank, date, time FROM Rankings WHERE swimmer = :swimmer AND gender = :gender AND age = :age"
     )
-    const swimmerTimes = await getSwimmerRankingTimes.all( { swimmer: swimmer.id } )
+    const swimmerTimes = await getSwimmerRankingTimes.all( { swimmer: swimmer.id, gender: swimmer.gender, age: ageGroup } )
 
     const getBestRankingTimes = prepareStatement<{gender:string,age:string},RankingRecord>(
       conn,
@@ -523,7 +523,7 @@ const updatePerformance = async ( swimmer: Swimmer ) => {
   }, swimmer )
 }
 
-const updateSwimmerData = async ( swimmer: Swimmer, relative: boolean ) => {
+const updateSwimmerData = async ( swimmer: Swimmer, relative: boolean, force: boolean ) => {
   console.log( `Updating data for swimmer '${swimmer.fullName}'` )
 
   // const pool = await getPool()
@@ -537,14 +537,14 @@ const updateSwimmerData = async ( swimmer: Swimmer, relative: boolean ) => {
   )
   await swimmerUpdate.run( { ...swimmer, type: relative ? "full" : "basic"} )
 
-  const individualData = await updateIndividual( swimmer )
+  const individualData = await updateIndividual( swimmer, force )
 
   // await updateResults( swimmer, individualData )
-  await updateResultsBatch( swimmer, individualData )
+  await updateResultsBatch( swimmer, individualData, force )
 
   const updateType = relative ? "full" : "basic"
   if ( updateType === "full" ) {
-    await updateRankings( swimmer, individualData )
+    await updateRankings( swimmer, individualData, force )
     await updatePerformance( swimmer )
   }
 
@@ -657,6 +657,7 @@ interface CliOptions {
   ids?: string[]
   queue: boolean
   relative: boolean
+  force: boolean
 }
 
 ( async () => {
@@ -670,6 +671,7 @@ interface CliOptions {
   program.option( "-i, --ids <ids...>", "fetch data for specified swimmers only" )
   program.option( "-q, --queue", "fetch data for swimmers with pending updates only" )
   program.option( "-r, --relative", "fetch data relative to other swimmers alongside basic info", false )
+  program.option( "-f, --force", "force update, ignoring caching time", false )
 
   // Parse argv
   program.parse( process.argv )
@@ -693,7 +695,7 @@ interface CliOptions {
         if ( ( options.queue && !!updateInfo?.updateType ) || ( !options.queue && ( !options.ids || options.ids.find( s => s === swimmer.id ) ) ) ) {
           swimmer.birthday = format( new Date( swimmer.birthday ), "yyyy-MM-dd" )
           try {
-            await updateSwimmerData( swimmer, updateInfo?.updateType === "full" || !!options.relative )
+            await updateSwimmerData( swimmer, updateInfo?.updateType === "full" || !!options.relative, options.force )
           } catch ( e ) {
             console.error( "Unable to fetch swimmer data, skipping", e )
             await swimmerUpdateError.run( swimmer )
