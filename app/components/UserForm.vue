@@ -151,6 +151,7 @@
       ...{
         id: "",
         firstName: "",
+        middleName: "",
         lastName: "",
         gender: "male",
         birthday: "",
