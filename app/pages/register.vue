@@ -2,7 +2,7 @@
   onMounted( () => {
     if ( import.meta.client ) {
       const script = document.createElement( "script" )
-      script.src = "https://form.jotform.com/jsform/252724926226056"
+      script.src = "https://form.jotform.com/jsform/252743309376361"
       script.async = true
       document.getElementById( "jotform-container" )?.appendChild( script )
     }
