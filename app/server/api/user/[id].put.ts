@@ -67,17 +67,24 @@ export default eventHandler( async ( event ) => {
     await updateUser.run( { ...userData, ...{ userId } } )
 
     // Now do swimmers
-    const swimmerIds = userData.swimmers.map( swimmer => swimmer.id )
-    const swimmerIdsSql = swimmerIds.map( ( _, i ) => `:swimmerIds${i}` ).join( ", " )
-    const swimmerIdsValues = Object.fromEntries( swimmerIds.map( ( id, i ) => ( [ `swimmerIds${i}`, id ] ) ) )
-    const deleteSwimmers = prepareStatement(
-      conn,
-      `DELETE FROM UserSwimmers WHERE userId = :userId AND swimmerId NOT IN (${swimmerIdsSql})`
-    )
-    await deleteSwimmers.run( { ...swimmerIdsValues, ...{ userId } } )
+    if ( userData.swimmers.length === 0 ) {
+      const deleteSwimmers = prepareStatement(
+        conn,
+        "DELETE FROM UserSwimmers WHERE userId = :userId"
+      )
+      await deleteSwimmers.run( { userId } )
+    } else {
+      const swimmerIds = userData.swimmers.map( swimmer => swimmer.id )
+      const swimmerIdsSql = swimmerIds.map( ( _, i ) => `:swimmerIds${i}` ).join( ", " )
+      const swimmerIdsValues = Object.fromEntries( swimmerIds.map( ( id, i ) => ( [ `swimmerIds${i}`, id ] ) ) )
+      const deleteSwimmers = prepareStatement(
+        conn,
+        `DELETE FROM UserSwimmers WHERE userId = :userId AND swimmerId NOT IN (${swimmerIdsSql})`
+      )
+      await deleteSwimmers.run( { ...swimmerIdsValues, ...{ userId } } )
 
-    const insertSwimmerSql =
-      `INSERT INTO Swimmers (
+      const insertSwimmerSql =
+        `INSERT INTO Swimmers (
         id,
         firstName,
         middleName,
@@ -113,13 +120,13 @@ export default eventHandler( async ( event ) => {
         active      = :active
       ;`
 
-    const insertSwimmer = prepareStatement( conn, insertSwimmerSql )
-    for ( const swimmer of userData.swimmers ) {
-      await insertSwimmer.run( swimmer )
-    }
+      const insertSwimmer = prepareStatement( conn, insertSwimmerSql )
+      for ( const swimmer of userData.swimmers ) {
+        await insertSwimmer.run( swimmer )
+      }
 
-    const insertUserSwimmerSql =
-      `INSERT INTO UserSwimmers (
+      const insertUserSwimmerSql =
+        `INSERT INTO UserSwimmers (
         userId,
         swimmerId,
         squad
@@ -132,9 +139,10 @@ export default eventHandler( async ( event ) => {
       ON DUPLICATE KEY UPDATE
         squad   = :squad
       ;`
-    const insertUserSwimmer = prepareStatement( conn, insertUserSwimmerSql )
-    for ( const swimmer of userData.swimmers ) {
-      await insertUserSwimmer.run( { userId, id: swimmer.id, squad: swimmer.squad } )
+      const insertUserSwimmer = prepareStatement( conn, insertUserSwimmerSql )
+      for ( const swimmer of userData.swimmers ) {
+        await insertUserSwimmer.run( { userId, id: swimmer.id, squad: swimmer.squad } )
+      }
     }
   }
 
