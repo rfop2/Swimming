@@ -2,13 +2,47 @@
   {
     "isoDate": "2025-10-02",
     "niceDate": "2 October 2025",
-    "diff": "10.3.0..",
-    "href": "https://bitbucket.org/guntrader/swimming/compare/10.4.0..10.3.0",
+    "diff": "10.4.0..",
+    "href": "https://bitbucket.org/guntrader/swimming/compare/10.4.1..10.4.0",
     "major": false,
     "minor": false,
     "tag": null,
+    "title": "10.4.1",
+    "date": "2025-10-02T15:43:31.029Z",
+    "summary": null,
+    "commits": [
+      {
+        "hash": "8f2769020058e90f5ca5e5e0ea4683ea05762713",
+        "shorthash": "8f27690",
+        "author": "Philip Coombes",
+        "email": "phil@web2wire.com",
+        "date": "2025-10-02T15:43:20.000Z",
+        "niceDate": "2 October 2025",
+        "subject": "Speculative change to fix SSR meets calendar issue",
+        "message": "Speculative change to fix SSR meets calendar issue",
+        "fixes": null,
+        "href": "https://bitbucket.org/guntrader/swimming/commits/8f2769020058e90f5ca5e5e0ea4683ea05762713",
+        "breaking": false,
+        "files": 1,
+        "insertions": 4,
+        "deletions": 1,
+        "merge": null
+      }
+    ],
+    "merges": [],
+    "fixes": []
+  },
+  {
+    "isoDate": "2025-10-02",
+    "niceDate": "2 October 2025",
+    "diff": "10.3.0..10.4.0",
+    "href": "https://bitbucket.org/guntrader/swimming/compare/10.4.0..10.3.0",
+    "major": false,
+    "minor": true,
+    "tag": "10.4.0",
+    "date": "2025-10-02",
     "title": "10.4.0",
-    "date": "2025-10-02T12:47:23.565Z",
+    "version": "10.4.0",
     "summary": null,
     "commits": [
       {
