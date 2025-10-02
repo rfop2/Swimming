@@ -2,7 +2,6 @@
   import type { InternalApi } from "nitropack"
   import { haversineDistance, type Club, type Meet } from "lib"
   import { addDays, formatISO, parseISO } from "date-fns"
-  import { ScheduleXCalendar } from "@schedule-x/vue"
   import {
     createCalendar,
     createViewDay,
@@ -17,6 +16,10 @@
   import "@schedule-x/theme-default/dist/index.css"
   import CalendarModal from "~/components/CalendarModal.vue"
   import StandardPage from "~/components/StandardPage.vue"
+
+  const ScheduleXCalendar = defineAsyncComponent( () =>
+    import( "@schedule-x/vue" ).then( mod => mod.ScheduleXCalendar )
+  )
 
   definePageMeta( {
     layout: "secure",
