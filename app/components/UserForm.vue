@@ -19,6 +19,7 @@
 
   const currentUser = useAuthenticatedUser()
   const isAdmin = !!Number( currentUser.value.admin )
+  const editingSelf = currentUser.value.id === props.user.id
 
   const { data: locations } = await useFetch<Array<{ lat: string, lon: string }>>(
     `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent( props.user.location + ", UK" )}`
@@ -316,7 +317,7 @@
             Personal Information
           </h2>
           <p class="mt-1 text-sm/6 text-gray-600">
-            Update your personal details and the swimmers you wish to follow.
+            Update {{ editingSelf ? "your personal" : "user" }} details and the swimmers {{ editingSelf ? "you wish" : "for the user" }} to follow.
           </p>
 
           <div class="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
@@ -468,7 +469,7 @@
               Swimmers
             </h1>
             <p class="mt-2 text-sm text-gray-700">
-              A list of the swimmers to track on your account.
+              A list of the swimmers to track on {{ editingSelf ? "your" : "the user's" }} account.
             </p>
           </div>
           <div class="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
