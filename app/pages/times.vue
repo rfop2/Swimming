@@ -133,7 +133,7 @@
   >
     <template #description>
       Best times for strokes at each distance. Converted times shown in brackets if better than course time.
-      Times in colour are inside consideration times for <span class="qualified-county">county</span>, <span class="qualified-regional">region</span>, <span class="qualified-national">country</span>.
+      Times in colour are inside consideration times for <span class="qualified-county">county</span>, <span class="qualified-regional">region</span><!--, <span class="qualified-national">country</span>-->.
     </template>
     <template #controls>
       <div class="min-w-48">

@@ -300,7 +300,7 @@
       </div>
     </template>
     <template #key>
-      Key &ndash; Best times recorded qualify for <span class="px-2 mr-1 qualifiedArea1" /> county, <span class="px-2 mr-1 qualifiedArea2" /> region, <span class="px-2 mr-1 qualifiedArea3" /> country.
+      Key &ndash; Best times recorded qualify for <span class="px-2 mr-1 qualifiedArea1" /> county, <span class="px-2 mr-1 qualifiedArea2" /> region<!--, <span class="px-2 mr-1 qualifiedArea3" /> country-->.
       Event ranking is in the <span class="px-2 mr-1 rank-10" /> top 10, <span class="px-2 mr-1 rank-20" /> top 20, <span class="px-2 mr-1 rank-50" /> top 50.
     </template>
     <div>
