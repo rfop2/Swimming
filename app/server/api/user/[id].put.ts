@@ -36,7 +36,7 @@ export default eventHandler( async ( event ) => {
 
               const updatePassword = prepareStatement(
                 conn,
-                "UPDATE User SET password = :passwordHash WHERE id = :userId"
+                "UPDATE User SET password_hash = :passwordHash WHERE id = :userId"
               )
               await updatePassword.run( { passwordHash, ...{ userId } } )
             } else {
