@@ -91,10 +91,10 @@ export const useSwimmers = ( userId?: string ) => {
     swimmers,
     loading,
     fetchError,
-    refreshSwimmers: fetchSwimmers,
+    refresh: fetchSwimmers,
     // addSwimmer,
     // updateSwimmer,
     // deleteSwimmer,
-    clearSwimmers
+    clear: clearSwimmers,
   }
 }

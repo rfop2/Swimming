@@ -13,7 +13,8 @@
 
   const user = useAuthenticatedUser()
 
-  const { swimmers, refreshSwimmers } = await useSwimmers()
+  const { userClubs, loading: loadingUserClubs, refresh: refreshUserClubs } = useUserClubs()
+  const { swimmers, loading: loadingSwimmers, refresh: refreshSwimmers } = useSwimmers()
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const saveUser = async ( values: any ) => {
@@ -22,13 +23,16 @@
       body: JSON.stringify( values ),
     } )
     // await refreshNuxtData()
+    await refreshUserClubs()
     await refreshSwimmers()
   }
 </script>
 
 <template>
   <UserForm
+    v-if="!loadingUserClubs && !loadingSwimmers"
     :user="user"
+    :clubs="userClubs"
     :swimmers="swimmers"
     :save-fn="saveUser"
   />

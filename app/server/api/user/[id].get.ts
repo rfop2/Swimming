@@ -16,10 +16,10 @@ export default defineEventHandler( async ( event ) => {
     } )
   }
 
-  const selectRecords = prepareStatement<{ userId: string }, User>(
+  const selectUser = prepareStatement<{ userId: string }, User>(
     await getPool(),
     "SELECT id, username, firstName, lastName, location, type, admin, created, updated FROM User WHERE id = :userId"
   )
-  const data = await selectRecords.get( { userId } )
+  const data = await selectUser.get( { userId } )
   return data
 } )

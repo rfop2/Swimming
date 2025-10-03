@@ -1,5 +1,5 @@
 import { hash } from "@node-rs/argon2"
-import { getPool, isMySql2Error, prepareStatement, runTransaction, type Swimmer } from "lib"
+import { getPool, isMySql2Error, prepareStatement, runTransaction, type UserClub, type Swimmer } from "lib"
 import { generateId } from "lucia"
 import type { PoolConnection } from "mysql2/promise"
 
@@ -10,6 +10,7 @@ interface UserData {
   location: string
   password: string
   confirmPassword: string
+  clubs: Array<UserClub>
   swimmers: Array<Swimmer>
 }
 
@@ -96,6 +97,25 @@ export default eventHandler( async ( event ) => {
       } )
     }
     console.log( "User created" )
+
+    const insertUserClubSql =
+      `INSERT INTO UserClubs (
+        userId,
+        clubId,
+        clubOwner
+      )
+      VALUES (
+        :userId,
+        :clubId,
+        :clubOwner
+      )
+      ON DUPLICATE KEY UPDATE
+        clubOwner = :clubOwner
+      ;`
+    const insertUserClub = prepareStatement( conn, insertUserClubSql )
+    for ( const club of userData.clubs ) {
+      await insertUserClub.run( { userId, clubId: club.clubId, clubOwner: club.clubOwner } )
+    }
 
     // Now do swimmers
     const insertSwimmerSql =

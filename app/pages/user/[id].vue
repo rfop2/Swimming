@@ -39,7 +39,9 @@
   if ( !user.value ) {
     throw createError( `Can't load user '${userId}'` )
   }
-  const { swimmers, refreshSwimmers } = await useSwimmers( userId as string )
+
+  const { userClubs, loading: loadingUserClubs, refresh: refreshUserClubs } = useUserClubs( userId as string )
+  const { swimmers, loading: loadingSwimmers, refresh: refreshSwimmers } = useSwimmers( userId as string )
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const saveUser = async ( values: any ) => {
@@ -55,6 +57,7 @@
       } )
     }
     // await refreshNuxtData()
+    await refreshUserClubs()
     await refreshSwimmers()
   }
 
@@ -62,7 +65,9 @@
 
 <template>
   <UserForm
+    v-if="!loadingUserClubs && !loadingSwimmers"
     :user="user as User"
+    :clubs="userClubs"
     :swimmers="swimmers"
     :save-fn="saveUser"
   />

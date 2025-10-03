@@ -117,6 +117,14 @@ export interface Club {
   meetName: string
 }
 
+export interface UserClub {
+  clubId: Club["clubId"]
+  clubName?: string
+  clubCounty?: string
+  clubRegion?: string
+  clubOwner: number
+}
+
 export interface Meet {
   id: string
   code: string

@@ -1,5 +1,5 @@
 import { hash } from "@node-rs/argon2"
-import { getPool, prepareStatement, runTransaction, type Swimmer } from "lib"
+import { getPool, prepareStatement, runTransaction, type UserClub, type Swimmer } from "lib"
 import type { PoolConnection } from "mysql2/promise"
 
 interface UserData {
@@ -9,6 +9,7 @@ interface UserData {
   location: string
   password: string
   confirmPassword: string
+  clubs: Array<UserClub>
   swimmers: Array<Swimmer>
 }
 
@@ -142,6 +143,42 @@ export default eventHandler( async ( event ) => {
       const insertUserSwimmer = prepareStatement( conn, insertUserSwimmerSql )
       for ( const swimmer of userData.swimmers ) {
         await insertUserSwimmer.run( { userId, id: swimmer.id, squad: swimmer.squad } )
+      }
+    }
+
+    if ( userData.clubs.length === 0 ) {
+      const deleteClubs = prepareStatement(
+        conn,
+        "DELETE FROM UserClubs WHERE userId = :userId"
+      )
+      await deleteClubs.run( { userId } )
+    } else {
+      const clubIds = userData.clubs.map( club => club.clubId )
+      const clubIdsSql = clubIds.map( ( _, i ) => `:clubIds${i}` ).join( ", " )
+      const clubIdsValues = Object.fromEntries( clubIds.map( ( id, i ) => ( [ `clubIds${i}`, id ] ) ) )
+      const deleteClubs = prepareStatement(
+        conn,
+        `DELETE FROM UserClubs WHERE userId = :userId AND clubId NOT IN (${clubIdsSql})`
+      )
+      await deleteClubs.run( { ...clubIdsValues, ...{ userId } } )
+
+      const insertUserClubSql =
+        `INSERT INTO UserClubs (
+        userId,
+        clubId,
+        clubOwner
+      )
+      VALUES (
+        :userId,
+        :clubId,
+        :clubOwner
+      )
+      ON DUPLICATE KEY UPDATE
+        clubOwner = :clubOwner
+      ;`
+      const insertUserClub = prepareStatement( conn, insertUserClubSql )
+      for ( const club of userData.clubs ) {
+        await insertUserClub.run( { ...club, userId } )
       }
     }
   }

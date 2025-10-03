@@ -5,13 +5,14 @@
   import { ArrowPathIcon, CheckIcon, ClockIcon, ExclamationTriangleIcon, PencilSquareIcon, TrashIcon, UserPlusIcon, XCircleIcon, XMarkIcon } from "@heroicons/vue/24/outline"
 
   import type { FetchError } from "ofetch"
-  import { COUNTIES, NATIONALITIES, REGIONS, type Swimmer } from "lib"
+  import { COUNTIES, NATIONALITIES, REGIONS, type Club, type Swimmer, type UserClub } from "lib"
   import { useDebounceAsync } from "~/composables/useDebounceAsync"
   import type { User } from "lucia"
   import { format } from "date-fns"
 
   const props = defineProps<{
     user: User
+    clubs: UserClub[]
     swimmers: Swimmer[]
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     saveFn: ( values: any ) => void
@@ -48,6 +49,7 @@
       confirmPassword: props.user.id !== "0" ? PASSWORD : "",
       location: props.user.location,
       type: props.user.type,
+      clubs: props.clubs.map( ( { clubId, clubOwner } ) => ( { clubId, clubOwner } ) ), // Filter out the other fields
       swimmers: props.swimmers,
     },
     validationSchema: toTypedSchema(
@@ -87,6 +89,10 @@
             ? yup.string().required()
             : yup.string().notRequired()
         } ),
+        clubs: yup.array( yup.object( {
+          clubId: yup.string().required(),
+          clubOwner: yup.number().required(),
+        } ) ),
         swimmers: yup.array( yup.object( {
           firstName: yup.string().required(),
           lastName: yup.string().required(),
@@ -109,6 +115,8 @@
   const [ confirmPassword, confirmPasswordAttrs ] = defineField( "confirmPassword" )
   const [ location, locationAttrs ] = defineField( "location" )
   const [ type, typeAttrs ] = defineField( "type" )
+  const { replace: replaceUserClub } = useFieldArray<UserClub>( "clubs" )
+  const { remove: removeSwimmer, push: pushSwimmer, update: updateSwimmer, fields: userSwimmers } = useFieldArray<Swimmer>( "swimmers" )
 
   // Should come from DB
   const userTypes =
@@ -129,8 +137,6 @@
         value: "other"
       },
     ]
-
-  const { remove, push, update, fields } = useFieldArray<Swimmer>( "swimmers" )
 
   const swimmerErrors = ( index: number ) => {
     const prefix = `swimmers[${index}].`
@@ -164,24 +170,24 @@
       ...foundSwimmer.value
     }
     console.log( newSwimmer )
-    push( newSwimmer )
-    editing.value = fields.value.length - 1
+    pushSwimmer( newSwimmer )
+    editing.value = userSwimmers.value.length - 1
   }
 
   const editSwimmer = ( swimmerIndex: number ) => {
     editing.value = swimmerIndex
     if ( squads.value.length ) {
-      selectedSquad.value = squads.value.find( s => s.value === fields.value[swimmerIndex].value.squad )
+      selectedSquad.value = squads.value.find( s => s.value === userSwimmers.value[swimmerIndex].value.squad )
     }
-    swimmerData.value = JSON.stringify( fields.value[swimmerIndex].value )
+    swimmerData.value = JSON.stringify( userSwimmers.value[swimmerIndex].value )
   }
 
   const resetSwimmer = () => {
     if ( editing.value !== null ) {
-      if ( fields.value[editing.value].value.id === foundSwimmer.value.id ) {
-        remove( editing.value )
+      if ( userSwimmers.value[editing.value].value.id === foundSwimmer.value.id ) {
+        removeSwimmer( editing.value )
       } else if ( swimmerData.value ) {
-        update( editing.value, JSON.parse( swimmerData.value ) )
+        updateSwimmer( editing.value, JSON.parse( swimmerData.value ) )
         swimmerData.value = null
       }
     }
@@ -206,12 +212,12 @@
 
   const deleteSwimmer = () => {
     if ( deleting.value !== null ) {
-      remove( deleting.value )
+      removeSwimmer( deleting.value )
     }
     deleting.value = null
   }
 
-  const squads = computed( () => Array.from( fields.value.reduce( ( sq, s ) => {
+  const squads = computed( () => Array.from( userSwimmers.value.reduce( ( sq, s ) => {
     if ( s.value.squad )
       sq.add( s.value.squad )
     return sq
@@ -220,10 +226,32 @@
 
   watch( selectedSquad, ( v ) => {
     if ( editing.value !== null ) {
-      fields.value[editing.value].value.squad = v?.value ?? ""
+      userSwimmers.value[editing.value].value.squad = v?.value ?? ""
     }
   } )
 
+  const selectedClub = ref<UISelection | undefined>( props.clubs.length ? { label: props.clubs[0].clubName, value: props.clubs[0].clubId } : undefined )
+  const clubOwner = ref<0 | 1>( props.clubs.length && props.clubs[0].clubOwner ? 1 : 0 )
+
+  watchEffect( () => {
+    if ( selectedClub.value?.value ) {
+      replaceUserClub( [ {
+        clubId: String( selectedClub.value?.value ),
+        clubOwner: clubOwner.value,
+      } ] )
+    } else {
+      replaceUserClub( [] )
+    }
+  } )
+
+  const searchClubs = async ( query: string ) => {
+    if ( !query ) return []
+    const res = await $fetch( `/api/clubs?search=${encodeURIComponent( query )}` )
+    return res.map( ( u: Club ) => ( {
+      label: u.clubName,
+      value: u.clubId,
+    } ) )
+  }
   const saveSuccess = ref( false )
   const save = handleSubmit( async () => {
     try {
@@ -239,8 +267,8 @@
 
   useUnsavedWarning( () => meta.value.dirty )
 
-  watch( [ values, meta ], ( newValues ) => {
-    console.log( "VAL", unref( newValues[0] ), "META", unref( newValues[1] ) )
+  watchEffect( () => {
+    console.log( "VAL", unref( values ), "META", unref( meta ) )
   } )
 
   watch( errors, ( newErrors ) => {
@@ -457,6 +485,30 @@
                 :options="userTypes"
               />
             </div>
+            <div
+              class="sm:col-span-2"
+            >
+              <UI-Combobox
+                id="club"
+                v-model="selectedClub"
+                label="Club"
+                placeholder="Select or type club name"
+                :fetch-options="searchClubs"
+              />
+            </div>
+            <div
+              v-if="isAdmin"
+              class="sm:col-span-1"
+            >
+              <UI-input
+                v-model="clubOwner"
+                type="checkbox"
+                label="Club Admin"
+                :disabled="!selectedClub"
+                :true-value="1"
+                :false-value="0"
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -569,7 +621,7 @@
                 </thead>
                 <tbody class="divide-y divide-gray-200">
                   <tr
-                    v-for="(swimmer, swimmerIndex) in fields"
+                    v-for="(swimmer, swimmerIndex) in userSwimmers"
                     :key="swimmer.value.id"
                   >
                     <td class="py-1 pr-1 pl-2 text-sm font-medium whitespace-nowrap text-gray-900 sm:pl-0">
@@ -862,7 +914,7 @@
     <UI-Confirm
       v-if="deleting !== null"
       title="Delete swimmer"
-      :text="`Are you sure you want to delete swimmer '${fields[deleting].value.fullName}' from your account?`"
+      :text="`Are you sure you want to delete swimmer '${userSwimmers[deleting].value.fullName}' from your account?`"
       confirm-label="Delete"
       :action="deleteSwimmer"
     />
