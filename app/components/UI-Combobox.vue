@@ -22,6 +22,7 @@
     multiple?: boolean
     required?: boolean
     strict?: boolean
+    clearable?: boolean
     placeholder?: string
     debounceMs?: number
   }>(), {
@@ -32,6 +33,7 @@
     multiple: false,
     required: false,
     strict: true,
+    clearable: true,
     placeholder: "Select Option or Add New",
     debounceMs: 300,
   } )
@@ -68,6 +70,12 @@
   const queryValue = computed( () => {
     return query.value === "" ? null : { label: query.value, value: query.value }
   } )
+
+  const clearSelection = () => {
+    model.value = undefined
+    query.value = ""
+  }
+
 </script>
 
 <template>
@@ -91,7 +99,19 @@
         @change="query = $event.target.value"
         @blur="query = ''"
       />
-      <ComboboxButton class="absolute inset-y-0 right-0 flex items-center rounded-r-md px-2 focus:outline-none">
+      <!-- Clear button -->
+      <ComboboxButton
+        v-if="clearable && model"
+        type="button"
+        class="absolute inset-y-0 right-2 flex items-center text-gray-400 hover:text-gray-600"
+        @click="clearSelection"
+      >
+        ✕
+      </ComboboxButton>
+      <ComboboxButton
+        v-if="internalOptions.length"
+        class="absolute inset-y-0 right-0 flex items-center rounded-r-md px-2 focus:outline-none"
+      >
         <ChevronDownIcon
           class="size-5 text-gray-400"
           aria-hidden="true"
