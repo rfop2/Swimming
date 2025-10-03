@@ -77,12 +77,6 @@
     }
   )
 
-  const { data: clubs } = await useFetch<Club[]>(
-    "/api/clubs",
-  )
-
-  const clubOptions = computed( () => ( [ { label: "All Clubs", value: "XXXX" } ].concat( ( clubs?.value ?? [] ).map( c => ( { label: c.clubName, value: c.clubId } ) ) ) ) )
-
   interface CalendarEvent extends CalendarEventExternal {
     duration: number
     color?: string
@@ -161,6 +155,15 @@
     distance: distances[0],
     tagged: taggings[0],
   }, "reactive" )
+
+  const searchClubs = async ( query: string ) => {
+    if ( !query ) return []
+    const res = await $fetch( `/api/clubs?search=${encodeURIComponent( query )}` )
+    return res.map( ( u: Club ) => ( {
+      label: u.clubName,
+      value: u.clubId,
+    } ) )
+  }
 
   const distanceCalendar = ( distance: number | null ) => {
     if ( !distance )
@@ -320,14 +323,14 @@
     <template #controls>
       <ClientOnly>
         <div class="min-w-48">
-          <UIListbox
+          <UI-Listbox
             v-model="selections.course"
             :options="courses"
             label="Course"
           />
         </div>
         <div class="min-w-72">
-          <UIListbox
+          <UI-Listbox
             v-model="selections.level"
             :options="levels"
             label="Level"
@@ -336,21 +339,23 @@
           />
         </div>
         <div class="min-w-64">
-          <UIListbox
+          <UI-Combobox
+            id="club"
             v-model="selections.club"
-            :options="clubOptions"
             label="Club"
+            placeholder="Type club name"
+            :fetch-options="searchClubs"
           />
         </div>
         <div class="min-w-36">
-          <UIListbox
+          <UI-Listbox
             v-model="selections.distance"
             :options="distances"
             label="Distance"
           />
         </div>
         <div class="min-w-36">
-          <UIListbox
+          <UI-Listbox
             v-model="selections.tagged"
             :options="taggings"
             label="Tagged"
