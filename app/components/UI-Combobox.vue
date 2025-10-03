@@ -16,23 +16,54 @@
 
   const props = withDefaults( defineProps<{
     id?: string
-    options: UISelection[]
+    options?: UISelection[]
+    fetchOptions?: ( query: string ) => Promise<UISelection[]>
     label?: string
     multiple?: boolean
     required?: boolean
+    strict?: boolean
     placeholder?: string
+    debounceMs?: number
   }>(), {
     id: undefined,
+    options: () => [],
+    fetchOptions: undefined,
     label: undefined,
     multiple: false,
     required: false,
+    strict: true,
     placeholder: "Select Option or Add New",
+    debounceMs: 300,
   } )
 
   // const empty = computed( () => Array.isArray( model.value ) ? model.value.length === 0 : !model.value )
   // const prompt = computed( () => empty.value ? props.placeholder : ( props.multiple ? ( ( model.value ?? [] ) as Array<UISelection> ).map( item => item.label ?? item.value ).join( ", " ) : ( model.value as UISelection ).label ?? ( model.value as UISelection ).value ) )
 
   const query = ref( "" )
+  const loading = ref( false )
+  const internalOptions = ref<UISelection[]>( props.options )
+
+  // Debounced search
+  const runSearch = useDebounceAsync( async ( q: string ) => {
+    if ( !props.fetchOptions ) return
+    loading.value = true
+    try {
+      internalOptions.value = await props.fetchOptions( q )
+    } finally {
+      loading.value = false
+    }
+  }, props.debounceMs )
+
+  // Watch query updates
+  watch( query, ( val ) => {
+    if ( props.fetchOptions ) {
+      runSearch( val )
+    } else {
+      internalOptions.value = props.options.filter( ( opt ) =>
+        ( opt.label ?? String( opt.value ) ).toLowerCase().includes( val.toLowerCase() )
+      )
+    }
+  } )
 
   const queryValue = computed( () => {
     return query.value === "" ? null : { label: query.value, value: query.value }
@@ -56,6 +87,7 @@
       <ComboboxInput
         class="block w-full rounded-md bg-white py-1.5 pl-3 pr-12 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
         :display-value="(option) => (option as UISelection).label ?? ''"
+        :placeholder="placeholder"
         @change="query = $event.target.value"
         @blur="query = ''"
       />
@@ -75,8 +107,20 @@
           v-if="options.length > 0 || query.length > 0"
           class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg outline outline-1 outline-black/5 sm:text-sm"
         >
+          <div
+            v-if="loading"
+            class="p-2 text-gray-500 text-sm"
+          >
+            Loading...
+          </div>
+          <div
+            v-else-if="internalOptions.length === 0"
+            class="p-2 text-gray-500 text-sm"
+          >
+            No results found
+          </div>
           <ComboboxOption
-            v-if="queryValue"
+            v-if="!strict && queryValue"
             v-slot="{ active }"
             :value="queryValue"
             as="template"
@@ -88,8 +132,8 @@
             </li>
           </ComboboxOption>
           <ComboboxOption
-            v-for="option in options"
-            :key="option.label"
+            v-for="option in internalOptions"
+            :key="option.value"
             v-slot="{ active }"
             :value="option"
             as="template"
@@ -97,7 +141,7 @@
             <li :class="['relative cursor-default select-none px-3 py-2', active ? 'bg-indigo-600 text-white outline-none' : 'text-gray-900']">
               <div class="flex">
                 <span class="truncate">
-                  {{ option.label }}
+                  {{ option.label ?? option.value }}
                 </span>
               </div>
             </li>
