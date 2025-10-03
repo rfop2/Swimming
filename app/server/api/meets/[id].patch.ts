@@ -18,7 +18,7 @@ export default defineEventHandler( async ( event ) => {
   try {
     const updateMeet = prepareStatement<{ userId: string, meetId: string }>(
       await getPool(),
-      "INSERT OR REPLACE INTO UserMeets VALUES( :userId, :meetId, NULL )"
+      "INSERT IGNORE INTO UserMeets VALUES( :userId, :meetId, NULL )"
     )
     await updateMeet.run( { userId: event.context.user.id, meetId } )
   } catch ( error ) {
