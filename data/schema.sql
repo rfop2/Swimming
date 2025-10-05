@@ -129,24 +129,6 @@ CREATE TABLE `Locations` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Table structure for table `Locations_copy1`
---
-
-DROP TABLE IF EXISTS `Locations_copy1`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `Locations_copy1` (
-  `locationId` int(10) unsigned NOT NULL,
-  `locationName` varchar(32) NOT NULL,
-  `locationDescription` varchar(255) DEFAULT NULL,
-  `locationType` varchar(32) DEFAULT NULL,
-  `latitude` varchar(16) DEFAULT NULL,
-  `longitude` varchar(16) DEFAULT NULL,
-  PRIMARY KEY (`location`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
 -- Table structure for table `Meets`
 --
 
@@ -162,6 +144,7 @@ CREATE TABLE `Meets` (
   `country` varchar(16) NOT NULL,
   `region` varchar(32) NOT NULL,
   `location` varchar(32) NOT NULL,
+  `locationId` int(10) unsigned DEFAULT NULL,
   `course` varchar(8) NOT NULL,
   `level` int(11) NOT NULL,
   `type` varchar(16) NOT NULL,
