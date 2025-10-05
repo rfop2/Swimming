@@ -1,4 +1,4 @@
-import type { IndividualStats, LatLon, Meet, PageInfo, Ranking, RankingRow, ResultData, Results, Swimmer } from "./types.js"
+import type { IndividualStats, Location, Meet, PageInfo, Ranking, RankingRow, ResultData, Results, Swimmer } from "./types.js"
 import { getSwimmerAgeGroup, sleep, Timer, timeToSeconds } from "./lib.js"
 import { CACHE_DIR } from "./config.js"
 import { differenceInDays, differenceInHours, format, parse } from "date-fns"
@@ -679,39 +679,66 @@ export const parseMeets = ( pageInfo: PageInfo, $: CheerioAPI ) => {
 }
 
 const insertLocationsSql =
-  `INSERT INTO Locations (
-  created,
-  location,
+  `INSERT IGNORE INTO Locations (
+  locationId,
+  locationName,
+  locationDescription,
+  locationType,
   latitude,
   longitude
 )
 VALUES (
-  :created,
-  :location,
+  :locationId,
+  :locationName,
+  :locationDescription,
+  :locationType,
   :latitude,
   :longitude
 );`
 
-const geocodeTown = async ( town: string ): Promise<LatLon | undefined> => {
-  const getLocation = prepareStatement<{ location: string },LatLon>(
+const insertLocationAliasSql =
+  `INSERT IGNORE INTO LocationAliases (
+  locationId,
+  locationAlias
+)
+VALUES (
+  :locationId,
+  :locationAlias
+);`
+
+const geocodeLocation = async ( locationName: string ): Promise<Location | undefined> => {
+  console.log( `Geocoding '${locationName}'` )
+  const getLocation = prepareStatement<{ locationName: string },Location>(
     await getPool(),
-    "SELECT Latitude, Longitude FROM Locations WHERE Location = :location"
+    "SELECT Locations.locationId, locationName, GROUP_CONCAT( locationAlias SEPARATOR '|' ) AS locationAliases, locationDescription, locationType, latitude, longitude FROM Locations LEFT JOIN LocationAliases ON Locations.locationId = LocationAliases.locationId WHERE locationName = :locationName OR locationAlias = :locationName GROUP BY Locations.locationId"
   )
   const saveLocation = prepareStatement( await getPool(), insertLocationsSql )
-  let latlon = await getLocation.get( { location: town } ) as LatLon
-  if ( latlon === undefined ) {
+  const saveLocationAlias = prepareStatement( await getPool(), insertLocationAliasSql )
+  let location = await getLocation.get( { locationName } )
+  if ( location === undefined ) {
     const response = await fetch(
-      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent( town + ", UK" )}`
+      `https://nominatim.openstreetmap.org/search?format=json&city=${encodeURIComponent( locationName )}&countrycodes=gb&layer=address&addressdetails=1`
     )
-    const data = await response.json()
-    if ( data && data.length > 0 ) {
-      latlon = { latitude: Number( data[0].lat ), longitude: Number( data[0].lon ) }
-      await saveLocation.run( { created: format( new Date(), "yyyy-MM-dd" ), location: town, ...latlon } )
-    } else {
-      await saveLocation.run( { created: format( new Date(), "yyyy-MM-dd" ), location: town, latitude: null, longitude: null } )
+    const osmLocations = await response.json()
+    console.log( osmLocations )
+    if ( osmLocations && osmLocations.length > 0 ) {
+      osmLocations.sort( ( a: { importance: number }, b: { importance: number } ) => Number( b.importance ) - Number( a.importance ) )
+      const osmLocation = osmLocations[0]
+      location = {
+        locationId: Number( osmLocation.place_id ),
+        locationName: osmLocation.name,
+        locationDescription: osmLocation.display_name,
+        locationType: osmLocation.addresstype,
+        latitude: Number( osmLocation.lat ),
+        longitude: Number( osmLocation.lon )
+      }
+      if ( osmLocation.name !== locationName ) {
+        await saveLocationAlias.run( { locationId: location.locationId, locationAlias: locationName } )
+      }
+      await saveLocation.run( location )
     }
   }
-  return latlon
+  return location
 }
 
 export const parseMeet = async ( pageInfo: PageInfo, $: CheerioAPI, meet: Partial<Meet> ) => {
@@ -745,5 +772,7 @@ export const parseMeet = async ( pageInfo: PageInfo, $: CheerioAPI, meet: Partia
   meet.contact = details.Contact ?? null
   meet.email = details.Email ?? null
 
-  await geocodeTown( meet.location )
+  const location = await geocodeLocation( meet.location )
+  meet.locationId = location ? location.locationId : null
+  return location
 }

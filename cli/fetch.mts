@@ -206,6 +206,7 @@ const insertMeetsSql =
   country,
   region,
   location,
+  locationId,
   course,
   level,
   type,
@@ -221,6 +222,7 @@ VALUES (
   :country,
   :region,
   :location,
+  :locationId,
   :course,
   :level,
   :type,
@@ -228,18 +230,19 @@ VALUES (
   :email
 )
 ON DUPLICATE KEY UPDATE
-  code      = :code,
-  date      = :date,
-  duration  = :duration,
-  name      = :name,
-  country   = :country,
-  region    = :region,
-  location  = :location,
-  course    = :course,
-  level     = :level,
-  type      = :type,
-  contact   = :contact,
-  email     = :email
+  code       = :code,
+  date       = :date,
+  duration   = :duration,
+  name       = :name,
+  country    = :country,
+  region     = :region,
+  location   = :location,
+  locationId = :locationId,
+  course     = :course,
+  level      = :level,
+  type       = :type,
+  contact    = :contact,
+  email      = :email
 ;`
 
 const updateIndividual = async ( swimmer: Swimmer, force: boolean ) => {
@@ -555,19 +558,19 @@ const updateSwimmerData = async ( swimmer: Swimmer, relative: boolean, force: bo
   await swimmerLastUpdate.run( { ...swimmer, type: updateType } )
 }
 
-const updateMeet = async ( meet: Partial<Meet> ) => {
+const updateMeet = async ( meet: Partial<Meet>, force: boolean ) => {
   const page: PageInfo = {
     label: `meets_${meet.id}`,
     url: new URL( `${BASE_URL}${meetsBaseUrl}${meet.link}` ),
     type: "meet"
   }
-  const content = await fetchPage( page )
+  const content = await fetchPage( page, force ? 0 : undefined )
   const $ = cheerio.load( content )
 
   await parseMeet( page, $, meet )
 }
 
-const updateMeets = async () => {
+const updateMeets = async ( force: boolean ) => {
   console.log( "Updating meets" )
 
   const pool = await getPool()
@@ -586,7 +589,7 @@ const updateMeets = async () => {
       url: createUrl( meetsBaseUrl, meetsParams( pageNo, region ) ),
       type: "meets"
     }
-    const content = await fetchPage( page )
+    const content = await fetchPage( page, force ? 0 : undefined )
     // console.log( inspect( pageData, { depth: 5 } ) )
     const $ = cheerio.load( content )
 
@@ -621,8 +624,8 @@ const updateMeets = async () => {
       } else {
         console.log( "New meet", meet )
       }
-      if ( fetchMeet ) {
-        await updateMeet( meet )
+      if ( fetchMeet || force ) {
+        await updateMeet( meet, force )
         // console.log( meet )
         await saveMeets.run( meet )
       }
@@ -704,7 +707,7 @@ interface CliOptions {
       }
     }
     if ( !options.mode || options.mode === "meets" ) {
-      await updateMeets()
+      await updateMeets( options.force )
     }
   } catch ( error ) {
     console.error( "Error in script", error )

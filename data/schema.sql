@@ -92,6 +92,23 @@ CREATE TABLE `Individual` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Table structure for table `LocationAliases`
+--
+
+DROP TABLE IF EXISTS `LocationAliases`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `LocationAliases` (
+  `locationId` int(10) unsigned NOT NULL,
+  `locationAlias` varchar(32) NOT NULL,
+  `created` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`locationId`,`locationAlias`) USING BTREE,
+  KEY `IDX_locationAlias` (`locationAlias`) USING BTREE,
+  CONSTRAINT `LocationAliases_ibfk_1` FOREIGN KEY (`locationId`) REFERENCES `Locations` (`locationId`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
 -- Table structure for table `Locations`
 --
 
@@ -99,8 +116,30 @@ DROP TABLE IF EXISTS `Locations`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `Locations` (
-  `created` date NOT NULL DEFAULT current_timestamp(),
-  `location` varchar(32) NOT NULL,
+  `locationId` int(10) unsigned NOT NULL,
+  `locationName` varchar(32) NOT NULL,
+  `locationDescription` varchar(255) NOT NULL,
+  `locationType` varchar(32) NOT NULL,
+  `latitude` varchar(16) NOT NULL,
+  `longitude` varchar(16) NOT NULL,
+  `created` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`locationId`),
+  KEY `IDX_locationName` (`locationName`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `Locations_copy1`
+--
+
+DROP TABLE IF EXISTS `Locations_copy1`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `Locations_copy1` (
+  `locationId` int(10) unsigned NOT NULL,
+  `locationName` varchar(32) NOT NULL,
+  `locationDescription` varchar(255) DEFAULT NULL,
+  `locationType` varchar(32) DEFAULT NULL,
   `latitude` varchar(16) DEFAULT NULL,
   `longitude` varchar(16) DEFAULT NULL,
   PRIMARY KEY (`location`)
@@ -465,7 +504,7 @@ USE `swimming`;
 /*!50001 SET collation_connection      = utf8mb4_uca1400_ai_ci */;
 /*!50001 CREATE ALGORITHM=UNDEFINED */
 /*!50013 DEFINER=`root`@`%` SQL SECURITY DEFINER */
-/*!50001 VIEW `MeetsView` AS select `Meets`.`id` AS `id`,`Meets`.`code` AS `code`,`Meets`.`date` AS `date`,`Meets`.`duration` AS `duration`,`Meets`.`name` AS `name`,`Meets`.`country` AS `country`,`Meets`.`region` AS `region`,`Meets`.`location` AS `location`,`Locations`.`latitude` AS `latitude`,`Locations`.`longitude` AS `longitude`,`Meets`.`course` AS `course`,`Meets`.`level` AS `level`,`Meets`.`type` AS `type`,`Meets`.`contact` AS `contact`,`Meets`.`email` AS `email` from (`Meets` left join `Locations` on(`Meets`.`location` = `Locations`.`location`)) */;
+/*!50001 VIEW `MeetsView` AS select `Meets`.`id` AS `id`,`Meets`.`code` AS `code`,`Meets`.`date` AS `date`,`Meets`.`duration` AS `duration`,`Meets`.`name` AS `name`,`Meets`.`country` AS `country`,`Meets`.`region` AS `region`,`Meets`.`location` AS `location`,`Locations`.`latitude` AS `latitude`,`Locations`.`longitude` AS `longitude`,`Meets`.`course` AS `course`,`Meets`.`level` AS `level`,`Meets`.`type` AS `type`,`Meets`.`contact` AS `contact`,`Meets`.`email` AS `email` from (`Meets` left join `Locations` on(`Meets`.`locationId` = `Locations`.`locationId`)) */;
 /*!50001 SET character_set_client      = @saved_cs_client */;
 /*!50001 SET character_set_results     = @saved_cs_results */;
 /*!50001 SET collation_connection      = @saved_col_connection */;
