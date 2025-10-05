@@ -9,6 +9,7 @@
     ComboboxOptions,
   } from "@headlessui/vue"
   import classNames from "classnames"
+  import { XMarkIcon } from "@heroicons/vue/24/outline"
 
   const model = defineModel<UISelection | Array<UISelection>>()
 
@@ -106,7 +107,10 @@
         class="absolute inset-y-0 right-2 flex items-center text-gray-400 hover:text-gray-600"
         @click="clearSelection"
       >
-        ✕
+        <XMarkIcon
+          class="size-5 text-gray-400"
+          aria-hidden="true"
+        />
       </ComboboxButton>
       <ComboboxButton
         v-if="internalOptions.length"
