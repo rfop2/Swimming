@@ -6,6 +6,7 @@
     calendarEvent: CalendarEventExternal
   }>()
 
+  console.log( props )
   const tagged = ref( props.calendarEvent.meet.tagged )
 
   watch( tagged, async ( newTagged ) => {
@@ -81,11 +82,11 @@
           />
         </g>
       </svg>
-      <div v-if="props.calendarEvent.start == props.calendarEvent.end">
-        {{ format( parse( props.calendarEvent.start, "yyyy-MM-dd", new Date() ), "dd MMMM, yyyy" ) }}
+      <div v-if="props.calendarEvent.start.equals( props.calendarEvent.end )">
+        {{ props.calendarEvent.start.toLocaleString() }}
       </div>
       <div v-else>
-        {{ format( parse( props.calendarEvent.start, "yyyy-MM-dd", new Date() ), "dd MMMM, yyyy" ) }} &ndash; {{ format( parse( props.calendarEvent.end, "yyyy-MM-dd", new Date() ), "dd MMMM, yyyy" ) }}
+        {{ props.calendarEvent.start.toLocaleString() }} &ndash; {{ props.calendarEvent.end.toLocaleString() }}
       </div>
     </div>
     <div class="sx__has-icon sx__event-modal__location">
@@ -233,5 +234,9 @@
   height: auto !important;
   width: auto !important;
   overflow-y: hidden;
+}
+
+.sx__event-modal__time {
+  font-size: 16px;
 }
 </style>

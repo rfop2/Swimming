@@ -182,8 +182,8 @@
   const events = computed( () => {
     const calendarEvents = ( meets.value || [] ).map( ( meet ): CalendarEvent => ( {
       id: meet.id,
-      start: formatISO( parseISO( meet.date ), { representation: "date" } ),
-      end: formatISO( addDays( parseISO( meet.date ), ( meet.duration ?? 1 ) - 1 ), { representation: "date" } ),
+      start: Temporal.PlainDate.from( formatISO( parseISO( meet.date ), { representation: "date" } ) ),
+      end: Temporal.PlainDate.from( formatISO( addDays( parseISO( meet.date ), ( meet.duration ?? 1 ) - 1 ), { representation: "date" } ) ),
       duration: meet.duration as number,
       title: `${meet.level}: ${meet.name}`,
       // color: distanceColor( meet.distance ),
@@ -224,8 +224,9 @@
 
   const calendarApp = import.meta.client
     ? createCalendar( {
-      selectedDate: formatISO( new Date(), { representation: "date" } ),
+      selectedDate: Temporal.Now.plainDateISO(),
       locale: "en-GB",
+      timezone: "Europe/London",
       firstDayOfWeek: 1,
       defaultView: "month-grid",
       views: [
