@@ -1,12 +1,10 @@
 <script setup lang="ts">
   import type { CalendarEventExternal } from "@schedule-x/calendar"
-  import { format, parse } from "date-fns"
 
   const props = defineProps<{
     calendarEvent: CalendarEventExternal
   }>()
 
-  console.log( props )
   const tagged = ref( props.calendarEvent.meet.tagged )
 
   watch( tagged, async ( newTagged ) => {
