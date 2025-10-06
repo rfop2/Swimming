@@ -754,7 +754,6 @@ VALUES (
 );`
 
 const geocodeLocation = async ( locationName: string ): Promise<Location | undefined> => {
-  console.log( `Geocoding '${locationName}'` )
   const getLocation = prepareStatement<{ locationName: string },Location>(
     await getPool(),
     "SELECT Locations.locationId, locationName, GROUP_CONCAT( locationAlias SEPARATOR '|' ) AS locationAliases, locationDescription, locationType, latitude, longitude FROM Locations LEFT JOIN LocationAliases ON Locations.locationId = LocationAliases.locationId WHERE locationName = :locationName OR locationAlias = :locationName GROUP BY Locations.locationId"
@@ -763,6 +762,7 @@ const geocodeLocation = async ( locationName: string ): Promise<Location | undef
   const saveLocationAlias = prepareStatement( await getPool(), insertLocationAliasSql )
   let location = await getLocation.get( { locationName } )
   if ( location === undefined ) {
+    console.log( `Geocoding '${locationName}'` )
     const response = await fetch(
       `https://nominatim.openstreetmap.org/search?format=json&city=${encodeURIComponent( locationName )}&countrycodes=gb&layer=address&addressdetails=1`
     )
