@@ -575,7 +575,7 @@ const updateMeets = async ( force: boolean ) => {
   console.log( "Updating meets" )
 
   const pool = await getPool()
-  const selectMeets = prepareStatement<unknown[],Meet>( pool, "SELECT * FROM Meets WHERE date > CURDATE()" )
+  const selectMeets = prepareStatement<unknown[],Meet>( pool, "SELECT * FROM Meets WHERE date >= DATE_FORMAT(CURDATE(), '%Y-%m-01')" )
   const meets = await selectMeets.all()
   const meetsMap = new Map<Meet["id"],Meet>( meets.map( m => ( [ m.id, m ] ) ) )
   const fetchedMeets = new Set<Meet["id"]>()
