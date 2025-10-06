@@ -149,7 +149,7 @@ CREATE TABLE `Meets` (
   `level` int(11) NOT NULL,
   `type` varchar(16) NOT NULL,
   `contact` varchar(128) DEFAULT NULL,
-  `email` varchar(32) DEFAULT NULL,
+  `email` varchar(128) DEFAULT NULL,
   `created` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
   PRIMARY KEY (`id`)
