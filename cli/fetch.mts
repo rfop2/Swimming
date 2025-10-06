@@ -33,6 +33,7 @@ import {
   fetchPages,
   runTransaction,
   fetchPageBrowser,
+  closeBrowser,
 } from "lib"
 
 import type {
@@ -626,9 +627,14 @@ const updateMeets = async ( force: boolean ) => {
         console.log( "New meet", meet )
       }
       if ( fetchMeet || force ) {
+        try {
         await updateMeet( meet, force )
         // console.log( meet )
         await saveMeets.run( meet )
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        } catch ( error ) {
+          console.log( `Unable to update meet '${meet.name}` )
+        }
       }
     }
 
@@ -713,6 +719,7 @@ interface CliOptions {
   } catch ( error ) {
     console.error( "Error in script", error )
   } finally {
+    await closeBrowser()
     closePool()
   }
 } )().catch( ( error ) => {

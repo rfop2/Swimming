@@ -5,6 +5,7 @@ import { differenceInDays, differenceInHours, format, parse } from "date-fns"
 import type { AnyNode } from "domhandler"
 import type { Cheerio, CheerioAPI } from "cheerio"
 import { getPool, prepareStatement } from "./database.js"
+import { getBrowserPage } from "./puppeteer.js"
 
 export const BASE_URL = "https://www.swimmingresults.org"
 
@@ -458,24 +459,7 @@ export const fetchPages = async ( pages: Map<string,PageInfo>, cacheTime: number
 }
 
 export const fetchPageBrowser = async ( pageInfo: PageInfo, cacheTime: number = DEFAULT_CACHE_TIME ) => {
-  const puppeteer = await import( "puppeteer" ) // Dynamic import
-
-  const proxy = "http://proxy-server.scraperapi.com:8001"
-  const username = "scraperapi"
-  const password = process.env.SCRAPER_API_KEY
-  let page
-  if ( !page ) {
-    const browser = await puppeteer.launch( {
-      headless: true,
-      args: [
-        `--proxy-server=${proxy}`,
-        "--ignore-certificate-errors",
-      ]
-    } )
-    page = await browser.newPage()
-    page.setDefaultNavigationTimeout( 120_000 )
-    await page.authenticate( { username, password: password as string } )
-  }
+  const page = await getBrowserPage()
   const contentFile = CACHE_DIR + "/" + pageInfo.label
   console.log( `Processing ${pageInfo.label} -> ${pageInfo.url}` )
   const cachedContent = await loadCachedPage( contentFile, cacheTime )
