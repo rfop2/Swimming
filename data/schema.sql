@@ -27,6 +27,23 @@ CREATE DATABASE /*!32312 IF NOT EXISTS*/ `swimming` /*!40100 DEFAULT CHARACTER S
 USE `swimming`;
 
 --
+-- Table structure for table `ClubMeets`
+--
+
+DROP TABLE IF EXISTS `ClubMeets`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `ClubMeets` (
+  `clubId` varchar(16) NOT NULL,
+  `meetId` varchar(8) NOT NULL,
+  PRIMARY KEY (`clubId`,`meetId`) USING BTREE,
+  KEY `idx_meetId` (`meetId`) USING BTREE,
+  CONSTRAINT `ClubMeets_ibfk_1` FOREIGN KEY (`clubId`) REFERENCES `Clubs` (`clubId`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `ClubMeets_ibfk_2` FOREIGN KEY (`meetId`) REFERENCES `Meets` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
 -- Table structure for table `ClubSwimmers`
 --
 
