@@ -245,14 +245,10 @@ const DEFAULT_CACHE_TIME = Number( process.env.PAGE_CACHE_TIME ?? 24 )
 const MIN_FETCH_INTERVAL = Number( process.env.MIN_FETCH_INTERVAL ?? 0 )
 const MAX_FETCH_INTERVAL = Number( process.env.MAX_FETCH_INTERVAL ?? 0 )
 
-export const fetchPage = async ( pageInfo: PageInfo, cacheTime: number = DEFAULT_CACHE_TIME ) => {
+const loadCachedPage = async ( contentFile: string, cacheTime: number ) => {
   // Dynamic import to avoid browser issues
-  const { stat, readFile, writeFile } = await import( "fs/promises" )
-  const seedrandom = await import( "seedrandom" ) // Dynamic import
-  const rng = seedrandom.default()
+  const { stat, readFile } = await import( "fs/promises" )
 
-  const contentFile = CACHE_DIR + "/" + pageInfo.label
-  console.log( `Processing ${pageInfo.label} -> ${pageInfo.url}` )
   try {
     const stats = await stat( contentFile )
     // Page has been cached
@@ -267,12 +263,44 @@ export const fetchPage = async ( pageInfo: PageInfo, cacheTime: number = DEFAULT
     if ( error instanceof Error && ( error as NodeJS.ErrnoException ).code ) {
       const err = error as NodeJS.ErrnoException
       if ( err.code !== "ENOENT" ) {
-        console.error( `Error code: ${err.code} - ${err.message}` )
+        console.error( `Unable to read file '${contentFile}': ${err.code} - ${err.message}` )
       }
     } else {
       console.error( "Unknown error:", error )
     }
   }
+}
+
+const saveCachedPage = async ( contentFile: string, content: string ) => {
+  // Dynamic import to avoid browser issues
+  const { writeFile } = await import( "fs/promises" )
+  const seedrandom = await import( "seedrandom" ) // Dynamic import
+  const rng = seedrandom.default()
+
+  try {
+    await writeFile( contentFile, content )
+    if ( MAX_FETCH_INTERVAL ) {
+      const timeout = MIN_FETCH_INTERVAL + ( rng() * ( MAX_FETCH_INTERVAL - MIN_FETCH_INTERVAL ) )
+      console.log( `Sleeping for ${timeout.toFixed( 2 )} seconds` )
+      await sleep( timeout )
+    }
+  } catch ( error ) {
+    if ( error instanceof Error && ( error as NodeJS.ErrnoException ).code ) {
+      const err = error as NodeJS.ErrnoException
+      console.error( `Unable to write file '${contentFile}': ${err.code} - ${err.message}` )
+    } else {
+      console.error( "Unknown error:", error )
+    }
+    throw error
+  }
+}
+
+export const fetchPage = async ( pageInfo: PageInfo, cacheTime: number = DEFAULT_CACHE_TIME ) => {
+  const contentFile = CACHE_DIR + "/" + pageInfo.label
+  console.log( `Processing ${pageInfo.label} -> ${pageInfo.url}` )
+  const cachedContent = await loadCachedPage( contentFile, cacheTime )
+  if ( cachedContent )
+    return cachedContent
   try {
     process.stdout.write( `Fetching ${pageInfo.url}` )
     const headers = new Headers( {
@@ -313,12 +341,7 @@ export const fetchPage = async ( pageInfo: PageInfo, cacheTime: number = DEFAULT
       throw new Error( `Request failed: ${response.status} (${response.statusText})` )
     }
     const content = await response.text()
-    await writeFile( contentFile, content )
-    if ( MAX_FETCH_INTERVAL ) {
-      const timeout = MIN_FETCH_INTERVAL + ( rng() * ( MAX_FETCH_INTERVAL - MIN_FETCH_INTERVAL ) )
-      console.log( `Sleeping for ${timeout.toFixed( 2 )} seconds` )
-      await sleep( timeout )
-    }
+    await saveCachedPage( contentFile, content )
     return content
   } catch ( error ) {
     console.error( `\nFailed to fetch ${pageInfo.url}`, error )
@@ -432,6 +455,46 @@ export const fetchPages = async ( pages: Map<string,PageInfo>, cacheTime: number
     }
   }
   return responses
+}
+
+export const fetchPageBrowser = async ( pageInfo: PageInfo, cacheTime: number = DEFAULT_CACHE_TIME ) => {
+  const puppeteer = await import( "puppeteer" ) // Dynamic import
+
+  const proxy = "http://proxy-server.scraperapi.com:8001"
+  const username = "scraperapi"
+  const password = process.env.SCRAPER_API_KEY
+  let page
+  if ( !page ) {
+    const browser = await puppeteer.launch( {
+      headless: true,
+      args: [
+        `--proxy-server=${proxy}`,
+        "--ignore-certificate-errors",
+      ]
+    } )
+    page = await browser.newPage()
+    page.setDefaultNavigationTimeout( 120_000 )
+    await page.authenticate( { username, password: password as string } )
+  }
+  const contentFile = CACHE_DIR + "/" + pageInfo.label
+  console.log( `Processing ${pageInfo.label} -> ${pageInfo.url}` )
+  const cachedContent = await loadCachedPage( contentFile, cacheTime )
+  if ( cachedContent )
+    return cachedContent
+  try {
+    process.stdout.write( `Fetching ${pageInfo.url}` )
+    const timer = new Timer()
+    timer.start()
+    await page.goto( pageInfo.url.toString(), { waitUntil: "networkidle2" } )
+    const content = await page.content()
+    process.stdout.write( ` - ${timer.elapsedSeconds().toFixed( 2 )}\n` )
+    timer.stop()
+    await saveCachedPage( contentFile, content )
+    return content
+  } catch ( error ) {
+    console.error( `\nFailed to fetch ${pageInfo.url}`, error )
+    throw error
+  }
 }
 
 type RowFunction = ( arg0: CheerioAPI, arg1: Cheerio<AnyNode> ) => Record<string,string>
@@ -720,7 +783,6 @@ const geocodeLocation = async ( locationName: string ): Promise<Location | undef
       `https://nominatim.openstreetmap.org/search?format=json&city=${encodeURIComponent( locationName )}&countrycodes=gb&layer=address&addressdetails=1`
     )
     const osmLocations = await response.json()
-    console.log( osmLocations )
     if ( osmLocations && osmLocations.length > 0 ) {
       osmLocations.sort( ( a: { importance: number }, b: { importance: number } ) => Number( b.importance ) - Number( a.importance ) )
       const osmLocation = osmLocations[0]

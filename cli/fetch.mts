@@ -32,6 +32,7 @@ import {
   closePool,
   fetchPages,
   runTransaction,
+  fetchPageBrowser,
 } from "lib"
 
 import type {
@@ -564,7 +565,7 @@ const updateMeet = async ( meet: Partial<Meet>, force: boolean ) => {
     url: new URL( `${BASE_URL}${meetsBaseUrl}${meet.link}` ),
     type: "meet"
   }
-  const content = await fetchPage( page, force ? 0 : undefined )
+  const content = await fetchPageBrowser( page, force ? 0 : undefined )
   const $ = cheerio.load( content )
 
   await parseMeet( page, $, meet )
