@@ -146,6 +146,23 @@ CREATE TABLE `Locations` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Table structure for table `Logs`
+--
+
+DROP TABLE IF EXISTS `Logs`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `Logs` (
+  `logId` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `logCategory` varchar(16) NOT NULL,
+  `logType` varchar(16) NOT NULL,
+  `logText` varchar(255) NOT NULL,
+  `logTime` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`logId`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
 -- Table structure for table `Meets`
 --
 

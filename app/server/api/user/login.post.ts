@@ -59,6 +59,9 @@ export default eventHandler( async ( event ) => {
   try {
     const session = await lucia.createSession( existingUser.id, {} )
     appendHeader( event, "Set-Cookie", lucia.createSessionCookie( session.id ).serialize() )
+    const ip = getRequestIP( event, { xForwardedFor: true } )
+    const insertLog = prepareStatement( await getPool(), "INSERT INTO Logs SET logCategory = 'user', logType = 'login', logText = :logText" )
+    insertLog.run( { logText: `${username} logged in, IP ${ip}, session ${session.id}` } )
   } catch ( err ) {
     console.error( "Session insert failed:", err )
   }
