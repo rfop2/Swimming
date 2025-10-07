@@ -1,13 +1,15 @@
 <script setup lang="ts">
-  import { XMarkIcon, CheckCircleIcon, ExclamationCircleIcon, InformationCircleIcon } from "@heroicons/vue/20/solid"
-  import { XCircleIcon } from "@heroicons/vue/24/outline"
-  import { useAlert } from "~/composables/useAlert"
+  import {
+    XMarkIcon,
+    CheckCircleIcon,
+    XCircleIcon,
+    ExclamationCircleIcon,
+    InformationCircleIcon,
+  } from "@heroicons/vue/20/solid"
 
   const { alerts, dismissAlert } = useAlert()
 
-  // Tailwind classes and icons per alert type
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const typeClasses: Record<string, any> = {
+  const typeClasses = {
     success: {
       bg: "bg-green-50",
       text: "text-green-800",
@@ -17,16 +19,6 @@
       buttonText: "text-green-500",
       buttonHover: "hover:bg-green-100",
       buttonFocus: "focus-visible:ring-green-600 focus-visible:ring-offset-green-50",
-    },
-    warning: {
-      bg: "bg-yellow-50",
-      text: "text-yellow-800",
-      icon: ExclamationCircleIcon,
-      iconColor: "text-yellow-400",
-      buttonBg: "bg-yellow-50",
-      buttonText: "text-yellow-500",
-      buttonHover: "hover:bg-yellow-100",
-      buttonFocus: "focus-visible:ring-yellow-600 focus-visible:ring-offset-yellow-50",
     },
     error: {
       bg: "bg-red-50",
@@ -48,51 +40,69 @@
       buttonHover: "hover:bg-blue-100",
       buttonFocus: "focus-visible:ring-blue-600 focus-visible:ring-offset-blue-50",
     },
+    warning: {
+      bg: "bg-amber-50",
+      text: "text-amber-800",
+      icon: ExclamationCircleIcon,
+      iconColor: "text-amber-400",
+      buttonBg: "bg-amber-50",
+      buttonText: "text-amber-500",
+      buttonHover: "hover:bg-amber-100",
+      buttonFocus: "focus-visible:ring-amber-600 focus-visible:ring-offset-amber-50",
+    },
   }
 </script>
 
 <template>
-  <div class="fixed top-4 left-1/2 -translate-x-1/2 space-y-2 z-50 w-96">
+  <div class="space-y-1">
     <div
       v-for="alert in alerts"
       :key="alert.id"
-      :class="[
-        'rounded-md p-4 flex items-start shadow',
-        typeClasses[alert.type].bg
-      ]"
+      :class="['rounded-md p-4', typeClasses[alert.type].bg]"
     >
-      <div class="shrink-0">
-        <component
-          :is="typeClasses[alert.type].icon"
-          class="h-5 w-5"
-          :class="typeClasses[alert.type].iconColor"
-          aria-hidden="true"
-        />
-      </div>
-      <div
-        class="ml-3 flex-1 text-sm font-medium"
-        :class="typeClasses[alert.type].text"
-      >
-        {{ alert.message }}
-      </div>
-      <div class="ml-auto pl-3">
-        <button
-          type="button"
-          :class="[
-            'inline-flex rounded-md p-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
-            typeClasses[alert.type].buttonBg,
-            typeClasses[alert.type].buttonText,
-            typeClasses[alert.type].buttonHover,
-            typeClasses[alert.type].buttonFocus
-          ]"
-          @click="dismissAlert(alert.id)"
-        >
-          <span class="sr-only">Dismiss</span>
-          <XMarkIcon
-            class="h-5 w-5"
+      <div class="flex">
+        <!-- Icon -->
+        <div class="shrink-0">
+          <component
+            :is="typeClasses[alert.type].icon"
+            class="size-5"
+            :class="typeClasses[alert.type].iconColor"
             aria-hidden="true"
           />
-        </button>
+        </div>
+
+        <!-- Message -->
+        <div class="ml-3">
+          <p
+            class="text-sm font-medium"
+            :class="typeClasses[alert.type].text"
+          >
+            {{ alert.message }}
+          </p>
+        </div>
+
+        <!-- Dismiss button -->
+        <div class="ml-auto pl-3">
+          <div class="-mx-1.5 -my-1.5">
+            <button
+              type="button"
+              class="inline-flex rounded-md p-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+              :class="[
+                typeClasses[alert.type].buttonBg,
+                typeClasses[alert.type].buttonText,
+                typeClasses[alert.type].buttonHover,
+                typeClasses[alert.type].buttonFocus
+              ]"
+              @click="dismissAlert(alert.id)"
+            >
+              <span class="sr-only">Dismiss</span>
+              <XMarkIcon
+                class="size-5"
+                aria-hidden="true"
+              />
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
