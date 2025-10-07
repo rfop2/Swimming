@@ -11,7 +11,7 @@ export interface Alert {
 const alerts = ref<Alert[]>( [] )
 let counter = 0
 
-export function showAlert( message: string, type: AlertType = "info", duration = 5000 ) {
+export function showAlert( message: string, type: AlertType = "info", duration = 60_000 ) {
   const id = counter++
   alerts.value.push( { id, message, type } )
 
