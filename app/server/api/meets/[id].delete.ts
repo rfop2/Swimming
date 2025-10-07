@@ -4,6 +4,13 @@ import { getPool, prepareStatement, type Meet } from "lib"
 export default defineEventHandler( async ( event ) => {
   if ( !event.context.session || !event.context.user ) {
     throw createError( {
+      status: 401
+    } )
+  }
+
+  const userId = getRouterParam( event, "id" )
+  if ( userId && !Number( event.context.user.admin ) ) {
+    throw createError( {
       status: 403
     } )
   }

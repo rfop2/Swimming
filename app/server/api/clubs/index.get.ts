@@ -4,7 +4,7 @@ import { type Club, getPool, prepareStatement } from "lib"
 export default defineEventHandler( async ( event ) => {
   if ( !event.context.session || !event.context.user ) {
     throw createError( {
-      status: 403
+      status: 401
     } )
   }
 

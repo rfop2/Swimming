@@ -4,7 +4,7 @@ import { getPool, prepareStatement, type PerformanceRow } from "lib"
 export default defineEventHandler( async ( event ) => {
   if ( !event.context.session ) {
     throw createError( {
-      status: 403
+      status: 401
     } )
   }
 

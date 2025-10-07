@@ -2,7 +2,14 @@ import { format } from "date-fns"
 import { getPool, prepareStatement, runTransaction, type QualifyingRow } from "lib"
 
 export default eventHandler( async ( event ) => {
-  if ( !event.context.session ) {
+  if ( !event.context.session || !event.context.user ) {
+    throw createError( {
+      status: 401
+    } )
+  }
+
+  const userId = getRouterParam( event, "id" )
+  if ( userId && !Number( event.context.user.admin ) ) {
     throw createError( {
       status: 403
     } )
