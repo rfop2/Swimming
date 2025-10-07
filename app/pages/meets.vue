@@ -186,8 +186,8 @@
       end: Temporal.PlainDate.from( formatISO( addDays( parseISO( meet.date ), ( meet.duration ?? 1 ) - 1 ), { representation: "date" } ) ),
       duration: meet.duration as number,
       title: `${meet.level}: ${meet.name}`,
-      // color: distanceColor( meet.distance ),
-      location: `${meet.location} (~${Math.round( meet.distance || 0 )} miles)`,
+      // color: distanceColor( meet.distance ,
+      location: meet.location + ( meet.distance ? `(~${Math.round( meet.distance || 0 )} miles)` : "" ),
       description: meet.type,
       _options: {
         disableDND: true,
