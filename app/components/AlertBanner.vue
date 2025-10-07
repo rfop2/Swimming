@@ -54,7 +54,11 @@
 </script>
 
 <template>
-  <div class="space-y-1">
+  <TransitionGroup
+    name="fade-slide"
+    tag="div"
+    class="space-y-1"
+  >
     <div
       v-for="alert in alerts"
       :key="alert.id"
@@ -105,5 +109,17 @@
         </div>
       </div>
     </div>
-  </div>
+  </TransitionGroup>
 </template>
+
+<style scoped>
+.fade-slide-enter-active,
+.fade-slide-leave-active {
+  transition: all 0.3s ease;
+}
+.fade-slide-enter-from,
+.fade-slide-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+</style>
