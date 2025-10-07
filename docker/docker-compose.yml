@@ -25,8 +25,8 @@ services:
       - ./mariadb/config:/etc/mysql/mariadb.conf.d/:ro
       - ./mariadb/bootstrap:/docker-entrypoint-initdb.d:ro
       - db-data:/var/lib/mysql:rw
-    ports:
-      - "3308:3306"
+    #ports:
+      #- "3308:3306"
     environment:
       MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
       MARIADB_DATABASE: ${MARIADB_DATABASE}
