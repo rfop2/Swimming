@@ -1,5 +1,10 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 import pkg from "./package.json"
+import { createRequire } from 'module';
+
+// ESM-safe way to access Node builtins
+const require = createRequire(import.meta.url);
+const builtinModules = require('module').builtinModules;
 
 export default defineNuxtConfig( {
   devtools: { enabled: true },
@@ -40,8 +45,23 @@ export default defineNuxtConfig( {
   },
 
   vite: {
+    plugins: [
+      {
+        name: 'externalize-puppeteer',
+        enforce: 'pre',
+        resolveId(id) {
+          if (
+            id.startsWith('puppeteer') ||
+            id.startsWith('@puppeteer/') ||
+            builtinModules.includes(id)
+          ) {
+            return { id, external: true };
+          }
+        },
+      },
+    ],
     ssr: {
-      external: [ "crypto" ]
+      external: []
     }
   },
 
