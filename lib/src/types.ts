@@ -25,6 +25,7 @@ export interface Swimmer {
   updateStatus?: "pending" | "progress"
   updateType?: "basic" | "full"
   lastUpdateTime?: Date
+}
 
 export interface ExtSwimmer extends Swimmer {
   clubId: Club["clubId"]
