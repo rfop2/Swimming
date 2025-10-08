@@ -1,19 +1,12 @@
 <script lang="ts" setup>
-  import type { FetchError } from "ofetch"
-
-  const errString = ref<string | null>( null )
-
-  async function login( e: Event ) {
-    try {
-      await $fetch( "/api/user/login", {
-        method: "POST",
-        body: new FormData( e.target as HTMLFormElement )
-      } )
-      await navigateTo( "/performance" )
-    } catch ( error ) {
-      errString.value = ( error as FetchError ).message ?? null
+  onMounted( () => {
+    if ( import.meta.client ) {
+      const script = document.createElement( "script" )
+      script.src = "https://form.jotform.com/jsform/252804433335352"
+      script.async = true
+      document.getElementById( "jotform-container" )?.appendChild( script )
     }
-  }
+  } )
 </script>
 
 <template>
@@ -27,118 +20,17 @@
         style="clip-path: polygon(74.1% 44.1%, 100% 61.6%, 97.5% 26.9%, 85.5% 0.1%, 80.7% 2%, 72.5% 32.5%, 60.2% 62.4%, 52.4% 68.1%, 47.5% 58.3%, 45.2% 34.5%, 27.5% 76.7%, 0.1% 64.9%, 17.9% 100%, 27.6% 76.8%, 76.1% 97.7%, 74.1% 44.1%)"
       />
     </div>
-    <div class="mx-auto max-w-2xl text-center">
+    <div class="mx-auto mb-2 max-w-2xl text-center">
       <h2 class="text-2xl font-semibold tracking-tight text-balance text-gray-900 sm:text-3xl">
-        Contact us
+        Contact Us
       </h2>
       <p class="mt-2 text-lg/8 text-gray-600">
-        For information or other enquiries fill in the form below and we'll get back to you.
+        Please complete the form below and we will get back to you as soon as possible.
       </p>
     </div>
-    <form
-      action="#"
-      method="POST"
-      class="mx-auto mt-16 max-w-xl sm:mt-10"
-    >
-      <div class="grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-2">
-        <div>
-          <label
-            for="first-name"
-            class="block text-sm/6 font-semibold text-gray-900"
-          >First name</label>
-          <div class="mt-2.5">
-            <input
-              id="first-name"
-              type="text"
-              name="first-name"
-              autocomplete="given-name"
-              class="block w-full rounded-md bg-white px-3.5 py-2 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600"
-            >
-          </div>
-        </div>
-        <div>
-          <label
-            for="last-name"
-            class="block text-sm/6 font-semibold text-gray-900"
-          >Last name</label>
-          <div class="mt-2.5">
-            <input
-              id="last-name"
-              type="text"
-              name="last-name"
-              autocomplete="family-name"
-              class="block w-full rounded-md bg-white px-3.5 py-2 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600"
-            >
-          </div>
-        </div>
-        <div class="sm:col-span-2">
-          <label
-            for="company"
-            class="block text-sm/6 font-semibold text-gray-900"
-          >Company</label>
-          <div class="mt-2.5">
-            <input
-              id="company"
-              type="text"
-              name="company"
-              autocomplete="organization"
-              class="block w-full rounded-md bg-white px-3.5 py-2 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600"
-            >
-          </div>
-        </div>
-        <div class="sm:col-span-2">
-          <label
-            for="email"
-            class="block text-sm/6 font-semibold text-gray-900"
-          >Email</label>
-          <div class="mt-2.5">
-            <input
-              id="email"
-              type="email"
-              name="email"
-              autocomplete="email"
-              class="block w-full rounded-md bg-white px-3.5 py-2 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600"
-            >
-          </div>
-        </div>
-        <div class="sm:col-span-2">
-          <label
-            for="phone"
-            class="block text-sm/6 font-semibold text-gray-900"
-          >Phone</label>
-          <div class="mt-2.5">
-            <input
-              id="phone"
-              type="text"
-              name="phone"
-              autocomplete="phone"
-              class="block w-full rounded-md bg-white px-3.5 py-2 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600"
-            >
-          </div>
-        </div>
-        <div class="sm:col-span-2">
-          <label
-            for="message"
-            class="block text-sm/6 font-semibold text-gray-900"
-          >Message</label>
-          <div class="mt-2.5">
-            <textarea
-              id="message"
-              name="message"
-              rows="4"
-              class="block w-full rounded-md bg-white px-3.5 py-2 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600"
-            />
-          </div>
-        </div>
-      </div>
-      <div class="mt-10">
-        <button
-          type="submit"
-          class="block w-full rounded-md bg-indigo-600 px-3.5 py-2.5 text-center text-sm font-semibold text-white shadow-xs hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-        >
-          Submit
-        </button>
-      </div>
-    </form>
+    <div
+      id="jotform-container"
+      class="mx-auto max-w-2xl text-center"
+    />
   </div>
 </template>
