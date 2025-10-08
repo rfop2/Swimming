@@ -5,7 +5,7 @@
   import { ArrowPathIcon, CheckIcon, ClockIcon, ExclamationTriangleIcon, PencilSquareIcon, TrashIcon, UserPlusIcon, XCircleIcon, XMarkIcon } from "@heroicons/vue/24/outline"
 
   import type { FetchError } from "ofetch"
-  import { COUNTIES, NATIONALITIES, REGIONS, type Club, type Swimmer, type UserClub } from "lib"
+  import { COUNTIES, NATIONALITIES, NATIONALITY, REGIONS, type Club, type ExtSwimmer, type Swimmer, type UserClub } from "lib"
   import { useDebounceAsync } from "~/composables/useDebounceAsync"
   import type { User } from "lucia"
   import { format } from "date-fns"
@@ -150,7 +150,7 @@
 
   const swimmerData = ref<string | null>( null )
 
-  const foundSwimmer = ref<Partial<Swimmer>>( {} )
+  const foundSwimmer = ref<Partial<ExtSwimmer>>( {} )
 
   const addSwimmer = () => {
     const newSwimmer = {
@@ -321,6 +321,22 @@
       if ( genderCell ) {
         const gender = genderCell.textContent.toLocaleLowerCase()
         foundSwimmer.value.gender = gender === "female" ? gender : "male"
+      }
+      const clubCell = doc.querySelector( "#outerWrapper > div:nth-child(2) > div.boxRepeat.rankingsContent > div > div:nth-child(1) > div > table:nth-child(3) > tbody > tr:nth-child(4) > td:nth-child(2)" )
+      if ( clubCell ) {
+        const clubName = clubCell.textContent
+        const clubs = await $fetch( `/api/clubs?search=${encodeURIComponent( clubName )}` )
+        if ( clubs.length === 1 ) {
+          foundSwimmer.value.county = clubs[0].clubCounty
+          foundSwimmer.value.region = clubs[0].clubRegion
+          foundSwimmer.value.clubId = clubs[0].clubId
+        }
+      }
+
+      const countryCell = doc.querySelector( "#outerWrapper > div:nth-child(2) > div.boxRepeat.rankingsContent > div > div:nth-child(1) > div > table:nth-child(3) > tbody > tr:nth-child(5) > td:nth-child(2)" )
+      if ( countryCell ) {
+        const country = countryCell.textContent.toLocaleUpperCase()
+        foundSwimmer.value.nationality = NATIONALITY[country]
       }
       console.log( "N", foundSwimmer )
     }

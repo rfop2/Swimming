@@ -1,5 +1,5 @@
 import { hash } from "@node-rs/argon2"
-import { getPool, prepareStatement, runTransaction, type UserClub, type Swimmer } from "lib"
+import { getPool, prepareStatement, runTransaction, type UserClub, type ExtSwimmer } from "lib"
 import type { PoolConnection } from "mysql2/promise"
 
 interface UserData {
@@ -10,7 +10,7 @@ interface UserData {
   password: string
   confirmPassword: string
   clubs: Array<UserClub>
-  swimmers: Array<Swimmer>
+  swimmers: Array<ExtSwimmer>
 }
 
 export default eventHandler( async ( event ) => {
@@ -121,9 +121,23 @@ export default eventHandler( async ( event ) => {
         active      = :active
       ;`
 
+      const insertClubSwimmerSql =
+        `INSERT IGNORE INTO ClubSwimmers (
+          clubId,
+          swimmerId
+        )
+        VALUES (
+          :clubId,
+          :swimmerId
+        );`
+
       const insertSwimmer = prepareStatement( conn, insertSwimmerSql )
+      const insertClubSwimmer = prepareStatement( conn, insertClubSwimmerSql )
       for ( const swimmer of userData.swimmers ) {
         await insertSwimmer.run( swimmer )
+        if ( swimmer.clubId ) {
+          await insertClubSwimmer.run( { clubId: swimmer.clubId, swimmerId: swimmer.id } )
+        }
       }
 
       const insertUserSwimmerSql =
