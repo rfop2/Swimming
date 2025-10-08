@@ -23,10 +23,6 @@ export default defineNuxtConfig( {
     "@nuxtjs/seo",
   ],
 
-  plugins: [
-    "~/plugins/temporal.client.ts",
-  ],
-
   app: {
     head: {
       meta: [
