@@ -12,23 +12,15 @@ const structuredData = ref([])
 const selections = ref([])
 const activeGender = ref('Male')
 const activeStroke = ref('All')
+const activeCourse = ref('lc')
+
+const courses = [
+    { value: 'lc', label: 'Long Course' },
+    { value: 'sc', label: 'Short Course' }
+]
 
 const genders = ['Male', 'Female']
 const editingTime = ref({}) // { [eventIndex_age]: true/false }
-
-function startEditing(eventIdx, age) {
-    editingTime.value[`${eventIdx}_${age}`] = true
-}
-
-function finishEditing(eventIdx, age, e) {
-    const val = e.target.value.trim()
-    structuredData.value.find((item, idx) => idx === eventIdx && item.age === age).time = val
-    editingTime.value[`${eventIdx}_${age}`] = false
-}
-
-function handleKey(e, eventIdx, age) {
-    if (e.key === 'Enter') e.target.blur()
-}
 
 onMounted(() => {
     const stored = sessionStorage.getItem('parsedData')
@@ -47,13 +39,16 @@ const strokes = computed(() => {
 })
 
 const filteredData = computed(() => {
-    const filtered = structuredData.value
+    let filtered = structuredData.value
         .filter(item =>
             item.gender?.toLowerCase() === activeGender.value.toLowerCase()
         )
         .filter(item =>
             activeStroke.value === 'All' || item.stroke === activeStroke.value
         )
+    if (selections.value?.course?.value === 'both') {
+        filtered = filtered.filter(item => item.course === activeCourse.value)
+    }
 
     return filtered.reduce((acc, item) => {
         if (!acc[item.event]) acc[item.event] = []
@@ -140,6 +135,12 @@ async function save() {
                     <button v-for="s in strokes" :key="s" @click="activeStroke = s"
                         :class="[activeStroke === s ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700', 'px-4 py-2 rounded font-semibold']">
                         {{ s }}
+                    </button>
+                </div>
+                <div v-if="selections.course.value === 'both'" class="flex space-x-4 mb-6">
+                    <button v-for="c in courses" :key="c.value" @click="activeCourse = c.value"
+                        :class="[activeCourse === c.value ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700', 'px-4 py-2 rounded font-semibold']">
+                        {{ c.label }}
                     </button>
                 </div>
                 <div class="space-x-4 mb-6">
