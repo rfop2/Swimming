@@ -63,8 +63,12 @@ export default defineNuxtConfig( {
   },
 
   runtimeConfig: {
+    apiInternalBase: process.env.API_INTERNAL_BASE || "http://localhost:3000",
     public: {
       appVersion: pkg.version,
+      apiBase: process.env.NODE_ENV === "production"
+        ? process.env.API_BASE || "https://swim.racing/api"
+        : "",
     },
   },
 

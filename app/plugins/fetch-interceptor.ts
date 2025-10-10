@@ -1,34 +1,42 @@
 // ~/plugins/fetch-interceptor.ts
-import { ofetch, type FetchContext, type FetchResponse } from "ofetch"
-import { showAlert } from "~/composables/useAlert"
-
 export default defineNuxtPlugin( () => {
-  // 1) Capture Nuxt's current $fetch and its exact type
-  const _currentFetch = $fetch
-  type NuxtFetch = typeof _currentFetch
+  const config = useRuntimeConfig()
+  const isDev = import.meta.dev
 
-  // 2) Build a wrapped instance with your interceptors
-  const wrapped = ofetch.create( {
-    async onRequest( context: FetchContext ) {
-      if ( typeof context.request === "string" && context.request.startsWith( "/api" ) ) {
-        context.options.credentials = "include"
-      } else {
-        context.options.credentials = "omit"
-      }
-    },
+  // 1) Capture the original function and its exact type
+  const originalFetch = globalThis.$fetch
+  type NuxtFetch = typeof originalFetch
+
+  // 2) Build a wrapped callable with the SAME call signature
+  const wrapped = ( async ( ...args: Parameters<NuxtFetch> ) => {
+    // args is [request, options?]
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    async onResponseError( ctx: FetchContext & { response: FetchResponse<any> } ) {
-      const { request, response } = ctx
+    let [ request, options ] = args as [unknown, any]
 
-      // Only handle your app API (ignore external URLs)
-      if ( typeof request !== "string" || !request.startsWith( "/api" ) ) {
-        // rethrow so callers still see the error
-        throw ctx.error ?? new Error( `Fetch error ${response?.status}` )
+    // Pre-request logic (only for your app API)
+    if ( typeof request === "string" && request.startsWith( "/api" ) ) {
+      // In dev: don't rewrite; let Nitro resolve /api internally (SSR-safe)
+      if ( !isDev ) {
+        const base = import.meta.server
+          ? ( config.apiInternalBase || "" )
+          : ( config.public.apiBase || "" )
+        if ( base ) request = `${base}${request}`
       }
 
-      const status = response?.status
+      options = { ...( options || {} ), credentials: "include" }
+    } else {
+      options = { ...( options || {} ), credentials: "omit" }
+    }
 
-      if ( import.meta.client ) {
+    try {
+      // Call the original $fetch to preserve all SSR/Nitro behavior
+      // @ts-expect-error - types are preserved via NuxtFetch; arguments are compatible
+      return await originalFetch( request, options )
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch ( error: any ) {
+      // Post-error handling
+      const status = error?.response?.status
+      if ( typeof request === "string" && request.startsWith( "/api" ) && import.meta.client ) {
         if ( status === 401 ) {
           showAlert( "Your session has expired. Please log in again.", "warning" )
           navigateTo( "/login" )
@@ -36,12 +44,13 @@ export default defineNuxtPlugin( () => {
           showAlert( "Access denied. You do not have permission to view this resource.", "error" )
         }
       }
+      throw error
+    }
+  } ) as NuxtFetch
 
-      // SSR: just propagate the error
-      throw ctx.error ?? new Error( `Fetch error ${status}` )
-    },
-  } ) as unknown as NuxtFetch
+  // 3) Preserve static members (raw, create, native, defaults, etc.)
+  Object.assign( wrapped, originalFetch )
 
-  // 3) Replace global $fetch with the wrapped one
-  globalThis.$fetch = wrapped
+  // 4) Replace the global with the properly-typed wrapped function
+  ;( globalThis as { $fetch: NuxtFetch } ).$fetch = wrapped
 } )
