@@ -22,9 +22,8 @@ export interface Swimmer {
   county: string
   squad: string
   active: number
-  updateStatus?: "pending" | "progress"
-  updateType?: "basic" | "full"
   lastUpdateTime?: Date
+  lastUpdateType?: string
 }
 
 export interface ExtSwimmer extends Swimmer {
@@ -178,4 +177,16 @@ export interface QualifyingRow {
   age: string
   timeString: string
   time: number
+}
+
+export interface Update {
+  id: number
+  creatorId?: string
+  updateType: string
+  targetType?: string
+  targetId?: string
+  updateOptions?: string
+  updateStatus: string
+  startTime?: Date
+  endTime?: Date
 }

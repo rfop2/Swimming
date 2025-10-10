@@ -367,10 +367,31 @@ CREATE TABLE `Swimmers` (
   `region` varchar(16) DEFAULT NULL,
   `county` varchar(16) DEFAULT NULL,
   `active` tinyint(1) NOT NULL DEFAULT 1,
-  `updateStatus` enum('pending','progress','error') DEFAULT NULL,
-  `updateType` varchar(16) DEFAULT NULL,
   `lastUpdateTime` timestamp NULL DEFAULT NULL,
   `lastUpdateType` varchar(16) DEFAULT NULL,
+  `created` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `Updates`
+--
+
+DROP TABLE IF EXISTS `Updates`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `Updates` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `creatorId` varchar(8) DEFAULT NULL,
+  `updateType` varchar(16) NOT NULL,
+  `targetType` enum('swimmer','club','') DEFAULT NULL,
+  `targetId` varchar(8) DEFAULT NULL,
+  `updateStatus` enum('pending','progress','cancelled','error') NOT NULL DEFAULT 'pending',
+  `updateOptions` varchar(255) DEFAULT NULL,
+  `startTime` timestamp NULL DEFAULT NULL,
+  `endTime` timestamp NULL DEFAULT NULL,
   `created` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
   PRIMARY KEY (`id`)
