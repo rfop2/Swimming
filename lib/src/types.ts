@@ -179,14 +179,17 @@ export interface QualifyingRow {
   time: number
 }
 
-export interface Update {
-  id: number
+export interface Task {
+  taskId: number
   creatorId?: string
-  updateType: string
+  taskType: string
+  taskOptions?: string
   targetType?: string
   targetId?: string
-  updateOptions?: string
-  updateStatus: string
+  targetDescription?: string
+  taskSchedule: string
+  taskStatus: string
+  taskResult: string
   startTime?: Date
   endTime?: Date
 }
