@@ -193,22 +193,6 @@
     editing.value = null
   }
 
-  const fetchSwimmer = async ( swimmerIndex: number, cancel: boolean = false ) => {
-    const swimmer = userSwimmers.value[swimmerIndex].value
-    try {
-      await $fetch(
-        `/api/swimmers/${swimmer.id}`,
-        {
-          method: "PATCH",
-          body: JSON.stringify( { action: cancel ? "cancel" : "basic" } ),
-        }
-      )
-    } catch ( error ) {
-      console.error( "Error", error )
-      throw createError( error as FetchError )
-    }
-  }
-
   const deleteSwimmer = () => {
     if ( deleting.value !== null ) {
       removeSwimmer( deleting.value )
