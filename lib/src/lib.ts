@@ -1,5 +1,5 @@
 import { addMilliseconds, differenceInYears, endOfYear, format, parseISO } from "date-fns"
-import { LatLon, Swimmer } from "./types.js"
+import type { LatLon, Swimmer } from "./types.js"
 
 const debugEnabled = !!( process.env?.DEBUG === "true" ) || false
 
@@ -51,16 +51,16 @@ export const timeToSeconds = ( time: string ): number => {
   return totalSeconds
 }
 
-export const secondsToTime = ( seconds: number, decimals: number=2 ): string => {
+export const secondsToTime = ( seconds: number, decimals: number = 2 ): string => {
   // Calculate the whole seconds and fractional part
   const wholeSeconds = Math.floor( seconds )
-  const milliseconds = Math.round( ( seconds - wholeSeconds ) * Math.pow( 10, decimals ) ) * Math.pow( 10, 3-decimals )
+  const milliseconds = Math.round( ( seconds - wholeSeconds ) * Math.pow( 10, decimals ) ) * Math.pow( 10, 3 - decimals )
 
   // Add the given number of milliseconds to the epoch start (1970-01-01T00:00:00Z)
   const date = addMilliseconds( new Date( 0 ), wholeSeconds * 1000 + milliseconds )
 
   // Format the date based on the total seconds
-  const timeFormat = `${seconds >= 60 ? 'm:ss' : 's'}.${'S'.repeat( decimals )}`
+  const timeFormat = `${seconds >= 60 ? "m:ss" : "s"}.${"S".repeat( decimals )}`
   return format( date, timeFormat )
 }
 
