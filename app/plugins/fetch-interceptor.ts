@@ -1,8 +1,5 @@
 // ~/plugins/fetch-interceptor.ts
 export default defineNuxtPlugin( () => {
-  const config = useRuntimeConfig()
-  const isDev = import.meta.dev
-
   // 1) Capture the original function and its exact type
   const originalFetch = globalThis.$fetch
   type NuxtFetch = typeof originalFetch
@@ -10,19 +7,11 @@ export default defineNuxtPlugin( () => {
   // 2) Build a wrapped callable with the SAME call signature
   const wrapped = ( async ( ...args: Parameters<NuxtFetch> ) => {
     // args is [request, options?]
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let [ request, options ] = args as [unknown, any]
+    const request = args[0]
+    let options = args[1]
 
     // Pre-request logic (only for your app API)
     if ( typeof request === "string" && request.startsWith( "/api" ) ) {
-      // In dev: don't rewrite; let Nitro resolve /api internally (SSR-safe)
-      if ( !isDev ) {
-        const base = import.meta.server
-          ? ( config.apiInternalBase || "" )
-          : ( config.public.apiBase || "" )
-        if ( base ) request = `${base}${request}`
-      }
-
       options = { ...( options || {} ), credentials: "include" }
     } else {
       options = { ...( options || {} ), credentials: "omit" }
@@ -30,7 +19,6 @@ export default defineNuxtPlugin( () => {
 
     try {
       // Call the original $fetch to preserve all SSR/Nitro behavior
-      // @ts-expect-error - types are preserved via NuxtFetch; arguments are compatible
       return await originalFetch( request, options )
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch ( error: any ) {
