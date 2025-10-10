@@ -2,7 +2,7 @@
   import { useForm, useFieldArray } from "vee-validate"
   import * as yup from "yup"
   import { toTypedSchema } from "@vee-validate/yup"
-  import { ArrowPathIcon, CheckIcon, ClockIcon, ExclamationTriangleIcon, PencilSquareIcon, TrashIcon, UserPlusIcon, XCircleIcon, XMarkIcon } from "@heroicons/vue/24/outline"
+  import { CheckIcon, ExclamationTriangleIcon, PencilSquareIcon, TrashIcon, UserPlusIcon, XCircleIcon, XMarkIcon } from "@heroicons/vue/24/outline"
 
   import type { FetchError } from "ofetch"
   import { COUNTIES, NATIONALITIES, NATIONALITY, REGIONS, type Club, type ExtSwimmer, type Swimmer, type UserClub } from "lib"
@@ -195,7 +195,7 @@
   }
 
   const fetchSwimmer = async ( swimmerIndex: number, cancel: boolean = false ) => {
-    const swimmer = fields.value[swimmerIndex].value
+    const swimmer = userSwimmers.value[swimmerIndex].value
     try {
       await $fetch(
         `/api/swimmers/${swimmer.id}`,
