@@ -37,7 +37,11 @@ export const usePersisted = <T, M extends PersistedMode = "state">(
     watch(
       state,
       ( val ) => {
-        localStorage.setItem( key, JSON.stringify( val ) )
+        if ( val !== undefined ) {
+          localStorage.setItem( key, JSON.stringify( val ) )
+        } else {
+          localStorage.clearItem( key )
+        }
       },
       { deep: true }
     )
