@@ -184,12 +184,12 @@ export interface Task {
   creatorId?: string
   taskType: string
   taskOptions?: string
-  targetType?: string
+  targetType: string
   targetId?: string
   targetDescription?: string
-  taskSchedule: string
-  taskStatus: string
-  taskResult: string
+  taskSchedule?: string
+  taskStatus?: string
+  taskResult?: string
   startTime?: Date
   endTime?: Date
 }
