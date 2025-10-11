@@ -56,6 +56,8 @@
 
   const activeUserNavigation = computed( () => userNavigation.value.filter( item => !item.condition || ( item.condition )() ) )
 
+  useTasksCheck()
+
   async function logout() {
     await $fetch( "/api/user/logout", {
       method: "POST"
