@@ -8,8 +8,16 @@ export default defineEventHandler( async ( event ) => {
     } )
   }
 
-  const userId = getRouterParam( event, "id" )
-  if ( userId && !Number( event.context.user.admin ) ) {
+  const userId = getRouterParam( event, "id" ) ?? event.context.session.userId
+  if ( !userId ) {
+    throw createError( {
+      message: "No user id found",
+      status: 400
+    } )
+  }
+
+  const isAdmin = Number( event.context.user.admin )
+  if ( userId !== event.context.user.id && !isAdmin ) {
     throw createError( {
       status: 403
     } )
