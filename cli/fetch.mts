@@ -43,6 +43,7 @@ import type {
   PageInfo,
   PoolConnection,
   Swimmer,
+  SwimmerUpdateType,
   Task
 } from "lib"
 import { Command } from "commander"
@@ -530,25 +531,25 @@ const updatePerformance = async ( swimmer: Swimmer ) => {
   }, swimmer )
 }
 
-const updateSwimmerData = async ( swimmer: Swimmer, relative: boolean, force: boolean ) => {
+const updateSwimmerData = async ( swimmer: Swimmer, updateType: SwimmerUpdateType, force: boolean ) => {
   console.log( `Updating data for swimmer '${swimmer.fullName}'` )
 
   const individualData = await updateIndividual( swimmer, force )
 
+  if ( updateType === "results" || updateType === "rankings") {
   // await updateResults( swimmer, individualData )
   await updateResultsBatch( swimmer, individualData, force )
 
-  const updateType = relative ? "full" : "basic"
-  if ( updateType === "full" ) {
+  if ( updateType === "rankings" ) {
     await updateRankings( swimmer, individualData, force )
     await updatePerformance( swimmer )
   }
-
+  }
   const swimmerLastUpdate = prepareStatement(
     await getPool(),
-    "UPDATE Swimmers SET lastUpdateTime = NOW(), lastUpdateType = :type WHERE id = :id",
+    "UPDATE Swimmers SET lastUpdateTime = NOW(), lastUpdateType = :updateType WHERE id = :id",
   )
-  await swimmerLastUpdate.run( { ...swimmer, type: updateType } )
+  await swimmerLastUpdate.run( { ...swimmer, updateType } )
 }
 
 const updateMeet = async ( meet: Partial<Meet>, force: boolean ) => {
@@ -656,7 +657,7 @@ const updateMeets = async ( force: boolean ) => {
 interface CliOptions {
   mode: "swimmers" | "meets" | "queue"
   ids?: string[]
-  relative: boolean
+  update: SwimmerUpdateType
   force: boolean
 }
 
@@ -671,7 +672,7 @@ interface CliOptions {
 
   program.option( "-m, --mode <mode>", "fetch mode 'swimmers', 'meets' or 'queue'" )
   program.option( "-i, --ids <ids...>", "in swimmers mode, fetch data for specified swimmers only" )
-  program.option( "-r, --relative", "in swimmers mode, fetch data relative to other swimmers alongside basic info", false )
+  program.option( "-u, --update", "in swimmers mode, what to update. Options are 'individual', 'results' or 'rankings'", "results" )
   program.option( "-f, --force", "force update, ignoring caching time", false )
 
   // Parse argv
@@ -694,7 +695,7 @@ interface CliOptions {
         if ( !options.ids || options.ids.find( s => s === swimmer.id ) ) {
           swimmer.birthday = format( new Date( swimmer.birthday ), "yyyy-MM-dd" )
           try {
-            await updateSwimmerData( swimmer, !!options.relative, options.force )
+            await updateSwimmerData( swimmer, options.update, options.force )
           } catch ( e ) {
             console.error( "Unable to fetch swimmer data, skipping", e )
             await swimmerUpdateError.run( swimmer )
@@ -743,7 +744,13 @@ interface CliOptions {
                   swimmer.birthday = format( new Date( swimmer.birthday ), "yyyy-MM-dd" )
                   const taskOptions = new Set<string>( (task.taskOptions ?? "").split( "," ) )
                   await taskStart.run( task )
-                  await updateSwimmerData( swimmer, taskOptions.has( "full" ), taskOptions.has( "force") )
+                  const updateType = taskOptions.has( "individual" ) ? "individual" :
+                  ( taskOptions.has( "results" ) ? "results" :
+                  ( taskOptions.has( "rankings" ) ? "rankings" : "" ) )
+                  if ( !updateType ) {
+                    throw new Error( `Can't find update type in task ${task.taskId}` )
+                  }
+                  await updateSwimmerData( swimmer, updateType, taskOptions.has( "force") )
                   await taskComplete.run( task )
                   break;
                 }
@@ -753,7 +760,7 @@ interface CliOptions {
           }
         } catch ( e ) {
           console.error( "Unable to fetch swimmer data, skipping", e )
-          task.taskResult = e as string
+          task.taskResult = JSON.stringify( e )
           await taskUpdateError.run( task )
         }
       }
