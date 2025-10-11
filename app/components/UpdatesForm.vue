@@ -8,34 +8,22 @@
   const props = defineProps<{
     user: User
     swimmers: Swimmer[]
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    saveFn: ( values: any ) => void
-    reloadFn: () => void
   }>()
 
   const { tasks, createTask, createTasks, deleteTask } = useTasks()
 
   const swimmerTasks = computed( () => Object.fromEntries( props.swimmers.map( swimmer => ( [ swimmer.id, ( ( tasks.value ?? [] ).filter( task => task.targetType === "swimmer" && task.targetId === swimmer.id ) ?? [] ) ] ) ) ) )
 
-  watchEffect( () => {
-    console.log( "PS", props.swimmers )
-  } )
-  watchEffect( () => {
-    console.log( "TASKS", tasks.value, swimmerTasks.value )
-  } )
-  // const currentUser = useAuthenticatedUser()
-  // const isAdmin = !!Number( currentUser.value.admin )
-
-  const genders =
-    [ {
-        label: "Open/Male",
-        value: "male"
-      },
-      {
-        label: "Female",
-        value: "female"
-      },
-    ]
+  const genders = [
+    {
+      label: "Open/Male",
+      value: "male"
+    },
+    {
+      label: "Female",
+      value: "female"
+    },
+  ]
 
   const selectAll = ref( false )
   const selected = ref( Object.fromEntries( props.swimmers.map( s => ( [ s.id, 0 ] ) ) ) )
