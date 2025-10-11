@@ -245,6 +245,19 @@ CREATE TABLE `Performance` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Table structure for table `Pools`
+--
+
+DROP TABLE IF EXISTS `Pools`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `Pools` (
+  `PoolName` varchar(54) NOT NULL,
+  PRIMARY KEY (`PoolName`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
 -- Table structure for table `Qualifying`
 --
 
