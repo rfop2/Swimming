@@ -1,9 +1,19 @@
 // lockfile.ts
-import fs from "fs"
-import path from "path"
-import process from "process"
+/**
+ * Cross-platform, race-safe lock file mechanism using dynamic Node imports.
+ * Safe to include in shared libraries (will no-op in non-Node environments).
+ */
+export async function acquireLock(): Promise<void> {
+  if ( typeof process === "undefined" || typeof window !== "undefined" ) {
+    // Running in a browser or non-Node context — do nothing.
+    return
+  }
 
-export function acquireLock(): void {
+  const [ { default: fs }, { default: path } ] = await Promise.all( [
+    import( "fs" ),
+    import( "path" ),
+  ] )
+
   const script = process.argv[1]
     ? path.basename( process.argv[1], path.extname( process.argv[1] ) )
     : "unknown"
@@ -28,52 +38,55 @@ export function acquireLock(): void {
     }
 
     process.on( "exit", cleanup )
-    process.on( "SIGINT", () => { cleanup(); process.exit( 1 ) } )
-    process.on( "SIGTERM", () => { cleanup(); process.exit( 1 ) } )
-
+    process.on( "SIGINT", () => {
+      cleanup()
+      process.exit( 1 )
+    } )
+    process.on( "SIGTERM", () => {
+      cleanup()
+      process.exit( 1 )
+    } )
   } catch ( err: unknown ) {
     if ( isNodeError( err ) && err.code === "EEXIST" ) {
-      handleExistingLock( lockFile )
+      await handleExistingLock( lockFile )
     } else {
       throw err
     }
   }
-}
 
-function handleExistingLock( lockFile: string ): void {
-  try {
-    const pid = parseInt( fs.readFileSync( lockFile, "utf-8" ), 10 )
+  async function handleExistingLock( lockFile: string ): Promise<void> {
+    try {
+      const pid = parseInt( fs.readFileSync( lockFile, "utf-8" ), 10 )
 
-    if ( !isNaN( pid ) && processExists( pid ) ) {
-      console.error( `❌ Another instance (PID ${pid}) is already running.` )
+      if ( !isNaN( pid ) && processExists( pid ) ) {
+        console.error( `❌ Another instance (PID ${pid}) is already running.` )
+        process.exit( 1 )
+      }
+
+      console.warn( `⚠️ Removing stale lock file for PID ${pid}.` )
+      fs.unlinkSync( lockFile )
+      await acquireLock() // retry once
+    } catch ( err: unknown ) {
+      const message = err instanceof Error ? err.message : String( err )
+      console.error( `Failed to handle existing lock: ${message}` )
       process.exit( 1 )
     }
-
-    console.warn( `⚠️ Removing stale lock file for PID ${pid}.` )
-    fs.unlinkSync( lockFile )
-    acquireLock() // retry once
-  } catch ( err: unknown ) {
-    const message = err instanceof Error ? err.message : String( err )
-    console.error( `Failed to handle existing lock: ${message}` )
-    process.exit( 1 )
   }
-}
 
-function processExists( pid: number ): boolean {
-  try {
-    process.kill( pid, 0 )
-    return true
-  } catch ( err: unknown ) {
-    return isNodeError( err ) && err.code === "EPERM"
+  function processExists( pid: number ): boolean {
+    try {
+      process.kill( pid, 0 )
+      return true
+    } catch ( err: unknown ) {
+      return isNodeError( err ) && err.code === "EPERM"
+    }
   }
-}
 
-/** Type guard for NodeJS errors that have a `code` property. */
-function isNodeError( err: unknown ): err is NodeJS.ErrnoException {
-  return err instanceof Error && "code" in err
-}
+  function isNodeError( err: unknown ): err is NodeJS.ErrnoException {
+    return err instanceof Error && "code" in err
+  }
 
-/** Platform-safe temp directory */
-function getTempDir(): string {
-  return process.platform === "win32" ? process.env.TEMP ?? "C:\\Temp" : "/tmp"
+  function getTempDir(): string {
+    return process.platform === "win32" ? process.env.TEMP ?? "C:\\Temp" : "/tmp"
+  }
 }
