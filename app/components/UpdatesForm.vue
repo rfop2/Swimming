@@ -34,7 +34,7 @@
     selectAll.value = Object.values( newSelected ).every( v => !!v )
   }, { deep: true } )
 
-  const updateAll = ( updateType: string = "basic" ) => {
+  const updateAll = ( updateType: string ) => {
     try {
       const updateTasks = props.swimmers.map( s => ( {
         taskType: "update",
@@ -49,7 +49,7 @@
     }
   }
 
-  const updateSelected = ( updateType: string = "basic" ) => {
+  const updateSelected = ( updateType: string ) => {
     try {
       const updateTasks = Object.entries( selected.value ).filter( s => !!s[1] ).map( s => ( {
         taskType: "update",
@@ -82,7 +82,6 @@
 
   const cancelUpdate = async ( swimmerIndex: number ) => {
     const swimmer = props.swimmers[swimmerIndex]
-    console.log( "S", swimmer )
     const tasks = swimmerTasks.value[swimmer.id].filter( t => t.taskStatus === "pending" )
     console.log( "T", tasks )
     try {
@@ -93,6 +92,33 @@
       console.error( "Error", error )
       throw createError( error as FetchError )
     }
+  }
+
+  const selectUpdateType = ref<boolean>( false )
+  const selectedForUpdate = ref<null | number | "selected" | "all">( null )
+  watchEffect( () => {
+    if ( selectedForUpdate.value !== null ) {
+      selectUpdateType.value = true
+    }
+  } )
+
+  const updateOptions = [
+    { label: "Choose update", value: "" },
+    { label: "Basic swimmer data only", value: "individual" },
+    { label: "Basic data and event results", value: "results" },
+    { label: "Basic data, event results and relative rankings", value: "rankings" },
+  ]
+  const updateType = ref( updateOptions[0].value )
+
+  const queueUpdates = async () => {
+    if ( selectedForUpdate.value === "all" ) {
+      await updateAll( updateType.value )
+    } else if ( selectedForUpdate.value === "selected" ) {
+      await updateSelected( updateType.value )
+    } else if ( selectedForUpdate.value !== null ) {
+      await updateSwimmer( selectedForUpdate.value, updateType.value )
+    }
+    selectedForUpdate.value = null
   }
 </script>
 
@@ -111,8 +137,9 @@
         <div class="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
           <button
             type="button"
-            class="inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-            @click="updateSelected()"
+            class="inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
+            :disabled="!Object.entries( selected ).filter( s => !!s[1] ).length"
+            @click="selectedForUpdate = 'selected'"
           >
             <ArrowPathIcon
               class="-ml-0.5 size-5"
@@ -121,11 +148,12 @@
             Update selected
           </button>
         </div>
-        <div class="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
+        <div class="mt-4 sm:mt-0 sm:ml-4 sm:flex-none">
           <button
             type="button"
-            class="inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-            @click="updateAll()"
+            class="inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
+            :disabled="!swimmers.length"
+            @click="selectedForUpdate = 'all'"
           >
             <ArrowPathIcon
               class="-ml-0.5 size-5"
@@ -250,13 +278,13 @@
                         type="button"
                         title="Update Swimmer"
                         class="inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
-                        @click="() => updateSwimmer( swimmerIndex, 'basic' )"
+                        @click="selectedForUpdate = swimmerIndex"
                       >
                         <ArrowPathIcon
                           class="-ml-0.5 size-5"
                           aria-hidden="true"
                         />
-                        <span class="sr-only">Refresh, {{ swimmer.fullName }}</span>
+                        <span class="sr-only">Update, {{ swimmer.fullName }}</span>
                       </button>
                       <button
                         v-if="swimmerTasks[swimmer.id].find( t => t.taskStatus === 'pending' || t.taskStatus === 'progress' )"
@@ -281,6 +309,29 @@
       </div>
     </div>
   </div>
+
+  <UI-Dialog
+    v-model="selectUpdateType"
+    title="Choose update type"
+    confirm-label="Select"
+    :confirm-enabled="() => !!updateType"
+    :action="async () => { await queueUpdates() }"
+  >
+    <div class="px-1 py-3 sm:p-2">
+      <div class="mt-2 max-w-xl text-sm text-gray-500">
+        <p>Select update type to apply to swimmers. The more data is selected the longer an update will take.</p>
+      </div>
+      <form class="mt-5 sm:flex sm:items-center">
+        <div class="w-full sm:max-w-xs">
+          <UI-Select
+            v-model="updateType"
+            label="Update type"
+            :options="updateOptions"
+          />
+        </div>
+      </form>
+    </div>
+  </UI-Dialog>
 
   <!--<UI-Confirm
     v-if="deleting !== null"
