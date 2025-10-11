@@ -48,12 +48,15 @@
 
   const userNavigation = computed<NavOption[]>( () => [
     { name: "Account", href: "/account" },
+    { name: "Updates", href: "/updates" },
     { name: "Users", href: "/users", condition: () => !!Number( user.value.admin ) },
     // { name: "Settings", href: "#" },
     { name: "Sign out", href: "", click: logout },
   ] )
 
   const activeUserNavigation = computed( () => userNavigation.value.filter( item => !item.condition || ( item.condition )() ) )
+
+  useTasksCheck()
 
   async function logout() {
     await $fetch( "/api/user/logout", {

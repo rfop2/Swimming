@@ -22,9 +22,8 @@ export interface Swimmer {
   county: string
   squad: string
   active: number
-  updateStatus?: "pending" | "progress"
-  updateType?: "basic" | "full"
   lastUpdateTime?: Date
+  lastUpdateType?: string
 }
 
 export interface ExtSwimmer extends Swimmer {
@@ -179,3 +178,20 @@ export interface QualifyingRow {
   timeString: string
   time: number
 }
+
+export interface Task {
+  taskId: number
+  creatorId?: string
+  taskType: string
+  taskOptions?: string
+  targetType: string
+  targetId?: string
+  targetDescription?: string
+  taskSchedule?: string
+  taskStatus?: string
+  taskResult?: string
+  startTime?: Date
+  endTime?: Date
+}
+
+export type SwimmerUpdateType = "individual" | "results" | "rankings"

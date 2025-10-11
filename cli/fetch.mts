@@ -34,6 +34,7 @@ import {
   runTransaction,
   fetchPageBrowser,
   closeBrowser,
+  acquireLock,
 } from "lib"
 
 import type {
@@ -41,7 +42,9 @@ import type {
   Meet,
   PageInfo,
   PoolConnection,
-  Swimmer
+  Swimmer,
+  SwimmerUpdateType,
+  Task
 } from "lib"
 import { Command } from "commander"
 
@@ -528,36 +531,25 @@ const updatePerformance = async ( swimmer: Swimmer ) => {
   }, swimmer )
 }
 
-const updateSwimmerData = async ( swimmer: Swimmer, relative: boolean, force: boolean ) => {
+const updateSwimmerData = async ( swimmer: Swimmer, updateType: SwimmerUpdateType, force: boolean ) => {
   console.log( `Updating data for swimmer '${swimmer.fullName}'` )
-
-  // const pool = await getPool()
-
-  // const selectUpdateType = prepareStatement<{id: string},{ updateType?: string}>( pool, "SELECT updateType FROM Swimmers WHERE id = :id" )
-  // const updateInfo = await selectUpdateType.get( swimmer )
-
-  const swimmerUpdate = prepareStatement(
-    await getPool(),
-    "UPDATE Swimmers SET updateStatus = 'progress' WHERE id = :id",
-  )
-  await swimmerUpdate.run( { ...swimmer, type: relative ? "full" : "basic"} )
 
   const individualData = await updateIndividual( swimmer, force )
 
+  if ( updateType === "results" || updateType === "rankings") {
   // await updateResults( swimmer, individualData )
   await updateResultsBatch( swimmer, individualData, force )
 
-  const updateType = relative ? "full" : "basic"
-  if ( updateType === "full" ) {
+  if ( updateType === "rankings" ) {
     await updateRankings( swimmer, individualData, force )
     await updatePerformance( swimmer )
   }
-
+  }
   const swimmerLastUpdate = prepareStatement(
     await getPool(),
-    "UPDATE Swimmers SET updateStatus = NULL, updateType = NULL, lastUpdateTime = NOW(), lastUpdateType = :type WHERE id = :id",
+    "UPDATE Swimmers SET lastUpdateTime = NOW(), lastUpdateType = :updateType WHERE id = :id",
   )
-  await swimmerLastUpdate.run( { ...swimmer, type: updateType } )
+  await swimmerLastUpdate.run( { ...swimmer, updateType } )
 }
 
 const updateMeet = async ( meet: Partial<Meet>, force: boolean ) => {
@@ -663,24 +655,24 @@ const updateMeets = async ( force: boolean ) => {
 
 // Extract options in a typed way
 interface CliOptions {
-  mode?: "swimmers" | "meets"
+  mode: "swimmers" | "meets" | "queue"
   ids?: string[]
-  queue: boolean
-  relative: boolean
+  update: SwimmerUpdateType
   force: boolean
 }
 
 ( async () => {
+  acquireLock()
+
   const program = new Command()
 
   program
     .name( "fetch" )
     .description( "Fetch data from source site" )
 
-  program.option( "-m, --mode <mode>", "fetch mode 'swimmers' or 'meets'" )
-  program.option( "-i, --ids <ids...>", "fetch data for specified swimmers only" )
-  program.option( "-q, --queue", "fetch data for swimmers with pending updates only" )
-  program.option( "-r, --relative", "fetch data relative to other swimmers alongside basic info", false )
+  program.option( "-m, --mode <mode>", "fetch mode 'swimmers', 'meets' or 'queue'" )
+  program.option( "-i, --ids <ids...>", "in swimmers mode, fetch data for specified swimmers only" )
+  program.option( "-u, --update", "in swimmers mode, what to update. Options are 'individual', 'results' or 'rankings'", "results" )
   program.option( "-f, --force", "force update, ignoring caching time", false )
 
   // Parse argv
@@ -689,23 +681,21 @@ interface CliOptions {
   const options = program.opts<CliOptions>()
 
   try {
-    if ( !options.mode || options.mode === "swimmers" ) {
+    if ( options.mode === "swimmers" ) {
       const getSwimmers = prepareStatement<void,Swimmer>(
         await getPool(),
         "SELECT * FROM Swimmers WHERE active = 1"
       )
-      const selectUpdateType = prepareStatement<{id: string},{ updateStatus?: string, updateType?: string}>( await getPool(), "SELECT updateStatus, updateType FROM Swimmers WHERE id = :id AND updateStatus = 'pending' AND updateType IS NOT NULL" )
       const swimmerUpdateError = prepareStatement(
         await getPool(),
         "UPDATE Swimmers SET updateStatus = 'error' WHERE id = :id",
       )
       const swimmers = await getSwimmers.all()
       for ( const swimmer of swimmers ) {
-        const updateInfo = await selectUpdateType.get( swimmer )
-        if ( ( options.queue && !!updateInfo?.updateType ) || ( !options.queue && ( !options.ids || options.ids.find( s => s === swimmer.id ) ) ) ) {
+        if ( !options.ids || options.ids.find( s => s === swimmer.id ) ) {
           swimmer.birthday = format( new Date( swimmer.birthday ), "yyyy-MM-dd" )
           try {
-            await updateSwimmerData( swimmer, updateInfo?.updateType === "full" || !!options.relative, options.force )
+            await updateSwimmerData( swimmer, options.update, options.force )
           } catch ( e ) {
             console.error( "Unable to fetch swimmer data, skipping", e )
             await swimmerUpdateError.run( swimmer )
@@ -713,8 +703,67 @@ interface CliOptions {
         }
       }
     }
-    if ( !options.mode || options.mode === "meets" ) {
+    else if ( options.mode === "meets" ) {
       await updateMeets( options.force )
+    }
+    else if ( options.mode === "queue" ) {
+      const getTasks = prepareStatement<void,Task>(
+        await getPool(),
+        "SELECT * FROM Tasks WHERE taskStatus = 'pending'"
+      )
+      const taskStart = prepareStatement(
+        await getPool(),
+        "UPDATE Tasks SET startTime = NOW(), taskStatus = 'progress', taskResult = '' WHERE taskId = :taskId",
+      )
+      const taskComplete = prepareStatement(
+        await getPool(),
+        "UPDATE Tasks SET endTime = NOW(), taskStatus = 'complete' WHERE taskId = :taskId",
+      )
+      const taskUpdateError = prepareStatement(
+        await getPool(),
+        "UPDATE Tasks SET endTime = NOW(), taskStatus = 'error', taskResult = :taskResult WHERE taskId = :taskId",
+      )
+      const getSwimmer = prepareStatement<{ id: string },Swimmer>(
+        await getPool(),
+        "SELECT * FROM Swimmers WHERE id = :id"
+      )
+      const tasks = await getTasks.all()
+      for ( const task of tasks ) {
+        try {
+          switch ( task.taskType ) {
+            case "update" : {
+              switch ( task.targetType ) {
+                case "swimmer" : {
+                  if ( !task.targetId ) {
+                    throw new Error( `No target id on task ${task.taskId}` )
+                  }
+                  const swimmer = await getSwimmer.get( { id: task.targetId } )
+                  if ( !swimmer ) {
+                    throw new Error( `Can't find swimmer id '${task.targetId}' for task ${task.taskId}` )
+                  }
+                  swimmer.birthday = format( new Date( swimmer.birthday ), "yyyy-MM-dd" )
+                  const taskOptions = new Set<string>( (task.taskOptions ?? "").split( "," ) )
+                  await taskStart.run( task )
+                  const updateType = taskOptions.has( "individual" ) ? "individual" :
+                  ( taskOptions.has( "results" ) ? "results" :
+                  ( taskOptions.has( "rankings" ) ? "rankings" : "" ) )
+                  if ( !updateType ) {
+                    throw new Error( `Can't find update type in task ${task.taskId}` )
+                  }
+                  await updateSwimmerData( swimmer, updateType, taskOptions.has( "force") )
+                  await taskComplete.run( task )
+                  break;
+                }
+              }
+              break;
+            }
+          }
+        } catch ( e ) {
+          console.error( "Unable to fetch swimmer data, skipping", e )
+          task.taskResult = JSON.stringify( e )
+          await taskUpdateError.run( task )
+        }
+      }
     }
   } catch ( error ) {
     console.error( "Error in script", error )

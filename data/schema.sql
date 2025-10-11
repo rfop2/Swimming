@@ -367,13 +367,38 @@ CREATE TABLE `Swimmers` (
   `region` varchar(16) DEFAULT NULL,
   `county` varchar(16) DEFAULT NULL,
   `active` tinyint(1) NOT NULL DEFAULT 1,
-  `updateStatus` enum('pending','progress','error') DEFAULT NULL,
-  `updateType` varchar(16) DEFAULT NULL,
   `lastUpdateTime` timestamp NULL DEFAULT NULL,
   `lastUpdateType` varchar(16) DEFAULT NULL,
   `created` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
   PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `Tasks`
+--
+
+DROP TABLE IF EXISTS `Tasks`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `Tasks` (
+  `taskId` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `creatorId` varchar(16) DEFAULT NULL,
+  `taskType` varchar(16) NOT NULL,
+  `taskOptions` varchar(255) DEFAULT NULL,
+  `targetType` enum('swimmer','club','meet') DEFAULT NULL,
+  `targetId` varchar(8) DEFAULT NULL,
+  `taskStatus` enum('pending','progress','complete','cancelled','error') NOT NULL DEFAULT 'pending',
+  `taskSchedule` varchar(32) DEFAULT NULL,
+  `taskResult` varchar(240) DEFAULT NULL,
+  `startTime` timestamp NULL DEFAULT NULL,
+  `endTime` timestamp NULL DEFAULT NULL,
+  `created` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
+  PRIMARY KEY (`taskId`) USING BTREE,
+  KEY `idx_creatorId` (`creatorId`),
+  KEY `idx_target` (`targetType`,`targetId`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
