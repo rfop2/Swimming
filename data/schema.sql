@@ -383,20 +383,20 @@ DROP TABLE IF EXISTS `Tasks`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `Tasks` (
-  `taskIid` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `creatorId` varchar(8) DEFAULT NULL,
+  `taskId` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `creatorId` varchar(16) DEFAULT NULL,
   `taskType` varchar(16) NOT NULL,
   `taskOptions` varchar(255) DEFAULT NULL,
   `targetType` enum('swimmer','club','meet') DEFAULT NULL,
   `targetId` varchar(8) DEFAULT NULL,
-  `taskStatus` enum('pending','progress','cancelled','error') NOT NULL DEFAULT 'pending',
+  `taskStatus` enum('pending','progress','complete','cancelled','error') NOT NULL DEFAULT 'pending',
   `taskSchedule` varchar(32) DEFAULT NULL,
   `taskResult` varchar(240) DEFAULT NULL,
   `startTime` timestamp NULL DEFAULT NULL,
   `endTime` timestamp NULL DEFAULT NULL,
   `created` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
-  PRIMARY KEY (`taskIid`) USING BTREE,
+  PRIMARY KEY (`taskId`) USING BTREE,
   KEY `idx_creatorId` (`creatorId`),
   KEY `idx_target` (`targetType`,`targetId`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
