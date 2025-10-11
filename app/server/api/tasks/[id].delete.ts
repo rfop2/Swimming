@@ -1,4 +1,4 @@
-import { getPool, prepareStatement, type Update } from "lib"
+import { getPool, prepareStatement, type Task } from "lib"
 
 export default eventHandler( async ( event ) => {
   if ( !event.context.session || !event.context.user ) {
@@ -8,41 +8,41 @@ export default eventHandler( async ( event ) => {
   }
 
   try {
-    const updateId = getRouterParam( event, "id" )
-    if ( !updateId ) {
+    const taskId = getRouterParam( event, "id" )
+    if ( !taskId ) {
       throw createError( {
-        message: "No update id found",
+        message: "No task id found",
         status: 400
       } )
     }
 
-    const selectUpdate = prepareStatement<{ updateId: string }, Update>(
+    const selectTask = prepareStatement<{ taskId: string }, Task>(
       await getPool(),
-      "SELECT * FROM Updates WHERE Id = :updateId"
+      "SELECT * FROM Tasks WHERE taskId = :taskId"
     )
-    const update = await selectUpdate.get( { updateId } )
-    if ( !update ) {
+    const task = await selectTask.get( { taskId } )
+    if ( !task ) {
       throw createError( {
-        message: `Update ${updateId} not found`,
+        message: `Task ${taskId} not found`,
         status: 404
       } )
     }
 
-    if ( update.creatorId !== event.context.user.id && !Number( event.context.user.admin ) ) {
+    if ( task.creatorId !== event.context.user.id && !Number( event.context.user.admin ) ) {
       throw createError( {
         status: 403
       } )
     }
 
-    const updateJob = prepareStatement<{ updateId: string }>(
+    const taskJob = prepareStatement<{ taskId: string }>(
       await getPool(),
-      "UPDATE Updates SET updateStatus = 'cancelled' WHERE id = :updateId"
+      "UPDATE Tasks SET taskStatus = 'cancelled' WHERE taskId = :taskId"
     )
-    await updateJob.run( { updateId } )
+    await taskJob.run( { taskId } )
   } catch ( error ) {
     console.error( error )
     throw createError( {
-      message: "Unable to update job record",
+      message: "Unable to cancel task",
       status: 500
     } )
   }

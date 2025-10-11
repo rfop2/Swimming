@@ -8,7 +8,7 @@ export default eventHandler( async ( event ) => {
   }
 
   try {
-    const userId = getRouterParam( event, "id" )
+    const userId = getRouterParam( event, "id" ) ?? event.context.user.id
     if ( !userId ) {
       throw createError( {
         message: "No user id found",
@@ -22,15 +22,19 @@ export default eventHandler( async ( event ) => {
       } )
     }
 
-    const updateData = await readBody( event )
+    const taskData = await readBody( event )
 
-    const addUpdate = prepareStatement(
+    const addTask = prepareStatement(
       await getPool(),
-      "INSERT INTO Updates ( creatorId, updateType, targetType, targetId, updateOptions  ) VALUES( :userId, :updateType, :targetType, :targetId, :updateOptions )"
+      "INSERT INTO Tasks ( creatorId, taskType, targetType, targetId, taskOptions  ) VALUES( :userId, :taskType, :targetType, :targetId, :taskOptions )"
     )
-    const result = await addUpdate.run( { ...updateData, userId } )
-    const updateId = result.insertId
-    console.log( `Update ${updateId} created` )
+
+    const tasks = Array.isArray( taskData ) ? taskData : [ taskData ]
+    for ( const task of tasks ) {
+      const result = await addTask.run( { ...task, userId } )
+      const taskId = result.insertId
+      console.log( `Task ${taskId} created` )
+    }
   } catch ( error ) {
     console.error( error )
     if ( isMySql2Error( error ) ) {
@@ -40,7 +44,7 @@ export default eventHandler( async ( event ) => {
       } )
     }
     throw createError( {
-      message: "Unable to create update record",
+      message: "Unable to create task record",
       status: 500
     } )
   }
