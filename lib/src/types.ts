@@ -193,3 +193,5 @@ export interface Task {
   startTime?: Date
   endTime?: Date
 }
+
+export type SwimmerUpdateType = "individual" | "results" | "rankings"
