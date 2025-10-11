@@ -40,11 +40,13 @@ export const useTasksCheck = () => {
     lastTasks.value = JSON.parse( JSON.stringify( tasks.value ) )
   }
 
+  const checkInterval = Number( process.env.TASK_CHECK_INTERVAL ?? 180 )
+
   // initial + periodic checks
   if ( import.meta.client ) {
     onMounted( () => {
       checkTasks()
-      setInterval( checkTasks, 60 * 1000 ) // periodic checks
+      setInterval( checkTasks, checkInterval * 1_000 ) // periodic checks
     } )
   }
 
