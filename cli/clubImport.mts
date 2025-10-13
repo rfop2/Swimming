@@ -1,17 +1,18 @@
 #!/usr/bin/env nodemjs
 import "dotenv/config"
 import * as cheerio from "cheerio"
-import { COUNTIES, createUrl, fetchPage, getPool, isMySql2Error, NATIONALITIES, PageInfo, parseRanking, prepareStatement, rankBaseUrl, REGIONS, runTransaction, STROKE_DISTANCE } from "lib"
+import type { Club, PageInfo } from "lib"
+import { COUNTIES, createUrl, fetchPage, getPool, isMySql2Error, NATIONALITIES, parseRanking, prepareStatement, rankBaseUrl, REGIONS, runTransaction, STROKE_DISTANCE } from "lib"
 
 ( async () => {
   const args = process.argv.slice( 2 )
 
-  if ( args.length != 5 ) {
-    throw( "Error, username, club, country, region and county must be given" )
+  if ( args.length < 2 ) {
+    throw( "Error, username, club must be given. Country, region and county may also be provided" )
   }
 
   const username = args[0]
-  const clubCode = args[1]
+  let clubCode = args[1]
   const country = args[2]
   const region = args[3]
   const county = args[4]
@@ -26,22 +27,56 @@ import { COUNTIES, createUrl, fetchPage, getPool, isMySql2Error, NATIONALITIES, 
     throw new Error ( `Invalid user '${username}'` )
   }
 
-  const countryLookup = Object.fromEntries( Object.entries( NATIONALITIES ).map( ( [ k, v ] ) => [ v, k ] ) )
-  const countryCode = countryLookup[country]
+  let club = null
+  let clubId = null
+  let countryCode = null
+  let regionCode = null
+  let countyCode = null
+  if ( clubCode.match( /^[A-Z]{4,8}$/ ) ) {
+    clubId = clubCode.substring( 0, 4 )
+    const getClub = prepareStatement<{clubId:string},Club>( await getPool(), "SELECT * FROM Clubs where clubId = :clubId" )
+    club = await getClub.get( { clubId: clubCode } )
+    if ( !club ) {
+      throw new Error ( `Can't find club code '${clubCode}'` )
+    }
+  } else {
+    const getClub = prepareStatement<{clubName:string},Club>( await getPool(), "SELECT * FROM Clubs where clubName = :clubName" )
+    club = await getClub.get( { clubName: clubCode } )
+    if ( !club ) {
+      throw new Error ( `Can't find club name '${clubCode}'` )
+    }
+  }
+  clubId = club.clubId
+  clubCode = `${clubId}${club.clubCounty}`
+  countyCode = club.clubCounty
+  regionCode = club.clubRegion
+  // countryCode = regionCode === "X" ? "S" : ( regionCode === "Y" ? "W" : "E" )
+
+  if ( !countryCode && country ) {
+    const countryLookup = Object.fromEntries( Object.entries( NATIONALITIES ).map( ( [ k, v ] ) => [ v, k ] ) )
+    countryCode = countryLookup[country]
+    if ( !countryCode ) {
+      throw new Error ( `Can't find region '${country}'` )
+    }
+  }
   if ( !countryCode ) {
-    throw new Error ( `Can't find region '${country}'` )
+    countryCode = "E"
   }
 
-  const regionLookup = Object.fromEntries( Object.entries( REGIONS ).map( ( [ k, v ] ) => [ v, k ] ) )
-  const regionCode = regionLookup[region]
-  if ( !regionCode ) {
-    throw new Error ( `Can't find region '${region}'` )
+  if ( !regionCode && region ) {
+    const regionLookup = Object.fromEntries( Object.entries( REGIONS ).map( ( [ k, v ] ) => [ v, k ] ) )
+    regionCode = regionLookup[region]
+    if ( !regionCode ) {
+      throw new Error ( `Can't find region '${region}'` )
+    }
   }
 
-  const countyLookup = Object.fromEntries( Object.entries( COUNTIES ).map( ( [ k, v ] ) => [ v, k ] ) )
-  const countyCode = countyLookup[county]
-  if ( !countyCode ) {
-    throw new Error ( `Can't find county '${county}'` )
+  if ( !countyCode && county ) {
+    const countyLookup = Object.fromEntries( Object.entries( COUNTIES ).map( ( [ k, v ] ) => [ v, k ] ) )
+    countyCode = countyLookup[county]
+    if ( !countyCode ) {
+      throw new Error ( `Can't find county '${county}'` )
+    }
   }
 
   const insertSwimmerSql =
@@ -91,12 +126,16 @@ VALUES (
   const insertClubSwimmerSql =
     `INSERT IGNORE INTO ClubSwimmers (
   clubId,
-  swimmerId
+  swimmerId,
+  rankedClub
 )
 VALUES (
   :clubId,
-  :swimmerId
+  :swimmerId,
+  :rankedClub
 );`
+
+  const getRankedClub = prepareStatement<{clubAlias:string},Club>( await getPool(), "SELECT * FROM Clubs where clubAlias = :clubAlias OR clubName = :clubAlias" )
 
   try {
     const ageGroup = "OP"
@@ -109,54 +148,71 @@ VALUES (
           }
           const { stroke = "", distance = "" } = { ...matches?.groups }
 
-          const page: PageInfo = {
-            label: `${distance}_${stroke}_${gender.toLocaleLowerCase()}_${course === "S" ? "sc" : "lc"}_${ageGroup.toLocaleLowerCase()}_club_${clubCode.toLocaleLowerCase()}`,
-            url: createUrl( rankBaseUrl, {
-              Stroke: sdCode,
-              Pool: course,
-              Sex: gender,
-              AgeGroup: ageGroup,
-              StartNumber: "1",
-              RecordsToView: "100",
-              TargetNationality: "P",
-              TargetRegion: "P",
-              TargetCounty: "XXXX",
-              TargetClub: clubCode,
-              Level: "O",
-            } ),
-            type: "ranking",
-          }
-
-          const content = await fetchPage( page )
-
-          // console.log( inspect( pageData, { depth: 5 } ) )
-          const $ = cheerio.load( content )
-
-          const rankingData = parseRanking( page, $ )
-
-          await runTransaction( await getPool(), async ( conn ) => {
-            const clubId = clubCode.substring( 0, 4 )
-            const insertSwimmer = prepareStatement( conn, insertSwimmerSql )
-            const insertUserSwimmer = prepareStatement( conn, insertUserSwimmerSql )
-            const insertClubSwimmer = prepareStatement( conn, insertClubSwimmerSql )
-            for ( const row of rankingData.table ) {
-              const [ firstName, lastName ] = row.name.split( /\s+/ )
-              const swimmer = {
-                id: row.swimmer,
-                firstName,
-                lastName,
-                birthday: Number( row.yob ) > 20 ? `${String( 1900 + Number( row.yob ) )}-06-01` : `${String( 2000 + Number( row.yob ) )}-06-01`,
-                gender: gender === "M" ? "male" : "female",
-                nationality: countryCode,
-                region: regionCode,
-                county: countyCode,
-                active: 1
-              }
-              await insertSwimmer.run( swimmer )
-              await insertUserSwimmer.run( { userId: user.id, swimmerId: row.swimmer } )
-              await insertClubSwimmer.run( { clubId, swimmerId: row.swimmer } )
+          let morePages = false
+          let pageNo = 1
+          do {
+            const page: PageInfo = {
+              label: `${distance}_${stroke}_${gender.toLocaleLowerCase()}_${course === "S" ? "sc" : "lc"}_${ageGroup.toLocaleLowerCase()}_club_${clubCode.toLocaleLowerCase()}-${pageNo}`,
+              url: createUrl( rankBaseUrl, {
+                Stroke: sdCode,
+                Pool: course,
+                Sex: gender,
+                AgeGroup: ageGroup,
+                StartNumber: String( 1 + ( ( pageNo - 1 ) * 100 ) ),
+                RecordsToView: "100",
+                TargetNationality: "P",
+                TargetRegion: "P",
+                TargetCounty: "XXXX",
+                TargetClub: clubCode,
+                Level: "O",
+              } ),
+              type: "ranking",
             }
-          }  )
+
+            const content = await fetchPage( page )
+
+            // console.log( inspect( pageData, { depth: 5 } ) )
+            const $ = cheerio.load( content )
+
+            const rankingData = parseRanking( page, $ )
+
+            await runTransaction( await getPool(), async ( conn ) => {
+              const insertSwimmer = prepareStatement( conn, insertSwimmerSql )
+              const insertUserSwimmer = prepareStatement( conn, insertUserSwimmerSql )
+              const insertClubSwimmer = prepareStatement( conn, insertClubSwimmerSql )
+              for ( const row of rankingData.table ) {
+                const [ firstName, lastName ] = row.name.split( /\s+/ )
+                const swimmer = {
+                  id: row.swimmer,
+                  firstName,
+                  lastName,
+                  birthday: Number( row.yob ) > 20 ? `${String( 1900 + Number( row.yob ) )}-06-01` : `${String( 2000 + Number( row.yob ) )}-06-01`,
+                  gender: gender === "M" ? "male" : "female",
+                  nationality: countryCode,
+                  region: regionCode,
+                  county: countyCode,
+                  active: 1
+                }
+                await insertSwimmer.run( swimmer )
+                await insertUserSwimmer.run( { userId: user.id, swimmerId: row.swimmer } )
+                let ranked = true
+                if ( row.ranked_club !== club.clubName && row.ranked_club !== club.clubAlias ) {
+                // The swimmer's ranked club is not the club we are importing
+                  const rankedClub = await getRankedClub.get( { clubAlias: row.ranked_club } )
+                  if ( !rankedClub ) {
+                    console.warn( `Can't find ranked club '${row.ranked_club}'` )
+                  // throw new Error ( `Can't find ranked club '${row.ranked_club}'` )
+                  } else {
+                    await insertClubSwimmer.run( { clubId: rankedClub.clubId, swimmerId: row.swimmer, rankedClub: Number( ranked ) } )
+                  }
+                  ranked = false
+                }
+                await insertClubSwimmer.run( { clubId, swimmerId: row.swimmer, rankedClub: Number( ranked ) } )
+              }
+            }  )
+            morePages = ( rankingData.table.length === 100 )
+            pageNo++
+          } while( morePages )
         }
       }
     }
@@ -168,7 +224,7 @@ VALUES (
         throw new Error( `Database error: ${e.sqlMessage}` )
       }
     }
-    throw new Error( "An unknown error occurred" )
+    throw e
   }
   console.log( "Club import completed" )
   process.exit( 0 )
