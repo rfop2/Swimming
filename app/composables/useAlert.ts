@@ -1,5 +1,3 @@
-import { ref } from "vue"
-
 export type AlertType = "success" | "warning" | "error" | "info"
 
 export interface Alert {
