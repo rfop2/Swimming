@@ -71,6 +71,7 @@ DROP TABLE IF EXISTS `Clubs`;
 CREATE TABLE `Clubs` (
   `clubId` varchar(8) NOT NULL,
   `clubName` varchar(128) NOT NULL,
+  `clubAlias` varchar(32) DEFAULT NULL,
   `clubRegion` varchar(8) NOT NULL,
   `clubCounty` varchar(8) NOT NULL,
   `meetName` varchar(128) DEFAULT NULL,
