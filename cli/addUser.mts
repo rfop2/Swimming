@@ -1,7 +1,8 @@
 #!/usr/bin/env nodemjs
 import "dotenv/config"
 import { hash } from "@node-rs/argon2"
-import { getPool, isMySql2Error, prepareStatement } from "lib"
+import type { Club} from "lib"
+import { geocodeLocation, getPool, isMySql2Error, prepareStatement, runTransaction } from "lib"
 import { generateId } from "lucia"
 
 ( async () => {
@@ -16,7 +17,9 @@ import { generateId } from "lucia"
   const firstName = args[2]
   const lastName = args[3]
   const type = args[4]
-  const location = args[5]
+  const clubId = args[5]
+  const clubOwner = args[6]
+  const townCity = args[7]
 
   if (
     username.length < 3 ||
@@ -39,30 +42,49 @@ import { generateId } from "lucia"
   } )
   const userId = generateId( 15 )
 
-  try {
-    const addUser = prepareStatement(
-      await getPool(),
-      "INSERT INTO User ( id, username, password_hash, firstName, lastName, type, location ) VALUES( :userId, :username, :passwordHash, :firstName, :lastName, :type, :location )"
-    )
-    await addUser.run( {
-      userId,
-      username,
-      passwordHash,
-      firstName,
-      lastName,
-      type,
-      location
-    } )
-  } catch ( e ) {
-    if ( isMySql2Error( e ) ) {
-      if ( e.code === "ER_DUP_ENTRY" ) {
-        throw new Error( "Username already used" )
-      } else {
-        throw new Error( `Database error: ${e.sqlMessage}` )
+  await runTransaction( await getPool(), async ( conn ) => {
+    try {
+      let location
+      if ( townCity ) {
+        location = await geocodeLocation( townCity )
       }
+      const addUser = prepareStatement(
+        conn,
+        "INSERT INTO User ( id, username, password_hash, firstName, lastName, type, location, locationId ) VALUES( :userId, :username, :passwordHash, :firstName, :lastName, :type, :location, :locationId )"
+      )
+
+      await addUser.run( {
+        userId,
+        username,
+        passwordHash,
+        firstName,
+        lastName,
+        type,
+        location: location ? location.locationName : townCity,
+        locationId: location ? location.locationId : null,
+      } )
+
+      const getClub = prepareStatement<{clubId:string},Club>( conn, "SELECT * FROM Clubs where clubId = :clubId" )
+      const club = await getClub.get( { clubId } )
+      if ( !club ) {
+        throw new Error ( `Can't find club id '${clubId}'` )
+      }
+      const insertUserClub = prepareStatement(
+        conn,
+        "INSERT INTO UserClubs ( userId, clubId, clubOwner) VALUES ( :userId, :clubId, :clubOwner )"
+      )
+      await insertUserClub.run( { userId, clubId, clubOwner: Number( clubOwner ) } )
+    } catch ( e ) {
+      if ( isMySql2Error( e ) ) {
+        if ( e.code === "ER_DUP_ENTRY" ) {
+          throw new Error( "Username already used" )
+        } else {
+          throw new Error( `Database error: ${e.sqlMessage}` )
+        }
+      }
+      throw e
     }
-    throw new Error( "An unknown error occurred" )
-  }
+  } )
   console.log( "User created" )
   process.exit( 0 )
 
