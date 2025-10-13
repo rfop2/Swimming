@@ -430,6 +430,7 @@ CREATE TABLE `User` (
   `firstName` varchar(32) NOT NULL,
   `lastName` varchar(32) NOT NULL,
   `location` varchar(32) NOT NULL,
+  `locationId` int(10) unsigned DEFAULT NULL,
   `type` varchar(16) NOT NULL,
   `admin` tinyint(4) NOT NULL DEFAULT 0,
   `created` timestamp NOT NULL DEFAULT current_timestamp(),
