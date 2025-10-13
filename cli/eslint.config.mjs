@@ -37,7 +37,7 @@ export default [
 
   // TypeScript + Stylistic rules for all TS files
   {
-    files: [ "**/*.ts", "server/api/**/*.ts" ],
+    files: [ "*.mts", "*.ts" ],
     languageOptions: {
       parser: tsParser,
       parserOptions: {
