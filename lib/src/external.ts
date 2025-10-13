@@ -1,11 +1,12 @@
-import type { IndividualStats, Location, Meet, PageInfo, Ranking, RankingRow, ResultData, Results, Swimmer } from "./types.js"
-import { getSwimmerAgeGroup, sleep, Timer, timeToSeconds } from "./lib.js"
+import type { IndividualStats, Meet, PageInfo, Ranking, RankingRow, ResultData, Results, Swimmer } from "./types.js"
+import { getSwimmerAgeGroup, sleep, timeToSeconds } from "./lib.js"
 import { CACHE_DIR } from "./config.js"
 import { differenceInDays, differenceInHours, format, parse } from "date-fns"
 import type { AnyNode } from "domhandler"
 import type { Cheerio, CheerioAPI } from "cheerio"
-import { getPool, prepareStatement } from "./database.js"
 import { getBrowserPage } from "./puppeteer.js"
+import { geocodeLocation } from "./geo.js"
+import { Timer } from "./timer.js"
 
 export const BASE_URL = "https://www.swimmingresults.org"
 
@@ -723,68 +724,6 @@ export const parseMeets = ( pageInfo: PageInfo, $: CheerioAPI ) => {
     }
   }
   return data
-}
-
-const insertLocationsSql =
-  `INSERT IGNORE INTO Locations (
-  locationId,
-  locationName,
-  locationDescription,
-  locationType,
-  latitude,
-  longitude
-)
-VALUES (
-  :locationId,
-  :locationName,
-  :locationDescription,
-  :locationType,
-  :latitude,
-  :longitude
-);`
-
-const insertLocationAliasSql =
-  `INSERT IGNORE INTO LocationAliases (
-  locationId,
-  locationAlias
-)
-VALUES (
-  :locationId,
-  :locationAlias
-);`
-
-const geocodeLocation = async ( locationName: string ): Promise<Location | undefined> => {
-  const getLocation = prepareStatement<{ locationName: string },Location>(
-    await getPool(),
-    "SELECT Locations.locationId, locationName, GROUP_CONCAT( locationAlias SEPARATOR '|' ) AS locationAliases, locationDescription, locationType, latitude, longitude FROM Locations LEFT JOIN LocationAliases ON Locations.locationId = LocationAliases.locationId WHERE locationName = :locationName OR locationAlias = :locationName GROUP BY Locations.locationId"
-  )
-  const saveLocation = prepareStatement( await getPool(), insertLocationsSql )
-  const saveLocationAlias = prepareStatement( await getPool(), insertLocationAliasSql )
-  let location = await getLocation.get( { locationName } )
-  if ( location === undefined ) {
-    console.log( `Geocoding '${locationName}'` )
-    const response = await fetch(
-      `https://nominatim.openstreetmap.org/search?format=json&city=${encodeURIComponent( locationName )}&countrycodes=gb&layer=address&addressdetails=1`
-    )
-    const osmLocations = await response.json()
-    if ( osmLocations && osmLocations.length > 0 ) {
-      osmLocations.sort( ( a: { importance: number }, b: { importance: number } ) => Number( b.importance ) - Number( a.importance ) )
-      const osmLocation = osmLocations[0]
-      location = {
-        locationId: Number( osmLocation.place_id ),
-        locationName: osmLocation.name,
-        locationDescription: osmLocation.display_name,
-        locationType: osmLocation.addresstype,
-        latitude: Number( osmLocation.lat ),
-        longitude: Number( osmLocation.lon )
-      }
-      if ( osmLocation.name !== locationName ) {
-        await saveLocationAlias.run( { locationId: location.locationId, locationAlias: locationName } )
-      }
-      await saveLocation.run( location )
-    }
-  }
-  return location
 }
 
 export const parseMeet = async ( pageInfo: PageInfo, $: CheerioAPI, meet: Partial<Meet> ) => {

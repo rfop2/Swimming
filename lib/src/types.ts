@@ -109,18 +109,10 @@ export interface ResultsRow extends ResultData {
   distance: string
 }
 
-export type LatLon = { latitude: number, longitude: number }
-
-export interface Location extends LatLon {
-  locationId: number
-  locationName: string
-  locationDescription: string
-  locationType: string
-}
-
 export interface Club {
   clubId: string
   clubName: string
+  clubAlias?: string
   clubRegion: string
   clubCounty: string
   meetName: string
