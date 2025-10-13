@@ -41,19 +41,14 @@
 
   const filteredRanges = computed( () => {
     const ranges = dateRanges.filter( r => props.showLast ? true : !r.value.includes( "last-" ) )
-    console.log( "r1", JSON.stringify( ranges ), ranges.length )
     const maxIndex = ranges.findIndex( r => r.value.includes( props.maxPeriod ) )
-    console.log( maxIndex )
     if ( maxIndex > 1 ) {
       ranges.splice( 1, maxIndex - 1 )
     }
     const minIndex = ranges.findLastIndex( r => r.value.includes( props.minPeriod ) )
-    console.log( "r2", JSON.stringify( ranges ), ranges.length )
-    console.log( minIndex )
     if ( minIndex >= 0 && minIndex < ranges.length - 1 ) {
       ranges.splice( minIndex + 1, ( ranges.length - 2 ) - minIndex )
     }
-    console.log( "r3", JSON.stringify( ranges ), ranges.length )
     return ranges
   } )
 
@@ -104,10 +99,6 @@
   watch( group, ( newGroup ) => {
     model.value.group = newGroup?.value
   }, { deep: true } )
-
-  watchEffect( () => {
-    console.log( "M", model.value )
-  } )
 </script>
 
 <template>
