@@ -30,7 +30,11 @@
   const { state: selections } = usePersisted( "results-selection", {
     course: courseOptions.find( option => option.value === slug[0] ) ?? courseOptions[0],
     stroke: strokeOptions.find( option => option.value === slug[1] ) ?? strokeOptions[0],
-    distance: distanceOptions.find( option => option.value === slug[2] ) ?? distanceOptions[0]
+    distance: distanceOptions.find( option => option.value === slug[2] ) ?? distanceOptions[0],
+    period: {
+      startDate: undefined,
+      endDate: undefined,
+    }
   }, "reactive" )
 
   watch( () => selections.stroke, ( newStroke ) => {
@@ -76,7 +80,23 @@
 
   watchEffect( async () => {
     if ( hasSwimmer( swimmer ) ) {
-      const query = Object.fromEntries( Object.entries( selections ).map( ( [ label, option ] ) => ( [ label, option.value ] ) ) )
+      const query: {
+        course: string
+        stroke: string
+        distance: string
+        startDate?: string
+        endDate?: string
+      } = {
+        course: selections.course.value,
+        stroke: selections.stroke.value,
+        distance: selections.distance.value,
+      }
+      if ( selections.period.startDate ) {
+        query.startDate = selections.period.startDate
+      }
+      if ( selections.period.endDate ) {
+        query.endDate = selections.period.endDate
+      }
       records.value = await $fetch<ApiResponse>( `/api/results/${swimmer.value.id}`, { query } )
       records.value.sort( ( a, b ) => {
         if ( a.date < b.date ) {
@@ -278,7 +298,6 @@
       }
     }
   } ) )
-
 </script>
 
 <template>
@@ -290,7 +309,7 @@
     </template>
     <template #controls>
       <SwimmerSelector />
-      <div class="min-w-48">
+      <div class="min-w-24">
         <UI-Listbox
           v-model="selections.course"
           :options="courseOptions"
@@ -298,7 +317,7 @@
           placeholder="Choose Course"
         />
       </div>
-      <div class="min-w-72">
+      <div class="min-w-48">
         <UI-Listbox
           v-model="selections.stroke"
           :options="strokeOptions"
@@ -306,12 +325,19 @@
           placeholder="Choose Stroke"
         />
       </div>
-      <div class="min-w-48">
+      <div class="min-w-32">
         <UI-Listbox
           v-model="selections.distance"
           :options="distanceOptions"
           label="Distance"
           placeholder="Choose Distance"
+        />
+      </div>
+      <div class="min-w-64">
+        <UI-Date-Range
+          v-model="selections.period"
+          :show-last="false"
+          min-period="month"
         />
       </div>
     </template>
