@@ -270,7 +270,7 @@ const updateIndividual = async ( swimmer: Swimmer, force: boolean ) => {
       conn,
       "DELETE FROM Individual WHERE swimmer = :id"
     )
-    deleteIndividual.run( swimmer )
+    await deleteIndividual.run( swimmer )
     const saveIndividual = prepareStatement(
       conn,
       insertIndividualSql
@@ -311,7 +311,7 @@ const updateResults = async ( swimmer: Swimmer, individualData: Array<Individual
         conn,
         "DELETE FROM Results WHERE swimmer = :id"
       )
-      deleteResults.run( swimmer )
+      await deleteResults.run( swimmer )
 
       const saveResults = prepareStatement( conn, insertResultsSql )
       for ( const result of resultsData ) {
@@ -346,7 +346,7 @@ const updateResultsBatch = async ( swimmer: Swimmer, individualData: Array<Indiv
       conn,
       "DELETE FROM Results WHERE swimmer = :id"
     )
-    deleteResults.run( swimmer )
+    await deleteResults.run( swimmer )
     for ( const [ url, content ] of responses.entries() ) {
     // console.log( inspect( pageData, { depth: 5 } ) )
       const page = pages.get( url )
@@ -481,7 +481,7 @@ const updateRankings = async ( swimmer: Swimmer, individualData: Array<Individua
       const rankingData = parseRanking( page, $ )
       const pageNo = ( page.data as { pageNo?: number } ).pageNo ?? 1
       for ( const [ index, row ] of rankingData.table.entries() ) {
-        saveRankings.run( { ...( page.data as object ), ...row, position: ( ( pageNo - 1 ) * 100 ) + ( index + 1 ) } )
+        await saveRankings.run( { ...( page.data as object ), ...row, position: ( ( pageNo - 1 ) * 100 ) + ( index + 1 ) } )
       }
     }
 
@@ -536,14 +536,14 @@ const updateSwimmerData = async ( swimmer: Swimmer, updateType: SwimmerUpdateTyp
 
   const individualData = await updateIndividual( swimmer, force )
 
-  if ( updateType === "results" || updateType === "rankings") {
+  if ( updateType === "results" || updateType === "rankings" ) {
   // await updateResults( swimmer, individualData )
-  await updateResultsBatch( swimmer, individualData, force )
+    await updateResultsBatch( swimmer, individualData, force )
 
-  if ( updateType === "rankings" ) {
-    await updateRankings( swimmer, individualData, force )
-    await updatePerformance( swimmer )
-  }
+    if ( updateType === "rankings" ) {
+      await updateRankings( swimmer, individualData, force )
+      await updatePerformance( swimmer )
+    }
   }
   const swimmerLastUpdate = prepareStatement(
     await getPool(),
@@ -620,9 +620,9 @@ const updateMeets = async ( force: boolean ) => {
       }
       if ( fetchMeet || force ) {
         try {
-        await updateMeet( meet, force )
-        // console.log( meet )
-        await saveMeets.run( meet )
+          await updateMeet( meet, force )
+          // console.log( meet )
+          await saveMeets.run( meet )
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch ( error ) {
           console.log( `Unable to update meet '${meet.name}` )
@@ -662,7 +662,7 @@ interface CliOptions {
 }
 
 ( async () => {
-  acquireLock()
+  await acquireLock()
 
   const program = new Command()
 
@@ -742,20 +742,20 @@ interface CliOptions {
                     throw new Error( `Can't find swimmer id '${task.targetId}' for task ${task.taskId}` )
                   }
                   swimmer.birthday = format( new Date( swimmer.birthday ), "yyyy-MM-dd" )
-                  const taskOptions = new Set<string>( (task.taskOptions ?? "").split( "," ) )
+                  const taskOptions = new Set<string>( ( task.taskOptions ?? "" ).split( "," ) )
                   await taskStart.run( task )
                   const updateType = taskOptions.has( "individual" ) ? "individual" :
-                  ( taskOptions.has( "results" ) ? "results" :
-                  ( taskOptions.has( "rankings" ) ? "rankings" : "" ) )
+                    ( taskOptions.has( "results" ) ? "results" :
+                      ( taskOptions.has( "rankings" ) ? "rankings" : "" ) )
                   if ( !updateType ) {
                     throw new Error( `Can't find update type in task ${task.taskId}` )
                   }
-                  await updateSwimmerData( swimmer, updateType, taskOptions.has( "force") )
+                  await updateSwimmerData( swimmer, updateType, taskOptions.has( "force" ) )
                   await taskComplete.run( task )
-                  break;
+                  break
                 }
               }
-              break;
+              break
             }
           }
         } catch ( e ) {
@@ -769,7 +769,7 @@ interface CliOptions {
     console.error( "Error in script", error )
   } finally {
     await closeBrowser()
-    closePool()
+    await closePool()
   }
 } )().catch( ( error ) => {
   console.error( "Uncaught error...", error )
