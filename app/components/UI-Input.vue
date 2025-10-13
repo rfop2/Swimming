@@ -71,7 +71,7 @@
         :id="props.id ?? defaultId"
         v-model="model"
         :type="props.type"
-        class="block w-full rounded-md text-gray-900 py-1.5 sm:text-sm sm:leading-6"
+        class="block w-full rounded-md text-gray-900 border-gray-300 py-1.5 sm:text-sm sm:leading-6"
         :placeholder="props.placeholder"
         :required="props.required"
         v-bind="$attrs"
