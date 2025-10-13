@@ -53,6 +53,7 @@ DROP TABLE IF EXISTS `ClubSwimmers`;
 CREATE TABLE `ClubSwimmers` (
   `clubId` varchar(8) NOT NULL,
   `swimmerId` varchar(8) NOT NULL,
+  `rankedClub` tinyint(1) unsigned NOT NULL DEFAULT 0,
   `created` timestamp NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`clubId`,`swimmerId`) USING BTREE,
   KEY `swimmerId` (`swimmerId`),
