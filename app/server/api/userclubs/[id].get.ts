@@ -1,4 +1,3 @@
-import { defineEventHandler } from "h3"
 import { getPool, prepareStatement, type UserClub } from "lib"
 
 export default defineEventHandler( async ( event ) => {

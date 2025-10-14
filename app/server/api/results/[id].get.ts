@@ -1,4 +1,3 @@
-import { defineEventHandler } from "h3"
 import { getPool, prepareStatement, type ResultsRow } from "lib"
 
 type Params = {

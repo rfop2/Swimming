@@ -1,4 +1,3 @@
-import { defineEventHandler } from "h3"
 import { getPool, prepareStatement } from "lib"
 import type { User } from "lucia"
 

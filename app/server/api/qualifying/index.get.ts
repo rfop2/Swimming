@@ -1,4 +1,3 @@
-import { defineEventHandler } from "h3"
 import { getPool, prepareStatement, type QualifyingRow } from "lib"
 
 export default defineEventHandler( async ( event ) => {
