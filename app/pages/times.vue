@@ -22,7 +22,7 @@
   const route = useRoute()
   const slug = Array.isArray( route.params.slug ) ? route.params.slug : []
 
-  const { swimmers } = await useSwimmers()
+  const { swimmers } = useSwimmers()
 
   const squadOptions = computed( () => [ { label: "All Swimmers", value: "*" }, ...Array.from( swimmers.value.reduce( ( sq, s ) => {
     if ( s.squad )

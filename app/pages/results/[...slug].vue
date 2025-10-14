@@ -308,7 +308,7 @@
       Results and progress in each event. Qualifying times are shown where available, adjusted to the selected course.
     </template>
     <template #controls>
-      <SwimmerSelector />
+      <SwimmerSelector v-model="swimmer" />
       <div class="min-w-24">
         <UI-Listbox
           v-model="selections.course"

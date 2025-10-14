@@ -3,6 +3,8 @@
   import { FetchError } from "ofetch"
   import type { Swimmer } from "lib"
 
+  const model = defineModel<Swimmer | undefined>( { required: true } )
+
   const props = withDefaults( defineProps<{
     showLabel?: boolean
     showUpdated?: boolean
@@ -11,8 +13,8 @@
     showUpdated: false,
   } )
 
-  const { swimmers } = await useSwimmers()
-  const { swimmer, setSwimmer } = await useSwimmer()
+  const { swimmers } = useSwimmers()
+  const { swimmer } = useSwimmer()
   const swimmersMap = new Map<Swimmer["id"], Swimmer>( swimmers.value.map( s => ( [ s.id, s ] ) ) )
 
   const swimmerOptions = computed( () => swimmers.value.map( s => ( { label: s.fullName, value: s.id } ) ) )
@@ -23,8 +25,9 @@
   watch(
     selectedSwimmer,
     async ( newSwimmer ) => {
+      console.log( "ss", newSwimmer )
       if ( newSwimmer && newSwimmer.value ) {
-        setSwimmer( swimmersMap.get( String( newSwimmer.value ) ) )
+        model.value = swimmersMap.get( String( newSwimmer.value ) )
         try {
           const lastUpdate = await $fetch( `/api/updated/${newSwimmer.value}` )
           updated.value = format( lastUpdate, "yyyy-MM-dd" )

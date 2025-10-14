@@ -5,22 +5,27 @@ export const useSwimmer = () => {
   const { swimmers } = useSwimmers()
 
   // Computed swimmer based on swimmerId
-  const swimmer = computed<Swimmer | undefined>( () => {
-    if ( !ready.value || !swimmers.value.length ) return undefined
-    return swimmers.value.find( s => s.id === swimmerId.value ) ?? swimmers.value[0]
+  const swimmer = computed<Swimmer | undefined>( {
+    get() {
+      if ( !ready.value || !swimmers.value.length ) return undefined
+      return swimmers.value.find( s => s.id === swimmerId.value ) ?? swimmers.value[0]
+    },
+    set( newSwimmer ) {
+      swimmerId.value = newSwimmer?.id
+    },
+  } )
+
+  watchEffect( () => {
+    console.log( "si", swimmerId.value )
   } )
 
   // Optional: keep swimmerId in sync (e.g., if swimmers list changes and selected swimmer disappears)
   watch( swimmer, s => {
+    console.log( "SW", swimmer.value )
     if ( s?.id !== swimmerId.value ) {
       swimmerId.value = s?.id
     }
   } )
 
-  // Helper to update the current swimmer
-  const setSwimmer = ( newSwimmer?: Swimmer ) => {
-    swimmerId.value = newSwimmer?.id
-  }
-
-  return { swimmer, setSwimmer }
+  return { swimmer }
 }

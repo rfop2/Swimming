@@ -583,7 +583,7 @@
       </div>
     </template>
     <template #controls>
-      <SwimmerSelector />
+      <SwimmerSelector v-model="swimmer" />
       <div class="min-w-24">
         <UI-Listbox
           v-model="selections.year"

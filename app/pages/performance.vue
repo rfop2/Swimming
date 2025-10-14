@@ -17,7 +17,7 @@
     ]
   } )
 
-  const { swimmer } = await useSwimmer()
+  const { swimmer } = useSwimmer()
 
   type PerformanceApiResponse = InternalApi["/api/relative/:id"]["get"]
   interface AreaDetail extends Partial<PerformanceApiResponse[number]> {
@@ -290,7 +290,10 @@
       Performance in events relative to the event leader if appearing in top 100 rankings (200 for national) in the last 12 months.
     </template>
     <template #controls>
-      <SwimmerSelector :show-label="false" />
+      <SwimmerSelector
+        v-model="swimmer"
+        :show-label="false"
+      />
       <div class="min-w-32">
         <UI-Listbox
           v-model="qualifyingYear"
