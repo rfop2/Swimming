@@ -2,99 +2,54 @@ import { format } from "date-fns"
 import type { Swimmer } from "lib"
 
 export const useSwimmers = ( userId?: string ) => {
-  const swimmers = useState<Swimmer[]>( `swimmers-${userId}`, () => [] )
-  const loading = useState<boolean>( `swimmersLoading-${userId}`, () => false )
-  const fetchError = useState<unknown>( `swimmersError-${userId}`, () => null )
+  const swimmers = useState<Swimmer[]>( `swimmers-${userId ?? "0"}`, () => [] )
+  const loading = useState<boolean>( `swimmersLoading-${userId ?? "0"}`, () => false )
+  const fetchError = useState<{ status: number | null, message: string | null }> (
+    `swimmersError-${userId}`,
+    () => ( { status: null, message: null } )
+  )
 
-  const fetchSwimmers = async () => {
-    if ( loading.value ) return
+  const fetchSwimmers = async (): Promise<Swimmer[]> => {
     loading.value = true
-    fetchError.value = null
+    fetchError.value = { status: null, message: null }
 
     try {
-      const { data, error } = await useFetch<Swimmer[]>( `/api/swimmers/${userId ?? ""}`, {
-        key: `swimmers-${userId}`,
-        transform: data =>
-          data.map( s => ( {
-            ...s,
-            birthday: format( new Date( s.birthday ), "yyyy-MM-dd" ),
-          } ) ),
-      } )
-
-      if ( error.value ) {
-        fetchError.value = error.value
-      } else {
-        swimmers.value = ( data.value || [] ).sort( ( a, b ) => {
-          const lastSort = a.lastName.localeCompare( b.lastName )
-          return lastSort || a.firstName.localeCompare( b.firstName )
+      const data = await $fetch<Swimmer[]>( `/api/swimmers/${userId ?? ""}` )
+      return data
+        .map( s => ( {
+          ...s,
+          birthday: format( new Date( s.birthday ), "yyyy-MM-dd" )
+        } ) )
+        .sort( ( a, b ) => {
+          const last = a.lastName.localeCompare( b.lastName )
+          return last || a.firstName.localeCompare( b.firstName )
         } )
-      }
-    } catch ( err ) {
-      fetchError.value = err
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch ( err: any ) {
+      fetchError.value = { status: err?.status ?? null, message: String( err?.message ?? err ) }
+      return []
     } finally {
       loading.value = false
     }
   }
 
-  // --- Mutations ---
-  /*
-  const addSwimmer = async ( newSwimmer: Omit<Swimmer, "id"> ): Promise<Swimmer> => {
-    const created = await $fetch<Swimmer>( "/api/swimmers", {
-      method: "POST",
-      body: newSwimmer
-    } )
+  // ✅ This actually produces serialized data in the SSR payload
+  const { data } = useAsyncData( `swimmers-${userId ?? "0"}`, fetchSwimmers, { default: () => [] } )
 
-    swimmers.value.push( {
-      ...created,
-      birthday: format( new Date( created.birthday ), "yyyy-MM-dd" )
-    } )
+  // ✅ Keep global reactive state in sync with SSR data
+  watchEffect( () => {
+    if ( data.value && data.value.length ) swimmers.value = data.value
+  } )
 
-    return created
+  const refresh = async () => {
+    const newData = await fetchSwimmers()
+    swimmers.value = newData
   }
 
-  const updateSwimmer = async ( updated: Swimmer ): Promise<Swimmer> => {
-    const saved = await $fetch<Swimmer>( `/api/swimmers/${updated.id}`, {
-      method: "PUT",
-      body: updated
-    } )
-
-    const idx = swimmers.value.findIndex( ( s ) => s.id === updated.id )
-    if ( idx !== -1 ) {
-      swimmers.value[idx] = {
-        ...saved,
-        birthday: format( new Date( saved.birthday ), "yyyy-MM-dd" )
-      }
-    }
-
-    return saved
-  }
-
-  const deleteSwimmer = async ( id: string ): Promise<void> => {
-    await $fetch( `/api/swimmers/${id}`, { method: "DELETE" } )
-    swimmers.value = swimmers.value.filter( ( s ) => s.id !== id )
-  }
-  */
-
-  // --- Clear everything ---
-  const clearSwimmers = (): void => {
+  const clear = () => {
     swimmers.value = []
-    fetchError.value = null
-    clearNuxtData( "swimmers" ) // invalidate fetch cache
+    clearNuxtData( `swimmers-${userId}` )
   }
 
-  // --- Public API ---
-  if ( !swimmers.value.length ) {
-    fetchSwimmers()
-  }
-
-  return {
-    swimmers,
-    loading,
-    fetchError,
-    refresh: fetchSwimmers,
-    // addSwimmer,
-    // updateSwimmer,
-    // deleteSwimmer,
-    clear: clearSwimmers,
-  }
+  return { swimmers, loading, fetchError, refresh, clear }
 }
