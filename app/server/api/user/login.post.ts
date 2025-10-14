@@ -1,7 +1,7 @@
 import { verify } from "@node-rs/argon2"
 import { type DatabaseUser, getPool, prepareStatement } from "lib"
 
-export default eventHandler( async ( event ) => {
+export default defineEventHandler( async ( event ) => {
   const formData = await readFormData( event )
   const username = formData.get( "username" )
   if (

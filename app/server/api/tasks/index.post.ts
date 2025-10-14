@@ -1,6 +1,6 @@
 import { getPool, isMySql2Error, prepareStatement } from "lib"
 
-export default eventHandler( async ( event ) => {
+export default defineEventHandler( async ( event ) => {
   if ( !event.context.session || !event.context.user ) {
     throw createError( {
       status: 401

@@ -1,6 +1,6 @@
 import { getPool, prepareStatement, type Task } from "lib"
 
-export default eventHandler( async ( event ) => {
+export default defineEventHandler( async ( event ) => {
   if ( !event.context.session || !event.context.user ) {
     throw createError( {
       status: 401
