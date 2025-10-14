@@ -36,8 +36,7 @@ export default defineEventHandler( async ( event ) => {
   if ( task.taskStatus !== "pending" ) {
     throw createError( {
       message: "Task is not cancellable",
-      status: 404,
-      statusCode: 404
+      status: 410,
     } )
   }
 
