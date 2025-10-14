@@ -19,11 +19,11 @@ export const useTasksCheck = () => {
                   case "swimmer" : {
                     console.log( "t", task.taskStatus )
                     if ( task.taskStatus === "error" ) {
-                      showAlert( `Updating swimmer '${task.targetId}' failed`, "error" )
+                      showAlert( `Task "${task.taskDescription}" failed`, "error" )
                     } else if ( task.taskStatus === "complete" ) {
-                      showAlert( `Updating swimmer '${task.targetId}' is complete`, "success" )
+                      showAlert( `Task "${task.taskDescription}" is complete`, "success" )
                     } else if ( lastTask.taskStatus === "pending" && task.taskStatus === "progress" ) {
-                      showAlert( `Update for swimmer '${task.targetId}' has started`, "info" )
+                      showAlert( `Task "${task.taskDescription}" has started`, "info" )
                     }
                     break
                   }

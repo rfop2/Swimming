@@ -3,16 +3,21 @@
   import type { FetchError } from "ofetch"
   import type { User } from "lucia"
   import { format } from "date-fns"
-  import type { Swimmer } from "lib"
+  import type { Task } from "lib"
 
   const props = defineProps<{
     user: User
-    swimmers: Swimmer[]
   }>()
+
+  const { swimmers, refresh: refreshSwimmers } = useSwimmers( props.user.id )
 
   const { tasks, createTask, createTasks, deleteTask } = useTasks()
 
-  const swimmerTasks = computed( () => Object.fromEntries( props.swimmers.map( swimmer => ( [ swimmer.id, ( ( tasks.value ?? [] ).filter( task => task.targetType === "swimmer" && task.targetId === swimmer.id ) ?? [] ) ] ) ) ) )
+  watch( tasks, async () => {
+    await refreshSwimmers()
+  }, { deep: true } )
+
+  const swimmerTasks = computed( () => Object.fromEntries( swimmers.value.map( swimmer => ( [ swimmer.id, ( ( tasks.value ?? [] ).filter( task => task.targetType === "swimmer" && task.targetId === swimmer.id ) ?? [] ) ] ) ) ) )
 
   const genders = [
     {
@@ -26,19 +31,21 @@
   ]
 
   const selectAll = ref( false )
-  const selected = ref( Object.fromEntries( props.swimmers.map( s => ( [ s.id, 0 ] ) ) ) )
+  const selected = ref( new Array( swimmers.value.length ).fill( 0 ) )
+
   const toggleAll = ( event: Event ) => {
-    selected.value = Object.fromEntries( props.swimmers.map( s => ( [ s.id, Number( ( event.target as HTMLInputElement ).checked ) ] ) ) )
+    selected.value.fill( Number( ( event.target as HTMLInputElement ).checked ) )
   }
   watch( selected, ( newSelected ) => {
-    selectAll.value = Object.values( newSelected ).every( v => !!v )
+    selectAll.value = newSelected.every( s => !!s )
   }, { deep: true } )
 
   const updateAll = ( updateType: string ) => {
     try {
-      const updateTasks = props.swimmers.map( s => ( {
+      const updateTasks: Array<Partial<Task>> = swimmers.value.map( s => ( {
         taskType: "update",
         taskOptions: updateType,
+        taskDescription: `${updateType.charAt( 0 ).toUpperCase()}${updateType.slice( 1 )} update of swimmer '${s.fullName}'`,
         targetType: "swimmer",
         targetId: s.id,
       } ) )
@@ -51,14 +58,15 @@
 
   const updateSelected = ( updateType: string ) => {
     try {
-      const updateTasks = Object.entries( selected.value ).filter( s => !!s[1] ).map( s => ( {
+      const updateTasks: Array<Partial<Task>> = swimmers.value.filter( ( s, i ) => selected.value[i] ).map( s => ( {
         taskType: "update",
         taskOptions: updateType,
+        taskDescription: `${updateType.charAt( 0 ).toUpperCase()}${updateType.slice( 1 )} update of swimmer '${s.fullName}'`,
         targetType: "swimmer",
-        targetId: s[0],
+        targetId: s.id,
       } ) )
       createTasks( updateTasks )
-      selected.value = Object.fromEntries( props.swimmers.map( s => ( [ s.id, 0 ] ) ) )
+      selected.value.fill( 0 )
     } catch ( error ) {
       console.error( "Error", error )
       throw createError( error as FetchError )
@@ -66,11 +74,12 @@
   }
 
   const updateSwimmer = async ( swimmerIndex: number, updateType: string ) => {
-    const swimmer = props.swimmers[swimmerIndex]
+    const swimmer = swimmers.value[swimmerIndex]
     try {
       createTask( {
         taskType: "update",
         taskOptions: updateType,
+        taskDescription: `${updateType.charAt( 0 ).toUpperCase()}${updateType.slice( 1 )} update of swimmer '${swimmer.fullName}'`,
         targetType: "swimmer",
         targetId: swimmer.id,
       } )
@@ -80,8 +89,9 @@
     }
   }
 
+  const cancelFailed = ref( false )
   const cancelUpdate = async ( swimmerIndex: number ) => {
-    const swimmer = props.swimmers[swimmerIndex]
+    const swimmer = swimmers.value[swimmerIndex]
     const tasks = swimmerTasks.value[swimmer.id].filter( t => t.taskStatus === "pending" )
     console.log( "T", tasks )
     try {
@@ -90,17 +100,10 @@
       }
     } catch ( error ) {
       console.error( "Error", error )
+      cancelFailed.value = true
       throw createError( error as FetchError )
     }
   }
-
-  const selectUpdateType = ref<boolean>( false )
-  const selectedForUpdate = ref<null | number | "selected" | "all">( null )
-  watchEffect( () => {
-    if ( selectedForUpdate.value !== null ) {
-      selectUpdateType.value = true
-    }
-  } )
 
   const updateOptions = [
     { label: "Choose update", value: "" },
@@ -109,6 +112,15 @@
     { label: "Basic data, event results and relative rankings", value: "rankings" },
   ]
   const updateType = ref( updateOptions[0].value )
+
+  const selectUpdateType = ref<boolean>( false )
+  const selectedForUpdate = ref<null | number | "selected" | "all">( null )
+  watchEffect( () => {
+    if ( selectedForUpdate.value !== null ) {
+      selectUpdateType.value = true
+      updateType.value = updateOptions[0].value
+    }
+  } )
 
   const queueUpdates = async () => {
     if ( selectedForUpdate.value === "all" ) {
@@ -230,7 +242,7 @@
                 >
                   <td class="py-1 pr-1 pl-2 text-sm font-medium whitespace-nowrap text-gray-900 sm:pl-0">
                     <UIInput
-                      v-model="selected[swimmer.id]"
+                      v-model="selected[swimmerIndex]"
                       type="checkbox"
                       :true-value="1"
                       :false-value="0"
@@ -340,9 +352,9 @@
     confirm-label="Delete"
     :action="deleteSwimmer"
   />-->
-  <!--<UI-SuccessNotification
-    v-model="saveSuccess"
-    title="Successfully saved!"
-    text="Account details have been updated."
-  />-->
+  <UI-ErrorNotification
+    v-model="cancelFailed"
+    title="Failed to delete"
+    text="Unable to delete task."
+  />
 </template>

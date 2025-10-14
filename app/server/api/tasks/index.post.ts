@@ -26,7 +26,7 @@ export default defineEventHandler( async ( event ) => {
 
     const addTask = prepareStatement(
       await getPool(),
-      "INSERT INTO Tasks ( creatorId, taskType, targetType, targetId, taskOptions  ) VALUES( :userId, :taskType, :targetType, :targetId, :taskOptions )"
+      "INSERT INTO Tasks ( creatorId, taskType, taskOptions, taskDescription, targetType, targetId ) VALUES( :userId, :taskType, :taskOptions, :taskDescription, :targetType, :targetId )"
     )
 
     const tasks = Array.isArray( taskData ) ? taskData : [ taskData ]

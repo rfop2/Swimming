@@ -402,6 +402,7 @@ CREATE TABLE `Tasks` (
   `creatorId` varchar(16) DEFAULT NULL,
   `taskType` varchar(16) NOT NULL,
   `taskOptions` varchar(255) DEFAULT NULL,
+  `taskDescription` varchar(255) DEFAULT NULL,
   `targetType` enum('swimmer','club','meet') DEFAULT NULL,
   `targetId` varchar(8) DEFAULT NULL,
   `taskStatus` enum('pending','progress','complete','cancelled','error') NOT NULL DEFAULT 'pending',

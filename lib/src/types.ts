@@ -176,9 +176,9 @@ export interface Task {
   creatorId?: string
   taskType: string
   taskOptions?: string
+  taskDescription?: string
   targetType: string
   targetId?: string
-  targetDescription?: string
   taskSchedule?: string
   taskStatus?: string
   taskResult?: string

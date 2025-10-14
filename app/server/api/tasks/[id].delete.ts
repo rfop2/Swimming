@@ -7,33 +7,41 @@ export default defineEventHandler( async ( event ) => {
     } )
   }
 
+  const taskId = getRouterParam( event, "id" )
+  if ( !taskId ) {
+    throw createError( {
+      message: "No task id found",
+      status: 400
+    } )
+  }
+
+  const selectTask = prepareStatement<{ taskId: string }, Task>(
+    await getPool(),
+    "SELECT * FROM Tasks WHERE taskId = :taskId"
+  )
+  const task = await selectTask.get( { taskId } )
+  if ( !task ) {
+    throw createError( {
+      message: `Task ${taskId} not found`,
+      status: 404
+    } )
+  }
+
+  if ( task.creatorId !== event.context.user.id && !Number( event.context.user.admin ) ) {
+    throw createError( {
+      status: 403
+    } )
+  }
+
+  if ( task.taskStatus !== "pending" ) {
+    throw createError( {
+      message: "Task is not cancellable",
+      status: 404,
+      statusCode: 404
+    } )
+  }
+
   try {
-    const taskId = getRouterParam( event, "id" )
-    if ( !taskId ) {
-      throw createError( {
-        message: "No task id found",
-        status: 400
-      } )
-    }
-
-    const selectTask = prepareStatement<{ taskId: string }, Task>(
-      await getPool(),
-      "SELECT * FROM Tasks WHERE taskId = :taskId"
-    )
-    const task = await selectTask.get( { taskId } )
-    if ( !task ) {
-      throw createError( {
-        message: `Task ${taskId} not found`,
-        status: 404
-      } )
-    }
-
-    if ( task.creatorId !== event.context.user.id && !Number( event.context.user.admin ) ) {
-      throw createError( {
-        status: 403
-      } )
-    }
-
     const taskJob = prepareStatement<{ taskId: string }>(
       await getPool(),
       "UPDATE Tasks SET taskStatus = 'cancelled' WHERE taskId = :taskId"
