@@ -32,6 +32,7 @@
     stroke: strokeOptions.find( option => option.value === slug[1] ) ?? strokeOptions[0],
     distance: distanceOptions.find( option => option.value === slug[2] ) ?? distanceOptions[0],
     period: {
+      range: undefined,
       startDate: undefined,
       endDate: undefined,
     }

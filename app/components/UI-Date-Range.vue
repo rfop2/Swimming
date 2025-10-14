@@ -3,22 +3,21 @@
   import type { Temporal } from "temporal-polyfill"
 
   export interface DateDefn {
-    startDate?: string
-    endDate?: string
+    range: string | undefined
+    startDate: string | undefined
+    endDate: string | undefined
     group?: string
   }
 
   const model = defineModel<DateDefn>( { required: true } )
 
   const props = withDefaults( defineProps<{
-    initialRange?: string
     labelled?: boolean
     grouped?: boolean
     showLast?: boolean
     maxPeriod?: string
     minPeriod?: string
   }>(), {
-    initialRange: "",
     labelled: true,
     grouped: false,
     showLast: false,
@@ -60,7 +59,7 @@
     { label: "By Year", value: "year" },
   ]
 
-  const range = ref( dateRanges.find( r => r.value === props.initialRange ) ?? dateRanges[0] )
+  const range = ref( dateRanges.find( r => r.value === model.value.range ) ?? ( !model.value.startDate && !model.value.endDate ? dateRanges[0] : dateRanges[dateRanges.length - 1] ) )
   const group = ref( dateGroups.find( g => g.value === model.value.group ) )
 
   const getDatesFromRange = ( range: string ) => {
@@ -81,6 +80,7 @@
   }
 
   watch( range, ( newRange ) => {
+    model.value.range = newRange.value
     const dates = getDatesFromRange( newRange.value )
     if ( dates ) {
       if ( dates.start ) {
