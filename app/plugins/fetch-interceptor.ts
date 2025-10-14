@@ -1,4 +1,6 @@
 export default defineNuxtPlugin( () => {
+  const nuxtApp = useNuxtApp() // ✅ this is valid here
+
   const originalFetch = globalThis.$fetch
   type NuxtFetch = typeof originalFetch
 
@@ -11,8 +13,9 @@ export default defineNuxtPlugin( () => {
 
     // Forward cookies automatically during SSR for /api requests
     if ( import.meta.server && isApiRequest ) {
-      const headers = useRequestHeaders( [ "cookie" ] )
-      options = { ...options, headers: { ...headers, ...( options.headers || {} ) } }
+      // ✅ get Nuxt context safely
+      const headers = nuxtApp.ssrContext?.event?.node?.req?.headers ?? {}
+      options = { ...options, headers: { cookie: headers.cookie ?? "", ...( options.headers || {} ) } }
     }
 
     // Browser credentials policy
