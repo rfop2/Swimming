@@ -2,13 +2,47 @@
   {
     "isoDate": "2025-10-14",
     "niceDate": "14 October 2025",
-    "diff": "11.1.0..",
-    "href": "https://bitbucket.org/guntrader/swimming/compare/11.2.0..11.1.0",
+    "diff": "11.2.0..",
+    "href": "https://bitbucket.org/guntrader/swimming/compare/11.2.1..11.2.0",
     "major": false,
     "minor": false,
     "tag": null,
+    "title": "11.2.1",
+    "date": "2025-10-14T10:11:27.212Z",
+    "summary": null,
+    "commits": [
+      {
+        "hash": "86919dc9eae4e4cef31c92c4193c803fc3071fef",
+        "shorthash": "86919dc",
+        "author": "Philip Coombes",
+        "email": "phil@web2wire.com",
+        "date": "2025-10-14T09:48:19.000Z",
+        "niceDate": "14 October 2025",
+        "subject": "Revert \"Avoid using useFetch as complains on reloads\"",
+        "message": "Revert \"Avoid using useFetch as complains on reloads\"\n\nThis reverts commit ad38ecad66182d3dd5581a1ee6036579185e1a1a.",
+        "fixes": null,
+        "href": "https://bitbucket.org/guntrader/swimming/commits/86919dc9eae4e4cef31c92c4193c803fc3071fef",
+        "breaking": false,
+        "files": 1,
+        "insertions": 13,
+        "deletions": 7,
+        "merge": null
+      }
+    ],
+    "merges": [],
+    "fixes": []
+  },
+  {
+    "isoDate": "2025-10-14",
+    "niceDate": "14 October 2025",
+    "diff": "11.1.0..11.2.0",
+    "href": "https://bitbucket.org/guntrader/swimming/compare/11.2.0..11.1.0",
+    "major": false,
+    "minor": true,
+    "tag": "11.2.0",
+    "date": "2025-10-14",
     "title": "11.2.0",
-    "date": "2025-10-14T09:23:41.356Z",
+    "version": "11.2.0",
     "summary": null,
     "commits": [
       {
