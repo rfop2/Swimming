@@ -12,17 +12,23 @@ export const useSwimmers = ( userId?: string ) => {
     fetchError.value = null
 
     try {
-      const data = await $fetch<Swimmer[]>( `/api/swimmers/${userId ?? ""}` )
+      const { data, error } = await useFetch<Swimmer[]>( `/api/swimmers/${userId ?? ""}`, {
+        key: `swimmers-${userId}`,
+        transform: data =>
+          data.map( s => ( {
+            ...s,
+            birthday: format( new Date( s.birthday ), "yyyy-MM-dd" ),
+          } ) ),
+      } )
 
-      swimmers.value = data
-        .map( s => ( {
-          ...s,
-          birthday: format( new Date( s.birthday ), "yyyy-MM-dd" ),
-        } ) )
-        .sort( ( a, b ) => {
+      if ( error.value ) {
+        fetchError.value = error.value
+      } else {
+        swimmers.value = ( data.value || [] ).sort( ( a, b ) => {
           const lastSort = a.lastName.localeCompare( b.lastName )
           return lastSort || a.firstName.localeCompare( b.firstName )
         } )
+      }
     } catch ( err ) {
       fetchError.value = err
     } finally {
