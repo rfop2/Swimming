@@ -1,5 +1,8 @@
 
 import * as XLSX from 'xlsx'
+
+// some functions doesn't have course because is selected by the user
+
 // 2025-SECC-Qualifying-Times_updated-Nov-2024_-final
 export function parseSwimmingPdf(text: string) {
     const ages = ['10 & 11', '12', '13', '14', '15', '16', '17+'];
@@ -118,7 +121,8 @@ export function parseSwimmingPdfLayout2(text: string) {
             }
 
             ages.forEach((ageLabel, idx) => {
-                const time = times[idx] || null;
+                let time = times[idx] || null;
+                time = normalizeTime(time)
 
                 if (ageLabel === "10 & 11") {
                     structured.push({ gender: currentGender, event, distance, stroke, age: "10", time });
@@ -575,7 +579,6 @@ export function parseSwimmingPdfLayout6(text: string) {
     const lines = text.split("\n").map(l => l.trim()).filter(Boolean);
 
     const AGES8 = ["10-11", "12", "13", "14", "15", "16", "17", "18+"];
-    const course: "sc" = "sc";
     const structured: any[] = [];
 
     let gender: "female" | "male" | null = null;
@@ -626,10 +629,10 @@ export function parseSwimmingPdfLayout6(text: string) {
             const t = normalizeTime(raw);
 
             if (label === "10-11") {
-                structured.push({ gender, course, event, distance, stroke, age: "10", time: t });
-                structured.push({ gender, course, event, distance, stroke, age: "11", time: t });
+                structured.push({ gender, event, distance, stroke, age: "10", time: t });
+                structured.push({ gender, event, distance, stroke, age: "11", time: t });
             } else {
-                structured.push({ gender, course, event, distance, stroke, age: label, time: t });
+                structured.push({ gender, event, distance, stroke, age: label, time: t });
             }
         }
     };
@@ -667,7 +670,6 @@ export function parseSwimmingPdfLayout7(text: string) {
     const lines = text.split("\n").map(l => l.trim()).filter(Boolean);
 
     const AGES = ["10-11", "12", "13", "14", "15", "16", "17+"] as const;
-    const course: "sc" = "sc";
     const structured: any[] = [];
 
     let gender: "female" | "male" | null = null;
@@ -705,10 +707,10 @@ export function parseSwimmingPdfLayout7(text: string) {
             const t = normalizeTime(raw);
 
             if (label === "10-11") {
-                structured.push({ gender, course, event, distance, stroke, age: "10", time: t });
-                structured.push({ gender, course, event, distance, stroke, age: "11", time: t });
+                structured.push({ gender, event, distance, stroke, age: "10", time: t });
+                structured.push({ gender, event, distance, stroke, age: "11", time: t });
             } else {
-                structured.push({ gender, course, event, distance, stroke, age: label, time: t });
+                structured.push({ gender, event, distance, stroke, age: label, time: t });
             }
         }
     };
@@ -753,20 +755,32 @@ export function parseSwimmingPdfLayout8(text: string) {
     type Gender = "female" | "male";
     type Course = "lc" | "sc";
 
+    // PDF shows headers like "11y/12y 13y 14y ... 18y+"
     const AGE_COLS = ["11y/12y", "13y", "14y", "15y", "16y", "17y", "18y+"] as const;
 
     const courseFrom = (s: string): Course | null =>
         /LONG\s*COURSE/i.test(s) ? "lc" : (/SHORT\s*COURSE/i.test(s) ? "sc" : null);
 
-    const EVENT_RX = /^(\d{2,4})m\s+(Freestyle|Backstroke|Breaststroke|Butterfly|(?:Ind(?:ividual)?\.?\s*Medley|IM))\s*(.*)$/i;
+    const EVENT_RX =
+        /^(\d{2,4})m\s+(Freestyle|Backstroke|Breaststroke|Butterfly|(?:Ind(?:ividual)?\.?\s*Medley|IM))\s*(.*)$/i;
 
-    const TIME_RX = /(?:(?:\d{1,2}[:.]){2}\d{1,2})|(?:\d{1,2}[:.]\d{1,2}(?:[:.]\d{1,2})?)|(?:\d{1,2}[.]\d{1,2})/g;
+    // HH:MM:SS(.sss) | MM:SS(.sss) | SS.xx | SS.xxx  (order matters)
+    const TIME_RX =
+        /(?:\d{1,2}:\d{2}:\d{2}(?:\.\d{1,3})?)|(?:\d{1,2}:\d{2}(?:\.\d{1,3})?)|(?:\d{1,2}\.\d{2})|(?:\d{1,2}\.\d{3})/g;
 
     const PURE_TIMES_RX = /^([0-9:.]+\s*)+$/;
-
     const timesFrom = (s: string) => s.match(TIME_RX) ?? [];
 
-    const NEED_TOKENS = 14;
+    // Accept one or more "QTCT" blocks (with or without spaces)
+    const QTCT_RX = /^(?:Q\s*T\s*C\s*T)+$/i;
+
+    const NEED_TOKENS = 14; // QT + CT for 7 age columns
+
+    // --- NEW: age normalization helper ---
+    const normalizeAge = (s: string) =>
+        s.replace(/\s+/g, "")          // strip spaces
+            .replace(/y\+$/i, "+")        // "18y+" -> "18+"
+            .replace(/y$/i, "");          // "13y"  -> "13"
 
     const pushRows = (
         out: any[],
@@ -780,22 +794,21 @@ export function parseSwimmingPdfLayout8(text: string) {
         const distance = `${distanceNum}m`;
         const event = `${stroke} ${distance}`;
 
+        // Even indices = QT (keep); Odd indices = CT (ignore)
         const qt = Array.from({ length: 7 }, (_, i) => tokens[2 * i] ?? null);
-        const ct = Array.from({ length: 7 }, (_, i) => tokens[2 * i + 1] ?? null);
 
         for (let i = 0; i < AGE_COLS.length; i++) {
             const col = AGE_COLS[i];
             const qtT = normalizeTime(qt[i]);
-            const ctT = normalizeTime(ct[i]);
 
             if (col === "11y/12y") {
-                out.push({ gender, course, event, distance, stroke, standard: "qt", age: "11", time: qtT });
-                out.push({ gender, course, event, distance, stroke, standard: "qt", age: "12", time: qtT });
-                out.push({ gender, course, event, distance, stroke, standard: "ct", age: "11", time: ctT });
-                out.push({ gender, course, event, distance, stroke, standard: "ct", age: "12", time: ctT });
+                // Emit both 11 and 12 from the combined column
+                out.push({ gender, course, event, distance, stroke, age: "11", time: qtT });
+                out.push({ gender, course, event, distance, stroke, age: "12", time: qtT });
             } else {
-                out.push({ gender, course, event, distance, stroke, standard: "qt", age: col, time: qtT });
-                out.push({ gender, course, event, distance, stroke, standard: "ct", age: col, time: ctT });
+                // Normalize labels like "13y" -> "13", "18y+" -> "18+"
+                const age = normalizeAge(col);
+                out.push({ gender, course, event, distance, stroke, age, time: qtT });
             }
         }
     };
@@ -804,13 +817,12 @@ export function parseSwimmingPdfLayout8(text: string) {
 
     let currentCourse: Course | null = null;
     let currentGender: Gender | null = null;
-    let blockWithinCourse = 0;
+    let qtctCountInCourse = 0;
 
     let pending: { distance: string; stroke: string; tokens: string[] } | null = null;
 
     const flushPending = () => {
         if (!pending || !currentCourse || !currentGender) { pending = null; return; }
-        // garante exatamente 14 tokens
         const toks = pending.tokens.slice(0, NEED_TOKENS);
         if (toks.length === NEED_TOKENS) {
             pushRows(structured, currentGender, currentCourse, pending.stroke, pending.distance, toks);
@@ -822,25 +834,28 @@ export function parseSwimmingPdfLayout8(text: string) {
         const line = lines[i];
         if (!line) continue;
 
+        // Course header
         const c = courseFrom(line);
         if (c) {
             flushPending();
             currentCourse = c;
             currentGender = null;
-            blockWithinCourse = 0;
+            qtctCountInCourse = 0;
             continue;
         }
 
-        if (/^QTCT/i.test(line)) {
+        // QT/CT header ⇒ sets gender by position within the course
+        if (QTCT_RX.test(line)) {
             flushPending();
             if (!currentCourse) continue;
-            currentGender = (blockWithinCourse === 0 ? "male" : "female");
-            blockWithinCourse += 1;
+            qtctCountInCourse += 1;
+            currentGender = (qtctCountInCourse === 1 ? "male" : "female");
             continue;
         }
 
         if (!currentCourse || !currentGender) continue;
 
+        // Event row
         const m = EVENT_RX.exec(line);
         if (m) {
             flushPending();
@@ -867,7 +882,8 @@ export function parseSwimmingPdfLayout8(text: string) {
             continue;
         }
 
-        if (/^(FEMALE|OPEN\/?MALE|11y\/?12y|Age|Notes|QUALIFYING|CONSIDERATION)/i.test(line)) {
+        // Skip other headers/noise
+        if (/^(11y\/?12y|Age|Notes|QUALIFYING|CONSIDERATION|FEMALE|OPEN\/?MALE)/i.test(line)) {
             flushPending();
             continue;
         }
@@ -877,10 +893,10 @@ export function parseSwimmingPdfLayout8(text: string) {
     return structured;
 }
 
+
 // cornwall-county-championships-2025-qts_057406
 export function parseSwimmingPdfLayout9(text: string) {
     type Gender = "female" | "male";
-    const course: "sc" = "sc";
 
     const AGE_COLS = ["10-11", "12", "13", "14", "15", "16", "17+"] as const;
 
@@ -924,14 +940,14 @@ export function parseSwimmingPdfLayout9(text: string) {
         const d = `${distance}`; // "50", "100", ..., "1500"
         const isIM = /Individual\s+Medley/i.test(stroke) || /^IM$/i.test(stroke);
         if (d === "800" || d === "1500") return 6;        // 12..17+
-        if (d === "400" && isIM) return 6;                // 400 IM sem 10-11
-        return 7;                                         // demais: 10-11..17+
+        if (d === "400" && isIM) return 6;
+        return 7;
     };
 
     const alignTo7 = (distance: string, stroke: string, tokens: string[]) => {
         const need = expectedCount(distance, stroke);
         let arr = tokens.slice(0, need);
-        if (need === 6) arr = [null as any].concat(arr);  // insere 10-11 vazio
+        if (need === 6) arr = [null as any].concat(arr);
         while (arr.length < 7) arr.push(null as any);
         return arr as (string | null)[];
     };
@@ -945,16 +961,13 @@ export function parseSwimmingPdfLayout9(text: string) {
         for (let i = 0; i < AGE_COLS.length; i++) {
             const label = AGE_COLS[i];
             const raw = aligned[i];
-            const t = typeof (globalThis as any).normalizeTime === "function"
-                ? (globalThis as any).normalizeTime(raw)
-                : (raw ? String(raw) : null);
+            const t = normalizeTime(raw);
 
             if (label === "10-11") {
-                structured.push({ gender, course, event, distance, stroke, age: "10", time: t });
-                structured.push({ gender, course, event, distance, stroke, age: "11", time: t });
+                structured.push({ gender, event, distance, stroke, age: "10", time: t });
+                structured.push({ gender, event, distance, stroke, age: "11", time: t });
             } else {
-                // "17+" já é o destino final
-                structured.push({ gender, course, event, distance, stroke, age: label, time: t });
+                structured.push({ gender, event, distance, stroke, age: label, time: t });
             }
         }
     };
@@ -1016,174 +1029,161 @@ export function parseSwimmingPdfLayout9(text: string) {
 // Cornwall-County-Champs-2026-QTs
 export function parseSwimmingPdfLayout10(text: string) {
     const lines = text.split("\n").map(l => l.trim()).filter(Boolean);
+
     type Gender = "female" | "male";
-    type Course = "sc";
-    const course: Course = "sc";
 
-    const AGE_COLS = ["10-11", "12", "13", "14", "15", "16", "17+"] as const;
+    // “Age Group 10&11 12 13 14 15 16 17& Over”
+    // We always output: 10, 11, 12, 13, 14, 15, 16, 17+
+    const AGE_SLOTS = ["10-11", "12", "13", "14", "15", "16", "17+"] as const;
 
-    const FEMALE_RX = /\bFEMALE\b/i;
-    const MALE_RX = /\b(OPEN\s*\/\s*MALE|MALE\s*\/\s*OPEN|MALE|OPEN\/?MALE)\b/i;
+    // Gender headers
+    const FEMALE_RX = /\b(FEMALE)\b/i;
+    const MALE_RX = /\b(MALE\/?OPEN|OPEN\/?MALE|MALE|MALE\s*\/\s*OPEN)\b/i;
 
+    // Event line. Example: "50m Freestyle", "400m Freestyle  06:40.00", "100m Fly ..."
     const EVENT_RX =
-        /^(\d{2,4})m\s+(Freestyle|Backstroke|Breaststroke|(?:Butterfly|Fly)|(?:Ind(?:ividual)?\.?\s*Medley|IM))\b(?:.*?\*)?\s*(.*)$/i;
+        /^(\d{2,4})m\s+(Freestyle|Backstroke|Breaststroke|(?:Butterfly|Fly)|(?:Ind(?:ividual)?\.?\s*Medley|IM))\*?\s*(.*)$/i;
 
-    const TIME_TOKEN_RX =
-        /(?:(?:\d{1,2}[:.]){2}\d{1,2})|(?:\d{1,2}[:.]\d{1,2}(?:[:.]\d{1,2})?)|(?:\d{1,2}[.]\d{1,2})/g;
+    // “Consideration” block begins here (may have times on same line OR on next lines)
+    const CONSID_RX = /^Consideration\b/i;
 
-    const STD_LINE_RX = /^(QT|CT)\b[:\-]?\s*(.*)$/i;
+    // A single token can be:
+    // - HH:MM:SS(.sss)
+    // - MM:SS(.sss)
+    // - SS.ss or SS.sss
+    // We’ll tokenize by whitespace and test per token.
+    const TIME_ATOM_RX =
+        /^(?:\d{1,2}:\d{2}:\d{2}(?:\.\d{1,3})?|\d{1,2}:\d{2}(?:\.\d{1,3})?|\d{1,2}\.\d{2,3})$/;
 
-    const timesFrom = (s: string): string[] => s.match(TIME_TOKEN_RX) ?? [];
+    // Placeholder tokens (e.g., xxxx, —, -). Treat as missing slot (null).
+    const isPlaceholderToken = (t: string) =>
+        /^x+$/i.test(t.replace(/[.:]/g, "")) || t === "—" || t === "-";
 
+    // A line that consists only of time/placeholder tokens (used to skip Consideration blocks)
+    const isTimesOrPlaceholderLine = (s: string) => {
+        const parts = s.split(/\s+/).filter(Boolean);
+        if (!parts.length) return false;
+        return parts.every(p => TIME_ATOM_RX.test(p) || isPlaceholderToken(p));
+    };
+
+    // Normalize stroke names
     const normStroke = (s: string) => {
         if (/^fly$/i.test(s) || /butterfly/i.test(s)) return "Butterfly";
         if (/^im$/i.test(s) || /ind(?:ividual)?\.?\s*medley/i.test(s)) return "Individual Medley";
         return s;
     };
 
-    const normTime = (t: string | null) => {
-        if (!t) return null;
-        const s = t.trim();
-        if (!s || /^n\/a$/i.test(s) || s === "—" || s === "-") return null;
-        const fn = (globalThis as any).normalizeTime;
-        return typeof fn === "function" ? fn(s) : s;
-    };
-
-    const needsLeftPadNull = (distance: string, stroke: string) =>
-        distance === "800m" || distance === "1500m" || (distance === "400m" && /Individual Medley/i.test(stroke));
-
-    const alignTo7 = (distance: string, stroke: string, tokens: string[]) => {
-        let arr = tokens.slice(0, 7);
-        if (needsLeftPadNull(distance, stroke) && tokens.length === 6) {
-            arr = [null as any].concat(tokens).slice(0, 7);
+    // Tokenize a string into an ordered list of 0..7 columns including nulls for placeholders.
+    function extractColsFromString(s: string, acc: (string | null)[]) {
+        if (!s) return;
+        const parts = s.split(/\s+/).filter(Boolean);
+        for (const p of parts) {
+            if (isPlaceholderToken(p)) acc.push(null);
+            else if (TIME_ATOM_RX.test(p)) acc.push(p);
+            // else ignore non-time junk
+            if (acc.length >= 7) break;
         }
-        while (arr.length < 7) arr.push(null as any);
-        return arr as (string | null)[];
-    };
+    }
 
-    const pushAgeRows = (
+    // Emit rows for one event
+    function pushAgeRows(
         out: any[],
         gender: Gender,
         distance: string,
         stroke: string,
-        standard: "qt" | "ct",
-        tokens: string[]
-    ) => {
+        cols: (string | null)[]
+    ) {
         const event = `${stroke} ${distance}`;
-        const aligned = alignTo7(distance, stroke, tokens);
+        // Ensure exactly 7 slots
+        while (cols.length < 7) cols.push(null);
 
-        for (let i = 0; i < AGE_COLS.length; i++) {
-            const label = AGE_COLS[i];
-            const t = normTime(aligned[i]);
+        for (let i = 0; i < AGE_SLOTS.length; i++) {
+            const slot = AGE_SLOTS[i];
+            const val = normalizeTime(cols[i]);
 
-            if (label === "10-11") {
-                out.push({ gender, course, event, distance, stroke, standard, age: "10", time: t });
-                out.push({ gender, course, event, distance, stroke, standard, age: "11", time: t });
+            if (slot === "10-11") {
+                out.push({ gender, event, distance, stroke, age: "10", time: val });
+                out.push({ gender, event, distance, stroke, age: "11", time: val });
             } else {
-                out.push({ gender, course, event, distance, stroke, standard, age: label, time: t });
-            }
-        }
-    };
-
-    const structured: any[] = [];
-    let currentGender: Gender | null = null;
-
-    let pending:
-        | {
-            distance: string;
-            stroke: string;
-            qt: string[] | null;
-            ct: string[] | null;
-        }
-        | null = null;
-
-    const flushPending = () => {
-        if (!pending || !currentGender) { pending = null; return; }
-        const { distance, stroke, qt, ct } = pending;
-
-        if (qt && qt.length) pushAgeRows(structured, currentGender, distance, stroke, "qt", qt);
-        if (ct && ct.length) pushAgeRows(structured, currentGender, distance, stroke, "ct", ct);
-
-        pending = null;
-    };
-
-    for (let i = 0; i < lines.length; i++) {
-        const raw = lines[i];
-        if (!raw) continue;
-
-        if (FEMALE_RX.test(raw)) { flushPending(); currentGender = "female"; continue; }
-        if (MALE_RX.test(raw)) { flushPending(); currentGender = "male"; continue; }
-
-        if (!currentGender) continue; 
-
-        const em = EVENT_RX.exec(raw);
-        if (em) {
-            flushPending();
-
-            const dist = `${em[1]}m`;
-            const stroke = normStroke(em[2]);
-            const tail = (em[3] || "").trim();
-
-            let qtInLine: string[] | null = null;
-            let ctInLine: string[] | null = null;
-
-            if (tail) {
-                const parts = tail.split(/\s+/);
-                const idxQT = parts.findIndex(p => /^QT$/i.test(p));
-                const idxCT = parts.findIndex(p => /^CT$/i.test(p));
-                if (idxQT >= 0) {
-                    const after = parts.slice(idxQT + 1).join(" ");
-                    const toks = timesFrom(after);
-                    if (toks.length) qtInLine = toks;
-                }
-                if (idxCT >= 0) {
-                    const after = parts.slice(idxCT + 1).join(" ");
-                    const toks = timesFrom(after);
-                    if (toks.length) ctInLine = toks;
-                }
-            }
-
-            pending = { distance: dist, stroke, qt: qtInLine, ct: ctInLine };
-
-            if (pending.qt && pending.ct) flushPending();
-            continue;
-        }
-
-        if (pending) {
-            const sm = STD_LINE_RX.exec(raw);
-            if (sm) {
-                const std = sm[1].toUpperCase() as "QT" | "CT";
-                const toks = timesFrom(sm[2] || "");
-                if (toks.length) {
-                    if (std === "QT") pending.qt = toks;
-                    else pending.ct = toks;
-                }
-                continue;
-            }
-
-            const pureTimes = timesFrom(raw);
-            if (pureTimes.length) {
-                if (!pending.qt) pending.qt = pureTimes;
-                else if (!pending.ct) pending.ct = pureTimes;
-                continue;
+                out.push({ gender, event, distance, stroke, age: slot, time: val });
             }
         }
     }
 
-    flushPending();
+    const structured: any[] = [];
+    let currentGender: Gender | null = null;
+
+    // Walk the lines
+    for (let i = 0; i < lines.length; i++) {
+        const raw = lines[i];
+        if (!raw) continue;
+
+        // Gender switches
+        if (MALE_RX.test(raw)) { currentGender = "male"; continue; }
+        if (FEMALE_RX.test(raw)) { currentGender = "female"; continue; }
+
+        // Skip “Age Group …” header line; it’s informative only
+        if (/^Age\s*Group\b/i.test(raw)) continue;
+
+        // Match an event row
+        const m = EVENT_RX.exec(raw);
+        if (!m) continue;
+
+        // Default gender to male if not set yet (so UI shows something)
+        if (!currentGender) currentGender = "male";
+
+        const dist = `${m[1]}m`;
+        const stroke = normStroke(m[2]);
+        const tail = (m[3] || "").trim();
+
+        // Collect up to 7 columns from tail + subsequent lines, stopping at "Consideration" or next header/event
+        const cols: (string | null)[] = [];
+        extractColsFromString(tail, cols);
+
+        let j = i + 1;
+
+        while (j < lines.length && cols.length < 7) {
+            const ln = lines[j];
+
+            // Stop accumulating if the “Consideration” section begins.
+            if (CONSID_RX.test(ln)) {
+                // Skip the entire Consideration block (this line + any following time/placeholder lines)
+                j += 1;
+                while (j < lines.length && isTimesOrPlaceholderLine(lines[j])) j += 1;
+                break;
+            }
+
+            // Stop if the next event/gender/age header starts
+            if (EVENT_RX.test(ln) || MALE_RX.test(ln) || FEMALE_RX.test(ln) || /^Age\s*Group\b/i.test(ln)) {
+                break;
+            }
+
+            // Otherwise, consume times from this line
+            extractColsFromString(ln, cols);
+            j += 1;
+        }
+
+        // Emit rows for this event
+        pushAgeRows(structured, currentGender, dist, stroke, cols);
+
+        // Advance i to where we stopped scanning
+        i = j - 1;
+    }
+
     return structured;
 }
 
+
+// County Qualifying Times 2026
 export function parseSwimmingPdfLayout11(text: string) {
     const raw = text.split("\n");
     const lines = raw.map(s => s.replace(/\s{2,}/g, " ").trim()).filter(Boolean);
 
     const AGES = ["10-11", "12", "13", "14", "15", "16", "17+"] as const;
-    const course: "sc" = "sc";
     const used: boolean[] = new Array(lines.length).fill(false);
 
     const EVENT_RX = /^(\d{2,4})m\s+(Freestyle|Free|Backstroke|Back|Breaststroke|Breast|Butterfly|Fly|(?:Ind(?:ividual)?\.?\s*Medley|IM))\b(?:\s+(.*))?$/i;
-    const TIMES_RX = /(?:(?:\d{1,2}[:.]){2}\d{1,2})|(?:\d{1,2}[:.]\d{1,2}(?:[:.]\d{1,2})?)|(?:\d{1,2}[.]\d{1,2})/g;
+    const TIMES_RX = /(?:\d{1,2}\.\d{2}\.\d{2,3})|(?:\d{1,2}:\d{2}:\d{2}(?:\.\d{1,3})?)|(?:\d{1,2}:\d{2}(?:\.\d{1,3})?)|(?:\d{1,2}\.\d{2}(?=(?:\d{1,2}(?:[.:])|\d{2,4}\s*m\b|$)))|(?:\d{1,2}\.\d{3})(?!\d)/g;
 
     const isPureTimes = (s: string) => {
         const t = s.match(TIMES_RX) || [];
@@ -1226,10 +1226,10 @@ export function parseSwimmingPdfLayout11(text: string) {
             const label = AGES[i];
             const tt = normalizeTime(aligned[i]);
             if (label === "10-11") {
-                out.push({ gender, course, event, distance, stroke, age: "10", time: tt });
-                out.push({ gender, course, event, distance, stroke, age: "11", time: tt });
+                out.push({ gender, event, distance, stroke, age: "10", time: tt });
+                out.push({ gender, event, distance, stroke, age: "11", time: tt });
             } else {
-                out.push({ gender, course, event, distance, stroke, age: label, time: tt });
+                out.push({ gender, event, distance, stroke, age: label, time: tt });
             }
         }
     };
@@ -1292,92 +1292,113 @@ export function parseSwimmingPdfLayout11(text: string) {
 // County-Championship-QTs-2025-1
 export function parseSwimmingPdfLayout12(text: string) {
     const lines = text.split("\n").map(l => l.replace(/\s{2,}/g, " ").trim()).filter(Boolean);
-    const AGES = ["10", "11", "12", "13", "14", "15", "16+"] as const;
+    const AGES = ["10", "11", "12", "13", "14", "15", "16"] as const;
 
     const EVENT_ANY_RX =
-        /(\d{2,4})\s*m?\s+(Free(?:style)?|Back(?:stroke)?|Breast(?:stroke)?|Fly|Butterfly|I\.?M\.?|IM|Ind(?:ividual)?\.?\s*Medley)\b/i;
+        /(\d{2,4})\s*m?\s+(Free(?:style)?|Back(?:stroke)?|Breast(?:stroke)?|Fly|Butterfly|I\.?\s*M\.?|IM|Ind(?:ividual)?\.?\s*Medley)(?=\s|$|\d)/i;
+
+    // 1) m.ss.hh: force exactly 2 digits in the last part
+    // 2) H:MM:SS(.sss)
+    // 3) M:SS(.sss)
+    // 4) SS.hh with lookahead (still handles jammed tokens like 43.0039.00)
+    // 5) SS.sss but don't steal ".1" from the next token (e.g., 28.001.16)
     const TIMES_RX =
-        /(?:(?:\d{1,2}[:.]){2}\d{1,2})|(?:\d{1,2}[:.]\d{1,2}(?:[:.]\d{1,2})?)|(?:\d{1,2}[.]\d{1,2})/g;
+        /(?:\d{1,2}\.\d{2}\.\d{2})|(?:\d{1,2}:\d{2}:\d{2}(?:\.\d{1,3})?)|(?:\d{1,2}:\d{2}(?:\.\d{1,3})?)|(?:\d{1,2}\.\d{2}(?=(?:\d{1,2}(?:[.:])|\d{2,4}\s*m\b|$)))|(?:\d{1,2}\.\d{3})(?!\d|\.\d{2})/g;
+
+    const timesFrom = (s: string) => s.match(TIMES_RX) || [];
+
+    const deglueEventBoundary = (s: string) =>
+        s.replace(/(\d{1,2}\.\d{2})(?=\d{2,4}\s*m\b)/g, "$1 ");
 
     const isTimesOnly = (s: string) => {
-        const t = s.match(TIMES_RX) || [];
-        return t.length > 0 && t.join(" ") === s.replace(/\s+/g, " ");
+        const toks = timesFrom(s);
+        return toks.length > 0 && toks.join("") === s.replace(/\s+/g, "");
     };
-    const timesFrom = (s: string) => s.match(TIMES_RX) || [];
 
     const strokeCanonical = (s: string) => {
         if (/^free/i.test(s)) return "Freestyle";
         if (/^back/i.test(s)) return "Backstroke";
         if (/^breast/i.test(s)) return "Breaststroke";
-        if (/^(fly|butterfly)/i.test(s)) return "Butterfly";
+        if (/^(?:fly|butterfly)/i.test(s)) return "Butterfly";
         return "Individual Medley";
     };
 
     const needByEvent = (distance: string, stroke: string) => {
         const d = distance.replace(/m$/i, "");
-        const isIM = /individual medley/i.test(stroke);
-        if (d === "800" || d === "1500") return 6;
-        if (d === "400" && isIM) return 5;
-        return 7;
+        const isIM = /^(?:i\.?\s*m\.?|im|individual\s*medley)$/i.test(stroke) || /medley/i.test(stroke);
+        if (d === "800" || d === "1500") return 5;      // 12..16
+        if (d === "400" && isIM) return 5;              // 12..16
+        return 7;                                       // 10..16
     };
 
     const alignTo7 = (distance: string, stroke: string, tokens: string[]) => {
         const need = needByEvent(distance, stroke);
         const picked = tokens.slice(0, need);
         const out: (string | null)[] = Array(7).fill(null);
+
         if (need === 7) {
-            for (let i = 0; i < 7; i++) out[i] = picked[i] ?? null;
+            for (let i = 0; i < 7; i++) out[i] = picked[i] ?? null;        // 10..16
         } else if (need === 6) {
-            for (let i = 0; i < 6; i++) out[i + 2] = picked[i] ?? null;
-        } else {
-            for (let i = 0; i < 5; i++) out[i + 3] = picked[i] ?? null;
+            for (let i = 0; i < 6; i++) out[i + 1] = picked[i] ?? null;    // 11..16
+        } else { // need === 5
+            for (let i = 0; i < 5; i++) out[i + 2] = picked[i] ?? null;    // 12..16
         }
         return out;
     };
 
     const isJunk = (s: string) =>
-        /^(Produced by|Events|No event|All entries|Galaentries@|License numbers|Sussex County|Please be aware|Female Qualifying Times|Open\/Male Qualifying Times|Short course equivalent times)$/i.test(
-            s
-        ) ||
-        /(Born|yrs|earlier)/i.test(s) ||
-        /^\d{4}s?$/.test(s) ||
-        /^201\d(?:\s*201\d)*$/.test(s);
+        /^(Produced by|Events|No event|All entries|Galaentries@|License numbers|Sussex County|Please be aware|Female Qualifying Times|Open\/Male Qualifying Times|Short course equivalent times)$/i.test(s)
+        || /(Born|yrs|earlier)/i.test(s)
+        || /^\d{4}s?$/.test(s)
+        || /^201\d(?:\s*201\d)*$/.test(s);
 
     const out: any[] = [];
     let leftBuf: string[] = [];
     let eventsSeen = 0;
     const currentCourse = (): "lc" | "sc" => (eventsSeen < 17 ? "lc" : "sc");
 
+    // use the same precedence/order as TIMES_RX, keep full token
+    const salvageTailTime = (segment: string): string | null => {
+        if (!segment) return null;
+        const m = segment.match(
+            /(?:\d{1,2}\.\d{2}\.\d{2}|\d{1,2}:\d{2}:\d{2}(?:\.\d{1,3})?|\d{1,2}:\d{2}(?:\.\d{1,3})?|\d{1,2}\.\d{2}|\d{1,2}\.\d{3})(?!\d|\.\d{2})$/
+        );
+        return m ? m[0] : null;
+    };
+
     for (let i = 0; i < lines.length; i++) {
         const raw = lines[i];
-        if (!raw) continue;
-        if (isJunk(raw)) continue;
-        console.log("line", "line")
+        if (!raw || isJunk(raw)) continue;
 
-        const L = raw.replace(/\bI\.\s*M\.?/gi, "IM");
+        const L = deglueEventBoundary(raw.replace(/\bI\.\s*M\.?/gi, "IM"));
+
         const ev = EVENT_ANY_RX.exec(L);
         if (!ev) {
             if (isTimesOnly(L)) leftBuf.push(...timesFrom(L));
             continue;
         }
 
-        const start = ev.index ?? L.indexOf(ev[0]);
+        const start = ev.index!;
         const before = L.slice(0, start).trim();
         const after = L.slice(start + ev[0].length).trim();
 
-        const distNum = ev[1];
-        const strokeRaw = ev[2];
-        const stroke = strokeCanonical(strokeRaw);
-        const distance = `${parseInt(distNum, 10)}m`;
+        const distance = `${parseInt(ev[1], 10)}m`;
+        const stroke = strokeCanonical(ev[2]);
         const need = needByEvent(distance, stroke);
         const course = currentCourse();
 
         let left = [...leftBuf, ...timesFrom(before)];
-        let right = timesFrom(after);
+        if (left.length < need) {
+            const tail = salvageTailTime(before);
+            if (tail && !left.includes(tail)) left.push(tail);
+        }
 
+        let right: string[] = timesFrom(after);
         let j = i + 1;
-        while (right.length < need && j < lines.length && isTimesOnly(lines[j].replace(/\bI\.\s*M\.?/gi, "IM"))) {
-            right.push(...timesFrom(lines[j].replace(/\bI\.\s*M\.?/gi, "IM")));
+        while (right.length < need && j < lines.length) {
+            const Ln = deglueEventBoundary(lines[j].replace(/\bI\.\s*M\.?/gi, "IM"));
+            if (!isTimesOnly(Ln)) break;
+            right.push(...timesFrom(Ln));
             j++;
         }
 
@@ -1388,26 +1409,10 @@ export function parseSwimmingPdfLayout12(text: string) {
         const rightAligned = alignTo7(distance, stroke, right);
 
         for (let k = 0; k < AGES.length; k++) {
-            out.push({
-                gender: "male",
-                course,
-                event: `${stroke} ${distance}`,
-                distance,
-                stroke,
-                age: AGES[k],
-                time: normalizeTime(leftAligned[k]),
-            });
+            out.push({ gender: "male", course, event: `${stroke} ${distance}`, distance, stroke, age: AGES[k], time: normalizeTime(leftAligned[k]) });
         }
         for (let k = 0; k < AGES.length; k++) {
-            out.push({
-                gender: "female",
-                course,
-                event: `${stroke} ${distance}`,
-                distance,
-                stroke,
-                age: AGES[k],
-                time: normalizeTime(rightAligned[k]),
-            });
+            out.push({ gender: "female", course, event: `${stroke} ${distance}`, distance, stroke, age: AGES[k], time: normalizeTime(rightAligned[k]) });
         }
 
         eventsSeen += 1;
@@ -1417,6 +1422,137 @@ export function parseSwimmingPdfLayout12(text: string) {
 
     return out;
 }
+
+// 2026 - Wiltshire County
+export function parseSwimmingPdfLayout13(text: string) {
+    type Gender = "male" | "female";
+
+    const lines = text
+        .split("\n")
+        .map((l) => l.replace(/\s{2,}/g, " ").trim())
+        .filter(Boolean);
+
+    const STROKE_TOKEN_RX = /(Free|Back|Breast|B\/Fly|IM)/g;
+    const DIST_TOKEN_RX = /(\d{2,4}m)/g;
+
+    const TIMES_RX =
+        /(?:\d{1,2}\.\d{2}\.\d{2})|(?:\d{1,2}:\d{2}:\d{2}(?:\.\d{1,3})?)|(?:\d{1,2}:\d{2}(?:\.\d{1,3})?)|(?:\d{1,2}\.\d{2}(?=(?:\d{1,2}(?:[.:])|\d{2,4}\s*m\b|\D|$)))/g;
+
+    const timesFrom = (s: string): string[] => s.match(TIMES_RX) ?? [];
+
+    const normInline = (s: string) =>
+        s.replace(/\bI\.\s*M\.?\b/gi, "IM").replace(/\bB\s*\/\s*Fly\b/gi, "B/Fly");
+
+    const deglueBoundary = (s: string) =>
+        s.replace(/(\d{1,2}\.\d{2})(?=\d{2,4}\s*m\b)/g, "$1 ");
+
+    const normTime = (t: string | null) => {
+        if (t == null) return null;
+        const fn = (globalThis as any).normalizeTime;
+        return typeof fn === "function" ? fn(t) : t;
+    };
+
+    const parseHeaderPair = (i: number) => {
+        const strokeLine = normInline(lines[i]).replace(/\s+/g, "");
+        const distLine = normInline(lines[i + 1]).replace(/\s+/g, "");
+        const strokes = strokeLine.match(STROKE_TOKEN_RX) ?? [];
+        const dists = distLine.match(DIST_TOKEN_RX) ?? [];
+        return { strokes, dists, ok: strokes.length === dists.length && strokes.length >= 12 };
+    };
+
+    const isAgeLine = (s: string) =>
+        /^\s*(?:10\/?11\s*yr?s?|10\/?11|1[2-6]\s*yr?s?|17\+\s*yr?)/i.test(s);
+
+    const labelToAges = (label: string): string[] => {
+        const l = label.toLowerCase();
+        if (/10\/?11/.test(l)) return ["10", "11"];
+        if (/17\+/.test(l)) return ["17+"];
+        const m = l.match(/(1[2-6])\s*(?:yr?s?)?/);
+        return m ? [m[1]] : [];
+    };
+
+    const canonicalStroke = (s: string) => {
+        const v = s.trim().toLowerCase();
+        if (v === "free") return "Freestyle";
+        if (v === "back") return "Backstroke";
+        if (v === "breast") return "Breaststroke";
+        if (v === "im") return "Individual Medley";
+        if (v === "b/fly") return "Butterfly";
+        return s.trim();
+    };
+
+    const out: any[] = [];
+    let blockIndex = 0; // 0 = female, 1 = male
+
+    for (let i = 0; i < lines.length - 1; i++) {
+        const { strokes, dists, ok } = parseHeaderPair(i);
+        if (!ok) continue;
+
+        const cols = strokes.map((st, idx) => {
+            const strokeFull = canonicalStroke(st);
+            const distance = dists[idx];
+            return {
+                stroke: strokeFull,
+                distance,
+                event: `${strokeFull} ${distance}`,
+            };
+        });
+        const numCols = cols.length;
+
+        const gender: Gender = blockIndex === 0 ? "female" : "male";
+        blockIndex += 1;
+
+        let r = i + 2;
+        let agesParsed = 0;
+
+        while (r < lines.length && agesParsed < 7) {
+            let raw = normInline(lines[r]);
+            if (!isAgeLine(raw)) break;
+
+            raw = deglueBoundary(raw);
+
+            const mAge = raw.match(/^\s*(?:10\/?11\s*yr?s?|10\/?11|1[2-6]\s*yr?s?|17\+\s*yr?)/i);
+            const ageLabel = mAge ? mAge[0] : "";
+            const ages = labelToAges(ageLabel);
+
+            const tokens = timesFrom(raw).slice(0, numCols);
+
+            if (tokens.length < numCols && r + 1 < lines.length) {
+                const nxt = normInline(lines[r + 1]);
+                const nxtTimes = timesFrom(nxt);
+                if (nxtTimes.length && nxtTimes.join("") === nxt.replace(/\s+/g, "")) {
+                    tokens.push(...nxtTimes);
+                    r += 1;
+                }
+            }
+
+            while (tokens.length < numCols) tokens.push(null as any);
+
+            for (let c = 0; c < numCols; c++) {
+                const { stroke, distance, event } = cols[c];
+                const t = tokens[c] ?? null;
+                for (const a of ages) {
+                    out.push({
+                        gender,
+                        event,
+                        distance,
+                        stroke,
+                        age: a,
+                        time: normalizeTime(t),
+                    });
+                }
+            }
+
+            agesParsed += 1;
+            r += 1;
+        }
+
+        i = r - 1;
+    }
+
+    return out;
+}
+
 
 
 function fixRawTime(value: string | number): string {
@@ -1464,34 +1600,43 @@ function fixRawTime(value: string | number): string {
 
 function normalizeTime(t: string | null): string | null {
     if (!t) return null;
-    t = t.replace(',', '.').trim();
+    t = t.replace(",", ".").trim();
+
+    // e.g., "1.33:0" → "00:01:33", "12.07:3" → "00:12:07"
+    if (/^\d{1,2}\.\d{1,2}:\d+$/.test(t)) {
+        const [minPart, secAndTail] = t.split(".");
+        const secPart = secAndTail.split(":")[0];
+        const minutes = String(parseInt(minPart, 10)).padStart(2, "0");
+        const seconds = String(parseInt(secPart, 10)).padStart(2, "0");
+        return `00:${minutes}:${seconds}`;
+    }
 
     // Case mm:ss (no decimals) → convert to mm.ss
     if (/^\d{1,2}:\d{2}$/.test(t)) {
-        const [m, s] = t.split(':');
+        const [m, s] = t.split(":");
         return `${parseInt(m, 10)}.${s}`;
     }
 
     // Case m.ss.xx → convert to hh:mm:ss (drop hundredths)
     if (/^\d+\.\d+\.\d+$/.test(t)) {
-        const parts = t.split('.');
-        const minutes = String(parseInt(parts[0], 10)).padStart(2, '0');
-        const seconds = String(parseInt(parts[1], 10)).padStart(2, '0');
+        const parts = t.split(".");
+        const minutes = String(parseInt(parts[0], 10)).padStart(2, "0");
+        const seconds = String(parseInt(parts[1], 10)).padStart(2, "0");
         return `00:${minutes}:${seconds}`;
     }
 
     // Case mm:ss.xx → convert to hh:mm:ss
     if (/^\d{1,2}:\d{2}\.\d+$/.test(t)) {
-        const [m, sRaw] = t.split(':');
-        const seconds = Math.floor(parseFloat(sRaw)).toString().padStart(2, '0');
-        const minutes = String(parseInt(m, 10)).padStart(2, '0');
+        const [m, sRaw] = t.split(":");
+        const seconds = Math.floor(parseFloat(sRaw)).toString().padStart(2, "0");
+        const minutes = String(parseInt(m, 10)).padStart(2, "0");
         return `00:${minutes}:${seconds}`;
     }
 
-    // Case hh:mm:ss → normalize just in case
+    // Case hh:mm:ss → zero-pad just in case
     if (/^\d{1,2}:\d{2}:\d{2}$/.test(t)) {
-        const [h, m, s] = t.split(':');
-        return `${h.padStart(2, '0')}:${m.padStart(2, '0')}:${s.padStart(2, '0')}`;
+        const [h, m, s] = t.split(":");
+        return `${h.padStart(2, "0")}:${m.padStart(2, "0")}:${s.padStart(2, "0")}`;
     }
 
     return t;

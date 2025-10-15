@@ -17,6 +17,7 @@ import TableFemaleMaleCornwall from '~/components/TableFemaleMaleCornwall.vue'
 import TableMaleFemaleCornwallTogether from '~/components/TableMaleFemaleCornwallTogether.vue'
 import TableWCSA from '~/components/TableWCSA.vue'
 import TableSussexCounty from '~/components/TableSussexCounty.vue'
+import TableWiltshire from '~/components/TableWiltshire.vue'
 
 
 definePageMeta({
@@ -94,6 +95,7 @@ const layoutsPdf = [
     { component: TableMaleFemaleCornwallTogether, id: 'layout10' },
     { component: TableWCSA, id: 'layout11' },
     { component: TableSussexCounty, id: 'layout12' }, 
+    { component: TableWiltshire, id: 'layout13'}
 ]
 
 const layoutsXlsx = [

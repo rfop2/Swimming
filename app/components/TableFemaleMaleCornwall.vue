@@ -1,6 +1,6 @@
 <template>
   <div class="overflow-auto space-y-8">
-    <!-- FEMALE — SHORT COURSE 2025 -->
+    <h4 class="mb-4">Cornwall County Championships Qualifying Times for 2025</h4>
     <table class="w-full border-collapse border border-gray-400 text-center">
       <thead>
         <tr>

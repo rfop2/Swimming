@@ -1,6 +1,6 @@
 <template>
     <div class="overflow-auto space-y-10">
-        <!-- MALE / OPEN — 2026 -->
+        <h4 class="mb-4">Cornwall County Champs 2026 Qualifying and Consideration Times</h4>
         <table class="w-full border-collapse border border-gray-300 text-center">
             <thead>
                 <tr>
