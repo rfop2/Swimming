@@ -87,13 +87,13 @@ export default defineEventHandler( async ( event ) => {
         } else {
           throw createError( {
             message: `Database error: ${e.sqlMessage}`,
-            status: 400
+            status: 500
           } )
         }
       }
       throw createError( {
         message: "An unknown error occurred",
-        status: 400
+        status: 500
       } )
     }
     console.log( "User created" )

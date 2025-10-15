@@ -40,7 +40,7 @@ export default defineEventHandler( async ( event ) => {
     if ( isMySql2Error( error ) ) {
       throw createError( {
         message: `Database error: ${error.sqlMessage}`,
-        status: 400
+        status: 500
       } )
     }
     throw createError( {
