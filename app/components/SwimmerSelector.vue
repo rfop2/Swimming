@@ -25,7 +25,6 @@
   watch(
     selectedSwimmer,
     async ( newSwimmer ) => {
-      console.log( "ss", newSwimmer )
       if ( newSwimmer && newSwimmer.value ) {
         model.value = swimmersMap.get( String( newSwimmer.value ) )
         try {

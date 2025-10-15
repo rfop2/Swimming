@@ -26,7 +26,7 @@ export default defineEventHandler( async ( event ) => {
         )
         const updateQualifyingRow = prepareStatement<QualifyingRow>(
           conn,
-`INSERT INTO Qualifying (
+          `INSERT INTO Qualifying (
   created,
   year,
   course,

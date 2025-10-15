@@ -250,10 +250,6 @@
 
   useUnsavedWarning( () => meta.value.dirty )
 
-  watchEffect( () => {
-    console.log( "VAL", unref( values ), "META", unref( meta ) )
-  } )
-
   watch( errors, ( newErrors ) => {
     console.log( "ERR", newErrors )
   } )

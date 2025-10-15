@@ -15,13 +15,8 @@ export const useSwimmer = () => {
     },
   } )
 
-  watchEffect( () => {
-    console.log( "si", swimmerId.value )
-  } )
-
   // Optional: keep swimmerId in sync (e.g., if swimmers list changes and selected swimmer disappears)
   watch( swimmer, s => {
-    console.log( "SW", swimmer.value )
     if ( s?.id !== swimmerId.value ) {
       swimmerId.value = s?.id
     }
