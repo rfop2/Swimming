@@ -254,8 +254,15 @@ DROP TABLE IF EXISTS `Pools`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `Pools` (
-  `PoolName` varchar(54) NOT NULL,
-  PRIMARY KEY (`PoolName`)
+  `poolId` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `poolName` varchar(54) NOT NULL,
+  `poolStreet1` varchar(54) DEFAULT NULL,
+  `poolStreet2` varchar(54) DEFAULT NULL,
+  `poolStreet3` varchar(54) DEFAULT NULL,
+  `poolTown` varchar(54) DEFAULT NULL,
+  `poolPostCode` varchar(54) DEFAULT NULL,
+  `poolWhatThreeWords` varchar(54) DEFAULT NULL,
+  PRIMARY KEY (`poolId`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
