@@ -1,6 +1,12 @@
 import { getPool, prepareStatement } from "lib"
 import type { User } from "lucia"
 
+interface ExtUser extends User {
+  clubs: string
+  lastLogin: Date
+  loginCount: number
+}
+
 export default defineEventHandler( async ( event ) => {
   if ( !event.context.session || !event.context.user ) {
     throw createError( {
@@ -15,10 +21,53 @@ export default defineEventHandler( async ( event ) => {
     } )
   }
 
-  const selectRecords = prepareStatement<unknown[], User>(
+  const ignoreIPs = ( process.env.IGNORE_IPS ?? "" ).split( /\s*,\s*/ )
+  const ipParams: Record<string, string> = {}
+  const ipPlaceholders = ignoreIPs
+    .map( ( ip, i ) => {
+      const key = `ip_${i}`
+      ipParams[key] = ip
+      return `:${key}`
+    } )
+    .join( ", " ) || "''" // fallback if array is empty
+
+  const selectRecords = prepareStatement<Record<string, string>, ExtUser>(
     await getPool(),
-    "SELECT id, username, firstName, lastName, location, type, admin, created, updated FROM User"
+    `SELECT
+      u.id,
+      u.username,
+      u.firstName,
+      u.lastName,
+      u.location,
+      u.type,
+      GROUP_CONCAT(
+          CONCAT(IF(uc.ClubOwner, '*', ''), c.ClubName) SEPARATOR ','
+      ) AS clubs,
+      st.lastLogin,
+      st.loginCount,
+      u.admin,
+      u.created,
+      u.updated
+    FROM
+      User u
+      LEFT JOIN (
+          SELECT
+              userId,
+              MAX(actionTime) AS lastLogin,
+              COUNT(sessionId) AS loginCount
+          FROM
+              SessionTracking
+          WHERE
+              sessionAction = 'login'
+              AND sessionIP NOT IN (${ipPlaceholders})
+          GROUP BY
+              userId
+      ) AS st ON st.userId = u.id
+      LEFT JOIN UserClubs uc ON u.id = uc.userId
+      INNER JOIN Clubs c ON uc.clubId = c.clubId
+    GROUP BY
+      u.id`
   )
-  const data = await selectRecords.all()
+  const data = await selectRecords.all( ipParams )
   return data
 } )

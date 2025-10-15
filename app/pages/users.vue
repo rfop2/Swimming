@@ -91,14 +91,7 @@
                 <thead>
                   <tr>
                     <th
-                      scope="col"
                       class="py-3.5 pr-1 pl-2 text-left text-sm font-semibold text-gray-900 sm:pl-0"
-                    >
-                      Id
-                    </th>
-                    <th
-                      scope="col"
-                      class="px-1 py-3.5 text-left text-sm font-semibold text-gray-900"
                     >
                       First Name
                     </th>
@@ -130,7 +123,19 @@
                       scope="col"
                       class="px-1 py-3.5 text-left text-sm font-semibold text-gray-900"
                     >
+                      Club
+                    </th>
+                    <th
+                      scope="col"
+                      class="px-1 py-3.5 text-left text-sm font-semibold text-gray-900"
+                    >
                       Created
+                    </th>
+                    <th
+                      scope="col"
+                      class="px-1 py-3.5 text-left text-sm font-semibold text-gray-900"
+                    >
+                      Last Login
                     </th>
                     <th
                       scope="col"
@@ -151,10 +156,7 @@
                     v-for="(user, userIndex) in users"
                     :key="user.id"
                   >
-                    <td class="py-1 pr-1 pl-2 text-sm font-medium whitespace-nowrap text-gray-900 sm:pl-0">
-                      {{ user.id }}
-                    </td>
-                    <td class="px-1 py-2 text-sm whitespace-nowrap text-gray-500">
+                    <td class="py-1 pr-1 pl-2 text-sm font-medium whitespace-nowrap text-gray-500 sm:pl-0">
                       {{ user.firstName }}
                     </td>
                     <td class="px-1 py-2 text-sm whitespace-nowrap text-gray-500">
@@ -170,7 +172,13 @@
                       {{ user.type }}
                     </td>
                     <td class="px-1 py-2 text-sm whitespace-nowrap text-gray-500">
+                      {{ user.clubs }}
+                    </td>
+                    <td class="px-1 py-2 text-sm whitespace-nowrap text-gray-500">
                       {{ format( user.created as string, "dd/MM/yyyy" ) }}
+                    </td>
+                    <td class="px-1 py-2 text-sm whitespace-nowrap text-gray-500">
+                      {{ user.lastLogin ? `${format( user.lastLogin as string, "dd/MM/yyyy" )} (${user.loginCount})` : "" }}
                     </td>
                     <td class="px-1 py-2 text-sm whitespace-nowrap text-gray-500">
                       <CheckIcon
