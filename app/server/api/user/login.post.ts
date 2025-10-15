@@ -62,6 +62,8 @@ export default defineEventHandler( async ( event ) => {
     const ip = getRequestIP( event, { xForwardedFor: true } )
     const insertLog = prepareStatement( await getPool(), "INSERT INTO Logs SET logCategory = 'user', logType = 'login', logText = :logText" )
     insertLog.run( { logText: `${username} logged in, IP ${ip}, session ${session.id}` } )
+    const insertTracking = prepareStatement( await getPool(), "INSERT INTO SessionTracking SET sessionId = :sessionId, sessionAction = 'login', userId = :userId, sessionIP = :sessionIP" )
+    insertTracking.run( { sessionId: session.id, userId: existingUser.id, sessionIP: ip } )
   } catch ( err ) {
     console.error( "Session insert failed:", err )
   }

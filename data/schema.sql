@@ -364,6 +364,25 @@ CREATE TABLE `Session` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Table structure for table `SessionTracking`
+--
+
+DROP TABLE IF EXISTS `SessionTracking`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `SessionTracking` (
+  `sessionId` varchar(64) NOT NULL,
+  `sessionAction` enum('login','logout','expiry') NOT NULL,
+  `userId` varchar(16) NOT NULL,
+  `sessionIp` varchar(32) DEFAULT NULL,
+  `actionTime` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`sessionId`,`sessionAction`),
+  KEY `SessionTracking_ibfk_1` (`userId`),
+  CONSTRAINT `SessionTracking_ibfk_1` FOREIGN KEY (`userId`) REFERENCES `User` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
 -- Table structure for table `Swimmers`
 --
 
