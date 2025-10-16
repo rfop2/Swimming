@@ -64,7 +64,7 @@ export default defineEventHandler( async ( event ) => {
               userId
       ) AS st ON st.userId = u.id
       LEFT JOIN UserClubs uc ON u.id = uc.userId
-      INNER JOIN Clubs c ON uc.clubId = c.clubId
+      LEFT JOIN Clubs c ON uc.clubId = c.clubId
     GROUP BY
       u.id`
   )

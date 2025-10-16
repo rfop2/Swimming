@@ -123,7 +123,7 @@
                       scope="col"
                       class="px-1 py-3.5 text-left text-sm font-semibold text-gray-900"
                     >
-                      Club
+                      Club (*owner)
                     </th>
                     <th
                       scope="col"
@@ -169,7 +169,7 @@
                       {{ user.location }}
                     </td>
                     <td class="px-1 py-2 text-sm whitespace-nowrap text-gray-500">
-                      {{ user.type }}
+                      {{ `${user.type.charAt( 0 ).toUpperCase()}${user.type.slice( 1 )}` }}
                     </td>
                     <td class="px-1 py-2 text-sm whitespace-nowrap text-gray-500">
                       {{ user.clubs }}
