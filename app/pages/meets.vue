@@ -1,7 +1,6 @@
 <script setup lang="ts">
   import type { InternalApi } from "nitropack"
   import { haversineDistance, type Club, type Meet } from "lib"
-  import { addDays, formatISO, parseISO } from "date-fns"
   import {
     createCalendar,
     createViewDay,
@@ -182,12 +181,14 @@
   const events = computed( () => {
     const calendarEvents = ( meets.value || [] ).map( ( meet ): CalendarEvent => ( {
       id: meet.id,
-      start: Temporal.PlainDate.from( formatISO( parseISO( meet.date ), { representation: "date" } ) ),
-      end: Temporal.PlainDate.from( formatISO( addDays( parseISO( meet.date ), ( meet.duration ?? 1 ) - 1 ), { representation: "date" } ) ),
+      start: Temporal.Instant.from( meet.date ).toZonedDateTimeISO( "Europe/London" ).toPlainDate(),
+      end: Temporal.Instant.from( meet.date ).toZonedDateTimeISO( "Europe/London" ).toPlainDate().add( { days: ( meet.duration ?? 1 ) - 1 } ),
+      // end: Temporal.PlainDate.from( formatISO( addDays( parseISO( meet.date ), ( meet.duration ?? 1 ) - 1 ), { representation: "date" } ) ),
       duration: meet.duration as number,
       title: `${meet.level}: ${meet.name}`,
       // color: distanceColor( meet.distance ,
-      location: meet.location + ( meet.distance ? `(~${Math.round( meet.distance || 0 )} miles)` : "" ),
+      location: meet.location,
+      distance: meet.distance ? `(~${Math.round( meet.distance || 0 )} miles)` : "",
       description: meet.type,
       _options: {
         disableDND: true,
