@@ -8,6 +8,8 @@ services:
       MARIADB_DATABASE: ${MARIADB_DATABASE}
       MARIADB_USER: ${MARIADB_USER}
       MARIADB_PASSWORD: ${MARIADB_PASSWORD}
+      IGNORE_IPS: ${IGNORE_IPS}
+
     volumes:
       - ../app/.output/:/home/node/app
     ports:
