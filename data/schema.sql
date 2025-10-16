@@ -418,7 +418,7 @@ CREATE TABLE `SessionTracking` (
   `sessionId` varchar(64) NOT NULL,
   `sessionAction` enum('login','logout','expiry') NOT NULL,
   `userId` varchar(16) NOT NULL,
-  `sessionIp` varchar(32) DEFAULT NULL,
+  `sessionIP` varchar(32) DEFAULT NULL,
   `actionTime` timestamp NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`sessionId`,`sessionAction`),
   KEY `SessionTracking_ibfk_1` (`userId`),
