@@ -334,11 +334,9 @@
           placeholder="Choose Distance"
         />
       </div>
-      <div class="min-w-64">
-        <UI-Date-Range
+      <div class="min-w-96">
+        <UI-Year-Range
           v-model="selections.period"
-          :show-last="false"
-          min-period="month"
         />
       </div>
     </template>
