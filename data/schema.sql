@@ -44,6 +44,23 @@ CREATE TABLE `ClubMeets` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Table structure for table `ClubPools`
+--
+
+DROP TABLE IF EXISTS `ClubPools`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `ClubPools` (
+  `clubId` varchar(8) NOT NULL,
+  `poolId` int(10) unsigned NOT NULL,
+  PRIMARY KEY (`clubId`,`poolId`),
+  KEY `fk_ClubPools_Pools_2` (`poolId`),
+  CONSTRAINT `fk_ClubPools_Clubs_1` FOREIGN KEY (`clubId`) REFERENCES `Clubs` (`clubId`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_ClubPools_Pools_2` FOREIGN KEY (`poolId`) REFERENCES `Pools` (`poolId`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
 -- Table structure for table `ClubSwimmers`
 --
 
@@ -189,6 +206,26 @@ CREATE TABLE `Meets` (
   `created` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
   PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `MeetsMeta`
+--
+
+DROP TABLE IF EXISTS `MeetsMeta`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `MeetsMeta` (
+  `meetId` varchar(8) NOT NULL,
+  `meetPack` varchar(255) DEFAULT NULL,
+  `meetInfo` text DEFAULT NULL,
+  `poolId` int(10) unsigned DEFAULT NULL,
+  `clubId` varchar(8) DEFAULT NULL,
+  PRIMARY KEY (`meetId`),
+  KEY `fk_MeetPools_Pools_2` (`poolId`),
+  CONSTRAINT `fk_MeetPools_Meets_1` FOREIGN KEY (`meetId`) REFERENCES `Meets` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_MeetPools_Pools_2` FOREIGN KEY (`poolId`) REFERENCES `Pools` (`poolId`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
