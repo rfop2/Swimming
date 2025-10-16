@@ -118,6 +118,12 @@
       }
     }
     const sortedMap = new Map( [ ...map.entries() ].sort( ( [ keyA, _valA ], [ keyB, _valB ] ) => {
+      const genderSort = swimmersMap.value[keyA].gender.localeCompare( swimmersMap.value[keyB].gender )
+      if ( genderSort )
+        return genderSort
+      const birthdaySort = swimmersMap.value[keyA].birthday.localeCompare( swimmersMap.value[keyB].birthday )
+      if ( birthdaySort )
+        return birthdaySort
       const lastSort = swimmersMap.value[keyA].lastName.localeCompare( swimmersMap.value[keyB].lastName )
       if ( lastSort )
         return lastSort
@@ -182,7 +188,51 @@
           </thead>
           <tbody class="divide-y divide-gray-200 bg-white">
             <template
-              v-for="[swimmerId,courseRecords] in [...groupedRecords]"
+              v-for="[swimmerId,courseRecords] in [...groupedRecords].filter( ( [ id ] ) => swimmersMap[id].gender !== 'female' )"
+              :key="swimmerId"
+            >
+              <tr
+                v-for="[course,distanceRow] in [...courseRecords]"
+                :key="`${course}`"
+                class="divide-x divide-gray-200"
+                :class="classNames({ '!border-t-2 !border-gray-400': course === courseRecords.keys().next().value })"
+              >
+                <!-- Only render the first cell once per group, with rowspan -->
+                <td
+                  v-if="course === courseRecords.keys().next().value"
+                  :rowspan="courseRecords.size"
+                  class="whitespace-wrap sm:whitespace-nowrap px-2 py-2 text-right text-sm text-gray-900"
+                >
+                  {{ swimmers ? swimmersMap[swimmerId].fullName : "Unknown swimmer" }} ({{ getSwimmerAge(swimmersMap[swimmerId]) }})
+                </td>
+                <td
+                  class="whitespace-nowrap px-2 py-2 text-right text-sm text-gray-900"
+                  :class="['px-2 py-1', course !== Object.keys(courseRecords)[0] ? 'border-l' : '']"
+                >
+                  {{ COURSES[course] }}<span class="hidden sm:inline"> Course</span>
+                </td>
+                <td
+                  v-for="distance in distances"
+                  :key="distance"
+                  class="whitespace-nowrap px-2 py-2 text-right text-sm text-gray-900"
+                >
+                  <span v-if="distanceRow.get( distance )">
+                    <span :class="`qualified-${distanceRow.get( distance )?.qualified?.scope??'none'}`">{{ secondsToTime( distanceRow.get( distance )?.time ?? 0 ) }}</span>
+                    <span
+                      v-if="(courseRecords.get( course === 'lc' ? 'sc' : 'lc')?.get( distance )?.converted_time ?? Infinity) < (distanceRow?.get( distance )?.time ?? 0)"
+                      class="italic"
+                      :class="`qualified-${courseRecords.get( course === 'lc' ? 'sc' : 'lc' )?.get( distance )?.altQualified?.scope??'none'}`"
+                    >
+                      ({{ secondsToTime(courseRecords.get( course === 'lc' ? 'sc' : 'lc' )?.get( distance )?.converted_time ?? 0) }})
+                    </span>
+                  </span>
+                </td>
+              </tr>
+            </template>
+          </tbody>
+          <tbody class="divide-y divide-gray-200 bg-white">
+            <template
+              v-for="[swimmerId,courseRecords] in [...groupedRecords].filter( ( [ id ] ) => swimmersMap[id].gender === 'female' )"
               :key="swimmerId"
             >
               <tr
