@@ -63,7 +63,7 @@ export default defineEventHandler( async ( event ) => {
 
     const updateUser = prepareStatement(
       conn,
-      "UPDATE User SET username = :username, firstName = :firstName, lastName = :lastName, location = :location WHERE id = :userId"
+      "UPDATE User SET username = :username, firstName = :firstName, lastName = :lastName, location = :location, type = :type WHERE id = :userId"
     )
     await updateUser.run( { ...userData, ...{ userId } } )
 
