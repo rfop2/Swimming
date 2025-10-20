@@ -40,32 +40,33 @@
     selectAll.value = newSelected.every( s => !!s )
   }, { deep: true } )
 
-  const updateAll = ( updateType: string ) => {
+  const updateAll = async ( updateType: string ) => {
     try {
       const updateTasks: Array<Partial<Task>> = swimmers.value.map( s => ( {
         taskType: "update",
-        taskOptions: updateType,
+        taskOptions: JSON.stringify( { updateType } ),
         taskDescription: `${updateType.charAt( 0 ).toUpperCase()}${updateType.slice( 1 )} update of swimmer '${s.fullName}'`,
         targetType: "swimmer",
         targetId: s.id,
       } ) )
-      createTasks( updateTasks )
+      await createTasks( updateTasks )
+      selected.value.fill( 0 )
     } catch ( error ) {
       console.error( "Error", error )
       throw createError( error as FetchError )
     }
   }
 
-  const updateSelected = ( updateType: string ) => {
+  const updateSelected = async ( updateType: string ) => {
     try {
       const updateTasks: Array<Partial<Task>> = swimmers.value.filter( ( s, i ) => selected.value[i] ).map( s => ( {
         taskType: "update",
-        taskOptions: updateType,
+        taskOptions: JSON.stringify( { updateType } ),
         taskDescription: `${updateType.charAt( 0 ).toUpperCase()}${updateType.slice( 1 )} update of swimmer '${s.fullName}'`,
         targetType: "swimmer",
         targetId: s.id,
       } ) )
-      createTasks( updateTasks )
+      await createTasks( updateTasks )
       selected.value.fill( 0 )
     } catch ( error ) {
       console.error( "Error", error )
@@ -76,13 +77,14 @@
   const updateSwimmer = async ( swimmerIndex: number, updateType: string ) => {
     const swimmer = swimmers.value[swimmerIndex]
     try {
-      createTask( {
+      await createTask( {
         taskType: "update",
-        taskOptions: updateType,
+        taskOptions: JSON.stringify( { updateType } ),
         taskDescription: `${updateType.charAt( 0 ).toUpperCase()}${updateType.slice( 1 )} update of swimmer '${swimmer.fullName}'`,
         targetType: "swimmer",
         targetId: swimmer.id,
       } )
+      selected.value.fill( 0 )
     } catch ( error ) {
       console.error( "Error", error )
       throw createError( error as FetchError )
@@ -93,7 +95,6 @@
   const cancelUpdate = async ( swimmerIndex: number ) => {
     const swimmer = swimmers.value[swimmerIndex]
     const tasks = swimmerTasks.value[swimmer.id].filter( t => t.taskStatus === "pending" )
-    console.log( "T", tasks )
     try {
       for ( const task of tasks ) {
         await deleteTask( task.taskId )
@@ -101,6 +102,7 @@
     } catch ( error ) {
       console.error( "Error", error )
       cancelFailed.value = true
+      showAlert( `Unable to cancel task: ${( error as FetchError ).message}`, "error" )
       throw createError( error as FetchError )
     }
   }
@@ -327,7 +329,12 @@
     title="Choose update type"
     confirm-label="Select"
     :confirm-enabled="() => !!updateType"
-    :action="async () => { await queueUpdates() }"
+    :action="async () => {
+      await queueUpdates()
+    }"
+    :cancel-action="() => {
+      selectedForUpdate = null
+    }"
   >
     <div class="px-1 py-3 sm:p-2">
       <div class="mt-2 max-w-xl text-sm text-gray-500">
