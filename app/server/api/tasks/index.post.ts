@@ -1,3 +1,4 @@
+import type { Task } from "lib"
 import { getPool, isMySql2Error, prepareStatement } from "lib"
 
 export default defineEventHandler( async ( event ) => {
@@ -22,7 +23,7 @@ export default defineEventHandler( async ( event ) => {
       } )
     }
 
-    const taskData = await readBody( event )
+    const taskData = await readBody<Task | Task[]>( event )
 
     const addTask = prepareStatement(
       await getPool(),
@@ -31,7 +32,11 @@ export default defineEventHandler( async ( event ) => {
 
     const tasks = Array.isArray( taskData ) ? taskData : [ taskData ]
     for ( const task of tasks ) {
-      const result = await addTask.run( { ...task, userId } )
+      const result = await addTask.run( {
+        taskOptions: task.taskOptions ?? null,
+        ...task,
+        userId
+      } )
       const taskId = result.insertId
       console.log( `Task ${taskId} created` )
     }
