@@ -135,7 +135,7 @@ export const addClubSwimmers = async ( user: User, clubOrCode: string | Club, co
           let pageNo = 1
           do {
             const page: PageInfo = {
-              label: `${distance}_${stroke}_${gender.toLocaleLowerCase()}_${course === "S" ? "sc" : "lc"}_${ageGroup.toLocaleLowerCase()}_club_${clubId.toLocaleLowerCase()}-${pageNo}`,
+              label: `${distance}_${stroke}_${gender.toLocaleLowerCase()}_${course === "S" ? "sc" : "lc"}_${ageGroup.toLocaleLowerCase()}_club_${clubCode.toLocaleLowerCase()}-${pageNo}`,
               url: createUrl( rankBaseUrl, {
                 Stroke: sdCode,
                 Pool: course,
