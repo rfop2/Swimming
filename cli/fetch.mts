@@ -46,7 +46,7 @@ import type {
   SwimmerUpdateType,
   Task
 } from "lib"
-import { Command } from "commander"
+import { Command, Option } from "commander"
 
 const insertIndividualSql =
   `INSERT INTO Individual (
@@ -657,6 +657,7 @@ const updateMeets = async ( force: boolean ) => {
 interface CliOptions {
   mode: "swimmers" | "meets" | "queue"
   ids?: string[]
+  club?: string
   update: SwimmerUpdateType
   force: boolean
 }
@@ -670,9 +671,12 @@ interface CliOptions {
     .name( "fetch" )
     .description( "Fetch data from source site" )
 
-  program.option( "-m, --mode <mode>", "fetch mode 'swimmers', 'meets' or 'queue'" )
-  program.option( "-i, --ids <ids...>", "in swimmers mode, fetch data for specified swimmers only" )
-  program.option( "-u, --update", "in swimmers mode, what to update. Options are 'individual', 'results' or 'rankings'", "results" )
+  program.showHelpAfterError()
+
+  program.requiredOption( "-m, --mode <mode>", "fetch mode 'swimmers', 'meets' or 'queue'" )
+  program.option( "-i, --id <ids...>", "in swimmers mode, fetch data for specified swimmers, in club mode ids of clubs to fetch" )
+  program.option( "-c, --club <club>", "in swimmers mode, fetch data for swimmers in specified club only" )
+  program.addOption( new Option( "-u, --update <update>", "in swimmers mode, what to update." ).choices( [ "individual", "results", "rankings" ] ) )
   program.option( "-f, --force", "force update, ignoring caching time", false )
 
   // Parse argv
@@ -686,11 +690,19 @@ interface CliOptions {
         await getPool(),
         "SELECT * FROM Swimmers WHERE active = 1"
       )
+      const getClubSwimmers = prepareStatement<{clubId: string},Swimmer>(
+        await getPool(),
+        "SELECT Swimmers.* FROM Swimmers INNER JOIN ClubSwimmers ON (Swimmers.id = ClubSwimmers.swimmerId) INNER JOIN Clubs ON (ClubSwimmers.clubId = Clubs.clubId) WHERE Clubs.ClubId = :clubId AND Swimmers.active = 1"
+      )
       const swimmerUpdateError = prepareStatement(
         await getPool(),
         "UPDATE Swimmers SET updateStatus = 'error' WHERE id = :id",
       )
-      const swimmers = await getSwimmers.all()
+      const swimmers = await ( options.club ? getClubSwimmers.all( { clubId: options.club } ) : getSwimmers.all() )
+      if ( !swimmers.length ) {
+        console.log( "No swimmers found, exiting" )
+        process.exit( 0 )
+      }
       for ( const swimmer of swimmers ) {
         if ( !options.ids || options.ids.find( s => s === swimmer.id ) ) {
           swimmer.birthday = format( new Date( swimmer.birthday ), "yyyy-MM-dd" )
