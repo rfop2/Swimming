@@ -38,6 +38,7 @@ import {
 } from "lib"
 
 import type {
+  Club,
   IndividualStats,
   Meet,
   PageInfo,
@@ -47,6 +48,8 @@ import type {
   Task
 } from "lib"
 import { Command, Option } from "commander"
+import { addClubSwimmers } from "./lib.js"
+import type { User } from "lucia"
 
 const insertIndividualSql =
   `INSERT INTO Individual (
@@ -533,6 +536,7 @@ const updatePerformance = async ( swimmer: Swimmer ) => {
 
 const updateSwimmerData = async ( swimmer: Swimmer, updateType: SwimmerUpdateType, force: boolean ) => {
   console.log( `Updating data for swimmer '${swimmer.fullName}'` )
+  swimmer.birthday = format( new Date( swimmer.birthday ), "yyyy-MM-dd" )
 
   const individualData = await updateIndividual( swimmer, force )
 
@@ -673,7 +677,7 @@ interface CliOptions {
 
   program.showHelpAfterError()
 
-  program.requiredOption( "-m, --mode <mode>", "fetch mode 'swimmers', 'meets' or 'queue'" )
+  program.addOption( new Option( "-m, --mode <mode>", "fetch mode" ).choices( [ "swimmers", "meets", "queue" ] ).makeOptionMandatory() )
   program.option( "-i, --id <ids...>", "in swimmers mode, fetch data for specified swimmers, in club mode ids of clubs to fetch" )
   program.option( "-c, --club <club>", "in swimmers mode, fetch data for swimmers in specified club only" )
   program.addOption( new Option( "-u, --update <update>", "in swimmers mode, what to update." ).choices( [ "individual", "results", "rankings" ] ) )
@@ -705,7 +709,6 @@ interface CliOptions {
       }
       for ( const swimmer of swimmers ) {
         if ( !options.ids || options.ids.find( s => s === swimmer.id ) ) {
-          swimmer.birthday = format( new Date( swimmer.birthday ), "yyyy-MM-dd" )
           try {
             await updateSwimmerData( swimmer, options.update, options.force )
           } catch ( e ) {
@@ -739,6 +742,14 @@ interface CliOptions {
         await getPool(),
         "SELECT * FROM Swimmers WHERE id = :id"
       )
+      const getClub = prepareStatement<{ id: string },Club>(
+        await getPool(),
+        "SELECT * FROM Clubs WHERE clubId = :id"
+      )
+      const getClubSwimmers = prepareStatement<{ id: string },Swimmer>(
+        await getPool(),
+        "SELECT Swimmers.* FROM Swimmers INNER JOIN ClubSwimmers ON ( Swimmers.id = ClubSwimmers.swimmerIr ) WHERE ClubSwimmers.clubId = :id"
+      )
       const tasks = await getTasks.all()
       for ( const task of tasks ) {
         try {
@@ -753,25 +764,81 @@ interface CliOptions {
                   if ( !swimmer ) {
                     throw new Error( `Can't find swimmer id '${task.targetId}' for task ${task.taskId}` )
                   }
-                  swimmer.birthday = format( new Date( swimmer.birthday ), "yyyy-MM-dd" )
-                  const taskOptions = new Set<string>( ( task.taskOptions as string ?? "" ).split( "," ) )
-                  await taskStart.run( task )
-                  const updateType = taskOptions.has( "individual" ) ? "individual" :
-                    ( taskOptions.has( "results" ) ? "results" :
-                      ( taskOptions.has( "rankings" ) ? "rankings" : "" ) )
-                  if ( !updateType ) {
+                  const taskOptions = task.taskOptions ? JSON.parse( task.taskOptions ) : null
+                  if ( !taskOptions.updateType ) {
                     throw new Error( `Can't find update type in task ${task.taskId}` )
                   }
-                  await updateSwimmerData( swimmer, updateType, taskOptions.has( "force" ) )
+                  await taskStart.run( task )
+                  await updateSwimmerData( swimmer, taskOptions.updateType, taskOptions.force ?? false )
                   await taskComplete.run( task )
                   break
+                }
+                case "club" : {
+                  if ( !task.targetId ) {
+                    throw new Error( `No target id on task ${task.taskId}` )
+                  }
+                  const club = await getClub.get( { id: task.targetId } )
+                  if ( !club ) {
+                    throw new Error( `Can't find club id '${task.targetId}' for task ${task.taskId}` )
+                  }
+                  const clubSwimmers = await getClubSwimmers.all( { id: task.targetId } )
+                  if ( !club ) {
+                    throw new Error( `Can't find club id '${task.targetId}' for task ${task.taskId}` )
+                  }
+                  const taskOptions = task.taskOptions ? JSON.parse( task.taskOptions ) : null
+                  if ( !taskOptions.updateType ) {
+                    throw new Error( `Can't find update type in task ${task.taskId}` )
+                  }
+                  await taskStart.run( task )
+                  for ( const swimmer of clubSwimmers ) {
+                    await updateSwimmerData( swimmer, taskOptions.updateType, taskOptions.force ?? false )
+                  }
+                  await taskComplete.run( task )
+                  break
+                }
+                default : {
+                  throw new Error( `Unexpected target type ${task.targetType} for task ${task.taskId}` )
                 }
               }
               break
             }
+            case "add" : {
+              switch ( task.targetType ) {
+                case "user" : {
+                  if ( !task.targetId ) {
+                    throw new Error( `No target id on task ${task.taskId}` )
+                  }
+                  const getUser = prepareStatement<{id: string}, User>( await getPool(), "SELECT * FROM User where id = :id" )
+                  const user = await getUser.get( { id: task.targetId } )
+                  if ( !user ) {
+                    throw new Error ( `Invalid user id '${task.targetId}'` )
+                  }
+
+                  const taskOptions = task.taskOptions ? JSON.parse( task.taskOptions ) : null
+                  if ( !taskOptions.club ) {
+                    throw new Error ( `No club id found in options for task '${task.taskId}'` )
+                  }
+                  const club = await getClub.get( { id: taskOptions.club } )
+                  if ( !club ) {
+                    throw new Error( `Can't find club id '${taskOptions.club}' for task ${task.taskId}` )
+                  }
+                  await taskStart.run( task )
+                  await addClubSwimmers( user, club )
+                  await taskComplete.run( task )
+                  break
+                }
+                default : {
+                  throw new Error( `Unexpected target type ${task.targetType} for task ${task.taskId}` )
+                }
+              }
+              break
+            }
+            default : {
+              throw new Error( `Unexpected task type ${task.taskType} for task ${task.taskId}` )
+            }
           }
         } catch ( e ) {
-          console.error( "Unable to fetch swimmer data, skipping", e )
+          console.error( "Unable to execute task", e )
           task.taskResult = JSON.stringify( e )
           await taskUpdateError.run( task )
         }
