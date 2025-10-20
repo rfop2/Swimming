@@ -192,6 +192,8 @@ export const addClubSwimmers = async ( user: User, clubOrCode: string | Club, co
                 }
                 await insertClubSwimmer.run( { clubId, swimmerId: row.swimmer, rankedClub: Number( ranked ) } )
               }
+              const updateClubTimestamp = prepareStatement( conn, "UPDATE Clubs SET lastMemberUpdate = NOW() WHERE clubId = :clubId" )
+              await updateClubTimestamp.run( { clubId } )
             }  )
             morePages = ( rankingData.table.length === 100 )
             pageNo++
