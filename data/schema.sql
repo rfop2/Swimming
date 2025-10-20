@@ -93,6 +93,7 @@ CREATE TABLE `Clubs` (
   `clubRegion` varchar(8) NOT NULL,
   `clubCounty` varchar(8) NOT NULL,
   `meetName` varchar(128) DEFAULT NULL,
+  `lastMemberUpdate` timestamp NULL DEFAULT NULL,
   `created` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
   PRIMARY KEY (`clubId`)
@@ -466,8 +467,8 @@ CREATE TABLE `Tasks` (
   `taskType` varchar(16) NOT NULL,
   `taskOptions` varchar(255) DEFAULT NULL,
   `taskDescription` varchar(255) DEFAULT NULL,
-  `targetType` enum('swimmer','club','meet') DEFAULT NULL,
-  `targetId` varchar(8) DEFAULT NULL,
+  `targetType` enum('user','swimmer','club','meet') DEFAULT NULL,
+  `targetId` varchar(16) DEFAULT NULL,
   `taskStatus` enum('pending','progress','complete','cancelled','error') NOT NULL DEFAULT 'pending',
   `taskSchedule` varchar(32) DEFAULT NULL,
   `taskResult` varchar(240) DEFAULT NULL,
