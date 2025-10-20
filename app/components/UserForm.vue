@@ -2,10 +2,10 @@
   import { useForm, useFieldArray } from "vee-validate"
   import * as yup from "yup"
   import { toTypedSchema } from "@vee-validate/yup"
-  import { CheckIcon, ExclamationTriangleIcon, PencilSquareIcon, TrashIcon, UserPlusIcon, XCircleIcon, XMarkIcon } from "@heroicons/vue/24/outline"
+  import { CheckIcon, ExclamationTriangleIcon, PencilSquareIcon, TrashIcon, UserGroupIcon, UserPlusIcon, XCircleIcon, XMarkIcon } from "@heroicons/vue/24/outline"
 
   import type { FetchError } from "ofetch"
-  import { COUNTIES, NATIONALITIES, NATIONALITY, REGIONS, type Club, type ExtSwimmer, type Swimmer, type UserClub } from "lib"
+  import { COUNTIES, NATIONALITIES, NATIONALITY, REGIONS, type Club, type ExtSwimmer, type Swimmer, type Task, type UserClub } from "lib"
   import { useDebounceAsync } from "~/composables/useDebounceAsync"
   import type { User } from "lucia"
 
@@ -326,6 +326,27 @@
       foundSwimmer.value = {}
     }
   } )
+
+  const { createTask } = useTasks()
+  const addClubSwimmers = async () => {
+    if ( selectedClub.value ) {
+      try {
+        const task: Partial<Task> = {
+          taskType: "add",
+          taskOptions: JSON.stringify( { club: selectedClub.value.value as string } ),
+          taskDescription: `Add club swimmers for '${selectedClub.value.label}' to account`,
+          targetType: "user",
+          targetId: props.user.id,
+        }
+        await createTask( task )
+        showAlert( "Swimmers are being added to account, please check back shortly", "info" )
+      } catch ( error ) {
+        console.error( "Error", error )
+        showAlert( `Unable to add swimmers to account '${( error as FetchError ).message}'`, "error" )
+        throw createError( error as FetchError )
+      }
+    }
+  }
 </script>
 
 <template>
@@ -517,10 +538,24 @@
               Swimmers
             </h1>
             <p class="mt-2 text-sm text-gray-700">
-              A list of the swimmers to track on {{ editingSelf ? "your" : "the user's" }} account.
+              A list of the swimmers to track on {{ editingSelf ? "your" : "the user's" }} account. Please ensure all birthdays are filled in order that the appropriate qualifying and competition times are used.
             </p>
           </div>
-          <div class="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
+          <div class="mt-4 sm:mt-0 sm:ml-8 sm:flex-none">
+            <button
+              v-if="selectedClub && clubOwner"
+              type="button"
+              class="inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+              @click="addClubSwimmers"
+            >
+              <UserGroupIcon
+                class="-ml-0.5 size-5"
+                aria-hidden="true"
+              />
+              Add all club swimmers
+            </button>
+          </div>
+          <div class="mt-4 sm:mt-0 sm:ml-8 sm:flex-none">
             <button
               type="button"
               class="inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
