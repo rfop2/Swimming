@@ -6,12 +6,12 @@
     "declaration": true,
     "declarationMap": true,
     "outDir": "./build",
-    "rootDir": ".",
+    "rootDir": "./src",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true
   },
-  "include": ["*.mts"],
+  "include": ["src/*.mts", "src/*.ts"],
   "exclude": ["node_modules", "build", "eslint.config.mjs"]
 }

@@ -754,7 +754,7 @@ interface CliOptions {
                     throw new Error( `Can't find swimmer id '${task.targetId}' for task ${task.taskId}` )
                   }
                   swimmer.birthday = format( new Date( swimmer.birthday ), "yyyy-MM-dd" )
-                  const taskOptions = new Set<string>( ( task.taskOptions ?? "" ).split( "," ) )
+                  const taskOptions = new Set<string>( ( task.taskOptions as string ?? "" ).split( "," ) )
                   await taskStart.run( task )
                   const updateType = taskOptions.has( "individual" ) ? "individual" :
                     ( taskOptions.has( "results" ) ? "results" :
