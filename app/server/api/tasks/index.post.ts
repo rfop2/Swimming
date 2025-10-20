@@ -1,3 +1,4 @@
+import { TabList } from "@headlessui/vue"
 import type { Task } from "lib"
 import { getPool, isMySql2Error, prepareStatement } from "lib"
 
@@ -32,6 +33,12 @@ export default defineEventHandler( async ( event ) => {
 
     const tasks = Array.isArray( taskData ) ? taskData : [ taskData ]
     for ( const task of tasks ) {
+      if ( task.targetType === "user" && ( task.targetId !== userId && !Number( event.context.user.admin ) ) ) {
+        throw createError( {
+          status: 403,
+          message: "Task target is not current user",
+        } )
+      }
       const result = await addTask.run( {
         taskOptions: task.taskOptions ?? null,
         ...task,
