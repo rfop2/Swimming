@@ -2,13 +2,47 @@
   {
     "isoDate": "2025-10-21",
     "niceDate": "21 October 2025",
-    "diff": "11.6.0..",
-    "href": "https://bitbucket.org/guntrader/swimming/compare/11.7.0..11.6.0",
+    "diff": "11.7.0..",
+    "href": "https://bitbucket.org/guntrader/swimming/compare/11.7.1..11.7.0",
     "major": false,
     "minor": false,
     "tag": null,
+    "title": "11.7.1",
+    "date": "2025-10-21T17:01:18.249Z",
+    "summary": null,
+    "commits": [
+      {
+        "hash": "c6372dbbdc03b6c8f6bc1ddbb17a464baf0d1ce9",
+        "shorthash": "c6372db",
+        "author": "Philip Coombes",
+        "email": "phil@web2wire.com",
+        "date": "2025-10-21T17:01:10.000Z",
+        "niceDate": "21 October 2025",
+        "subject": "Account for users filter in user actions",
+        "message": "Account for users filter in user actions",
+        "fixes": null,
+        "href": "https://bitbucket.org/guntrader/swimming/commits/c6372dbbdc03b6c8f6bc1ddbb17a464baf0d1ce9",
+        "breaking": false,
+        "files": 1,
+        "insertions": 3,
+        "deletions": 3,
+        "merge": null
+      }
+    ],
+    "merges": [],
+    "fixes": []
+  },
+  {
+    "isoDate": "2025-10-21",
+    "niceDate": "21 October 2025",
+    "diff": "11.6.0..11.7.0",
+    "href": "https://bitbucket.org/guntrader/swimming/compare/11.7.0..11.6.0",
+    "major": false,
+    "minor": true,
+    "tag": "11.7.0",
+    "date": "2025-10-21",
     "title": "11.7.0",
-    "date": "2025-10-21T16:39:30.319Z",
+    "version": "11.7.0",
     "summary": null,
     "commits": [
       {
