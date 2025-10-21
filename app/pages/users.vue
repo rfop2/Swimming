@@ -51,7 +51,7 @@
   const impersonateUser = async ( userIndex: number ) => {
     if ( !users.value )
       return
-    const user = users.value[userIndex]
+    const user = filteredUsers.value[userIndex]
     console.log( "Impersonate", user )
     if ( user.id !== currentUser.value.id ) {
       await impersonate( user.id )
@@ -62,7 +62,7 @@
   const editUser = ( userIndex: number ) => {
     if ( !users.value )
       return
-    const user = users.value[userIndex]
+    const user = filteredUsers.value[userIndex]
     console.log( "Edit", user )
     if ( user.id === currentUser.value.id ) {
       navigateTo( "/account" )
@@ -77,7 +77,7 @@
     if ( !users.value )
       return
     if ( deleting.value !== null ) {
-      const userToDelete = users.value[deleting.value]
+      const userToDelete = filteredUsers.value[deleting.value]
       console.log( "Delete", userToDelete )
       await $fetch(
         `/api/user/${userToDelete.id}`,
