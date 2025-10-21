@@ -34,12 +34,14 @@ export const usePersisted = <T extends object | unknown, M extends PersistedMode
   mode: M = "state" as M,
   lazy = false
 ): UsePersistedReturn<T, M> => {
+  const { user } = useSessionUser()
   const stateRef = ref( initialValue ) as Ref<T>
   const ready = ref( !lazy || import.meta.server )
 
+  const userKey = computed( () => `${user.value?.id ?? "0"}:${key}` )
   const load = (): T | undefined => {
     try {
-      const raw = localStorage.getItem( key )
+      const raw = localStorage.getItem( userKey.value )
       if ( !raw ) return undefined
       const parsed = JSON.parse( raw ) as unknown
       if ( typeof parsed === "object" && parsed !== null && typeof initialValue === "object" && initialValue !== null ) {
@@ -65,7 +67,7 @@ export const usePersisted = <T extends object | unknown, M extends PersistedMode
       stateRef,
       ( val ) => {
         try {
-          localStorage.setItem( key, JSON.stringify( val ) )
+          localStorage.setItem( userKey.value, JSON.stringify( val ) )
         } catch {
           // ignore quota errors
         }
@@ -74,7 +76,7 @@ export const usePersisted = <T extends object | unknown, M extends PersistedMode
     )
 
     window.addEventListener( "storage", ( e: StorageEvent ) => {
-      if ( e.key !== key || !e.newValue ) return
+      if ( e.key !== userKey.value || !e.newValue ) return
       try {
         const parsed = JSON.parse( e.newValue ) as unknown
         if ( typeof parsed === "object" && parsed !== null && typeof initialValue === "object" && initialValue !== null ) {
@@ -93,7 +95,7 @@ export const usePersisted = <T extends object | unknown, M extends PersistedMode
 
   if ( mode === "reactive" ) {
     if ( typeof stateRef.value !== "object" || stateRef.value === null ) {
-      throw new Error( `usePersisted("${key}") in 'reactive' mode requires an object initialValue` )
+      throw new Error( `usePersisted("${userKey.value}") in 'reactive' mode requires an object initialValue` )
     }
 
     const reactiveState = reactive( { ...stateRef.value } ) as T
@@ -106,7 +108,7 @@ export const usePersisted = <T extends object | unknown, M extends PersistedMode
           ( val ) => {
             stateRef.value = val as T
             try {
-              localStorage.setItem( key, JSON.stringify( val ) )
+              localStorage.setItem( userKey.value, JSON.stringify( val ) )
             } catch {
               /* ignore quota errors */
             }

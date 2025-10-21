@@ -5,8 +5,8 @@ export const useAppReset = () => {
 
     // 2. Clear any global useState() values
     //    Add each user-scoped piece of state here.
-    useState( "swimmers-0" ).value = []
-    useState( "userClubs-0" ).value = []
+    useState( "0:swimmers" ).value = []
+    useState( "0:userClubs" ).value = []
     useState( "tasks" ).value = []
     // ... add as needed
 

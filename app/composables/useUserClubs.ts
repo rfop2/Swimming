@@ -1,9 +1,9 @@
 import type { UserClub } from "lib"
 
 export const useUserClubs = ( userId?: string ) => {
-  const userClubs = useState<UserClub[]>( `userClubs-${userId}`, () => [] )
-  const loading = useState<boolean>( `userClubsLoading-${userId}`, () => false )
-  const fetchError = useState<unknown>( `userClubsError-${userId}`, () => null )
+  const userClubs = useState<UserClub[]>( `${userId ?? "0"}:userClubs`, () => [] )
+  const loading = useState<boolean>( `${userId ?? "0"}:userClubsLoading`, () => false )
+  const fetchError = useState<unknown>( `${userId ?? "0"}:userClubsError`, () => null )
 
   const fetchUserClubs = async () => {
     if ( loading.value ) return

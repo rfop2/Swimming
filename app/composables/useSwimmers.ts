@@ -2,10 +2,10 @@ import { format } from "date-fns"
 import type { Swimmer } from "lib"
 
 export const useSwimmers = ( userId?: string ) => {
-  const swimmers = useState<Swimmer[]>( `swimmers-${userId ?? "0"}`, () => [] )
-  const loading = useState<boolean>( `swimmersLoading-${userId ?? "0"}`, () => false )
+  const swimmers = useState<Swimmer[]>( `${userId ?? "0"}:swimmers`, () => [] )
+  const loading = useState<boolean>( `${userId ?? "0"}:swimmersLoading`, () => false )
   const fetchError = useState<{ status: number | null, message: string | null }> (
-    `swimmersError-${userId}`,
+    `${userId ?? "0"}:swimmersError`,
     () => ( { status: null, message: null } )
   )
 
