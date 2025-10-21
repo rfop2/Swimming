@@ -48,15 +48,9 @@
 
   const activeNavigation = computed( () => navigation.value.filter( item => !item.condition || ( item.condition )() ) )
 
-  const route = useRoute()
-
   const revertUser = async () => {
     await revert()
-    if ( route.path === "/account" ) {
-      window.location.reload()
-    } else {
-      navigateTo( "/account" )
-    }
+    navigateTo( "/users" )
   }
 
   const userNavigation = computed<NavOption[]>( () => [
