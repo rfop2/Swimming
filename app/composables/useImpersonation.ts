@@ -1,6 +1,7 @@
 export const useImpersonation = () => {
   const { refresh } = useSessionUser()
   const impersonating = useState( "impersonating" )
+  const resetAppState = useAppReset()
 
   const impersonate = async ( userId: string ) => {
     await $fetch( "/api/admin/impersonate", {
@@ -9,6 +10,7 @@ export const useImpersonation = () => {
       credentials: "include",
     } )
     await refresh()
+    await resetAppState()
   }
 
   const revert = async () => {
@@ -17,6 +19,7 @@ export const useImpersonation = () => {
       credentials: "include",
     } )
     await refresh()
+    await resetAppState()
   }
 
   return { impersonating, impersonate, revert }

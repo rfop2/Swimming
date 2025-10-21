@@ -4,6 +4,9 @@ export default defineNuxtPlugin( () => {
   const originalFetch = globalThis.$fetch
   type NuxtFetch = typeof originalFetch
 
+  const { refresh } = useSessionUser()
+  const resetAppState = useAppReset()
+
   const wrapped = ( async ( ...args: Parameters<NuxtFetch> ) => {
     const request = args[0]
     let options = args[1] ?? {}
@@ -35,6 +38,8 @@ export default defineNuxtPlugin( () => {
       if ( isApiRequest && import.meta.client ) {
         if ( status === 401 ) {
           showAlert( "Your session has expired. Please log in again.", "warning" )
+          await resetAppState()
+          await refresh()
           navigateTo( "/login" )
         } else if ( status === 403 ) {
           showAlert( "Access denied. You do not have permission to view this resource.", "error" )
@@ -50,4 +55,11 @@ export default defineNuxtPlugin( () => {
 
   // Replace the global fetch
   ;( globalThis as { $fetch: NuxtFetch } ).$fetch = wrapped
+
+  watch( () => useState( "impersonating" ).value, async ( newVal, oldVal ) => {
+    if ( newVal !== oldVal ) {
+      const resetAppState = useAppReset()
+      await resetAppState()
+    }
+  } )
 } )
