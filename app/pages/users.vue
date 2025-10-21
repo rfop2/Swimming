@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { CheckIcon, PencilSquareIcon, TrashIcon, UserPlusIcon } from "@heroicons/vue/24/outline"
+  import { ArrowRightEndOnRectangleIcon, CheckIcon, PencilSquareIcon, TrashIcon, UserPlusIcon } from "@heroicons/vue/24/outline"
   import { format } from "date-fns"
   import type { User } from "lucia"
 
@@ -21,8 +21,21 @@
     "/api/users"
   )
 
+  const { impersonate } = useImpersonation()
+
   const addUser = () => {
     navigateTo( "/user/0" )
+  }
+
+  const impersonateUser = async ( userIndex: number ) => {
+    if ( !users.value )
+      return
+    const user = users.value[userIndex]
+    console.log( "Impersonate", user )
+    if ( user.id !== currentUser.value.id ) {
+      await impersonate( user.id )
+    }
+    navigateTo( "/account" )
   }
 
   const editUser = ( userIndex: number ) => {
@@ -190,7 +203,19 @@
                       <div class="flex gap-2 justify-end">
                         <button
                           type="button"
-                          class="inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                          class="inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600  disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
+                          :disabled="currentUser.id === user.id"
+                          @click="() => impersonateUser( userIndex )"
+                        >
+                          <ArrowRightEndOnRectangleIcon
+                            class="-ml-0.5 size-5"
+                            aria-hidden="true"
+                          />
+                          <span class="sr-only">Impersonate, {{ user.username }}</span>
+                        </button>
+                        <button
+                          type="button"
+                          class="inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600  disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
                           @click="() => editUser( userIndex )"
                         >
                           <PencilSquareIcon

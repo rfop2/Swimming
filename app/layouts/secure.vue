@@ -44,13 +44,21 @@
     { name: "Meets", href: "/meets" },
   ] )
 
+  const { impersonating, revert } = useImpersonation()
+
   const activeNavigation = computed( () => navigation.value.filter( item => !item.condition || ( item.condition )() ) )
+
+  const revertUser = async () => {
+    await revert()
+    navigateTo( "/users" )
+  }
 
   const userNavigation = computed<NavOption[]>( () => [
     { name: "Account", href: "/account" },
     { name: "Updates", href: "/updates" },
     { name: "Users", href: "/users", condition: () => !!Number( user.value.admin ) },
     // { name: "Settings", href: "#" },
+    { name: "Revert user", href: "", click: revertUser, condition: () => !!impersonating.value },
     { name: "Sign out", href: "", click: logout },
   ] )
 

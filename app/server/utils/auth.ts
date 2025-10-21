@@ -1,4 +1,5 @@
 import { Lucia } from "lucia"
+import type { H3Event } from "h3"
 import { createPool } from "mysql2/promise"
 import { Mysql2Adapter } from "@lucia-auth/adapter-mysql"
 import type { DatabaseUser } from "lib"
@@ -40,4 +41,17 @@ declare module "lucia" {
     Lucia: typeof lucia
     DatabaseUserAttributes: Omit<DatabaseUser, "id">
   }
+}
+
+export const validateRequest = async ( event: H3Event ) => {
+  const sessionId = getCookie( event, lucia.sessionCookieName )
+  if ( !sessionId ) return { user: null, session: null, impersonating: false }
+
+  const { session, user } = await lucia.validateSession( sessionId )
+  if ( !session || !user ) return { user: null, session: null, impersonating: false }
+
+  const adminSessionId = getCookie( event, "admin_session" )
+  const impersonating = !!adminSessionId
+
+  return { user, session, impersonating }
 }
