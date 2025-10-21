@@ -50,7 +50,15 @@ export default withNuxt( [
     // Stylistic rules applied to TS files
     ...stylistic.configs.recommended.rules,
     "@stylistic/indent": [ "error", 2 ],
-    "@typescript-eslint/no-unused-vars": "error",
+    "@typescript-eslint/no-unused-vars": [ "error", {
+      "args": "all",
+      "argsIgnorePattern": "^_",
+      "caughtErrors": "all",
+      "caughtErrorsIgnorePattern": "^_",
+      "destructuredArrayIgnorePattern": "^_",
+      "varsIgnorePattern": "^_",
+      "ignoreRestSiblings": true
+    } ],
     "@typescript-eslint/explicit-function-return-type": "off",
     "@typescript-eslint/consistent-type-imports": [ "error", { prefer: "type-imports" } ],
     "@stylistic/comma-dangle": [ "error", "only-multiline" ],
