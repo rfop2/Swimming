@@ -1,15 +1,14 @@
 export const useImpersonation = () => {
-  const impersonating = useState( "impersonating", () => false )
+  const { refresh } = useSessionUser()
+  const impersonating = useState( "impersonating" )
 
   const impersonate = async ( userId: string ) => {
     await $fetch( "/api/admin/impersonate", {
       method: "POST",
       body: { targetUserId: userId },
-      credentials: "include", // important so cookies are kept
+      credentials: "include",
     } )
-
-    impersonating.value = true
-    await refreshNuxtData() // reload user info
+    await refresh()
   }
 
   const revert = async () => {
@@ -17,9 +16,7 @@ export const useImpersonation = () => {
       method: "POST",
       credentials: "include",
     } )
-
-    impersonating.value = false
-    await refreshNuxtData()
+    await refresh()
   }
 
   return { impersonating, impersonate, revert }

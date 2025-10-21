@@ -1,15 +1,9 @@
-import { setCookie } from "h3"
+import { getCookie, setCookie } from "h3"
 
 export default defineEventHandler( async ( event ) => {
-  if ( !event.context.session || !event.context.user ) {
-    throw createError( {
-      status: 401
-    } )
-  }
-
   const { targetUserId } = await readBody<{ targetUserId: string }>( event )
 
-  // Get admin’s current session ID from cookie
+  // Validate admin session
   const sessionId = getCookie( event, lucia.sessionCookieName )
   if ( !sessionId ) {
     throw createError( {
@@ -25,26 +19,27 @@ export default defineEventHandler( async ( event ) => {
       message: "Invalid session"
     } )
   }
-
-  const isAdmin = Number( event.context.user.admin )
-  if ( !session || !isAdmin ) {
+  if ( !Number( user.admin ) ) {
     throw createError( {
-      status: 403
+      status: 403,
+      message: "Not authorised"
     } )
   }
 
-  // Store admin session ID in cookie (secure + httpOnly)
+  // Save current admin session ID
   setCookie( event, "admin_session", session.id, {
     httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
-    secure: true,
     path: "/",
   } )
 
-  // Create session for target user
-  const targetSession = await lucia.createSession( targetUserId, {} )
-  const cookie = lucia.createSessionCookie( targetSession.id )
+  // Create a new session for the impersonated user
+  const newSession = await lucia.createSession( targetUserId, {} )
+  const cookie = lucia.createSessionCookie( newSession.id )
 
+  // Replace the auth cookie with the impersonated session
   setCookie( event, cookie.name, cookie.value, cookie.attributes )
-  return { success: true }
+
+  return { success: true, impersonating: targetUserId }
 } )
