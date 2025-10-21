@@ -142,7 +142,7 @@
                       scope="col"
                       class="px-1 py-3.5 text-left text-sm font-semibold text-gray-900"
                     >
-                      Created
+                      Swimmers
                     </th>
                     <th
                       scope="col"
@@ -187,8 +187,8 @@
                     <td class="px-1 py-2 text-sm whitespace-nowrap text-gray-500">
                       {{ user.clubs }}
                     </td>
-                    <td class="px-1 py-2 text-sm whitespace-nowrap text-gray-500">
-                      {{ format( user.created as string, "dd/MM/yyyy" ) }}
+                    <td class="px-1 py-2 text-sm text-right whitespace-nowrap text-gray-500">
+                      {{ user.swimmerCount }}
                     </td>
                     <td class="px-1 py-2 text-sm whitespace-nowrap text-gray-500">
                       {{ user.lastLogin ? `${format( user.lastLogin as string, "dd/MM/yyyy" )} (${user.loginCount})` : "" }}

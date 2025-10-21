@@ -5,6 +5,7 @@ interface ExtUser extends User {
   clubs: string
   lastLogin: Date
   loginCount: number
+  swimmerCount: number
 }
 
 export default defineEventHandler( async ( event ) => {
@@ -45,6 +46,7 @@ export default defineEventHandler( async ( event ) => {
       ) AS clubs,
       st.lastLogin,
       st.loginCount,
+      sw.swimmerCount,
       u.admin,
       u.created,
       u.updated
@@ -63,6 +65,15 @@ export default defineEventHandler( async ( event ) => {
           GROUP BY
               userId
       ) AS st ON st.userId = u.id
+      LEFT JOIN (
+          SELECT
+              userId,
+              COUNT(swimmerId) AS swimmerCount
+          FROM
+              UserSwimmers
+          GROUP BY
+              userId
+      ) AS sw ON sw.userId = u.id
       LEFT JOIN UserClubs uc ON u.id = uc.userId
       LEFT JOIN Clubs c ON uc.clubId = c.clubId
     GROUP BY
