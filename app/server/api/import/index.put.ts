@@ -41,6 +41,7 @@ export default eventHandler(async (event) => {
             :time
           )
           ON DUPLICATE KEY UPDATE
+            timeString = :timeString,
             time = :time
           ;`
         )
