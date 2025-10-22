@@ -42,7 +42,7 @@
     { name: "Training", href: "/training" },
     { name: "Qualifying", href: "/qualifying" },
     { name: "Meets", href: "/meets" },
-    { name: "Import", href: "/import" },
+    { name: "Import", href: "/Import", condition: () => !!Number( user.value.admin ) },
   ] )
 
   const { impersonating, revert } = useImpersonation()

@@ -22,7 +22,7 @@ import TableWiltshire from '~/components/TableWiltshire.vue'
 
 definePageMeta({
     layout: "secure",
-    middleware: ["protected"]
+    middleware: ["admin"]
 })
 
 const filterYear = getYear(addMonths(new Date(), 1))
