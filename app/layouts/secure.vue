@@ -42,6 +42,7 @@
     { name: "Training", href: "/training" },
     { name: "Qualifying", href: "/qualifying" },
     { name: "Meets", href: "/meets" },
+    { name: "Import", href: "/import" },
   ] )
 
   const { impersonating, revert } = useImpersonation()
