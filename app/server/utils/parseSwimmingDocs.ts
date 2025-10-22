@@ -31,7 +31,7 @@ export function parseSwimmingPdf(text: string) {
         });
     };
 
-    const isTime = (t: string) => /\d+\.\d/.test(t); // exige pelo menos um ponto — evita confundir '50' com tempo
+    const isTime = (t: string) => /\d+\.\d/.test(t); 
 
     for (let i = 0; i < rawLines.length; i++) {
         const parts = rawLines[i].split(/\s+/).filter(Boolean);
@@ -49,7 +49,7 @@ export function parseSwimmingPdf(text: string) {
         const leftTokens = parts.slice(0, anchorIdx);
         const rightTokens = parts.slice(anchorIdx + 2);
 
-        // Caso especial: Breaststroke com anchor sozinho (ex: prev line = female times, anchor nesta linha, male em 1+ linhas)
+        // sepcial case: Breaststroke 
         if (stroke === "Breaststroke" && leftTokens.length === 0 && i > 0) {
             const prevParts = rawLines[i - 1].split(/\s+/).filter(Boolean);
             const femaleTokens = prevParts.filter(isTime);
@@ -61,20 +61,19 @@ export function parseSwimmingPdf(text: string) {
                 const nextAnchorIdx = nextParts.findIndex((p, idx) =>
                     /^\d{2,4}$/.test(p) && isStrokeWord(nextParts[idx + 1])
                 );
-                if (nextAnchorIdx !== -1) break; // apareceu um próximo evento — para de acumular
+                if (nextAnchorIdx !== -1) break; 
                 maleTokens = maleTokens.concat(nextParts.filter(isTime));
                 j++;
             }
 
-            pushEvent(distance, "Breaststroke", femaleTokens, maleTokens.slice(0, ages.length));
-            i = j - 1; // pular as linhas que consumimos
+            pushEvent(distance + "m", "Breaststroke", femaleTokens, maleTokens.slice(0, ages.length));
+            i = j - 1;
             continue;
         }
 
-        // Caso normal (anchor e tempos na mesma linha)
         const femaleRaw = leftTokens.filter(isTime);
         const maleRaw = rightTokens.filter(isTime);
-        pushEvent(distance, stroke, femaleRaw, maleRaw);
+        pushEvent(distance + "m", stroke, femaleRaw, maleRaw);
     }
 
     return events;
