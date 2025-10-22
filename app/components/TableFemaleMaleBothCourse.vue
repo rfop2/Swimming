@@ -1,5 +1,6 @@
 <template>
     <div class="overflow-auto">
+        <h4 class="mb-4">Hampshire County Champsionships 2025</h4>
         <h1>Qualifying Times - LONG COURSE</h1>
         <table class="w-full border-collapse border border-gray-400 text-center">
             <thead>

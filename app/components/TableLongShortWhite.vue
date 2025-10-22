@@ -1,6 +1,6 @@
 <template>
   <div class="overflow-auto space-y-10">
-    <!-- SE LONDON SUMMER CHAMPIONSHIPS 2025 — LONG COURSE — FEMALE -->
+    <h4 class="mb-4">SE LONDON SUMMER CHAMPIONSHIPS 2025</h4>
     <table class="w-full border-collapse border border-gray-400 text-center text-sm">
       <thead>
         <tr>

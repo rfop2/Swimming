@@ -1,5 +1,6 @@
 <template>
     <div class="overflow-auto">
+        <h4 class="mb-4">Cambridgeshire County Championships</h4>
         <table class="w-full border-collapse border border-gray-400 text-center">
             <thead>
                 <tr>

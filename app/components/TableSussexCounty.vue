@@ -1,5 +1,6 @@
 <template>
     <div class="overflow-auto space-y-10">
+        <h4 class="mb4">Sussex County ASA Championships & age group competition 2025.</h4>
         <table class="w-full border-collapse border border-gray-400 text-center">
             <thead>
                 <tr>

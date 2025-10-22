@@ -1,5 +1,6 @@
 <template>
     <div class="overflow-auto space-y-8">
+        <h4 class="mb4">Qualifying Times WCSA Championships 2026</h4>
         <table class="w-full border-collapse border border-gray-400 text-center">
             <thead>
                 <tr>

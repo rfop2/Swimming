@@ -20,7 +20,36 @@ const courses = [
 ]
 
 const genders = ['Male', 'Female']
-const editingTime = ref({}) // { [eventIndex_age]: true/false }
+const editingTime = ref({})
+const errorVisible = ref(false)
+const errorText = ref("")
+
+const sanitizeTime = (val: string) =>
+    val
+        .replace(/[^\d:.]/g, "")
+        .replace(/:{2,}/g, ":")
+        .replace(/\.{2,}/g, ".")
+        .slice(0, 12)
+
+const allowedNav = new Set([
+    "Backspace", "Delete", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown",
+    "Home", "End", "Tab", "Enter", "Escape"
+])
+
+function onTimeKeydown(e: KeyboardEvent) {
+    const k = e.key
+    if (allowedNav.has(k)) return
+    // allow Ctrl/Cmd + A/C/V/X
+    if ((e.ctrlKey || e.metaKey) && ["a", "c", "v", "x"].includes(k.toLowerCase())) return
+    // allow digits, colon, dot
+    if (/^\d$/.test(k) || k === ":" || k === ".") return
+    e.preventDefault()
+}
+
+function onTimeInput(e: Event, modelUpdate: (v: string) => void) {
+    const el = e.target as HTMLInputElement
+    modelUpdate(sanitizeTime(el.value))
+}
 
 onMounted(() => {
     const stored = sessionStorage.getItem('parsedData')
@@ -73,38 +102,96 @@ function normalizeStroke(stroke: string) {
             return stroke.toLowerCase()
     }
 }
+// if the documents has both long/short course map to the correct course
+function resolveCourseForRow(item: any, selections: any) {
+    const sel = selections?.course?.value ?? selections?.course
+    if (sel === "both") return item?.course ?? null
+    return item?.course ?? sel ?? null
+}
 function mapToImportRows(structured: any[], selections: any) {
     const created = new Date()
     return structured.map(item => ({
         created,
         year: selections.year.value,
-        course: selections.course.value,
+        course: resolveCourseForRow(item, selections),
         scope: selections.scope.value,
         area: selections.area.value,
         gender: item.gender,
         age: item.age,
         distance: item.distance,
         stroke: normalizeStroke(item.stroke),
-        timeString: item.time || '00:00.00',
-        time: item.time ? timeToSeconds(item.time) : 0.0
+        timeString: item.time || "00:00.00",
+        time: item.time ? timeToSeconds(item.time) : 0.0,
     }))
 }
+
+function looksLikeTime(s: string) {
+    // SS(.sss) | MM:SS(.sss) | HH:MM:SS(.sss)
+    return /^(?:\d{1,2}(?:\.\d{1,3})?|\d{1,2}:\d{2}(?:\.\d{1,3})?|\d{1,2}:\d{2}:\d{2}(?:\.\d{1,3})?)$/.test(s)
+}
+
+function genderLabel(row: any) {
+    const g = (row?.gender ?? "").toString().trim().toLowerCase();
+    if (g.startsWith("f")) return "Female";
+    if (g.startsWith("m")) return "Male";
+    return "Male/Female";
+}
+
+function courseLabel(row: any, selections?: any) {
+    const v =
+        row?.course ??
+        selections?.course?.value ??
+        selections?.course ??
+        ""
+
+    if (typeof v === "string") {
+        if (v.toLowerCase() === "lc" || /long\s*course/i.test(v)) return "LC"
+        if (v.toLowerCase() === "sc" || /short\s*course/i.test(v)) return "SC"
+    }
+    return "LC/SC"
+}
+
+function validateStructuredTimesWithCourse(structured: any[], selections?: any) {
+    const bad: string[] = [];
+
+    for (const row of structured) {
+        const t = (row.time ?? "").toString().trim();
+        if (!t) continue; // allow empty
+        if (!looksLikeTime(t)) {
+            const courseTag = courseLabel(row, selections);
+            const genderTag = genderLabel(row);
+            const eventLabel = row.event || `${row.stroke} ${row.distance}`;
+            bad.push(`[${courseTag} • ${genderTag} • ${eventLabel} • ${row.age}] "${t}"`);
+        }
+    }
+
+    if (bad.length) {
+        return {
+            ok: false,
+            message: `There ${bad.length === 1 ? "is" : "are"} ${bad.length} invalid time value${bad.length === 1 ? "" : "s"}: ${bad.join("; ")}`
+        };
+    }
+    return { ok: true };
+}
 async function save() {
+    const check = validateStructuredTimesWithCourse(structuredData.value, selections.value)
+    if (!check.ok) {
+        errorText.value = check.message
+        errorVisible.value = true
+        return
+    }
+
     try {
         const rows = mapToImportRows(structuredData.value, selections.value)
-
-        await $fetch("/api/import", {
-            method: "PUT",
-            body: rows
-        })
-
+        await $fetch("/api/import", { method: "PUT", body: rows })
         saveSuccess.value = true
         await refreshNuxtData("import")
     } catch (error) {
-        console.error("Error", error)
-        errString.value = (error as FetchError).message ?? null
+        errorText.value = (error as any)?.message || "Import failed."
+        errorVisible.value = true
     }
 }
+
 
 </script>
 
@@ -169,7 +256,9 @@ async function save() {
                                             class="ml-2 text-blue-600">✏️</button>
                                     </div>
                                     <div v-else class="flex items-center gap-2">
-                                        <input type="text" v-model="e.time" class="border px-2 py-1 w-20"
+                                        <input type="text" v-model="e.time" inputmode="numeric" pattern="[0-9:.]*"
+                                            class="border px-2 py-1 w-20" @keydown="onTimeKeydown"
+                                            @input="onTimeInput($event, v => e.time = v)"
                                             @keyup.enter="editingTime[`${idx}_${e.age}`] = false" />
                                         <button @click="editingTime[`${idx}_${e.age}`] = false"
                                             class="text-gray-500 px-2">❌</button>
@@ -183,5 +272,6 @@ async function save() {
             </div>
         </div>
         <UI-SuccessNotification v-model="saveSuccess" title="Successfully saved!" text="Data imported." />
+        <UI-ErrorNotification v-model="errorVisible" title="Validation failed" :text="errorText" />
     </StandardPage>
 </template>

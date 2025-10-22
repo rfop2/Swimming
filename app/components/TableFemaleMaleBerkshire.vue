@@ -1,6 +1,6 @@
 <template>
   <div class="overflow-auto space-y-10">
-    <!-- FEMALE — CONSIDERATION TIMES 2025 -->
+    <h4 class="mb-4">Berkshire & South Buckinghamshire ASA</h4>
     <table class="w-full border-collapse border border-gray-400 text-center">
       <thead>
         <tr>
@@ -95,7 +95,6 @@
       </tbody>
     </table>
 
-    <!-- OPEN / MALE — CONSIDERATION TIMES 2025 -->
     <table class="w-full border-collapse border border-gray-400 text-center">
       <thead>
         <tr>
@@ -191,7 +190,3 @@
     </table>
   </div>
 </template>
-
-<script setup lang="ts">
-// estático
-</script>
