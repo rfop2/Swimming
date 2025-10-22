@@ -2,7 +2,17 @@
   import { XCircleIcon } from "@heroicons/vue/24/outline"
   import type { FetchError } from "ofetch"
 
-  const swimmer = useSwimmer()
+  useHead( {
+    title: "Login",
+    meta: [
+      { name: "description", content: "Site login page" }
+    ]
+  } )
+
+  const user = useUser()
+  if ( user.value ) {
+    await navigateTo( "/account" )
+  }
 
   const errString = ref<string | null>( null )
 
@@ -12,7 +22,7 @@
         method: "POST",
         body: new FormData( e.target as HTMLFormElement )
       } )
-      await navigateTo( swimmer.value ? "/performance" : "/account" )
+      await navigateTo( "/account" )
     } catch ( error ) {
       errString.value = ( error as FetchError ).message ?? null
     }
@@ -126,10 +136,10 @@
         Not a member?
         {{ ' ' }}
         <nuxt-link
-          href="/contact"
+          href="/register"
           class="font-semibold leading-6 text-indigo-600 hover:text-indigo-500"
         >
-          Contact us for details on how to join
+          Register to apply for an account.
         </nuxt-link>
       </p>
     </div>

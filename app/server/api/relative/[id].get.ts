@@ -1,10 +1,9 @@
-import { defineEventHandler } from "h3"
 import { getPool, prepareStatement, type PerformanceRow } from "lib"
 
 export default defineEventHandler( async ( event ) => {
   if ( !event.context.session ) {
     throw createError( {
-      statusCode: 403
+      status: 401
     } )
   }
 
@@ -12,7 +11,7 @@ export default defineEventHandler( async ( event ) => {
   if ( !id ) {
     throw createError( {
       message: "No swimmer id supplied",
-      status: 403,
+      status: 400,
     } )
   }
 
@@ -24,7 +23,7 @@ export default defineEventHandler( async ( event ) => {
   )
   const result = await selectMaxCreated.get( { id } )
   if ( !result?.MaxCreated ) {
-    throw createError( { status: 404, statusText: "No records found"} )
+    throw createError( { status: 404, statusText: "No records found" } )
   }
   const selectRecords = prepareStatement<{ id: string, date: string }, PerformanceRow>(
     pool,

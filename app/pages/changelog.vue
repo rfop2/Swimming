@@ -4,6 +4,13 @@
     middleware: [ "protected" ]
   } )
 
+  useHead( {
+    title: "Changelog",
+    meta: [
+      { name: "description", content: "Version numbers and change history" }
+    ]
+  } )
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const changelog = ref<any[]>( [] )
   const loading = ref( true )

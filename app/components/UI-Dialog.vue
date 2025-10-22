@@ -1,5 +1,3 @@
-
-
 <script setup lang="ts">
   import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from "@headlessui/vue"
 
@@ -8,12 +6,14 @@
     title: string
     confirmLabel?: string
     confirmEnabled?: () => boolean
-    cancelLabel?: string
     action: ( arg0: Event ) => void
+    cancelLabel?: string
+    cancelAction?: () => void
   }>(), {
     confirmLabel: "Ok",
     confirmEnabled: () => true,
     cancelLabel: "Cancel",
+    cancelAction: () => {},
   } )
 
   const confirmAction = ( event: Event ) => {
@@ -26,6 +26,7 @@
   }>()
 
   const close = () => {
+    props.cancelAction()
     emit( "update:modelValue", false )
   }
 </script>

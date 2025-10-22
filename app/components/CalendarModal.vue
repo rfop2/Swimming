@@ -1,12 +1,14 @@
 <script setup lang="ts">
   import type { CalendarEventExternal } from "@schedule-x/calendar"
-  import { format, parse } from "date-fns"
 
   const props = defineProps<{
     calendarEvent: CalendarEventExternal
   }>()
 
+  const { formatTemporal } = useTemporal()
+
   const tagged = ref( props.calendarEvent.meet.tagged )
+  const meet = ref( props.calendarEvent.meet )
 
   watch( tagged, async ( newTagged ) => {
     if ( newTagged ) {
@@ -38,16 +40,19 @@
         rel="noopener,noreferrer"
         class=""
       >
-        {{ props.calendarEvent.meet.name }}
+        {{ meet.name }}
       </a>
-      <input
-        v-model="tagged"
-        type="checkbox"
-        :true-value="1"
-        :false-value="0"
-        class="mt-1 size-5 outline-0"
-        title="Add to tagged meets"
+      <span
+        class="pt-1 pl-2"
       >
+        <UI-Input
+          v-model="tagged"
+          type="checkbox"
+          :true-value="1"
+          :false-value="0"
+          title="Add to tagged meets"
+        />
+      </span>
     </div>
     <div class="sx__has-icon sx__event-modal__time">
       <svg
@@ -81,11 +86,11 @@
           />
         </g>
       </svg>
-      <div v-if="props.calendarEvent.start == props.calendarEvent.end">
-        {{ format( parse( props.calendarEvent.start, "yyyy-MM-dd", new Date() ), "dd MMMM, yyyy" ) }}
+      <div v-if="calendarEvent.start.equals( calendarEvent.end )">
+        {{ formatTemporal( calendarEvent.start ) }}
       </div>
       <div v-else>
-        {{ format( parse( props.calendarEvent.start, "yyyy-MM-dd", new Date() ), "dd MMMM, yyyy" ) }} &ndash; {{ format( parse( props.calendarEvent.end, "yyyy-MM-dd", new Date() ), "dd MMMM, yyyy" ) }}
+        {{ formatTemporal( calendarEvent.start ) }} &ndash; {{ formatTemporal( calendarEvent.end ) }}
       </div>
     </div>
     <div class="sx__has-icon sx__event-modal__location">
@@ -133,7 +138,22 @@
           </defs>
         </g>
       </svg>
-      {{ props.calendarEvent.location }} / {{ props.calendarEvent.meet.region }}
+      <span v-if="meet.poolId">
+        {{ meet.poolName }}<br>
+        {{ [ meet.poolStreet1, meet.poolStreet2, meet.poolSteet3 ].filter( s => !!s ).join( "," ) }}<br>
+        {{ meet.poolTown }}, {{ meet.poolPostCode }}<br>
+        {{ meet.region }}<br>
+        <a
+          :href="`https://what3words.com/${ meet.poolWhatThreeWords }`"
+          rel="nofollow noopener"
+          target="_blank"
+        >///{{ meet.poolWhatThreeWords }}
+        </a>
+      </span>
+      <span v-else>
+        {{ calendarEvent.location }}<br>
+        {{ meet.region }}
+      </span>
     </div>
     <div class="sx__has-icon sx__event-modal__description">
       <svg
@@ -192,10 +212,10 @@
           d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z"
         />
       </svg>
-      <span class="">Level {{ calendarEvent.meet.level }} / {{ calendarEvent.meet.course === "lc" ? "Long" : "Short" }} Course</span>
+      <span class="">Level {{ meet.level }} / {{ meet.course === "lc" ? "Long" : "Short" }} Course</span>
     </div>
     <div
-      v-if="calendarEvent.meet.contact || calendarEvent.meet.email"
+      v-if="meet.contact || meet.email"
       class="sx__has-icon sx__event-modal__description"
     >
       <svg
@@ -212,13 +232,24 @@
           d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5"
         />
       </svg>
-      <div>
-        <span v-if="calendarEvent.meet.contact">{{ calendarEvent.meet.contact }}</span>
+      <div
+        v-if="meet.contact || meet.email"
+      >
+        <span v-if="meet.contact">{{ meet.contact }}</span>
         <span
-          v-if="calendarEvent.meet.contact && calendarEvent.meet.email"
+          v-if="meet.contact && meet.email"
           class="ml-2"
-        >(<a :href="`mailto: ${calendarEvent.meet.email}?subject=${calendarEvent.meet.name}`">{{ calendarEvent.meet.email }}</a>)</span>
-        <span v-if="!calendarEvent.meet.contact && calendarEvent.meet.email"><a :href="`mailto: ${calendarEvent.meet.email}?subject=${calendarEvent.meet.name}`">{{ calendarEvent.meet.email }}</a></span>
+        >(<a :href="`mailto: ${meet.email}?subject=${meet.name}`">{{ meet.email }}</a>)</span>
+        <span v-if="!meet.contact && meet.email"><a :href="`mailto: ${meet.email}?subject=${meet.name}`">{{ meet.email }}</a></span>
+        <span v-if="meet.meetPack">
+          <br>
+          Meet Pack: <a
+            :href="`/downloads/meets/${ meet.meetPack }`"
+            rel="nofollow noopener"
+            target="_blank"
+          >View / Download
+          </a>
+        </span>
       </div>
     </div>
   </div>
@@ -229,9 +260,13 @@
   grid-template-columns: 30px 1fr 24px;
 }
 .sx__event-modal-default {
-  max-height: 240px !important;
+  max-height: 400px !important;
   height: auto !important;
   width: auto !important;
   overflow-y: hidden;
+}
+
+.sx__event-modal__time {
+  font-size: 16px;
 }
 </style>

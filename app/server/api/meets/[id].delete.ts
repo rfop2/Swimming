@@ -1,10 +1,16 @@
-import { defineEventHandler } from "h3"
 import { getPool, prepareStatement, type Meet } from "lib"
 
 export default defineEventHandler( async ( event ) => {
-  if ( !event.context.session || !event.context.user  ) {
+  if ( !event.context.session || !event.context.user ) {
     throw createError( {
-      statusCode: 403
+      status: 401
+    } )
+  }
+
+  const userId = getRouterParam( event, "id" )
+  if ( userId && !Number( event.context.user.admin ) ) {
+    throw createError( {
+      status: 403
     } )
   }
 
@@ -12,7 +18,7 @@ export default defineEventHandler( async ( event ) => {
   if ( !meetId ) {
     throw createError( {
       message: "No meet id supplied",
-      status: 403,
+      status: 400,
     } )
   }
   try {
@@ -25,7 +31,7 @@ export default defineEventHandler( async ( event ) => {
     console.error( error )
     throw createError( {
       message: "Unable to update user meets",
-      statusCode: 500
+      status: 500
     } )
   }
 } )

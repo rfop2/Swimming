@@ -1,5 +1,4 @@
 import { verifyRequestOrigin } from "lucia"
-
 import type { User, Session } from "lucia"
 
 export default defineEventHandler( async ( event ) => {
@@ -31,7 +30,7 @@ export default defineEventHandler( async ( event ) => {
 
 declare module "h3" {
   interface H3EventContext {
-    user: User | null;
-    session: Session | null;
+    user: User | null
+    session: Session | null
   }
 }

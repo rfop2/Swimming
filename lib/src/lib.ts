@@ -1,5 +1,5 @@
 import { addMilliseconds, differenceInYears, endOfYear, format, parseISO } from "date-fns"
-import { LatLon, Swimmer } from "./types.js"
+import type { Swimmer } from "./types.js"
 
 const debugEnabled = !!( process.env?.DEBUG === "true" ) || false
 
@@ -51,20 +51,17 @@ export const timeToSeconds = ( time: string ): number => {
   return totalSeconds
 }
 
-export const secondsToTime = ( seconds: number ): string => {
+export const secondsToTime = ( seconds: number, decimals: number = 2 ): string => {
   // Calculate the whole seconds and fractional part
   const wholeSeconds = Math.floor( seconds )
-  const milliseconds = Math.round( ( seconds - wholeSeconds ) * 1000 )
+  const milliseconds = Math.round( ( seconds - wholeSeconds ) * Math.pow( 10, decimals ) ) * Math.pow( 10, 3 - decimals )
 
   // Add the given number of milliseconds to the epoch start (1970-01-01T00:00:00Z)
   const date = addMilliseconds( new Date( 0 ), wholeSeconds * 1000 + milliseconds )
 
   // Format the date based on the total seconds
-  if ( seconds >= 60 ) {
-    return format( date, "m:ss.SS" )
-  } else {
-    return format( date, "s.SS" )
-  }
+  const timeFormat = `${seconds >= 60 ? "m:ss" : "s"}.${"S".repeat( decimals )}`
+  return format( date, timeFormat )
 }
 
 const turnFactors = new Map<string,number>( Object.entries( {
@@ -170,79 +167,4 @@ export const getSwimmerScopeArea = ( swimmer: Swimmer, scope: string ) => {
   if ( scope === "national" )
     return swimmer.nationality
   throw new Error( `Unable to find swimmer area for scope '${scope}'` )
-}
-
-export const toRadians = ( degrees: number ): number => {
-  return degrees * ( Math.PI / 180 )
-}
-
-export const haversineDistance = ( coord1: LatLon, coord2: LatLon ): number => {
-  const R = 3958.8 // Earth radius in miles
-  const dLat = toRadians( coord2.latitude - coord1.latitude )
-  const dLon = toRadians( coord2.longitude - coord1.longitude )
-
-  const lat1 = toRadians( coord1.latitude )
-  const lat2 = toRadians( coord2.latitude )
-
-  const a =
-    Math.sin( dLat / 2 ) ** 2 +
-    Math.cos( lat1 ) * Math.cos( lat2 ) * Math.sin( dLon / 2 ) ** 2
-
-  const c = 2 * Math.atan2( Math.sqrt( a ), Math.sqrt( 1 - a ) )
-
-  return R * c
-}
-
-export class Timer {
-  private startTime: [number, number] | null = null
-  private elapsedMs: number = 0
-  private running: boolean = false
-  private lastLap: [number, number] | null = null
-
-  start(): void {
-    if ( this.running ) return
-    this.startTime = process.hrtime()
-    this.lastLap = this.startTime
-    this.running = true
-  }
-
-  stop(): void {
-    if ( !this.running || this.startTime === null ) return
-    const diff = process.hrtime( this.startTime )
-    this.elapsedMs += diff[0] * 1_000 + diff[1] / 1e6 // convert to ms
-    this.running = false
-  }
-
-  reset(): void {
-    this.startTime = null
-    this.elapsedMs = 0
-    this.running = false
-    this.lastLap = null
-  }
-
-  resume(): void {
-    if ( this.running ) return
-    this.startTime = process.hrtime()
-    this.lastLap = this.startTime
-    this.running = true
-  }
-
-  lap(): number {
-    if ( !this.running || this.lastLap === null ) {
-      throw new Error( "Timer must be running to record a lap" )
-    }
-    const diff = process.hrtime( this.lastLap )
-    const lapMs = diff[0] * 1000 + diff[1] / 1e6
-    this.lastLap = process.hrtime()
-    return lapMs / 1000 // return in seconds
-  }
-
-  elapsedSeconds(): number {
-    let totalMs = this.elapsedMs
-    if ( this.running && this.startTime !== null ) {
-      const diff = process.hrtime( this.startTime )
-      totalMs += diff[0] * 1000 + diff[1] / 1e6
-    }
-    return totalMs / 1000 // return in seconds
-  }
 }

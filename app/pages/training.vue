@@ -8,10 +8,17 @@
     middleware: [ "protected" ]
   } )
 
+  useHead( {
+    title: "Training",
+    meta: [
+      { name: "description", content: "Swimmer target times based on previous performance" }
+    ]
+  } )
+
   const route = useRoute()
   const slug = Array.isArray( route.params.slug ) ? route.params.slug : []
 
-  const { swimmers } = await useSwimmers()
+  const { swimmers } = useSwimmers()
 
   const squadOptions = computed( () => [ { label: "All Swimmers", value: "*" }, ...Array.from( swimmers.value.reduce( ( sq, s ) => {
     if ( s.squad )
@@ -50,14 +57,14 @@
     },
   ]
 
-  const selections = reactive( {
+  const { state: selections } = usePersisted( "training-selection", {
     squad: squadOptions.value.find( option => option.value === slug[0] ) ?? squadOptions.value[0],
     stroke: strokeOptions.find( option => option.value === slug[1] ) ?? strokeOptions[0],
     course: courseOptions.find( option => option.value === slug[2] ) ?? courseOptions[0],
     baseDistance: baseDistanceOptions.find( option => String( option.value ) === slug[3] ) ?? baseDistanceOptions.find( d => d.label === "100m" ) ?? baseDistanceOptions[0],
     targetDistances: targetDistanceOptions.slice( 0, 4 ),
     effort: effortOptions.find( option => option.label === slug[4] ) ?? effortOptions[3]
-  } )
+  }, "reactive" )
 
   watch( () => selections.stroke, ( newStroke ) => {
     baseDistanceOptions.length = 0
@@ -72,13 +79,13 @@
     "/api/personal/",
   )
 
-  const bestTimes = computed( () => new Map<string,IndividualRow>( ( records.value || [] ).filter( ( r ) =>
+  const bestTimes = computed( () => new Map<string, IndividualRow>( ( records.value || [] ).filter( ( r ) =>
     r.stroke === selections.stroke.value && r.course === selections.course.value && r.distance === selections.baseDistance.label
   ).map( record => ( [ record.swimmer, record ] ) ) ) )
 
   // console.log( "bt", bestTimes.value )
 
-  const filteredSwimmers = computed( () => new Map<string,Swimmer>( ( swimmers.value || [] ).filter( swimmer => {
+  const filteredSwimmers = computed( () => new Map<string, Swimmer>( ( swimmers.value || [] ).filter( swimmer => {
     // Filter by squad
     if ( selections.squad.value !== "*" && swimmer.squad !== selections.squad.value )
       return false
@@ -188,14 +195,14 @@
             <td
               class="whitespace-nowrap !border-r-2 !border-gray-400 px-2 py-2 text-right text-sm text-gray-900"
             >
-              {{ secondsToTime( bestTimes.get( swimmer.id )?.time ?? 0 ) }}
+              {{ secondsToTime( bestTimes.get( swimmer.id )?.time ?? 0, 1 ) }}
             </td>
             <td
               v-for="distance in selections.targetDistances.sort( ( a, b ) => a.value - b.value )"
               :key="distance.label"
               class="whitespace-nowrap px-2 py-2 text-right text-sm text-gray-900"
             >
-              {{ secondsToTime( ( ( ( bestTimes.get( swimmer.id )?.time ?? 0 ) * distance.value ) / ( selections.effort.value * selections.baseDistance.value ) ) ) }}
+              {{ secondsToTime( ( ( ( bestTimes.get( swimmer.id )?.time ?? 0 ) * distance.value ) / ( selections.effort.value * selections.baseDistance.value ) ), 1 ) }}
             </td>
           </tr>
         </tbody>

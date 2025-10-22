@@ -1,12 +1,13 @@
 export interface DatabaseUser {
-  id: string;
-  username: string;
-  password_hash: string;
-  firstName: string;
-  lastName: string;
-  type: string;
-  admin: boolean;
-  location: string;
+  id: string
+  username: string
+  password_hash: string
+  firstName: string
+  lastName: string
+  location: string
+  type: string
+  admin: boolean
+  created?: Date
 }
 
 export interface Swimmer {
@@ -21,6 +22,12 @@ export interface Swimmer {
   county: string
   squad: string
   active: number
+  lastUpdateTime?: Date
+  lastUpdateType?: string
+}
+
+export interface ExtSwimmer extends Swimmer {
+  clubId: Club["clubId"]
 }
 
 export interface IndividualStats {
@@ -42,6 +49,7 @@ export interface IndividualRow extends IndividualStats {
 }
 
 export interface RankingRow {
+  position: number
   rank: number
   name: string
   swimmer: string
@@ -101,7 +109,22 @@ export interface ResultsRow extends ResultData {
   distance: string
 }
 
-export type LatLon = { latitude: number, longitude: number }
+export interface Club {
+  clubId: string
+  clubName: string
+  clubAlias?: string
+  clubRegion: string
+  clubCounty: string
+  meetName: string
+}
+
+export interface UserClub {
+  clubId: Club["clubId"]
+  clubName?: string
+  clubCounty?: string
+  clubRegion?: string
+  clubOwner: number
+}
 
 export interface Meet {
   id: string
@@ -113,6 +136,7 @@ export interface Meet {
   country: string
   region: string
   location: string
+  locationId: number | null
   latitude: number | null
   longitude: number | null
   course: string
@@ -128,7 +152,7 @@ export interface PageInfo {
   url: URL
   referrer?: URL,
   type: "individual" | "ranking" | "results" | "meets" | "meet"
-  data?: Record<string,string | number>
+  data?: unknown
 }
 
 export type PageData = Array<PageInfo>
@@ -146,3 +170,20 @@ export interface QualifyingRow {
   timeString: string
   time: number
 }
+
+export interface Task {
+  taskId: number
+  creatorId?: string
+  taskType: string
+  taskOptions?: string
+  taskDescription?: string
+  targetType: string
+  targetId?: string
+  taskSchedule?: string
+  taskStatus?: string
+  taskResult?: string
+  startTime?: Date
+  endTime?: Date
+}
+
+export type SwimmerUpdateType = "individual" | "results" | "rankings"

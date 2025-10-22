@@ -1,10 +1,17 @@
 import { format } from "date-fns"
 import { getPool, prepareStatement, runTransaction, type QualifyingRow } from "lib"
 
-export default eventHandler( async ( event ) => {
-  if ( !event.context.session ) {
+export default defineEventHandler( async ( event ) => {
+  if ( !event.context.session || !event.context.user ) {
     throw createError( {
-      statusCode: 403
+      status: 401
+    } )
+  }
+
+  const userId = getRouterParam( event, "id" )
+  if ( userId && !Number( event.context.user.admin ) ) {
+    throw createError( {
+      status: 403
     } )
   }
 
@@ -19,7 +26,7 @@ export default eventHandler( async ( event ) => {
         )
         const updateQualifyingRow = prepareStatement<QualifyingRow>(
           conn,
-`INSERT INTO Qualifying (
+          `INSERT INTO Qualifying (
   created,
   year,
   course,
@@ -62,7 +69,7 @@ ON DUPLICATE KEY UPDATE
     console.error( error )
     throw createError( {
       message: "Unable to update qualifying times",
-      statusCode: 500
+      status: 500
     } )
   }
 } )

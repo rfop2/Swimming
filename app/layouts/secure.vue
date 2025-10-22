@@ -1,11 +1,11 @@
 <script setup lang="ts">
   import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/vue"
-  import { ArrowPathIcon, Bars3Icon, BellIcon, InformationCircleIcon, UserIcon, XMarkIcon } from "@heroicons/vue/24/outline"
+  import { Bars3Icon, BellIcon, UserIcon, XMarkIcon } from "@heroicons/vue/24/outline"
 
   const user = useAuthenticatedUser()
 
   useHead( {
-    title: "Swimming",
+    title: "Swim.Racing",
     meta: [
       { name: "description", content: "Swimming stats." }
     ],
@@ -31,6 +31,7 @@
   type NavOption = {
     name: string
     href: string
+    click?: () => unknown
     condition?: () => boolean
   }
 
@@ -44,19 +45,27 @@
     { name: "Import", href: "/Import", condition: () => !!Number( user.value.admin ) },
   ] )
 
+  const { impersonating, revert } = useImpersonation()
+
   const activeNavigation = computed( () => navigation.value.filter( item => !item.condition || ( item.condition )() ) )
 
-  const userNavigation = [
-    { name: "Account", href: "/account" },
-    // { name: "Settings", href: "#" },
-    { name: "Sign out", href: "", click: logout },
-  ]
-
-  const { updateAvailable, newVersion } = useVersionCheck()
-
-  const reload = () => {
-    window.location.reload()
+  const revertUser = async () => {
+    await revert()
+    navigateTo( "/users" )
   }
+
+  const userNavigation = computed<NavOption[]>( () => [
+    { name: "Account", href: "/account" },
+    { name: "Updates", href: "/updates" },
+    { name: "Users", href: "/users", condition: () => !!Number( user.value.admin ) },
+    // { name: "Settings", href: "#" },
+    { name: "Revert user", href: "", click: revertUser, condition: () => !!impersonating.value },
+    { name: "Sign out", href: "", click: logout },
+  ] )
+
+  const activeUserNavigation = computed( () => userNavigation.value.filter( item => !item.condition || ( item.condition )() ) )
+
+  useTasksCheck()
 
   async function logout() {
     await $fetch( "/api/user/logout", {
@@ -79,38 +88,8 @@
       class="border-b border-gray-200 bg-white"
     >
       <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <!-- Update Banner -->
-        <div
-          v-if="updateAvailable"
-          class="mx-auto max-w-7xl rounded-md bg-blue-50 p-4"
-        >
-          <div class="flex">
-            <div class="shrink-0">
-              <InformationCircleIcon
-                class="size-5 text-blue-400"
-                aria-hidden="true"
-              />
-            </div>
-            <div class="ml-3 flex-1 md:flex md:justify-between">
-              <p class="text-sm text-blue-700">
-                A new version is available. Click reload to update to {{ newVersion }}.
-              </p>
-              <p class="mt-3 text-sm md:ml-6 md:mt-0">
-                <button
-                  type="button"
-                  class="inline-flex items-center gap-x-1.5 whitespace-nowrap font-medium text-blue-700 hover:text-blue-600"
-                  @click="reload"
-                >
-                  <span class="whitespace-nowrap">Reload</span>
-                  <ArrowPathIcon
-                    class="-mr-0.5 h-4 w-4"
-                    aria-hidden="true"
-                  />
-                </button>
-              </p>
-            </div>
-          </div>
-        </div>
+        <AlertBanner />
+        <UpdateNotifier />
         <div class="flex h-16 justify-between">
           <div class="flex">
             <div class="flex flex-shrink-0 items-center">
@@ -141,7 +120,13 @@
           </div>
           <div class="hidden sm:ml-6 sm:flex sm:items-center pt-2">
             <p class="mr-2 text-sm text-gray-700">
-              v{{ config.public.appVersion }}
+              <nuxt-link
+                v-if="user.admin"
+                to="/changelog"
+              >
+                v{{ config.public.appVersion }}
+              </nuxt-link>
+              <span v-else>v{{ config.public.appVersion }}</span>
             </p>
             <button
               type="button"
@@ -180,7 +165,7 @@
               >
                 <MenuItems class="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                   <MenuItem
-                    v-for="item in userNavigation"
+                    v-for="item in activeUserNavigation"
                     :key="item.name"
                     v-slot="{ active, close }"
                   >
@@ -256,7 +241,7 @@
           </div>
           <div class="mt-3 space-y-1">
             <DisclosureButton
-              v-for="item in userNavigation"
+              v-for="item in activeUserNavigation"
               :key="item.name"
               as="a"
               :href="item.href"

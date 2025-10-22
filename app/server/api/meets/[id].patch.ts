@@ -1,10 +1,9 @@
-import { defineEventHandler } from "h3"
-import { prepareStatement } from "lib"
+import { getPool, prepareStatement } from "lib"
 
 export default defineEventHandler( async ( event ) => {
-  if ( !event.context.session || !event.context.user  ) {
+  if ( !event.context.session || !event.context.user ) {
     throw createError( {
-      statusCode: 403
+      status: 401
     } )
   }
 
@@ -12,19 +11,20 @@ export default defineEventHandler( async ( event ) => {
   if ( !meetId ) {
     throw createError( {
       message: "No meet id supplied",
-      status: 403,
-  } )
+      status: 400,
+    } )
   }
   try {
     const updateMeet = prepareStatement<{ userId: string, meetId: string }>(
-      "INSERT OR REPLACE INTO UserMeets VALUES( :userId, :meetId, NULL )"
+      await getPool(),
+      "INSERT IGNORE INTO UserMeets VALUES( :userId, :meetId, NULL )"
     )
     await updateMeet.run( { userId: event.context.user.id, meetId } )
   } catch ( error ) {
     console.error( error )
     throw createError( {
       message: "Unable to update user meets",
-      statusCode: 500
+      status: 500
     } )
   }
 } )

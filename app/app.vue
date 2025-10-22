@@ -1,8 +1,8 @@
 <script setup lang="ts">
   useHead( {
-    title: "Swimming",
+    title: "Swim.Racing",
     meta: [
-      { name: "description", content: "Swimming stats." }
+      { name: "description", content: "Swimmer and swim club management and performance tracking" }
     ],
     link: [
       {

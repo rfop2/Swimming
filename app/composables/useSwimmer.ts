@@ -1,19 +1,26 @@
 import type { Swimmer } from "lib"
 
 export const useSwimmer = () => {
-  const swimmer = useState<Swimmer | undefined>( "swimmer", () => undefined )
+  const { state: swimmerId, ready } = usePersisted<Swimmer["id"] | undefined>( "swimmerId", undefined )
   const { swimmers } = useSwimmers()
 
-  // only initialize swimmer if it's not already set
-  watch(
-    swimmers,
-    ( newSwimmers ) => {
-      if ( !swimmer.value && newSwimmers.length ) {
-        swimmer.value = newSwimmers[0]
-      }
+  // Computed swimmer based on swimmerId
+  const swimmer = computed<Swimmer | undefined>( {
+    get() {
+      if ( !ready.value || !swimmers.value.length ) return undefined
+      return swimmers.value.find( s => s.id === swimmerId.value ) ?? swimmers.value[0]
     },
-    { immediate: true }
-  )
+    set( newSwimmer ) {
+      swimmerId.value = newSwimmer?.id
+    },
+  } )
 
-  return swimmer
+  // Optional: keep swimmerId in sync (e.g., if swimmers list changes and selected swimmer disappears)
+  watch( swimmer, s => {
+    if ( s?.id !== swimmerId.value ) {
+      swimmerId.value = s?.id
+    }
+  } )
+
+  return { swimmer }
 }

@@ -1,10 +1,12 @@
-import { IndividualStats, LatLon, Meet, PageInfo, Ranking, RankingRow, ResultData, Results, Swimmer } from "./types.js"
-import { getSwimmerAgeGroup, sleep, Timer, timeToSeconds } from "./lib.js"
+import type { IndividualStats, Meet, PageInfo, Ranking, RankingRow, ResultData, Results, Swimmer } from "./types.js"
+import { getSwimmerAgeGroup, sleep, timeToSeconds } from "./lib.js"
 import { CACHE_DIR } from "./config.js"
 import { differenceInDays, differenceInHours, format, parse } from "date-fns"
 import type { AnyNode } from "domhandler"
 import type { Cheerio, CheerioAPI } from "cheerio"
-import { getPool, prepareStatement } from "./database.js"
+import { getBrowserPage } from "./puppeteer.js"
+import { geocodeLocation } from "./geo.js"
+import { Timer } from "./timer.js"
 
 export const BASE_URL = "https://www.swimmingresults.org"
 
@@ -245,14 +247,10 @@ const DEFAULT_CACHE_TIME = Number( process.env.PAGE_CACHE_TIME ?? 24 )
 const MIN_FETCH_INTERVAL = Number( process.env.MIN_FETCH_INTERVAL ?? 0 )
 const MAX_FETCH_INTERVAL = Number( process.env.MAX_FETCH_INTERVAL ?? 0 )
 
-export const fetchPage = async ( pageInfo: PageInfo, cacheTime: number = DEFAULT_CACHE_TIME ) => {
+const loadCachedPage = async ( contentFile: string, cacheTime: number ) => {
   // Dynamic import to avoid browser issues
-  const { stat, readFile, writeFile } = await import( "fs/promises" )
-  const seedrandom = await import( "seedrandom" ) // Dynamic import
-  const rng = seedrandom.default()
+  const { stat, readFile } = await import( "fs/promises" )
 
-  const contentFile = CACHE_DIR + "/" + pageInfo.label
-  console.log( `Processing ${pageInfo.label} -> ${pageInfo.url}` )
   try {
     const stats = await stat( contentFile )
     // Page has been cached
@@ -267,12 +265,44 @@ export const fetchPage = async ( pageInfo: PageInfo, cacheTime: number = DEFAULT
     if ( error instanceof Error && ( error as NodeJS.ErrnoException ).code ) {
       const err = error as NodeJS.ErrnoException
       if ( err.code !== "ENOENT" ) {
-        console.error( `Error code: ${err.code} - ${err.message}` )
+        console.error( `Unable to read file '${contentFile}': ${err.code} - ${err.message}` )
       }
     } else {
       console.error( "Unknown error:", error )
     }
   }
+}
+
+const saveCachedPage = async ( contentFile: string, content: string ) => {
+  // Dynamic import to avoid browser issues
+  const { writeFile } = await import( "fs/promises" )
+  const seedrandom = await import( "seedrandom" ) // Dynamic import
+  const rng = seedrandom.default()
+
+  try {
+    await writeFile( contentFile, content )
+    if ( MAX_FETCH_INTERVAL ) {
+      const timeout = MIN_FETCH_INTERVAL + ( rng() * ( MAX_FETCH_INTERVAL - MIN_FETCH_INTERVAL ) )
+      console.log( `Sleeping for ${timeout.toFixed( 2 )} seconds` )
+      await sleep( timeout )
+    }
+  } catch ( error ) {
+    if ( error instanceof Error && ( error as NodeJS.ErrnoException ).code ) {
+      const err = error as NodeJS.ErrnoException
+      console.error( `Unable to write file '${contentFile}': ${err.code} - ${err.message}` )
+    } else {
+      console.error( "Unknown error:", error )
+    }
+    throw error
+  }
+}
+
+export const fetchPage = async ( pageInfo: PageInfo, cacheTime: number = DEFAULT_CACHE_TIME ) => {
+  const contentFile = CACHE_DIR + "/" + pageInfo.label
+  console.log( `Processing ${pageInfo.label} -> ${pageInfo.url}` )
+  const cachedContent = await loadCachedPage( contentFile, cacheTime )
+  if ( cachedContent )
+    return cachedContent
   try {
     process.stdout.write( `Fetching ${pageInfo.url}` )
     const headers = new Headers( {
@@ -306,22 +336,148 @@ export const fetchPage = async ( pageInfo: PageInfo, cacheTime: number = DEFAULT
       method: "GET",
       headers,
     } )
-    process.stdout.write( ` - ${timer.elapsedSeconds()}\n` )
+    process.stdout.write( ` - ${timer.elapsedSeconds().toFixed( 2 )}\n` )
     timer.stop()
 
     if ( response.status < 200 || response.status >= 300 ) {
-      throw new Error( `Request failed: ${response.statusText} (${response.statusText})` )
+      throw new Error( `Request failed: ${response.status} (${response.statusText})` )
     }
     const content = await response.text()
-    await writeFile( contentFile, content )
-    if ( MAX_FETCH_INTERVAL ) {
-      const timeout = MIN_FETCH_INTERVAL + ( rng() * ( MAX_FETCH_INTERVAL - MIN_FETCH_INTERVAL ) )
-      console.log( `Sleeping for ${timeout.toFixed( 2 )} seconds` )
-      await sleep( timeout )
-    }
+    await saveCachedPage( contentFile, content )
     return content
   } catch ( error ) {
-    console.error( `Failed to fetch ${pageInfo.url}`, error )
+    console.error( `\nFailed to fetch ${pageInfo.url}`, error )
+    throw error
+  }
+}
+
+interface PageStatus {
+  id: string
+  status: string
+  statusUrl: string
+  url: string
+  response?: Record<string,unknown>
+  body?: string
+  statusCode?: string
+}
+
+export const fetchPages = async ( pages: Map<string,PageInfo>, cacheTime: number = DEFAULT_CACHE_TIME ) => {
+  // Dynamic import to avoid browser issues
+  const { stat, readFile, writeFile } = await import( "fs/promises" )
+
+  console.log( `Getting content for ${pages.size} pages` )
+
+  const responses: Map<string,string> = new Map()
+  for ( const pageInfo of pages.values() ) {
+    const contentFile = CACHE_DIR + "/" + pageInfo.label
+    console.log( `Processing ${pageInfo.label} -> ${pageInfo.url}` )
+    try {
+      const stats = await stat( contentFile )
+      // Page has been cached
+      const fileAge = differenceInHours( Date.now(), stats.mtime )
+      if ( fileAge < cacheTime ) {
+        // Page is new enough
+        console.log( `Reading ${contentFile}, cached: ${fileAge} hours` )
+        const content = await readFile( contentFile )
+        responses.set( pageInfo.url.toString(), String( content ) )
+      }
+    } catch ( error ) {
+      if ( error instanceof Error && ( error as NodeJS.ErrnoException ).code ) {
+        const err = error as NodeJS.ErrnoException
+        if ( err.code !== "ENOENT" ) {
+          console.error( `Error code: ${err.code} - ${err.message}` )
+        }
+      } else {
+        console.error( "Unknown error:", error )
+      }
+    }
+  }
+  const fetchPages = new Map( pages )
+  for ( const url of responses.keys() ) {
+    fetchPages.delete( url )
+  }
+
+  if ( fetchPages.size ) {
+    try {
+      process.stdout.write( `Submitting request for ${fetchPages.size} pages` )
+      if ( !process.env.SCRAPER_API_KEY ) {
+        throw new Error( "No SCRAPER_API_KEY found" )
+      }
+      const scraperUrl = "https://async.scraperapi.com/batchjobs"
+      const timer = new Timer()
+      timer.start()
+      const response = await fetch( scraperUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify( {
+          apiKey: process.env.SCRAPER_API_KEY,
+          country_code: "gb",
+          urls: Array.from( fetchPages.values() ).map( p => String( p.url ) ),
+        } )
+      } )
+      process.stdout.write( ` - ${timer.elapsedSeconds().toFixed( 2 )}\n` )
+
+      if ( response.status < 200 || response.status >= 300 ) {
+        throw new Error( `Request failed: ${response.status} (${response.statusText})` )
+      }
+      const pageStatuses: PageStatus[] = await response.json()
+      const jobs = new Map<string,PageStatus>( pageStatuses.map( ps => [ ps.url, ps ] ) )
+      while( jobs.size ) {
+        await sleep( Math.max( 1, jobs.size / 5 ) )
+        console.log( `Checking status of ${jobs.size} requests` )
+        for ( const job of jobs.values() ) {
+          process.stdout.write( `Checking status of '${job.url}'` )
+          timer.lap()
+          const response = await fetch( job.statusUrl )
+          const jobStatus = await response.json()
+          if ( jobStatus.status === "finished" ) {
+            process.stdout.write( " - finished" )
+            if ( jobStatus.response.statusCode < 200 || jobStatus.response.statusCode >= 300 ) {
+              throw new Error( `Request failed for '${jobStatus.url}': ${jobStatus.response.statusCode} (${jobStatus.response.statusText})` )
+            }
+            responses.set( jobStatus.url, jobStatus.response.body )
+            const contentFile = CACHE_DIR + "/" + pages.get( job.url )?.label
+            await writeFile( contentFile, jobStatus.response.body )
+            jobs.delete( jobStatus.url )
+          } else if ( jobStatus.status === "running" ) {
+            process.stdout.write( " - running" )
+          } else {
+            console.log( "Unexpected job status", jobStatus )
+          }
+          process.stdout.write( ` - ${timer.elapsedSeconds().toFixed( 2 )} (${timer.lap().toFixed( 2 )})\n` )
+        }
+      }
+      console.log( `Content fetched in ${timer.elapsedSeconds().toFixed( 2 )} - ${( timer.elapsedSeconds() / pages.size ).toFixed( 2 )}/page` )
+      timer.stop()
+    } catch ( error ) {
+      console.error( `\nFailed to fetch ${fetchPages.size} urls`, error )
+      throw error
+    }
+  }
+  return responses
+}
+
+export const fetchPageBrowser = async ( pageInfo: PageInfo, cacheTime: number = DEFAULT_CACHE_TIME ) => {
+  const page = await getBrowserPage()
+  const contentFile = CACHE_DIR + "/" + pageInfo.label
+  console.log( `Processing ${pageInfo.label} -> ${pageInfo.url}` )
+  const cachedContent = await loadCachedPage( contentFile, cacheTime )
+  if ( cachedContent )
+    return cachedContent
+  try {
+    process.stdout.write( `Fetching ${pageInfo.url}` )
+    const timer = new Timer()
+    timer.start()
+    await page.goto( pageInfo.url.toString(), { waitUntil: "networkidle2" } )
+    const content = await page.content()
+    process.stdout.write( ` - ${timer.elapsedSeconds().toFixed( 2 )}\n` )
+    timer.stop()
+    await saveCachedPage( contentFile, content )
+    return content
+  } catch ( error ) {
+    console.error( `\nFailed to fetch ${pageInfo.url}`, error )
     throw error
   }
 }
@@ -429,6 +585,7 @@ export const parseRanking = ( pageInfo: PageInfo, $: CheerioAPI ) => {
         continue
       }
       const rankingRow: RankingRow = {
+        position: 0,
         rank: Number( row.rank ),
         name: row.name,
         swimmer: row.swimmer,
@@ -569,42 +726,6 @@ export const parseMeets = ( pageInfo: PageInfo, $: CheerioAPI ) => {
   return data
 }
 
-const insertLocationsSql =
-`INSERT INTO Locations (
-  created,
-  location,
-  latitude,
-  longitude
-)
-VALUES (
-  :created,
-  :location,
-  :latitude,
-  :longitude
-);`
-
-const geocodeTown = async ( town: string ): Promise<LatLon | undefined> => {
-  const getLocation = prepareStatement<{ location: string },LatLon>(
-    await getPool(),
-    "SELECT Latitude, Longitude FROM Locations WHERE Location = :location"
-  )
-  const saveLocation = prepareStatement( await getPool(), insertLocationsSql )
-  let latlon = await getLocation.get( { location: town } ) as LatLon
-  if ( latlon === undefined ) {
-    const response = await fetch(
-      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent( town + ", UK" )}`
-    )
-    const data = await response.json()
-    if ( data && data.length > 0 ) {
-      latlon = { latitude: Number( data[0].lat ), longitude: Number( data[0].lon ) }
-      await saveLocation.run( { created: format( new Date(), "yyyy-MM-dd" ), location: town, ...latlon } )
-    } else {
-      await saveLocation.run( { created: format( new Date(), "yyyy-MM-dd" ), location: town, latitude: null, longitude: null } )
-    }
-  }
-  return latlon
-}
-
 export const parseMeet = async ( pageInfo: PageInfo, $: CheerioAPI, meet: Partial<Meet> ) => {
   const startElem = $( "div.cl-event-date:nth-child(2)" )
   const startParts = $( startElem ).children().map( ( i, el ) => $( el ).text().trim() ).get()
@@ -636,5 +757,7 @@ export const parseMeet = async ( pageInfo: PageInfo, $: CheerioAPI, meet: Partia
   meet.contact = details.Contact ?? null
   meet.email = details.Email ?? null
 
-  await geocodeTown( meet.location )
+  const location = await geocodeLocation( meet.location )
+  meet.locationId = location ? location.locationId : null
+  return location
 }

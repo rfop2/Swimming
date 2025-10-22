@@ -8,6 +8,8 @@ services:
       MARIADB_DATABASE: ${MARIADB_DATABASE}
       MARIADB_USER: ${MARIADB_USER}
       MARIADB_PASSWORD: ${MARIADB_PASSWORD}
+      IGNORE_IPS: ${IGNORE_IPS}
+
     volumes:
       - ../app/.output/:/home/node/app
     ports:
@@ -25,8 +27,8 @@ services:
       - ./mariadb/config:/etc/mysql/mariadb.conf.d/:ro
       - ./mariadb/bootstrap:/docker-entrypoint-initdb.d:ro
       - db-data:/var/lib/mysql:rw
-    ports:
-      - "3308:3306"
+    #ports:
+      #- "3308:3306"
     environment:
       MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
       MARIADB_DATABASE: ${MARIADB_DATABASE}
@@ -36,6 +38,22 @@ services:
     networks:
       app:
         ipv4_address: 192.168.45.2
+
+  adminer:
+    image: adminer
+    restart: unless-stopped
+    ports:
+      - "58888:8080"
+    environment:
+      ADMINER_DEFAULT_SERVER: db
+      ADMINER_ALLOWED_IPS: ${ADMINER_ALLOWED_IPS}
+    volumes:
+      - ./adminer/plugins:/var/www/html/plugins-enabled
+    depends_on:
+      - db
+    networks:
+      app:
+        ipv4_address: 192.168.45.4
 
 volumes:
   db-data:
