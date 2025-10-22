@@ -114,7 +114,7 @@ async function save() {
 </script>
 
 <template>
-    <StandardPage title="Parsed Results">
+    <StandardPage title="Parsed Results - Please Verify Time Values">
         <div class="h-screen flex flex-col">
 
             <div v-if="!structuredData.length" class="text-center text-gray-500">
