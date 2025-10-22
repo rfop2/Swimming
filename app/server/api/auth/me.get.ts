@@ -1,5 +1,3 @@
-import { validateRequest } from "~/server/utils/auth"
-
 export default defineEventHandler( async ( event ) => {
   const { user, impersonating } = await validateRequest( event )
 
