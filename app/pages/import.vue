@@ -8,6 +8,15 @@ import TableXlsx from '~/components/TableXlsx.vue'
 import StandardPage from "~/components/StandardPage.vue"
 import { addMonths, format, getYear, parseISO } from "date-fns"
 import { REGIONS, COUNTIES, NATIONALITIES } from "lib"
+import TableFemaleMaleBothCourse from '~/components/TableFemaleMaleBothCourse.vue'
+import TableAcceptedConsidered from '~/components/TableAcceptedConsidered.vue'
+import TableFemaleMale from '~/components/TableFemaleMale.vue'
+import TableFemaleMaleBerkshire from '~/components/TableFemaleMaleBerkshire.vue'
+import TableLongShortWhite from '~/components/TableLongShortWhite.vue'
+import TableFemaleMaleCornwall from '~/components/TableFemaleMaleCornwall.vue'
+import TableMaleFemaleCornwallTogether from '~/components/TableMaleFemaleCornwallTogether.vue'
+import TableWCSA from '~/components/TableWCSA.vue'
+import TableSussexCounty from '~/components/TableSussexCounty.vue'
 
 
 definePageMeta({
@@ -49,6 +58,10 @@ const courses = [
         value: "sc",
         label: "Short",
     },
+    {
+        value: "both",
+        label: "Both",
+    },
 ]
 const selections = ref({
     year: years[0],
@@ -71,7 +84,16 @@ const currentLayoutIndex = ref(0)
 const layoutsPdf = [
     { component: TableFemaleEventMale, id: 'layout1' },
     { component: TableMaleFemaleOpen, id: 'layout2' },
-    { component: TableMaleOpen, id: 'layout3' }
+    { component: TableMaleOpen, id: 'layout3' },
+    { component: TableFemaleMaleBothCourse, id: 'layout4' },
+    { component: TableAcceptedConsidered, id: 'layout5' },
+    { component: TableFemaleMale, id: 'layout6' },
+    { component: TableFemaleMaleBerkshire, id: 'layout7' },
+    { component: TableLongShortWhite, id: 'layout8' },
+    { component: TableFemaleMaleCornwall, id: 'layout9' },
+    { component: TableMaleFemaleCornwallTogether, id: 'layout10' },
+    { component: TableWCSA, id: 'layout11' },
+    { component: TableSussexCounty, id: 'layout12' }, 
 ]
 
 const layoutsXlsx = [
@@ -98,7 +120,7 @@ function prevLayout() {
 async function sendFile() {
     if (!file.value) return alert('Please select a file')
     if (selectedLayoutIndex.value === null) return alert('Please select a layout')
-    
+
     const formData = new FormData()
     formData.append('pdf_file', file.value)
     formData.append('layout', layouts.value[selectedLayoutIndex.value].id)
@@ -204,6 +226,17 @@ function resetUpload() {
                         </button>
                     </div>
 
+                    <div class="flex space-x-2 mb-4 justify-between" v-if="selectedLayoutIndex === null">
+                        <button @click="prevLayout" :disabled="currentLayoutIndex === 0"
+                            class="px-4 py-2 bg-gray-300 rounded disabled:opacity-50">
+                            Back
+                        </button>
+                        <button @click="nextLayout" :disabled="currentLayoutIndex === layouts.length - 1"
+                            class="px-4 py-2 bg-gray-300 rounded disabled:opacity-50" style="margin-left: 5rem;">
+                            Next
+                        </button>
+                    </div>
+
                     <div
                         v-if="selectedLayoutIndex !== null && selections.year.value && selections.scope.value && selections.area.value">
                         <button @click="sendFile" class="mb-4 px-4 py-2 bg-blue-600 text-white rounded">
@@ -213,16 +246,6 @@ function resetUpload() {
 
                     <component :is="currentLayoutComponent" class="mb-4" v-if="selectedLayoutIndex === null" />
 
-                    <div class="flex space-x-2 mb-4 justify-between" v-if="selectedLayoutIndex === null">
-                        <button @click="prevLayout" :disabled="currentLayoutIndex === 0"
-                            class="px-4 py-2 bg-gray-300 rounded disabled:opacity-50">
-                            Back
-                        </button>
-                        <button @click="nextLayout" :disabled="currentLayoutIndex === layouts.length - 1"
-                            class="px-4 py-2 bg-gray-300 rounded disabled:opacity-50">
-                            Next
-                        </button>
-                    </div>
                 </div>
 
             </div>
