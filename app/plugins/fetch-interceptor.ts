@@ -39,7 +39,7 @@ export default defineNuxtPlugin( () => {
         const isMeRequest = request.startsWith( "/api/auth/me" )
         if ( !isMeRequest ) {
           if ( status === 401 ) {
-            showAlert( "Your session has expired. Please log in again.", "warning" )
+            // showAlert( "Your session has expired. Please log in again.", "warning" )
             await resetAppState()
             await refresh()
             navigateTo( "/login" )
