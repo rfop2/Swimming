@@ -478,7 +478,8 @@ CREATE TABLE `Tasks` (
   `updated` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
   PRIMARY KEY (`taskId`) USING BTREE,
   KEY `idx_creatorId` (`creatorId`),
-  KEY `idx_target` (`targetType`,`targetId`)
+  KEY `idx_target` (`targetType`,`targetId`),
+  CONSTRAINT `Tasks_ibfk_1` FOREIGN KEY (`creatorId`) REFERENCES `User` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
