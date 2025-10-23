@@ -7,17 +7,14 @@ export const useTasksCheck = () => {
   async function checkTasks() {
     try {
       await fetchTasks()
-      console.log( "LT", lastTasks.value, tasks.value )
       for ( const lastTask of lastTasks.value ) {
         if ( lastTask.taskStatus === "pending" || lastTask.taskStatus === "progress" ) {
           const task = tasks.value.find( t => t.taskId === lastTask.taskId )
-          console.log( "lt", lastTask, task )
           if ( task ) {
             switch ( task.taskType ) {
               case "update" : {
                 switch ( task.targetType ) {
                   case "swimmer" : {
-                    console.log( "t", task.taskStatus )
                     if ( task.taskStatus === "error" ) {
                       showAlert( `Task "${task.taskDescription}" failed`, "error" )
                     } else if ( task.taskStatus === "complete" ) {
