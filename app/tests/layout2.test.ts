@@ -5,7 +5,7 @@ import pdf from 'pdf-parse/lib/pdf-parse.js';
 import { parseSwimmingPdfLayout2 } from '../server/utils/parseSwimmingDocs'
 
 describe('PDF Swimming Parser', () => {
-    it('should parse Qualifying document', async () => {
+    it('should parse Qualifying documentt', async () => {
         const pdfPath = path.resolve(__dirname, './data/2026-Qualifying-times.pdf')
         const buffer = fs.readFileSync(pdfPath)
         const data = await pdf(buffer)
