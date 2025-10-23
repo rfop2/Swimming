@@ -36,13 +36,16 @@ export default defineNuxtPlugin( () => {
       const status = error?.response?.status
 
       if ( isApiRequest && import.meta.client ) {
-        if ( status === 401 ) {
-          showAlert( "Your session has expired. Please log in again.", "warning" )
-          await resetAppState()
-          await refresh()
-          navigateTo( "/login" )
-        } else if ( status === 403 ) {
-          showAlert( "Access denied. You do not have permission to view this resource.", "error" )
+        const isMeRequest = request.startsWith( "/api/auth/me" )
+        if ( !isMeRequest ) {
+          if ( status === 401 ) {
+            showAlert( "Your session has expired. Please log in again.", "warning" )
+            await resetAppState()
+            await refresh()
+            navigateTo( "/login" )
+          } else if ( status === 403 ) {
+            showAlert( "Access denied. You do not have permission to view this resource.", "error" )
+          }
         }
       }
 
