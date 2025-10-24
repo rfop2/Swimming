@@ -17,18 +17,10 @@ export default defineEventHandler( async ( event ) => {
 
   const pool = await getPool()
 
-  const selectMaxCreated = prepareStatement<{ id: string }, { MaxCreated: string }>(
+  const selectRecords = prepareStatement<{ id: string }, PerformanceRow>(
     pool,
-    "SELECT MAX(created) AS MaxCreated FROM Performance WHERE swimmer = :id"
+    "SELECT * FROM Performance WHERE swimmer = :id"
   )
-  const result = await selectMaxCreated.get( { id } )
-  if ( !result?.MaxCreated ) {
-    throw createError( { status: 404, statusText: "No records found" } )
-  }
-  const selectRecords = prepareStatement<{ id: string, date: string }, PerformanceRow>(
-    pool,
-    "SELECT * FROM Performance WHERE swimmer = :id AND created = :date"
-  )
-  const data = await selectRecords.all( { id, date: result.MaxCreated } )
+  const data = await selectRecords.all( { id } )
   return data
 } )
