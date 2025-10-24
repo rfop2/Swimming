@@ -2,7 +2,7 @@ import { onBeforeRouteLeave } from "vue-router"
 
 export function useUnsavedWarning( isDirty: () => boolean ) {
   // In-app navigation
-  onBeforeRouteLeave( ( to, from, next ) => {
+  onBeforeRouteLeave( ( _to, _from, next ) => {
     if ( isDirty() ) {
       const leave = confirm( "You have unsaved changes. Do you really want to leave?" )
       if ( !leave ) return next( false )
