@@ -252,7 +252,7 @@
             type: "box",
             yMin: 0,
             yMax: countyQualifying.value?.courseTime,
-            backgroundColor: "#22c55e10",
+            backgroundColor: "#22c55e20",
             display: !!countyQualifying.value,
             borderWidth: 0,
             label: {
@@ -278,7 +278,7 @@
             type: "box",
             yMin: 0,
             yMax: regionQualifying.value?.courseTime,
-            backgroundColor: "#f9741610",
+            backgroundColor: "#f9741620",
             display: !!regionQualifying.value,
             borderWidth: 0,
             label: {
