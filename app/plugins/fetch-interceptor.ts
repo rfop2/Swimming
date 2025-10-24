@@ -59,10 +59,15 @@ export default defineNuxtPlugin( () => {
   // Replace the global fetch
   ;( globalThis as { $fetch: NuxtFetch } ).$fetch = wrapped
 
-  watch( () => useState( "impersonating" ).value, async ( newVal, oldVal ) => {
-    if ( newVal !== oldVal ) {
-      const resetAppState = useAppReset()
-      await resetAppState()
-    }
-  } )
+  if ( import.meta.client ) {
+    nuxtApp.hook( "app:mounted", () => {
+      const impersonating = useState( "impersonating" )
+      watch( impersonating, async ( newVal, oldVal ) => {
+        if ( newVal !== oldVal ) {
+          const resetAppState = useAppReset()
+          await resetAppState()
+        }
+      } )
+    } )
+  }
 } )
