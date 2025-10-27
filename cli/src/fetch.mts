@@ -646,7 +646,7 @@ const updateMeets = async ( force: boolean ) => {
           await saveMeets.run( meet )
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch ( error ) {
-          console.log( `Unable to update meet '${meet.name}` )
+          console.log( `Unable to update meet '${meet.name}'` )
         }
       }
     }
