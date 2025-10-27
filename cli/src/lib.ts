@@ -152,7 +152,7 @@ export const addClubSwimmers = async ( user: User, clubOrCode: string | Club, co
               type: "ranking",
             }
 
-            const content = await fetchPage( page )
+            const { content } = await fetchPage( page )
 
             // console.log( inspect( pageData, { depth: 5 } ) )
             const $ = cheerio.load( content )
