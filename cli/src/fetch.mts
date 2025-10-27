@@ -674,8 +674,15 @@ const updateMeets = async ( force: boolean ) => {
   }
 }
 
-const getMeetSwimmers = async ( meetResults: MeetResults, year: string, force: boolean ) => {
-  console.log( "Updating meet results" )
+interface MeetsResultsOptions {
+  region?: string
+  county?: string[]
+  club?: string[]
+  force?: boolean
+}
+
+const getMeetSwimmers = async ( meetResults: MeetResults, year: string, options: MeetsResultsOptions ) => {
+  console.log( `Getting meet swimmers for meet '${meetResults.name}'` )
 
   const meetSwimmers = new Set<Swimmer["id"]>()
 
@@ -692,13 +699,23 @@ const getMeetSwimmers = async ( meetResults: MeetResults, year: string, force: b
         url: createUrl( meetResultsBaseUrl, meetResultsParams( year, meetResults.id, club, pageNo > 1 ? pageNo : undefined ) ),
         type: "meetResults"
       }
-      const { content } = await fetchPage( page, force ? 0 : undefined )
+      const { content } = await fetchPage( page, options.force ? 0 : undefined )
       // console.log( inspect( pageData, { depth: 5 } ) )
       const $ = cheerio.load( content )
 
       if ( !clubs.length ) {
-        clubs.push( ...$( "#clubtarget > option" ).get().map( o => $( o ).attr( "value" ) ).filter( o => o !== undefined ) )
-        console.log( "Found clubs", clubs )
+        clubs.push(
+          ...$( "#clubtarget > option" )
+            .get()
+            .map( o => $( o ).attr( "value" ) )
+            .filter( o => o !== undefined )
+            .filter( o => !options.county || options.county.includes( o.substring( 4 ) ) )
+            .filter( o => !options.club || options.club.includes( o.substring( 0, 4 ) ) )
+        )
+        if ( !clubs[clubIndex] )  {
+          // The default club isn't in the list
+          break
+        }
       }
 
       if ( pageNo === 1 ) {
@@ -706,30 +723,28 @@ const getMeetSwimmers = async ( meetResults: MeetResults, year: string, force: b
         if ( pages.text().match( /Pages/ ) ) {
           const pageLinks = $( "#outerWrapper > div:nth-child(2) > div.boxRepeat.rankingsContent > p:nth-child(3) > a" )
           numPages = pageLinks.length
-          console.log( `Found ${numPages} pages` )
+          // console.log( `Found ${numPages} pages` )
         }
       }
 
       const pageSwimmers = parseMeetResults( page, $ )
-
-      // console.log( meetsData )
-      console.log( `Got ${pageSwimmers.size} page swimmer ids` )
-
+      if ( pageSwimmers.size ) {
+        console.log( `Got ${pageSwimmers.size} page swimmer ids` )
+      }
       pageSwimmers.forEach( id => meetSwimmers.add( id ) )
     } while ( ++pageNo <= numPages )
   } while ( ++clubIndex < clubs.length )
   return meetSwimmers
 }
 
-const updateMeetsResults = async ( force: boolean ) => {
+const updateMeetsResults = async ( options: MeetsResultsOptions ) => {
   console.log( "Updating meets results" )
 
   const MAX_MEETS_RESULTS = 100
 
   const pool = await getPool()
-  const selectLastResultsUpdate = prepareStatement<void,string>( pool, "SELECT value FROM System WHERE name = 'lastResultsUpdate'" )
+  const selectLastResultsUpdate = prepareStatement<void,{value: string}>( pool, "SELECT value FROM System WHERE name = 'lastResultsUpdate'" )
   const lastResultsUpdate = await selectLastResultsUpdate.get()
-  const updateLastResultsUpdate = prepareStatement<{value: string}>( pool, "UPDATE System SET value = :value WHERE name = 'lastResultsUpdate'" )
 
   const resultsSwimmers = new Set<Swimmer["id"]>()
 
@@ -745,33 +760,78 @@ const updateMeetsResults = async ( force: boolean ) => {
       url: createUrl( meetsResultsBaseUrl, meetsResultsParams( thisYear, pageNo ) ),
       type: "meetsResults"
     }
-    const { content } = await fetchPage( page, force ? 0 : undefined )
+    const { content } = await fetchPage( page, options.force ? 0 : undefined )
     // console.log( inspect( pageData, { depth: 5 } ) )
     const $ = cheerio.load( content )
 
-    const firstMeetDate = lastResultsUpdate ? parse( lastResultsUpdate, "yyyy-MM-dd", new Date() ) : sub( now, { months: 1 } )
+    const firstMeetDate = lastResultsUpdate ? parse( lastResultsUpdate.value, "yyyy-MM-dd", new Date() ) : sub( now, { months: 1 } )
     const meetsResultsData = parseMeetsResults( page, $, firstMeetDate )
 
     // console.log( meetsData )
     console.log( `Got records for ${meetsResultsData.length} meets results` )
 
-    for ( const meetsResults of meetsResultsData ) {
+    for ( const meetResults of meetsResultsData ) {
       try {
-        console.log( meetsResults )
-        const meetSwimmers = await getMeetSwimmers( meetsResults, thisYear, force )
-        meetSwimmers.forEach( id => resultsSwimmers.add( id ) )
-        console.log( `Got ${meetSwimmers.size} meet swimmer ids` )
+        if ( !options.region || meetResults.code.startsWith( options.region ) ) {
+          const meetSwimmers = await getMeetSwimmers( meetResults, thisYear, options )
+          meetSwimmers.forEach( id => resultsSwimmers.add( id ) )
+          if ( meetSwimmers.size ) {
+            console.log( `Got ${meetSwimmers.size} meet swimmer ids` )
+          }
+        }
       } catch ( _error ) {
-        console.log( `Unable to update meet results '${meetsResults.name}` )
+        console.log( `Unable to get meet results swimmers for '${meetResults.name}` )
       }
     }
 
     if ( meetsResultsData.length >= MAX_MEETS_RESULTS ) {
       fetchNextPage = true
       pageNo++
+    } else {
+      fetchNextPage = false
     }
   } while ( fetchNextPage )
-  await updateLastResultsUpdate.run( { value: today } )
+  if ( resultsSwimmers.size ) {
+    console.log( `Got ${resultsSwimmers.size} swimmer ids to check and update` )
+  }
+  await runTransaction( pool, async ( conn: PoolConnection ) => {
+    const getSystemUser = prepareStatement<void>( conn, "SELECT * FROM User WHERE type = 'system'" )
+    const systemUser = await getSystemUser.get()
+    if ( !systemUser ) {
+      throw new Error( "Can't find system user in database" )
+    }
+    const addTask = prepareStatement(
+      conn,
+      `INSERT INTO Tasks (
+        creatorId, taskType, taskOptions, taskDescription, targetType, targetId
+      )
+      SELECT
+        :userId, :taskType, :taskOptions, :taskDescription, :targetType, :targetId
+      WHERE EXISTS (
+        SELECT 1 FROM Swimmers WHERE Swimmers.id = :targetId
+      )`
+    )
+    let swimmersToUpdate = 0
+    for( const swimmerId of resultsSwimmers ) {
+      const result = await addTask.run( {
+        userId: systemUser.id,
+        taskType: "update",
+        taskOptions: "rankings",
+        taskDescription: "Triggered rankings update from meet results",
+        targetType: "swimmer",
+        targetId: swimmerId
+      } )
+      swimmersToUpdate += result.affectedRows
+      if ( result.affectedRows ) {
+        console.log( `Queued update for swimmer ${swimmerId}` )
+      }
+    }
+    if ( swimmersToUpdate ) {
+      console.log( `Queued ranking updates for ${swimmersToUpdate} swimmers` )
+    }
+    const updateLastResultsUpdate = prepareStatement<{value: string}>( conn, "INSERT INTO System VALUES( 'lastResultsUpdate', :value ) ON DUPLICATE KEY UPDATE value = :value" )
+    await updateLastResultsUpdate.run( { value: today } )
+  } )
 }
 
 ( async () => {
@@ -824,10 +884,12 @@ const updateMeetsResults = async ( force: boolean ) => {
   program.command( "results" )
     .description( "Fetch recent results listings and identify swimmers that need updates" )
     .option( "-r, --region <region>", "only fetch results for the specified region" )
-    .option( "-c, --club <club>", "only fetch results for the specified club" )
-    .action( async ( options ) => {
+    .option( "-c, --county <county...>", "only fetch results for the specified counties" )
+    .option( "-C, --club <club...>", "only fetch results for the specified clubs" )
+    .addOption( new Option( "-m, --mode <mode>", "fetching strategy versus caching" ).choices( [ "force", "lazy" ] ).default( "lazy" ) )
+    .action( async ( options: MeetsResultsOptions ) => {
       try {
-        await updateMeetsResults( options.mode === "force" )
+        await updateMeetsResults( options )
       } catch ( e ) {
         console.error( "Unable to update meet results", e )
       }

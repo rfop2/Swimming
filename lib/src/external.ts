@@ -821,7 +821,6 @@ export const parseMeetsResults = ( _pageInfo: PageInfo, $: CheerioAPI, minMeetDa
   if ( table.length ) {
     // Do any conversions
     for ( const row of table ) {
-      console.log( row )
       const meetDate = parse( row.date, "dd/MM/yy", new Date() )
       if ( meetDate >= minMeetDate ) {
         const resultRow: MeetResults = {
