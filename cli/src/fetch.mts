@@ -48,6 +48,7 @@ import type {
   Club,
   IndividualStats,
   Meet,
+  MeetResults,
   PageInfo,
   PoolConnection,
   Swimmer,
@@ -773,15 +774,6 @@ const updateMeetsResults = async ( force: boolean ) => {
   await updateLastResultsUpdate.run( { value: today } )
 }
 
-// Extract options in a typed way
-interface CliOptions {
-  type: "results" | "swimmers" | "meets" | "queue"
-  ids?: string[]
-  club?: string
-  update: SwimmerUpdateType
-  mode: SwimmerUpdateMode
-}
-
 ( async () => {
   await acquireLock()
 
@@ -789,29 +781,17 @@ interface CliOptions {
 
   program
     .name( "fetch" )
-    .description( "Fetch data from source site" )
+    .description( "Fetch and update data from source site" )
 
   program.showHelpAfterError()
 
-  program.addOption( new Option( "-t, --type <type>", "fetch type" ).choices( [ "results", "swimmers", "meets", "queue" ] ).makeOptionMandatory() )
-  program.option( "-i, --id <ids...>", "in swimmers mode, fetch data for specified swimmers, in club mode ids of clubs to fetch" )
-  program.option( "-c, --club <club>", "in swimmers mode, fetch data for swimmers in specified club only" )
-  program.addOption( new Option( "-u, --update <update>", "in swimmers mode, what to update." ).choices( [ "individual", "results", "rankings" ] ) )
-  program.addOption( new Option( "-m, --mode <mode>", "in swimmers mode, what to update." ).choices( [ "force", "smart", "lazy" ] ).default( "lazy" ) )
-
-  // Parse argv
-  program.parse( process.argv )
-
-  const options = program.opts<CliOptions>()
-
-  try {
-    if ( options.type === "results" ) {
-      try {
-        await updateMeetsResults( options.mode === "force" )
-      } catch ( e ) {
-        console.error( "Unable to update meet results", e )
-      }
-    } else if ( options.type === "swimmers" ) {
+  program.command( "swimmers" )
+    .description( "Fetch swimmer data" )
+    .option( "-i, --id <ids...>", "fetch data for specified swimmers" )
+    .option( "-c, --club <club>", "fetch data for swimmers in specified club only" )
+    .addOption( new Option( "-u, --update <update>", "what level of swimmer data to update" ).choices( [ "individual", "results", "rankings" ] ) )
+    .addOption( new Option( "-m, --mode <mode>", "fetching strategy versus caching" ).choices( [ "force", "smart", "lazy" ] ).default( "lazy" ) )
+    .action( async ( options ) => {
       const getSwimmers = prepareStatement<void,Swimmer>(
         await getPool(),
         "SELECT * FROM Swimmers WHERE active = 1"
@@ -830,7 +810,7 @@ interface CliOptions {
         process.exit( 0 )
       }
       for ( const swimmer of swimmers ) {
-        if ( !options.ids || options.ids.find( s => s === swimmer.id ) ) {
+        if ( !options.ids || options.ids.find( ( s: string ) => s === swimmer.id ) ) {
           try {
             await updateSwimmerData( swimmer, options.update, options.mode )
           } catch ( e ) {
@@ -839,11 +819,30 @@ interface CliOptions {
           }
         }
       }
-    }
-    else if ( options.type === "meets" ) {
+    } )
+
+  program.command( "results" )
+    .description( "Fetch recent results listings and identify swimmers that need updates" )
+    .option( "-r, --region <region>", "only fetch results for the specified region" )
+    .option( "-c, --club <club>", "only fetch results for the specified club" )
+    .action( async ( options ) => {
+      try {
+        await updateMeetsResults( options.mode === "force" )
+      } catch ( e ) {
+        console.error( "Unable to update meet results", e )
+      }
+    } )
+
+  program.command( "meets" )
+    .description( "Fetch data for new or updated meets" )
+    .addOption( new Option( "-m, --mode <mode>", "fetching strategy versus caching" ).choices( [ "force", "lazy" ] ).default( "lazy" ) )
+    .action( async ( options ) => {
       await updateMeets( options.mode === "force" )
-    }
-    else if ( options.type === "queue" ) {
+    } )
+
+  program.command( "queue" )
+    .description( "Process and execute fetches according to task queue" )
+    .action( async () => {
       const getTasks = prepareStatement<void,Task>(
         await getPool(),
         "SELECT * FROM Tasks WHERE taskStatus = 'pending'"
@@ -965,7 +964,10 @@ interface CliOptions {
           await taskUpdateError.run( task )
         }
       }
-    }
+    } )
+
+  try {
+    await program.parseAsync( process.argv )
   } catch ( error ) {
     console.error( "Error in script", error )
   } finally {
