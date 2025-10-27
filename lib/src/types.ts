@@ -7,7 +7,7 @@ export interface DatabaseUser {
   location: string
   type: string
   admin: boolean
-  created?: Date
+  created?: string
 }
 
 export interface Swimmer {
