@@ -17,9 +17,9 @@ import { generateId } from "lucia"
   const firstName = args[2]
   const lastName = args[3]
   const type = args[4]
-  const clubId = args[5]
-  const clubOwner = args[6]
-  const townCity = args[7]
+  const townCity = args[5]
+  const clubId = args[6]
+  const clubOwner = args[7]
 
   if (
     username.length < 3 ||
@@ -64,16 +64,18 @@ import { generateId } from "lucia"
         locationId: location ? location.locationId : null,
       } )
 
-      const getClub = prepareStatement<{clubId:string},Club>( conn, "SELECT * FROM Clubs where clubId = :clubId" )
-      const club = await getClub.get( { clubId } )
-      if ( !club ) {
-        throw new Error ( `Can't find club id '${clubId}'` )
+      if ( clubId ) {
+        const getClub = prepareStatement<{clubId:string},Club>( conn, "SELECT * FROM Clubs where clubId = :clubId" )
+        const club = await getClub.get( { clubId } )
+        if ( !club ) {
+          throw new Error ( `Can't find club id '${clubId}'` )
+        }
+        const insertUserClub = prepareStatement(
+          conn,
+          "INSERT INTO UserClubs ( userId, clubId, clubOwner) VALUES ( :userId, :clubId, :clubOwner )"
+        )
+        await insertUserClub.run( { userId, clubId, clubOwner: Number( clubOwner ) } )
       }
-      const insertUserClub = prepareStatement(
-        conn,
-        "INSERT INTO UserClubs ( userId, clubId, clubOwner) VALUES ( :userId, :clubId, :clubOwner )"
-      )
-      await insertUserClub.run( { userId, clubId, clubOwner: Number( clubOwner ) } )
     } catch ( e ) {
       if ( isMySql2Error( e ) ) {
         if ( e.code === "ER_DUP_ENTRY" ) {
