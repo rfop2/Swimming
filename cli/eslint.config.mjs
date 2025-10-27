@@ -22,7 +22,7 @@ const stylisticRules = {
 
 export default [
   // Ignore build/output folders
-  { ignores: [ "dist" ] },
+  { ignores: [ "build" ] },
 
   // Standard ESLint recommended rules
   eslint.configs.recommended,
@@ -50,7 +50,15 @@ export default [
       ...stylisticRules, // spread the same Stylistic rules
       // Type-aware TS rules
       "@typescript-eslint/no-floating-promises": "error",
-      "@typescript-eslint/no-unused-vars": "error",
+      "@typescript-eslint/no-unused-vars": [ "error", {
+        "args": "all",
+        "argsIgnorePattern": "^_",
+        "caughtErrors": "all",
+        "caughtErrorsIgnorePattern": "^_",
+        "destructuredArrayIgnorePattern": "^_",
+        "varsIgnorePattern": "^_",
+        "ignoreRestSiblings": true
+      } ],
       "@typescript-eslint/explicit-function-return-type": "off",
       "@typescript-eslint/consistent-type-imports": [ "error", { prefer: "type-imports" } ],
     },
