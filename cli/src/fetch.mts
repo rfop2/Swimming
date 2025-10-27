@@ -720,7 +720,7 @@ interface CliOptions {
       for ( const swimmer of swimmers ) {
         if ( !options.ids || options.ids.find( s => s === swimmer.id ) ) {
           try {
-            await updateSwimmerData( swimmer, options.update, options.mode === "force" )
+            await updateSwimmerData( swimmer, options.update, options.mode )
           } catch ( e ) {
             console.error( "Unable to fetch swimmer data, skipping", e )
             await swimmerUpdateError.run( swimmer )
