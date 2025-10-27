@@ -147,11 +147,23 @@ export interface Meet {
   tagged: number
 }
 
+export interface MeetResults {
+  id: number
+  code: string
+  name: string
+  city: string
+  type: string
+  date: string
+  course: string
+  link: string
+  level: number
+}
+
 export interface PageInfo {
   label: string
   url: URL
   referrer?: URL,
-  type: "individual" | "ranking" | "results" | "meets" | "meet"
+  type: "individual" | "ranking" | "results" | "meets" | "meet" | "meetsResults" | "meetResults"
   data?: unknown
 }
 

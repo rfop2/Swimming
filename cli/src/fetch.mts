@@ -1,6 +1,6 @@
 #!/usr/bin/env nodemjs
 import "dotenv/config"
-import { format, formatISO } from "date-fns"
+import { format, formatISO, parse, sub } from "date-fns"
 import * as cheerio from "cheerio"
 
 // import { inspect } from "util"
@@ -36,6 +36,12 @@ import {
   acquireLock,
   individualRecentParams,
   individualAllTimeParams,
+  meetsResultsBaseUrl,
+  meetsResultsParams,
+  parseMeetsResults,
+  meetResultsBaseUrl,
+  meetResultsParams,
+  parseMeetResults,
 } from "lib"
 
 import type {
@@ -667,9 +673,109 @@ const updateMeets = async ( force: boolean ) => {
   }
 }
 
+const getMeetSwimmers = async ( meetResults: MeetResults, year: string, force: boolean ) => {
+  console.log( "Updating meet results" )
+
+  const meetSwimmers = new Set<Swimmer["id"]>()
+
+  const clubs: string[] = []
+  let clubIndex = 0
+  do {
+    const club = clubs.length ? clubs[clubIndex] : undefined
+    let pageNo = 1
+    let numPages = 1
+
+    do {
+      const page: PageInfo = {
+        label: `meet_results_${meetResults.id}${club ? ( "-" + club ) : ""}-${pageNo}`,
+        url: createUrl( meetResultsBaseUrl, meetResultsParams( year, meetResults.id, club, pageNo > 1 ? pageNo : undefined ) ),
+        type: "meetResults"
+      }
+      const { content } = await fetchPage( page, force ? 0 : undefined )
+      // console.log( inspect( pageData, { depth: 5 } ) )
+      const $ = cheerio.load( content )
+
+      if ( !clubs.length ) {
+        clubs.push( ...$( "#clubtarget > option" ).get().map( o => $( o ).attr( "value" ) ).filter( o => o !== undefined ) )
+        console.log( "Found clubs", clubs )
+      }
+
+      if ( pageNo === 1 ) {
+        const pages = $( "#outerWrapper > div:nth-child(2) > div.boxRepeat.rankingsContent > p:nth-child(3)" )
+        if ( pages.text().match( /Pages/ ) ) {
+          const pageLinks = $( "#outerWrapper > div:nth-child(2) > div.boxRepeat.rankingsContent > p:nth-child(3) > a" )
+          numPages = pageLinks.length
+          console.log( `Found ${numPages} pages` )
+        }
+      }
+
+      const pageSwimmers = parseMeetResults( page, $ )
+
+      // console.log( meetsData )
+      console.log( `Got ${pageSwimmers.size} page swimmer ids` )
+
+      pageSwimmers.forEach( id => meetSwimmers.add( id ) )
+    } while ( ++pageNo <= numPages )
+  } while ( ++clubIndex < clubs.length )
+  return meetSwimmers
+}
+
+const updateMeetsResults = async ( force: boolean ) => {
+  console.log( "Updating meets results" )
+
+  const MAX_MEETS_RESULTS = 100
+
+  const pool = await getPool()
+  const selectLastResultsUpdate = prepareStatement<void,string>( pool, "SELECT value FROM System WHERE name = 'lastResultsUpdate'" )
+  const lastResultsUpdate = await selectLastResultsUpdate.get()
+  const updateLastResultsUpdate = prepareStatement<{value: string}>( pool, "UPDATE System SET value = :value WHERE name = 'lastResultsUpdate'" )
+
+  const resultsSwimmers = new Set<Swimmer["id"]>()
+
+  const now = new Date()
+  const today = format( now, "yyyy-MM-dd" )
+  const thisYear = format( now, "yyyy" )
+
+  let pageNo = 1
+  let fetchNextPage = false
+  do {
+    const page: PageInfo = {
+      label: `meet_results_list-${today}-${pageNo}`,
+      url: createUrl( meetsResultsBaseUrl, meetsResultsParams( thisYear, pageNo ) ),
+      type: "meetsResults"
+    }
+    const { content } = await fetchPage( page, force ? 0 : undefined )
+    // console.log( inspect( pageData, { depth: 5 } ) )
+    const $ = cheerio.load( content )
+
+    const firstMeetDate = lastResultsUpdate ? parse( lastResultsUpdate, "yyyy-MM-dd", new Date() ) : sub( now, { months: 1 } )
+    const meetsResultsData = parseMeetsResults( page, $, firstMeetDate )
+
+    // console.log( meetsData )
+    console.log( `Got records for ${meetsResultsData.length} meets results` )
+
+    for ( const meetsResults of meetsResultsData ) {
+      try {
+        console.log( meetsResults )
+        const meetSwimmers = await getMeetSwimmers( meetsResults, thisYear, force )
+        meetSwimmers.forEach( id => resultsSwimmers.add( id ) )
+        console.log( `Got ${meetSwimmers.size} meet swimmer ids` )
+      } catch ( _error ) {
+        console.log( `Unable to update meet results '${meetsResults.name}` )
+      }
+    }
+
+    if ( meetsResultsData.length >= MAX_MEETS_RESULTS ) {
+      fetchNextPage = true
+      pageNo++
+    }
+  } while ( fetchNextPage )
+  await updateLastResultsUpdate.run( { value: today } )
+}
+
 // Extract options in a typed way
 interface CliOptions {
-  type: "swimmers" | "meets" | "queue"
+  type: "results" | "swimmers" | "meets" | "queue"
   ids?: string[]
   club?: string
   update: SwimmerUpdateType
@@ -687,7 +793,7 @@ interface CliOptions {
 
   program.showHelpAfterError()
 
-  program.addOption( new Option( "-t, --type <type>", "fetch type" ).choices( [ "swimmers", "meets", "queue" ] ).makeOptionMandatory() )
+  program.addOption( new Option( "-t, --type <type>", "fetch type" ).choices( [ "results", "swimmers", "meets", "queue" ] ).makeOptionMandatory() )
   program.option( "-i, --id <ids...>", "in swimmers mode, fetch data for specified swimmers, in club mode ids of clubs to fetch" )
   program.option( "-c, --club <club>", "in swimmers mode, fetch data for swimmers in specified club only" )
   program.addOption( new Option( "-u, --update <update>", "in swimmers mode, what to update." ).choices( [ "individual", "results", "rankings" ] ) )
@@ -699,7 +805,13 @@ interface CliOptions {
   const options = program.opts<CliOptions>()
 
   try {
-    if ( options.type === "swimmers" ) {
+    if ( options.type === "results" ) {
+      try {
+        await updateMeetsResults( options.mode === "force" )
+      } catch ( e ) {
+        console.error( "Unable to update meet results", e )
+      }
+    } else if ( options.type === "swimmers" ) {
       const getSwimmers = prepareStatement<void,Swimmer>(
         await getPool(),
         "SELECT * FROM Swimmers WHERE active = 1"

@@ -1,4 +1,4 @@
-import type { IndividualStats, Meet, PageInfo, Ranking, RankingRow, ResultData, Results, Swimmer } from "./types.js"
+import type { IndividualStats, Meet, MeetResults, PageInfo, Ranking, RankingRow, ResultData, Results, Swimmer } from "./types.js"
 import { getSwimmerAgeGroup, sleep, timeToSeconds } from "./lib.js"
 import { CACHE_DIR } from "./config.js"
 import { differenceInDays, differenceInHours, format, parse } from "date-fns"
@@ -241,6 +241,28 @@ export const meetParams = ( page: number, region: string, meet: number ) => ( {
   month: "P",
   year: "P",
 } )
+
+export const meetsResultsBaseUrl = "/showmeetsbyclub"
+
+export const meetsResultsParams = ( targetyear: string, page: number ) => ( {
+  targetyear,
+  masters: "0",
+  page: String( page ),
+} )
+
+export const meetResultsBaseUrl = `${meetsResultsBaseUrl}/index.php`
+
+export const meetResultsParams = ( targetyear: string, meetcode: number, targetclub?: string, page?: number ) => {
+  const params: Record<string,string> = {
+    targetyear,
+    masters: "0",
+    pgm: "1",
+    meetcode: String( meetcode ),
+  }
+  if ( targetclub ) params.targetclub = targetclub
+  if ( page ) params.page = String( page )
+  return params
+}
 
 export const createUrl = ( base: string, params: Record<string, string> ) => {
   const url = new URL( BASE_URL + base )
@@ -767,4 +789,55 @@ export const parseMeet = async ( pageInfo: PageInfo, $: CheerioAPI, meet: Partia
   const location = await geocodeLocation( meet.location )
   meet.locationId = location ? location.locationId : null
   return location
+}
+
+const getResultsLink = ( $: CheerioAPI, valueCells: Cheerio<AnyNode> ) : Record<string,string> => {
+  const linkCell = valueCells[5]
+  const anchor = $( linkCell ).find( "a" )[0]
+  const link = $( anchor ).attr( "href" )
+  if ( !link )
+    return {}
+  const meetId = link.match( /meetcode=(\d+)/ )?.[1] ?? ""
+  return { link, meetId }
+}
+
+export const parseMeetResults = ( _pageInfo: PageInfo, $: CheerioAPI ) => {
+  const tables = $( "#rankTable" )
+  const swimmerIds = new Set<Swimmer["id"]>()
+  const table = extractTableData( $, $( tables[0] ) )
+  if ( table.length ) {
+    // Do any conversions
+    for ( const row of table ) {
+      swimmerIds.add( row.member )
+    }
+  }
+  return swimmerIds
+}
+
+export const parseMeetsResults = ( _pageInfo: PageInfo, $: CheerioAPI, minMeetDate: Date ) => {
+  const tables = $( "#rankTable" )
+  const data: Array<MeetResults> = []
+  const table = extractTableData( $, $( tables[0] ), getResultsLink )
+  if ( table.length ) {
+    // Do any conversions
+    for ( const row of table ) {
+      console.log( row )
+      const meetDate = parse( row.date, "dd/MM/yy", new Date() )
+      if ( meetDate >= minMeetDate ) {
+        const resultRow: MeetResults = {
+          id: Number( row.meetId ),
+          code: row.licence,
+          name: row.meet_name,
+          city: row.city,
+          type: row.type,
+          date: format( meetDate, "yyyy-MM-dd" ),
+          course: row.course.toLocaleLowerCase(),
+          link: row.link,
+          level: Number( row.level ),
+        }
+        data.push( resultRow )
+      }
+    }
+  }
+  return data
 }
