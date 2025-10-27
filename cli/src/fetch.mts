@@ -1,6 +1,6 @@
 #!/usr/bin/env nodemjs
 import "dotenv/config"
-import { format, formatISO } from "date-fns"
+import { format, formatISO, parse, sub } from "date-fns"
 import * as cheerio from "cheerio"
 
 // import { inspect } from "util"
@@ -8,7 +8,6 @@ import * as cheerio from "cheerio"
 import {
   createUrl,
   individualBaseUrl,
-  individualParams,
   rankBaseUrl,
   globalRankParams,
   // nationalRankParams,
@@ -35,15 +34,25 @@ import {
   fetchPageBrowser,
   closeBrowser,
   acquireLock,
+  individualRecentParams,
+  individualAllTimeParams,
+  meetsResultsBaseUrl,
+  meetsResultsParams,
+  parseMeetsResults,
+  meetResultsBaseUrl,
+  meetResultsParams,
+  parseMeetResults,
 } from "lib"
 
 import type {
   Club,
   IndividualStats,
   Meet,
+  MeetResults,
   PageInfo,
   PoolConnection,
   Swimmer,
+  SwimmerUpdateMode,
   SwimmerUpdateType,
   Task
 } from "lib"
@@ -253,18 +262,56 @@ ON DUPLICATE KEY UPDATE
   email      = :email
 ;`
 
+const checkIndividual = async ( swimmer: Swimmer ) => {
+  console.log( `Checking recent individual data for swimmer '${swimmer.fullName}'` )
+
+  const page: PageInfo = {
+    label: `individual_${swimmer.id}_recent`,
+    url: createUrl( individualBaseUrl, individualRecentParams( swimmer ) ),
+    type: "individual"
+  }
+  const { age, content } = await fetchPage( page )
+  // console.log( inspect( pageData, { depth: 5 } ) )
+  const $ = cheerio.load( content )
+  const individualData = parseIndividual( page, $ )
+
+  const updateData: IndividualStats[] = []
+  if ( age > 0 ) {
+    const { content: fetchedContent } = await fetchPage( page, 0 )
+    const $ = cheerio.load( fetchedContent )
+    const fetchedData = parseIndividual( page, $ )
+
+    for ( const row of fetchedData ) {
+      const prevRow = individualData.find( r => {
+        if ( r.course !== row.course ) return false
+        if ( r.stroke !== row.stroke ) return false
+        if ( r.distance !== row.distance ) return false
+        return true
+      } )
+      if ( !prevRow ) {
+        updateData.push( row )
+      } else {
+        if ( row.time !== prevRow.time || row.date !== row.date || row.meet !== row.meet ) {
+          updateData.push( row )
+        }
+      }
+    }
+    return updateData
+  }
+  return []
+}
+
 const updateIndividual = async ( swimmer: Swimmer, force: boolean ) => {
   console.log( `Updating individual data for swimmer '${swimmer.fullName}'` )
 
   const page: PageInfo = {
     label: `individual_${swimmer.id}`,
-    url: createUrl( individualBaseUrl, individualParams( swimmer ) ),
+    url: createUrl( individualBaseUrl, individualAllTimeParams( swimmer ) ),
     type: "individual"
   }
-  const content = await fetchPage( page, force ? 0 : undefined )
+  const { content } = await fetchPage( page, force ? 0 : undefined )
   // console.log( inspect( pageData, { depth: 5 } ) )
   const $ = cheerio.load( content )
-
   const individualData = parseIndividual( page, $ )
 
   await runTransaction( await getPool(), async ( conn: PoolConnection, individualData: IndividualStats[] ) => {
@@ -284,44 +331,6 @@ const updateIndividual = async ( swimmer: Swimmer, force: boolean ) => {
   }, individualData )
 
   return individualData
-}
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const updateResults = async ( swimmer: Swimmer, individualData: Array<IndividualStats> ) => {
-  console.log( `Updating results data for swimmer '${swimmer.fullName}'` )
-
-  await runTransaction( await getPool(), async ( conn: PoolConnection, individualData: IndividualStats[] ) => {
-    for ( const event of individualData ) {
-      const stroke_distance = STROKE_DISTANCE[`${event.stroke}__${event.distance}`.toLocaleUpperCase() as keyof typeof STROKE_DISTANCE]
-      const course = event.course.substring( 0, 1 ).toLocaleUpperCase()
-
-      const page: PageInfo = {
-        label: `${event.distance}_${event.stroke}_${event.course}_${swimmer.id}`,
-        url: createUrl( resultsBaseUrl, {
-          ...resultsParams( swimmer ),
-          ...{ tstroke: stroke_distance, tcourse: course },
-        } ),
-        type: "results"
-      }
-
-      const content = await fetchPage( page )
-      // console.log( inspect( pageData, { depth: 5 } ) )
-      const $ = cheerio.load( content )
-
-      const resultsData = parseResults( page, $ )
-
-      const deleteResults = prepareStatement<{id: string}>(
-        conn,
-        "DELETE FROM Results WHERE swimmer = :id"
-      )
-      await deleteResults.run( swimmer )
-
-      const saveResults = prepareStatement( conn, insertResultsSql )
-      for ( const result of resultsData ) {
-        await saveResults.run( { swimmer: swimmer.id, course: event.course, stroke: event.stroke, distance: event.distance, ...result } )
-      }
-    }
-  }, individualData )
 }
 
 const updateResultsBatch = async ( swimmer: Swimmer, individualData: Array<IndividualStats>, force: boolean ) => {
@@ -350,7 +359,7 @@ const updateResultsBatch = async ( swimmer: Swimmer, individualData: Array<Indiv
       "DELETE FROM Results WHERE swimmer = :id"
     )
     await deleteResults.run( swimmer )
-    for ( const [ url, content ] of responses.entries() ) {
+    for ( const [ url, { content } ] of responses.entries() ) {
     // console.log( inspect( pageData, { depth: 5 } ) )
       const page = pages.get( url )
       if ( !page )
@@ -474,7 +483,7 @@ const updateRankings = async ( swimmer: Swimmer, individualData: Array<Individua
     const saveRankings = prepareStatement( conn, insertRankingsSql )
 
     const responses = await fetchPages( batchPages, force ? 0 : undefined )
-    for ( const [ url, content ] of responses.entries() ) {
+    for ( const [ url, { content } ] of responses.entries() ) {
       // console.log( inspect( pageData, { depth: 5 } ) )
       const page = batchPages.get( url )
       if ( !page )
@@ -534,11 +543,19 @@ const updatePerformance = async ( swimmer: Swimmer ) => {
   }, swimmer )
 }
 
-const updateSwimmerData = async ( swimmer: Swimmer, updateType: SwimmerUpdateType, force: boolean ) => {
+const updateSwimmerData = async ( swimmer: Swimmer, updateType: SwimmerUpdateType, mode: SwimmerUpdateMode ) => {
   console.log( `Updating data for swimmer '${swimmer.fullName}'` )
   swimmer.birthday = format( new Date( swimmer.birthday ), "yyyy-MM-dd" )
 
-  const individualData = await updateIndividual( swimmer, force )
+  const individualData: IndividualStats[] = []
+  const force = ( mode !== "lazy" )
+  if ( mode === "smart" ) {
+    const updateData = await checkIndividual( swimmer )
+    individualData.push( ...updateData )
+  } else {
+    const updateData = await updateIndividual( swimmer, force )
+    individualData.push( ...updateData )
+  }
 
   if ( updateType === "results" || updateType === "rankings" ) {
   // await updateResults( swimmer, individualData )
@@ -562,7 +579,7 @@ const updateMeet = async ( meet: Partial<Meet>, force: boolean ) => {
     url: new URL( `${BASE_URL}${meetsBaseUrl}${meet.link}` ),
     type: "meet"
   }
-  const content = await fetchPageBrowser( page, force ? 0 : undefined )
+  const { content } = await fetchPageBrowser( page, force ? 0 : undefined )
   const $ = cheerio.load( content )
 
   await parseMeet( page, $, meet )
@@ -587,7 +604,7 @@ const updateMeets = async ( force: boolean ) => {
       url: createUrl( meetsBaseUrl, meetsParams( pageNo, region ) ),
       type: "meets"
     }
-    const content = await fetchPage( page, force ? 0 : undefined )
+    const { content } = await fetchPage( page, force ? 0 : undefined )
     // console.log( inspect( pageData, { depth: 5 } ) )
     const $ = cheerio.load( content )
 
@@ -657,13 +674,164 @@ const updateMeets = async ( force: boolean ) => {
   }
 }
 
-// Extract options in a typed way
-interface CliOptions {
-  mode: "swimmers" | "meets" | "queue"
-  ids?: string[]
-  club?: string
-  update: SwimmerUpdateType
-  force: boolean
+interface MeetsResultsOptions {
+  region?: string
+  county?: string[]
+  club?: string[]
+  force?: boolean
+}
+
+const getMeetSwimmers = async ( meetResults: MeetResults, year: string, options: MeetsResultsOptions ) => {
+  console.log( `Getting meet swimmers for meet '${meetResults.name}'` )
+
+  const meetSwimmers = new Set<Swimmer["id"]>()
+
+  const clubs: string[] = []
+  let clubIndex = 0
+  do {
+    const club = clubs.length ? clubs[clubIndex] : undefined
+    let pageNo = 1
+    let numPages = 1
+
+    do {
+      const page: PageInfo = {
+        label: `meet_results_${meetResults.id}${club ? ( "-" + club ) : ""}-${pageNo}`,
+        url: createUrl( meetResultsBaseUrl, meetResultsParams( year, meetResults.id, club, pageNo > 1 ? pageNo : undefined ) ),
+        type: "meetResults"
+      }
+      const { content } = await fetchPage( page, options.force ? 0 : undefined )
+      // console.log( inspect( pageData, { depth: 5 } ) )
+      const $ = cheerio.load( content )
+
+      if ( !clubs.length ) {
+        clubs.push(
+          ...$( "#clubtarget > option" )
+            .get()
+            .map( o => $( o ).attr( "value" ) )
+            .filter( o => o !== undefined )
+            .filter( o => !options.county || options.county.includes( o.substring( 4 ) ) )
+            .filter( o => !options.club || options.club.includes( o.substring( 0, 4 ) ) )
+        )
+        if ( !clubs[clubIndex] )  {
+          // The default club isn't in the list
+          break
+        }
+      }
+
+      if ( pageNo === 1 ) {
+        const pages = $( "#outerWrapper > div:nth-child(2) > div.boxRepeat.rankingsContent > p:nth-child(3)" )
+        if ( pages.text().match( /Pages/ ) ) {
+          const pageLinks = $( "#outerWrapper > div:nth-child(2) > div.boxRepeat.rankingsContent > p:nth-child(3) > a" )
+          numPages = pageLinks.length
+          // console.log( `Found ${numPages} pages` )
+        }
+      }
+
+      const pageSwimmers = parseMeetResults( page, $ )
+      if ( pageSwimmers.size ) {
+        console.log( `Got ${pageSwimmers.size} page swimmer ids` )
+      }
+      pageSwimmers.forEach( id => meetSwimmers.add( id ) )
+    } while ( ++pageNo <= numPages )
+  } while ( ++clubIndex < clubs.length )
+  return meetSwimmers
+}
+
+const updateMeetsResults = async ( options: MeetsResultsOptions ) => {
+  console.log( "Updating meets results" )
+
+  const MAX_MEETS_RESULTS = 100
+
+  const pool = await getPool()
+  const selectLastResultsUpdate = prepareStatement<void,{value: string}>( pool, "SELECT value FROM System WHERE name = 'lastResultsUpdate'" )
+  const lastResultsUpdate = await selectLastResultsUpdate.get()
+
+  const resultsSwimmers = new Set<Swimmer["id"]>()
+
+  const now = new Date()
+  const today = format( now, "yyyy-MM-dd" )
+  const thisYear = format( now, "yyyy" )
+
+  let pageNo = 1
+  let fetchNextPage = false
+  do {
+    const page: PageInfo = {
+      label: `meet_results_list-${today}-${pageNo}`,
+      url: createUrl( meetsResultsBaseUrl, meetsResultsParams( thisYear, pageNo ) ),
+      type: "meetsResults"
+    }
+    const { content } = await fetchPage( page, options.force ? 0 : undefined )
+    // console.log( inspect( pageData, { depth: 5 } ) )
+    const $ = cheerio.load( content )
+
+    const firstMeetDate = lastResultsUpdate ? parse( lastResultsUpdate.value, "yyyy-MM-dd", new Date() ) : sub( now, { months: 1 } )
+    const meetsResultsData = parseMeetsResults( page, $, firstMeetDate )
+
+    // console.log( meetsData )
+    console.log( `Got records for ${meetsResultsData.length} meets results` )
+
+    for ( const meetResults of meetsResultsData ) {
+      try {
+        if ( !options.region || meetResults.code.startsWith( options.region ) ) {
+          const meetSwimmers = await getMeetSwimmers( meetResults, thisYear, options )
+          meetSwimmers.forEach( id => resultsSwimmers.add( id ) )
+          if ( meetSwimmers.size ) {
+            console.log( `Got ${meetSwimmers.size} meet swimmer ids` )
+          }
+        }
+      } catch ( _error ) {
+        console.log( `Unable to get meet results swimmers for '${meetResults.name}` )
+      }
+    }
+
+    if ( meetsResultsData.length >= MAX_MEETS_RESULTS ) {
+      fetchNextPage = true
+      pageNo++
+    } else {
+      fetchNextPage = false
+    }
+  } while ( fetchNextPage )
+  if ( resultsSwimmers.size ) {
+    console.log( `Got ${resultsSwimmers.size} swimmer ids to check and update` )
+  }
+  await runTransaction( pool, async ( conn: PoolConnection ) => {
+    const getSystemUser = prepareStatement<void>( conn, "SELECT * FROM User WHERE type = 'system'" )
+    const systemUser = await getSystemUser.get()
+    if ( !systemUser ) {
+      throw new Error( "Can't find system user in database" )
+    }
+    const addTask = prepareStatement(
+      conn,
+      `INSERT INTO Tasks (
+        creatorId, taskType, taskOptions, taskDescription, targetType, targetId
+      )
+      SELECT
+        :userId, :taskType, :taskOptions, :taskDescription, :targetType, :targetId
+      WHERE EXISTS (
+        SELECT 1 FROM Swimmers WHERE Swimmers.id = :targetId
+      )`
+    )
+    let swimmersToUpdate = 0
+    for( const swimmerId of resultsSwimmers ) {
+      const result = await addTask.run( {
+        userId: systemUser.id,
+        taskType: "update",
+        taskOptions: "rankings",
+        taskDescription: "Triggered rankings update from meet results",
+        targetType: "swimmer",
+        targetId: swimmerId
+      } )
+      swimmersToUpdate += result.affectedRows
+      if ( result.affectedRows ) {
+        console.log( `Queued update for swimmer ${swimmerId}` )
+      }
+    }
+    if ( swimmersToUpdate ) {
+      console.log( `Queued ranking updates for ${swimmersToUpdate} swimmers` )
+    }
+    const updateLastResultsUpdate = prepareStatement<{value: string}>( conn, "INSERT INTO System VALUES( 'lastResultsUpdate', :value ) ON DUPLICATE KEY UPDATE value = :value" )
+    await updateLastResultsUpdate.run( { value: today } )
+  } )
 }
 
 ( async () => {
@@ -673,23 +841,17 @@ interface CliOptions {
 
   program
     .name( "fetch" )
-    .description( "Fetch data from source site" )
+    .description( "Fetch and update data from source site" )
 
   program.showHelpAfterError()
 
-  program.addOption( new Option( "-m, --mode <mode>", "fetch mode" ).choices( [ "swimmers", "meets", "queue" ] ).makeOptionMandatory() )
-  program.option( "-i, --id <ids...>", "in swimmers mode, fetch data for specified swimmers, in club mode ids of clubs to fetch" )
-  program.option( "-c, --club <club>", "in swimmers mode, fetch data for swimmers in specified club only" )
-  program.addOption( new Option( "-u, --update <update>", "in swimmers mode, what to update." ).choices( [ "individual", "results", "rankings" ] ) )
-  program.option( "-f, --force", "force update, ignoring caching time", false )
-
-  // Parse argv
-  program.parse( process.argv )
-
-  const options = program.opts<CliOptions>()
-
-  try {
-    if ( options.mode === "swimmers" ) {
+  program.command( "swimmers" )
+    .description( "Fetch swimmer data" )
+    .option( "-i, --id <ids...>", "fetch data for specified swimmers" )
+    .option( "-c, --club <club>", "fetch data for swimmers in specified club only" )
+    .addOption( new Option( "-u, --update <update>", "what level of swimmer data to update" ).choices( [ "individual", "results", "rankings" ] ) )
+    .addOption( new Option( "-m, --mode <mode>", "fetching strategy versus caching" ).choices( [ "force", "smart", "lazy" ] ).default( "lazy" ) )
+    .action( async ( options ) => {
       const getSwimmers = prepareStatement<void,Swimmer>(
         await getPool(),
         "SELECT * FROM Swimmers WHERE active = 1"
@@ -708,20 +870,41 @@ interface CliOptions {
         process.exit( 0 )
       }
       for ( const swimmer of swimmers ) {
-        if ( !options.ids || options.ids.find( s => s === swimmer.id ) ) {
+        if ( !options.ids || options.ids.find( ( s: string ) => s === swimmer.id ) ) {
           try {
-            await updateSwimmerData( swimmer, options.update, options.force )
+            await updateSwimmerData( swimmer, options.update, options.mode )
           } catch ( e ) {
             console.error( "Unable to fetch swimmer data, skipping", e )
             await swimmerUpdateError.run( swimmer )
           }
         }
       }
-    }
-    else if ( options.mode === "meets" ) {
-      await updateMeets( options.force )
-    }
-    else if ( options.mode === "queue" ) {
+    } )
+
+  program.command( "results" )
+    .description( "Fetch recent results listings and identify swimmers that need updates" )
+    .option( "-r, --region <region>", "only fetch results for the specified region" )
+    .option( "-c, --county <county...>", "only fetch results for the specified counties" )
+    .option( "-C, --club <club...>", "only fetch results for the specified clubs" )
+    .addOption( new Option( "-m, --mode <mode>", "fetching strategy versus caching" ).choices( [ "force", "lazy" ] ).default( "lazy" ) )
+    .action( async ( options: MeetsResultsOptions ) => {
+      try {
+        await updateMeetsResults( options )
+      } catch ( e ) {
+        console.error( "Unable to update meet results", e )
+      }
+    } )
+
+  program.command( "meets" )
+    .description( "Fetch data for new or updated meets" )
+    .addOption( new Option( "-m, --mode <mode>", "fetching strategy versus caching" ).choices( [ "force", "lazy" ] ).default( "lazy" ) )
+    .action( async ( options ) => {
+      await updateMeets( options.mode === "force" )
+    } )
+
+  program.command( "queue" )
+    .description( "Process and execute fetches according to task queue" )
+    .action( async () => {
       const getTasks = prepareStatement<void,Task>(
         await getPool(),
         "SELECT * FROM Tasks WHERE taskStatus = 'pending'"
@@ -843,7 +1026,10 @@ interface CliOptions {
           await taskUpdateError.run( task )
         }
       }
-    }
+    } )
+
+  try {
+    await program.parseAsync( process.argv )
   } catch ( error ) {
     console.error( "Error in script", error )
   } finally {

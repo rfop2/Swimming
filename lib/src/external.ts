@@ -1,4 +1,4 @@
-import type { IndividualStats, Meet, PageInfo, Ranking, RankingRow, ResultData, Results, Swimmer } from "./types.js"
+import type { IndividualStats, Meet, MeetResults, PageInfo, Ranking, RankingRow, ResultData, Results, Swimmer } from "./types.js"
 import { getSwimmerAgeGroup, sleep, timeToSeconds } from "./lib.js"
 import { CACHE_DIR } from "./config.js"
 import { differenceInDays, differenceInHours, format, parse } from "date-fns"
@@ -171,7 +171,12 @@ export const AGES = [
 
 export const individualBaseUrl = "/individualbest/personal_best.php"
 
-export const individualParams = ( swimmer: Swimmer ) => ( {
+export const individualAllTimeParams = ( swimmer: Swimmer ) => ( {
+  mode: "A",
+  tiref: swimmer.id,
+} )
+
+export const individualRecentParams = ( swimmer: Swimmer ) => ( {
   mode: "A",
   tiref: swimmer.id,
 } )
@@ -237,6 +242,28 @@ export const meetParams = ( page: number, region: string, meet: number ) => ( {
   year: "P",
 } )
 
+export const meetsResultsBaseUrl = "/showmeetsbyclub"
+
+export const meetsResultsParams = ( targetyear: string, page: number ) => ( {
+  targetyear,
+  masters: "0",
+  page: String( page ),
+} )
+
+export const meetResultsBaseUrl = `${meetsResultsBaseUrl}/index.php`
+
+export const meetResultsParams = ( targetyear: string, meetcode: number, targetclub?: string, page?: number ) => {
+  const params: Record<string,string> = {
+    targetyear,
+    masters: "0",
+    pgm: "1",
+    meetcode: String( meetcode ),
+  }
+  if ( targetclub ) params.targetclub = targetclub
+  if ( page ) params.page = String( page )
+  return params
+}
+
 export const createUrl = ( base: string, params: Record<string, string> ) => {
   const url = new URL( BASE_URL + base )
   url.search = new URLSearchParams( params ).toString()
@@ -247,7 +274,7 @@ const DEFAULT_CACHE_TIME = Number( process.env.PAGE_CACHE_TIME ?? 24 )
 const MIN_FETCH_INTERVAL = Number( process.env.MIN_FETCH_INTERVAL ?? 0 )
 const MAX_FETCH_INTERVAL = Number( process.env.MAX_FETCH_INTERVAL ?? 0 )
 
-const loadCachedPage = async ( contentFile: string, cacheTime: number ) => {
+const loadCachedPage = async ( contentFile: string, cacheTime: number ) : Promise<{ age: number, content: Buffer} | undefined> => {
   // Dynamic import to avoid browser issues
   const { stat, readFile } = await import( "fs/promises" )
 
@@ -259,16 +286,18 @@ const loadCachedPage = async ( contentFile: string, cacheTime: number ) => {
       // Page is new enough
       console.log( `Reading ${contentFile}, cached: ${fileAge} hours` )
       const content = await readFile( contentFile )
-      return content
+      return { age: fileAge, content }
     }
   } catch ( error ) {
     if ( error instanceof Error && ( error as NodeJS.ErrnoException ).code ) {
       const err = error as NodeJS.ErrnoException
       if ( err.code !== "ENOENT" ) {
         console.error( `Unable to read file '${contentFile}': ${err.code} - ${err.message}` )
+        throw error
       }
     } else {
       console.error( "Unknown error:", error )
+      throw error
     }
   }
 }
@@ -300,9 +329,9 @@ const saveCachedPage = async ( contentFile: string, content: string ) => {
 export const fetchPage = async ( pageInfo: PageInfo, cacheTime: number = DEFAULT_CACHE_TIME ) => {
   const contentFile = CACHE_DIR + "/" + pageInfo.label
   console.log( `Processing ${pageInfo.label} -> ${pageInfo.url}` )
-  const cachedContent = await loadCachedPage( contentFile, cacheTime )
-  if ( cachedContent )
-    return cachedContent
+  const cachedPage = await loadCachedPage( contentFile, cacheTime )
+  if ( cachedPage )
+    return cachedPage
   try {
     process.stdout.write( `Fetching ${pageInfo.url}` )
     const headers = new Headers( {
@@ -344,7 +373,7 @@ export const fetchPage = async ( pageInfo: PageInfo, cacheTime: number = DEFAULT
     }
     const content = await response.text()
     await saveCachedPage( contentFile, content )
-    return content
+    return { age: 0, content }
   } catch ( error ) {
     console.error( `\nFailed to fetch ${pageInfo.url}`, error )
     throw error
@@ -367,7 +396,7 @@ export const fetchPages = async ( pages: Map<string,PageInfo>, cacheTime: number
 
   console.log( `Getting content for ${pages.size} pages` )
 
-  const responses: Map<string,string> = new Map()
+  const responses: Map<string,{ age: number, content: string}> = new Map()
   for ( const pageInfo of pages.values() ) {
     const contentFile = CACHE_DIR + "/" + pageInfo.label
     console.log( `Processing ${pageInfo.label} -> ${pageInfo.url}` )
@@ -379,7 +408,7 @@ export const fetchPages = async ( pages: Map<string,PageInfo>, cacheTime: number
         // Page is new enough
         console.log( `Reading ${contentFile}, cached: ${fileAge} hours` )
         const content = await readFile( contentFile )
-        responses.set( pageInfo.url.toString(), String( content ) )
+        responses.set( pageInfo.url.toString(), { age: fileAge, content: String( content ) } )
       }
     } catch ( error ) {
       if ( error instanceof Error && ( error as NodeJS.ErrnoException ).code ) {
@@ -437,7 +466,7 @@ export const fetchPages = async ( pages: Map<string,PageInfo>, cacheTime: number
             if ( jobStatus.response.statusCode < 200 || jobStatus.response.statusCode >= 300 ) {
               throw new Error( `Request failed for '${jobStatus.url}': ${jobStatus.response.statusCode} (${jobStatus.response.statusText})` )
             }
-            responses.set( jobStatus.url, jobStatus.response.body )
+            responses.set( jobStatus.url, { age: 0, content: jobStatus.response.body } )
             const contentFile = CACHE_DIR + "/" + pages.get( job.url )?.label
             await writeFile( contentFile, jobStatus.response.body )
             jobs.delete( jobStatus.url )
@@ -463,9 +492,9 @@ export const fetchPageBrowser = async ( pageInfo: PageInfo, cacheTime: number = 
   const page = await getBrowserPage()
   const contentFile = CACHE_DIR + "/" + pageInfo.label
   console.log( `Processing ${pageInfo.label} -> ${pageInfo.url}` )
-  const cachedContent = await loadCachedPage( contentFile, cacheTime )
-  if ( cachedContent )
-    return cachedContent
+  const cachedPage = await loadCachedPage( contentFile, cacheTime )
+  if ( cachedPage )
+    return cachedPage
   try {
     process.stdout.write( `Fetching ${pageInfo.url}` )
     const timer = new Timer()
@@ -475,7 +504,7 @@ export const fetchPageBrowser = async ( pageInfo: PageInfo, cacheTime: number = 
     process.stdout.write( ` - ${timer.elapsedSeconds().toFixed( 2 )}\n` )
     timer.stop()
     await saveCachedPage( contentFile, content )
-    return content
+    return { age: 0, content }
   } catch ( error ) {
     console.error( `\nFailed to fetch ${pageInfo.url}`, error )
     throw error
@@ -760,4 +789,54 @@ export const parseMeet = async ( pageInfo: PageInfo, $: CheerioAPI, meet: Partia
   const location = await geocodeLocation( meet.location )
   meet.locationId = location ? location.locationId : null
   return location
+}
+
+const getResultsLink = ( $: CheerioAPI, valueCells: Cheerio<AnyNode> ) : Record<string,string> => {
+  const linkCell = valueCells[5]
+  const anchor = $( linkCell ).find( "a" )[0]
+  const link = $( anchor ).attr( "href" )
+  if ( !link )
+    return {}
+  const meetId = link.match( /meetcode=(\d+)/ )?.[1] ?? ""
+  return { link, meetId }
+}
+
+export const parseMeetResults = ( _pageInfo: PageInfo, $: CheerioAPI ) => {
+  const tables = $( "#rankTable" )
+  const swimmerIds = new Set<Swimmer["id"]>()
+  const table = extractTableData( $, $( tables[0] ) )
+  if ( table.length ) {
+    // Do any conversions
+    for ( const row of table ) {
+      swimmerIds.add( row.member )
+    }
+  }
+  return swimmerIds
+}
+
+export const parseMeetsResults = ( _pageInfo: PageInfo, $: CheerioAPI, minMeetDate: Date ) => {
+  const tables = $( "#rankTable" )
+  const data: Array<MeetResults> = []
+  const table = extractTableData( $, $( tables[0] ), getResultsLink )
+  if ( table.length ) {
+    // Do any conversions
+    for ( const row of table ) {
+      const meetDate = parse( row.date, "dd/MM/yy", new Date() )
+      if ( meetDate >= minMeetDate ) {
+        const resultRow: MeetResults = {
+          id: Number( row.meetId ),
+          code: row.licence,
+          name: row.meet_name,
+          city: row.city,
+          type: row.type,
+          date: format( meetDate, "yyyy-MM-dd" ),
+          course: row.course.toLocaleLowerCase(),
+          link: row.link,
+          level: Number( row.level ),
+        }
+        data.push( resultRow )
+      }
+    }
+  }
+  return data
 }
