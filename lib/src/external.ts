@@ -148,7 +148,6 @@ const strokeData = Object.entries( STROKE_DISTANCE ).reduce( ( strokes, [ stroke
   return strokes
 }, {} as Record<string,{ label: string, order: number, distances: Array<string>, codes: Array<string>}> )
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const strokes = Object.fromEntries( Object.entries( strokeData ).sort( ( [ _keyA, valA ], [ _keyB, valB ] ) => valA.order - valB.order ) )
 
 export const POOLS = {
@@ -522,7 +521,7 @@ const extractTableData = ( $: CheerioAPI, table: Cheerio<AnyNode>, rowFunc?: Row
   table.find( "tr" ).each( ( rowIndex, rowElement ) => {
     const row = $( rowElement )
     if ( rowIndex === 0 ) {
-      row.find( "th" ).each( ( cellIndex, cellElement ) => {
+      row.find( "th" ).each( ( _cellIndex, cellElement ) => {
         headers.push( $( cellElement ).text().toLocaleLowerCase().replace( /\s+/g, "_" ) )
       } )
       return
@@ -548,7 +547,7 @@ const extractTableData = ( $: CheerioAPI, table: Cheerio<AnyNode>, rowFunc?: Row
   return dataObject
 }
 
-export const parseIndividual = ( pageInfo: PageInfo, $: CheerioAPI ) => {
+export const parseIndividual = ( _pageInfo: PageInfo, $: CheerioAPI ) => {
   const headers = $( "p.rnk_sj" )
   const tables = $( "[id='rankTable'] tbody" )
   const data: Array<IndividualStats> = []
@@ -601,7 +600,7 @@ const extractSwimmerId = ( $: CheerioAPI, valueCells: Cheerio<AnyNode> ) => {
   return { swimmer: swimmerId }
 }
 
-export const parseRanking = ( pageInfo: PageInfo, $: CheerioAPI ) => {
+export const parseRanking = ( _pageInfo: PageInfo, $: CheerioAPI ) => {
   const tables = $( "[id='rankTable'] tbody" )
   const data: Ranking = {
     table: [],
@@ -633,7 +632,7 @@ export const parseRanking = ( pageInfo: PageInfo, $: CheerioAPI ) => {
   return data
 }
 
-export const parseResults = ( pageInfo: PageInfo, $: CheerioAPI ) => {
+export const parseResults = ( _pageInfo: PageInfo, $: CheerioAPI ) => {
   const tables = $( "[id='rankTable'] tbody" )
   const data: Results = []
   const table = extractTableData( $, $( tables[1] ) )
@@ -665,7 +664,7 @@ const extractMeetsTableData = ( $: CheerioAPI, table: Cheerio<AnyNode> ) => {
   $( thead ).find( "tr" ).each( ( rowIndex, rowElement ) => {
     const row = $( rowElement )
     if ( rowIndex === 0 ) {
-      row.find( "th" ).each( ( cellIndex, cellElement ) => {
+      row.find( "th" ).each( ( _cellIndex, cellElement ) => {
         // console.log( $( cellElement ).text() )
         headers.push( $( cellElement ).text().trim().toLocaleLowerCase().replace( /\W+/g, "_" ) )
       } )
@@ -674,7 +673,7 @@ const extractMeetsTableData = ( $: CheerioAPI, table: Cheerio<AnyNode> ) => {
   } )
 
   const tbody = table.find( "tbody" )[0]
-  $( tbody ).find( "tr" ).each( ( rowIndex, rowElement ) => {
+  $( tbody ).find( "tr" ).each( ( _rowIndex, rowElement ) => {
     const row = $( rowElement )
     const valueCells = row.find( "td div" )
     const rowData: Record<string, string | string[]> = {}
@@ -683,7 +682,7 @@ const extractMeetsTableData = ( $: CheerioAPI, table: Cheerio<AnyNode> ) => {
       let value: string | string[] = ""
       switch ( headerIndex ) {
         case 0: {
-          value = $( valueCell ).children().map( ( i, el ) => $( el ).text().trim() ).get()
+          value = $( valueCell ).children().map( ( _i, el ) => $( el ).text().trim() ).get()
           break
         }
         case 1: {
@@ -720,7 +719,7 @@ const extractMeetsTableData = ( $: CheerioAPI, table: Cheerio<AnyNode> ) => {
   return dataObject
 }
 
-export const parseMeets = ( pageInfo: PageInfo, $: CheerioAPI ) => {
+export const parseMeets = ( _pageInfo: PageInfo, $: CheerioAPI ) => {
   const tables = $( "#eventWrapper > table:nth-child(1)" )
   const data: Array<Partial<Meet>> = []
   const table = extractMeetsTableData( $, $( tables[0] ) )
@@ -755,12 +754,12 @@ export const parseMeets = ( pageInfo: PageInfo, $: CheerioAPI ) => {
   return data
 }
 
-export const parseMeet = async ( pageInfo: PageInfo, $: CheerioAPI, meet: Partial<Meet> ) => {
+export const parseMeet = async ( _pageInfo: PageInfo, $: CheerioAPI, meet: Partial<Meet> ) => {
   const startElem = $( "div.cl-event-date:nth-child(2)" )
-  const startParts = $( startElem ).children().map( ( i, el ) => $( el ).text().trim() ).get()
+  const startParts = $( startElem ).children().map( ( _i, el ) => $( el ).text().trim() ).get()
   const startDate = parse( `${startParts[1]} ${startParts[3]}`, "dd MMM yyyy", new Date() )
   const endElem = $( "div.cl-event-date:nth-child(3)" )
-  const endParts = $( endElem ).children().map( ( i, el ) => $( el ).text().trim() ).get()
+  const endParts = $( endElem ).children().map( ( _i, el ) => $( el ).text().trim() ).get()
   const endDate = parse( `${endParts[1]} ${endParts[3]}`, "dd MMM yyyy", new Date() )
 
   meet.duration = 1 + differenceInDays( endDate, startDate )
