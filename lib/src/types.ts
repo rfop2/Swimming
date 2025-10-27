@@ -187,3 +187,4 @@ export interface Task {
 }
 
 export type SwimmerUpdateType = "individual" | "results" | "rankings"
+export type SwimmerUpdateMode = "force" | "smart" | "lazy"
