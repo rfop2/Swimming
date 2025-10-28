@@ -44,8 +44,7 @@
     "/api/qualifying",
   )
 
-  const yearOptions = ref<UISelection[]>( [] )
-  const qualifyingYear = ref<UISelection | undefined>( undefined )
+  const qualifyingYear = ref<number | undefined>( undefined )
   const defaultYear = getYear( addMonths( new Date(), 1 ) )
   const qualifyingYearInfo = ref<QualifyingRow[]>( [] )
 
@@ -92,18 +91,15 @@
           },
           new Set<number>()
         ) ) )
-        yearOptions.value = qualifyingYears.value.map( year => ( { label: `${year} / ${getQualifyingAge( year )}`, value: year } ) )
-        qualifyingYear.value = yearOptions.value.find( y => y.value === defaultYear ) ?? yearOptions.value[0]
+        qualifyingYear.value = qualifyingYears.value.find( y => y === defaultYear ) ?? qualifyingYears.value[0]
         if ( qualifyingYear.value ) {
-          const qualifyingAge = getQualifyingAge( Number( qualifyingYear.value.value ) )
+          const qualifyingAge = getQualifyingAge( Number( qualifyingYear.value ) )
 
           qualifyingYearInfo.value =
             ( qualifyingInfo.value ?? [] )
-              .filter( row => ( row.year === qualifyingYear.value?.value && row.age === qualifyingAge && row.gender === swimmer.value?.gender ) )
+              .filter( row => ( row.year === qualifyingYear.value && row.age === qualifyingAge && row.gender === swimmer.value?.gender ) )
         }
       }
-    } else {
-      yearOptions.value = []
     }
   } )
 
@@ -312,13 +308,6 @@
         v-model="swimmer"
         :show-label="false"
       />
-      <div class="min-w-32">
-        <UI-Listbox
-          v-model="qualifyingYear"
-          :options="yearOptions"
-          placeholder="Choose Year"
-        />
-      </div>
     </template>
     <template #key>
       Key &ndash; Best times recorded in current calendar year qualify for <span class="px-2 mr-1 qualifiedArea1" /> county, <span class="px-2 mr-1 qualifiedArea2" /> region<!--, <span class="px-2 mr-1 qualifiedArea3" /> country-->.
