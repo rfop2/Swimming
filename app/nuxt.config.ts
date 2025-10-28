@@ -50,6 +50,7 @@ export default defineNuxtConfig( {
           if (
             id.startsWith( "puppeteer" )
             || id.startsWith( "@puppeteer/" )
+            || id.startsWith( "proxy-chain" )
             || builtinModules.includes( id )
           ) {
             return { id, external: true }

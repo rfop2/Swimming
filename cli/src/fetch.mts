@@ -598,6 +598,11 @@ const updateMeets = async ( force: boolean ) => {
 
   let pageNo = 1
   let numPages = 1
+  const counts = {
+    created: 0,
+    updated: 0,
+    deleted: 0,
+  }
   do {
     const page: PageInfo = {
       label: `meets_list_${region}-${pageNo}`,
@@ -633,20 +638,21 @@ const updateMeets = async ( force: boolean ) => {
           || meet.type !== dbMeet.type
         ) {
           console.log( "Updated meet", meet, dbMeet )
+          counts.updated++
         } else {
           fetchMeet = false
         }
       } else {
         console.log( "New meet", meet )
+        counts.created++
       }
       if ( fetchMeet || force ) {
         try {
           await updateMeet( meet, force )
           // console.log( meet )
           await saveMeets.run( meet )
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch ( error ) {
-          console.log( `Unable to update meet '${meet.name}'` )
+          console.log( `Unable to update meet '${meet.name}'`, error )
         }
       }
     }
@@ -666,12 +672,14 @@ const updateMeets = async ( force: boolean ) => {
       // console.log( "Got", currPage, maxPages )
     }
   } while ( ++pageNo <= numPages )
-  const deletedMeets = new Set( meetsMap.keys() ).difference( fetchedMeets )
+  /* const deletedMeets = new Set( meetsMap.keys() ).difference( fetchedMeets )
   const deleteMeet = prepareStatement<{ meetId: string }>( pool, "DELETE FROM Meets WHERE id = :meetId" )
   for ( const meetId of deletedMeets ) {
     console.log( `Deleting meet ${meetId}` )
     await deleteMeet.run( { meetId } )
-  }
+    counts.deleted++
+  } */
+  console.log( `Found ${counts.created} new meets, ${counts.updated} updated meets and ${counts.deleted} deleted meets` )
 }
 
 interface MeetsResultsOptions {
