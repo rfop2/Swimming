@@ -1,6 +1,15 @@
 import * as XLSX from "xlsx"
 
 // some functions doesn't have course because is selected by the user
+interface ImportEvent {
+  gender: "male" | "female" | null
+  age: string | number
+  course?: "lc" | "sc" | null
+  distance: string
+  stroke: string | null
+  event: string
+  time: string | null
+}
 
 // 2025-SECC-Qualifying-Times_updated-Nov-2024_-final
 export function parseSwimmingPdf( text: string ) {
@@ -9,7 +18,7 @@ export function parseSwimmingPdf( text: string ) {
     [ "Freestyle", "Breaststroke", "Butterfly", "Backstroke", "IM" ].includes( w )
 
   const rawLines = text.split( "\n" ).map( l => l.trim() ).filter( Boolean )
-  const events: any[] = []
+  const events: ImportEvent[] = []
 
   const pushEvent = ( distance: string, stroke: string, femaleRaw: string[], maleRaw: string[] ) => {
     const eventName = `${distance} ${stroke}`
@@ -88,7 +97,7 @@ export function parseSwimmingPdfLayout2( text: string ) {
   const ages = [ "10 & 11", "12", "13", "14", "15", "16", "17/OV" ]
 
   const structured = []
-  let currentGender = null
+  let currentGender: string | null = null
 
   for ( const line of lines ) {
     // detect gender
@@ -204,7 +213,7 @@ export function parseSwimmingPdfLayout3( text: string ) {
 }
 
 export function normalizeLayout3( events: any[] ) {
-  const normalized: any[] = []
+  const normalized: ImportEvent[] = []
 
   events.forEach( event => {
     let stroke = event.stroke
@@ -283,7 +292,7 @@ export function parseSwimmingXlsx( buffer: ArrayBuffer | Buffer ) {
   const rows: string[][] = XLSX.utils.sheet_to_json( sheet, { header: 1, raw: false } )
 
   const ages = [ "10yrs", "11yrs", "12yrs", "13yrs", "14yrs", "15yrs", "16yrs", "17/ov" ]
-  const events: any[] = []
+  const events: ImportEvent[] = []
   let currentDistance = ""
   let currentStroke = ""
 
@@ -350,7 +359,7 @@ export function parseSwimmingPdfLayout4( text: string ) {
   const strokes = [ "Freestyle", "Backstroke", "Breaststroke", "Butterfly", "IM" ]
   const distances = [ "50", "100", "200", "400", "800", "1500" ]
 
-  const structured: any[] = []
+  const structured: ImportEvent[] = []
   let currentCourse: "lc" | "sc" | null = null
   let currentGender: "male" | "female" | null = null
 
@@ -383,7 +392,7 @@ export function parseSwimmingPdfLayout4( text: string ) {
 
     // Encontrar stroke na linha
     let matchedStroke: string | null = null
-    let distance: string | null = null
+    let distance: string | undefined = undefined
 
     for ( const stroke of strokes ) {
       const strokeIndex = line.indexOf( stroke )
@@ -441,8 +450,8 @@ export function parseSwimmingPdfLayout5( text: string ) {
   const lines = text.split( "\n" ).map( l => l.trim() ).filter( Boolean )
 
   const AGE_COLS = [ "10-11", "12", "13", "14", "15", "16", "17" ]
-  const course: "sc" = "sc"
-  const structured: any[] = []
+  const course = "sc" as const
+  const structured: ImportEvent[] = []
 
   let gender: "female" | "male" | null = null
 
@@ -511,7 +520,8 @@ export function parseSwimmingPdfLayout5( text: string ) {
 
   const finalizePending = () => {
     if ( !pending || !gender ) {
-      pending = null; return
+      pending = null
+      return
     }
     const N = expectedCount( pending.distance, pending.stroke )
 
@@ -536,10 +546,14 @@ export function parseSwimmingPdfLayout5( text: string ) {
 
     // cabeçalhos de gênero
     if ( /^FEMALE$/i.test( line ) ) {
-      finalizePending(); gender = "female"; continue
+      finalizePending()
+      gender = "female"
+      continue
     }
     if ( /^(OPEN\s*\/\s*MALE|MALE\s*\/\s*OPEN|OPEN\/MALE|MALE\/OPEN|OPEN|MALE)$/i.test( line ) ) {
-      finalizePending(); gender = "male"; continue
+      finalizePending()
+      gender = "male"
+      continue
     }
 
     if ( isMeta( line ) ) continue
@@ -573,7 +587,7 @@ export function parseSwimmingPdfLayout6( text: string ) {
   const lines = text.split( "\n" ).map( l => l.trim() ).filter( Boolean )
 
   const AGES8 = [ "10-11", "12", "13", "14", "15", "16", "17", "18+" ]
-  const structured: any[] = []
+  const structured: ImportEvent[] = []
 
   let gender: "female" | "male" | null = null
   let eventHeaderCount = 0
@@ -673,8 +687,6 @@ export function parseSwimmingPdfLayout7( text: string ) {
 
   const TIME_TOKEN_RX = /\d{1,2}(?:[:.]\d{1,2}){1,2}/g
 
-  const isTimesLine = ( s: string ) => ( s.match( TIME_TOKEN_RX ) ?? [] ).length > 0
-
   const expectedCols = ( distance: string, stroke: string ) => {
     const isIM = /Ind(?:ividual)?\.?\s*Medley|IM/i.test( stroke )
     if ( distance === "800m" || distance === "1500m" ) return 6 // 12..17+
@@ -684,8 +696,8 @@ export function parseSwimmingPdfLayout7( text: string ) {
 
   const alignTo7 = ( distance: string, stroke: string, times: string[] ) => {
     const need = expectedCols( distance, stroke ) // 6 ou 7
-    let arr = times.slice( 0, need )
-    if ( need === 6 ) arr = [ null, ...arr ]
+    const arr: ( string | null )[] = times.slice( 0, need )
+    if ( need === 6 ) arr.unshift( null )
     while ( arr.length < 7 ) arr.push( null )
     return arr as ( string | null )[]
   }
@@ -714,10 +726,12 @@ export function parseSwimmingPdfLayout7( text: string ) {
 
     // Detecta gênero
     if ( /^FEMALE\b/i.test( line ) ) {
-      gender = "female"; continue
+      gender = "female"
+      continue
     }
     if ( /^(OPEN\/MALE|OPEN\s*\/\s*MALE|MALE|OPEN)\b/i.test( line ) ) {
-      gender = "male"; continue
+      gender = "male"
+      continue
     }
     if ( !gender ) continue
 
@@ -819,7 +833,8 @@ export function parseSwimmingPdfLayout8( text: string ) {
 
   const flushPending = () => {
     if ( !pending || !currentCourse || !currentGender ) {
-      pending = null; return
+      pending = null
+      return
     }
     const toks = pending.tokens.slice( 0, NEED_TOKENS )
     if ( toks.length === NEED_TOKENS ) {
@@ -984,7 +999,9 @@ export function parseSwimmingPdfLayout9( text: string ) {
 
     const g = genderFrom( raw )
     if ( g ) {
-      flushPending(); gender = g; continue
+      flushPending()
+      gender = g
+      continue
     }
 
     if ( !gender ) continue
@@ -1118,10 +1135,12 @@ export function parseSwimmingPdfLayout10( text: string ) {
 
     // Gender switches
     if ( MALE_RX.test( raw ) ) {
-      currentGender = "male"; continue
+      currentGender = "male"
+      continue
     }
     if ( FEMALE_RX.test( raw ) ) {
-      currentGender = "female"; continue
+      currentGender = "female"
+      continue
     }
 
     // Skip “Age Group …” header line; it’s informative only

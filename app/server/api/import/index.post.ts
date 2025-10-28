@@ -5,7 +5,7 @@ import { parseSwimmingPdf, parseSwimmingPdfLayout10, parseSwimmingPdfLayout11,
   parseSwimmingPdfLayout9, parseSwimmingXlsx }
   from "../../utils/parseSwimmingDocs"
 
-import { readMultipartFormData, readBody } from "h3"
+import { readMultipartFormData } from "h3"
 import pdf from "pdf-parse/lib/pdf-parse.js"
 
 export default defineEventHandler( async ( event ) => {

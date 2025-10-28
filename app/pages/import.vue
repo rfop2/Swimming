@@ -6,7 +6,7 @@
   import TableMaleOpen from "~/components/TableMaleOpen.vue"
   import TableXlsx from "~/components/TableXlsx.vue"
   import StandardPage from "~/components/StandardPage.vue"
-  import { addMonths, format, getYear, parseISO } from "date-fns"
+  import { addMonths, getYear } from "date-fns"
   import { REGIONS, COUNTIES, NATIONALITIES } from "lib"
   import TableFemaleMaleBothCourse from "~/components/TableFemaleMaleBothCourse.vue"
   import TableAcceptedConsidered from "~/components/TableAcceptedConsidered.vue"
