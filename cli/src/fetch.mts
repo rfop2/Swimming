@@ -672,13 +672,13 @@ const updateMeets = async ( force: boolean ) => {
       // console.log( "Got", currPage, maxPages )
     }
   } while ( ++pageNo <= numPages )
-  const deletedMeets = new Set( meetsMap.keys() ).difference( fetchedMeets )
+  /* const deletedMeets = new Set( meetsMap.keys() ).difference( fetchedMeets )
   const deleteMeet = prepareStatement<{ meetId: string }>( pool, "DELETE FROM Meets WHERE id = :meetId" )
   for ( const meetId of deletedMeets ) {
     console.log( `Deleting meet ${meetId}` )
     await deleteMeet.run( { meetId } )
     counts.deleted++
-  }
+  } */
   console.log( `Found ${counts.created} new meets, ${counts.updated} updated meets and ${counts.deleted} deleted meets` )
 }
 
