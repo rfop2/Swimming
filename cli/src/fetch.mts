@@ -598,6 +598,11 @@ const updateMeets = async ( force: boolean ) => {
 
   let pageNo = 1
   let numPages = 1
+  const counts = {
+    created: 0,
+    updated: 0,
+    deleted: 0,
+  }
   do {
     const page: PageInfo = {
       label: `meets_list_${region}-${pageNo}`,
@@ -633,11 +638,13 @@ const updateMeets = async ( force: boolean ) => {
           || meet.type !== dbMeet.type
         ) {
           console.log( "Updated meet", meet, dbMeet )
+          counts.updated++
         } else {
           fetchMeet = false
         }
       } else {
         console.log( "New meet", meet )
+        counts.created++
       }
       if ( fetchMeet || force ) {
         try {
@@ -671,7 +678,9 @@ const updateMeets = async ( force: boolean ) => {
   for ( const meetId of deletedMeets ) {
     console.log( `Deleting meet ${meetId}` )
     await deleteMeet.run( { meetId } )
+    counts.deleted++
   }
+  console.log( `Found ${counts.created} new meets, ${counts.updated} updated meets and ${counts.deleted} deleted meets` )
 }
 
 interface MeetsResultsOptions {
