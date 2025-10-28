@@ -1,17 +1,17 @@
 import { format } from "date-fns"
 import { getPool, prepareStatement, runTransaction } from "lib/index.ts"
 
-export default eventHandler(async (event) => {
-  if (!event.context.session) {
-    throw createError({ statusCode: 403 })
+export default eventHandler( async ( event ) => {
+  if ( !event.context.session ) {
+    throw createError( { statusCode: 403 } )
   }
 
   try {
-    const saveData = await readBody(event)
+    const saveData = await readBody( event )
 
     await runTransaction(
       await getPool(),
-      async (conn, importData) => {
+      async ( conn, importData ) => {
         const insertRow = prepareStatement(
           conn,
           `INSERT INTO Qualifying (
@@ -46,18 +46,18 @@ export default eventHandler(async (event) => {
           ;`
         )
 
-        for (const row of importData) {
-          row.created = format(row.created, "yyyy-MM-dd")
-          await insertRow.run(row)
+        for ( const row of importData ) {
+          row.created = format( row.created, "yyyy-MM-dd" )
+          await insertRow.run( row )
         }
       },
       saveData
     )
-  } catch (error) {
-    console.error(error)
-    throw createError({
+  } catch ( error ) {
+    console.error( error )
+    throw createError( {
       message: "Unable to import qualifying times",
       statusCode: 500
-    })
+    } )
   }
-})
+} )
