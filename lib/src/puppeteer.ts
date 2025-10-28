@@ -79,15 +79,6 @@ export const getBrowserPage = async () => {
       ],
     } )
 
-    // For visibility:
-    client.on( "Network.requestWillBeSent", ( params ) => {
-      if ( params.request.url.includes( "google." ) ) {
-        console.log( "⚠️  Would have hit Google:", params.request.url )
-      }
-    } )
-
-    await page.setRequestInterception( true )
-
     page.on( "request", ( req ) => {
       const url = req.url()
       const resource = req.resourceType()
@@ -95,37 +86,27 @@ export const getBrowserPage = async () => {
       try {
         // Block by domain regex
         const hostname = new URL( url ).hostname
-        console.log( "H", hostname )
         if ( allowDomainPatterns.some( ( re ) => re.test( hostname ) ) ) {
-          console.log( `Force allowed request to domain ${hostname}` )
           return void req.continue()
         }
-
         if ( blockedDomainPatterns.some( ( re ) => re.test( hostname ) ) ) {
-          console.log( `Blocked request to domain ${hostname}` )
           return void req.abort()
         }
 
         // Block by path regex
         const pathname = new URL( url ).pathname
-
         if ( allowPathPatterns.some( ( re ) => re.test( pathname ) ) ) {
-          console.log( `Force allowed request to path ${pathname}` )
           return void req.continue()
         }
-
         if ( blockedPathPatterns.some( ( re ) => re.test( pathname ) ) ) {
-          console.log( `Blocked request to path ${pathname}` )
           return void req.abort()
         }
 
         // Block by resource type
         if ( blockedResourceTypes.includes( resource ) ) {
-          console.log( `Blocked request for resource ${resource}` )
           return void req.abort()
         }
 
-        console.log( `Allowing request to ${hostname}/${pathname} (${resource})` )
         // Otherwise continue
         void req.continue()
       } catch {
