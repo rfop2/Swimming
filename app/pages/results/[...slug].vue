@@ -168,8 +168,10 @@
     datasets: [
       {
         label: "Time",
-        backgroundColor: "#3b82f6",
-        // data: ( records?.value || [] ).map( record => ( { x: record.date, y: Number( record.time ) } ) )
+        borderColor: "#60a5fa", // line color
+        borderWidth: 2, // line thickness
+        pointRadius: 2, // point size
+        pointBackgroundColor: "#3b82f6", // point color
         data: dataValues.value,
       }
     ]
@@ -250,7 +252,7 @@
         annotations: {
           zone1: {
             type: "box",
-            yMin: 0,
+            yMin: regionQualifying.value?.courseTime,
             yMax: countyQualifying.value?.courseTime,
             backgroundColor: "#22c55e20",
             display: !!countyQualifying.value,
@@ -259,7 +261,7 @@
               display: true,
               content: `${ucFirst( countyQualifying.value?.scope ?? "" )}: ${secondsToTime( countyQualifying.value?.courseTime || 0 )}`,
               position: "start",
-              backgroundColor: "rgba(255,0,0,0.7)",
+              backgroundColor: "#22c55e30",
               color: "#137c3a",
               font: {
                 size: 12,
@@ -285,7 +287,7 @@
               display: true,
               content: `${ucFirst( regionQualifying.value?.scope ?? "" )}: ${secondsToTime( regionQualifying.value?.courseTime || 0 )}`,
               position: "start",
-              backgroundColor: "rgba(0,255,0,0.7)",
+              backgroundColor: "#f9741642",
               color: "#b65e1f",
               font: {
                 size: 12,
