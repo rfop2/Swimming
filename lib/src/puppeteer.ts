@@ -41,9 +41,17 @@ let browser: Browser | null = null
 let page: Page | null = null
 
 export const getBrowserPage = async () => {
-  const proxy = "http://proxy-server.scraperapi.com:8001"
-  const username = "scraperapi"
-  const password = process.env.SCRAPER_API_KEY
+  const { anonymizeProxy } = await import( "proxy-chain" )
+
+  const username = process.env.NORDVPN_SC_USERNAME!
+  const password = process.env.NORDVPN_SC_PASSWORD!
+
+  // closest to UK: Dublin or Amsterdam SOCKS5
+  const socksHost = "nl.socks.nordhold.net" // or "amsterdam.nl.socks.nordhold.net"
+  const socksPort = 1080
+
+  const nordSocks = `socks5://${encodeURIComponent( username )}:${encodeURIComponent( password )}@${socksHost}:${socksPort}`
+  const localHttpProxy = await anonymizeProxy( nordSocks ) // converts SOCKS5→HTTP for Puppeteer
 
   const puppeteer = await import( "puppeteer" ) // dynamic import
 
@@ -53,7 +61,7 @@ export const getBrowserPage = async () => {
       args: [
         "--no-sandbox",
         "--disable-setuid-sandbox",
-        `--proxy-server=${proxy}`,
+        `--proxy-server=${localHttpProxy}`,
         "--ignore-certificate-errors",
       ]
     }
@@ -66,7 +74,7 @@ export const getBrowserPage = async () => {
     page.setDefaultNavigationTimeout( 120_000 )
     page.setDefaultTimeout( 120_000 )
 
-    await page.authenticate( { username, password: password as string } )
+    await page.authenticate( { username, password: password } )
 
     const client = await page.createCDPSession()
     await client.send( "Network.enable" )
