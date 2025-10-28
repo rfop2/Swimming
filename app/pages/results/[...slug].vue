@@ -334,7 +334,7 @@
           placeholder="Choose Distance"
         />
       </div>
-      <div class="min-w-96">
+      <div class="min-w-48">
         <UI-Year-Range
           v-model="selections.period"
         />

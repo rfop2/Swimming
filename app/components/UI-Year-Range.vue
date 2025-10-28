@@ -1,4 +1,5 @@
 <script setup lang="ts">
+  import { getYear } from "date-fns"
   import { Temporal } from "temporal-polyfill"
 
   export interface DateDefn {
@@ -15,15 +16,16 @@
     labelled: true,
   } )
 
-  const dateRanges = [
+  const currentYear = getYear( new Date() )
+  const yearSpan = 5
+
+  const dateRanges: UISelection[] = [
     { label: "All Time", value: "" },
-    { label: "Last Year", value: "last-year" },
-    { label: "Last Two Years", value: "last2-year" },
-    { label: "Last Three Years", value: "last3-year" },
-    { label: "Last Four Years", value: "last4-year" },
-    { label: "Last Five Years", value: "last5-year" },
-    { label: "Custom", value: "custom" },
   ]
+  Array.from( Array( yearSpan ).keys() )
+    .forEach( i => {
+      dateRanges.push( { label: `${currentYear - i}${i ? " - " + currentYear : ""}`, value: String( currentYear - i ) } )
+    } )
 
   const range = ref( dateRanges.find( r => r.value === model.value.range ) ?? ( !model.value.startDate && !model.value.endDate ? dateRanges[0] : dateRanges[dateRanges.length - 1] ) )
 
@@ -38,16 +40,23 @@
     } else if ( range === "custom" ) {
       return undefined
     } else {
-      const [ when, _period ] = range.split( "-" )
-      const now = Temporal.Now.zonedDateTimeISO( tz )
-      start = now.subtract( { years: Number( when.slice( 4, 5 ) || "1" ) } )
+      start = Temporal.ZonedDateTime.from( {
+        timeZone: tz,
+        year: Number( range.substring( 0, 4 ) ),
+        month: 1,
+        day: 1,
+        hour: 0,
+        minute: 0,
+        second: 0,
+        millisecond: 0
+      } )
     }
     return { start, end }
   }
 
   watch( range, ( newRange ) => {
-    model.value.range = newRange.value
-    const dates = getDatesFromRange( newRange.value )
+    model.value.range = String( newRange.value )
+    const dates = getDatesFromRange( String( newRange.value ) )
     if ( dates ) {
       if ( dates.start ) {
         model.value.startDate = dates.start.toPlainDate().toString()
@@ -60,38 +69,11 @@
 </script>
 
 <template>
-  <div
-    class="grid grid-cols-1 gap-x-4 gap-y-8"
-    :class="`sm:grid-cols-2`"
-  >
-    <div class="sm:col-span-1">
-      <UI-Listbox
-        v-model="range"
-        clearable
-        :label="props.labelled ? 'Period' : undefined"
-        placeholder="Date Range"
-        :options="dateRanges"
-      />
-    </div>
-    <div class="sm:col-span-1">
-      <UI-Input
-        v-model="model.startDate"
-        type="date"
-        placeholder="Start Date"
-        :label="labelled ? 'Start Date' : undefined"
-        :max="model.endDate"
-        @change="range = dateRanges[dateRanges.length-1]"
-      />
-    </div>
-    <div class="hidden sm:col-span-1">
-      <UI-Input
-        v-model="model.endDate"
-        type="date"
-        placeholder="End Date"
-        :label="labelled ? 'End Date' : undefined"
-        :min="model.startDate"
-        @change="range = dateRanges[dateRanges.length-1]"
-      />
-    </div>
-  </div>
+  <UI-Listbox
+    v-model="range"
+    clearable
+    :label="props.labelled ? 'Period' : undefined"
+    placeholder="Date Range"
+    :options="dateRanges"
+  />
 </template>
