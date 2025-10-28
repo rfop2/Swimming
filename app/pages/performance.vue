@@ -2,8 +2,9 @@
   import type { InternalApi } from "nitropack"
   import { LinkIcon, ChartBarIcon } from "@heroicons/vue/24/outline"
   import { type QualifyingRow, COUNTIES, type IndividualStats, /* NATIONALITIES,*/ REGIONS, STROKE_DISTANCE, type Swimmer, convertTime, countyRankParams, createUrl, getSwimmerAge, getSwimmerScopeArea, globalRankParams, nationalRankParams, rankBaseUrl, regionalRankParams, secondsToTime, strokeSort } from "lib"
-  import { differenceInCalendarMonths, getYear, addMonths, format } from "date-fns"
+  import { differenceInCalendarMonths, getYear, addMonths, format, parseISO } from "date-fns"
   import { FetchError } from "ofetch"
+  import classNames from "classnames"
 
   definePageMeta( {
     layout: "secure",
@@ -107,6 +108,8 @@
   } )
 
   interface PersonalQualifyingType extends IndividualStats {
+    qtime?: number
+    qdate?: string
     key: string
     age: number
     distanceMetres: number
@@ -150,7 +153,7 @@
         return []
 
       const performanceRecordsMap = new Map<string, AreaDetail>( ( performanceRecords.value ?? [] ).map( record => {
-        const { course, stroke, distance, scope, position, rank, best, best_date, difference } = record
+        const { course, stroke, distance, scope, position, rank, time, time_date, best, best_date, difference } = record
         const key = `${distance}_${stroke}_${course}_${scope}`
         const page = Math.floor( rank / 100 ) + 1
         const url = generateRankingUrl( swimmer.value as Swimmer, course, stroke, distance, scope, page )
@@ -158,6 +161,8 @@
           url,
           position,
           rank,
+          time,
+          time_date,
           best,
           best_date,
           difference
@@ -166,7 +171,7 @@
       // console.log( "PerfMap", performanceRecordsMap )
 
       const qualifyingRecords = ( personalRecords.value ?? [] ).map( record => {
-        const { course, stroke, distance, date, time } = record
+        const { course, stroke, distance, date } = record
         const key = `${distance}_${stroke}_${course}`
         const age = differenceInCalendarMonths( new Date(), new Date( date ) )
         const qualifyingRecord: PersonalQualifyingType = {
@@ -185,6 +190,10 @@
           const performanceRecord = performanceRecordsMap.get( `${key}_${scope}` )
           if ( performanceRecord ) {
             qualifyingRecord.qualifying[scope as keyof QualifyingType] = performanceRecord
+            if ( !qualifyingRecord.qtime || ( performanceRecord.time && performanceRecord.time < qualifyingRecord.qtime ) ) {
+              qualifyingRecord.qtime = performanceRecord.time
+              qualifyingRecord.qdate = performanceRecord.time_date
+            }
           }
           const qualifyingEntry = ( qualifyingYearInfo?.value || [] ).find( entry => (
             entry.stroke === stroke && entry.distance === distance && entry.scope === scope && entry.area === getSwimmerScopeArea( swimmer.value as Swimmer, scope )
@@ -192,7 +201,7 @@
           if ( qualifyingEntry ) {
             const qualifyRaw = qualifyingEntry ? convertTime( qualifyingEntry.course, course, stroke, distance, qualifyingEntry.time ) : undefined
             const qualifyTime = qualifyRaw ? secondsToTime( qualifyRaw ) : undefined
-            const qualified = time <= ( qualifyRaw ?? 0 )
+            const qualified = !!performanceRecord?.time && ( performanceRecord.time <= ( qualifyRaw ?? 0 ) )
             qualifyingRecord.qualifying[scope as keyof QualifyingType].qualifyTime = qualifyTime
             qualifyingRecord.qualifying[scope as keyof QualifyingType].qualified = qualified
             switch ( scope ) {
@@ -210,6 +219,9 @@
               }
             }
           }
+        }
+        if ( qualifyingRecord.qdate ) {
+          qualifyingRecord.age = differenceInCalendarMonths( new Date(), new Date( qualifyingRecord.qdate ) )
         }
         return qualifyingRecord
       } )
@@ -304,7 +316,7 @@
     </template>
     <template #key>
       Key &ndash; Best times recorded qualify for <span class="px-2 mr-1 qualifiedArea1" /> county, <span class="px-2 mr-1 qualifiedArea2" /> region<!--, <span class="px-2 mr-1 qualifiedArea3" /> country-->.
-      Event ranking is in the <span class="px-2 mr-1 rank-10" /> top 10, <span class="px-2 mr-1 rank-20" /> top 20, <span class="px-2 mr-1 rank-50" /> top 50.
+      Event ranking is in the <span class="px-2 mr-1 rank-10" /> top 10, <span class="px-2 mr-1 rank-20" /> top 20, <span class="px-2 mr-1 rank-50" /> top 50. Times in <span class="time-pb">purple</span> are personal bests.
     </template>
     <div>
       <div
@@ -476,12 +488,12 @@
               </td>
               <td
                 class="whitespace-nowrap px-2 py-2 text-right text-sm text-gray-900"
-                :class="`qualifiedArea${row.qualifiedFor}`"
+                :class="classNames( `qualifiedArea${row.qualifiedFor}`, { 'time-pb': !row.qtime || row.time === row.qtime } )"
               >
-                {{ row.time ? secondsToTime( row.time ) : '' }}
+                {{ secondsToTime( row.qtime ?? row.time ) }}
               </td>
               <td :class="`whitespace-nowrap px-2 py-2 text-right text-sm text-gray-900 opacity-30 age-${row.age}`">
-                {{ format( row.date, "yyyy-MM-dd" ) }}
+                {{ format( parseISO( row.qdate ?? row.date ), "yyyy-MM-dd" ) }}
               </td>
               <td
                 class="whitespace-nowrap !border-l-2 !border-gray-400 px-2 py-2 text-right text-sm text-gray-900"
@@ -618,5 +630,9 @@
 
 .rank-50 {
   background-color: #9eccf880;
+}
+
+.time-pb {
+  color: #b80381;
 }
 </style>
