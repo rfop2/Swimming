@@ -1,4 +1,5 @@
 import { Temporal } from "temporal-polyfill"
+globalThis.Temporal ??= Temporal
 
 export const useTemporal = () => {
   /**
@@ -62,24 +63,36 @@ export const useTemporal = () => {
       Temporal.PlainDateTime |
       Temporal.ZonedDateTime |
       Temporal.Instant,
-    options: Intl.DateTimeFormatOptions = { dateStyle: "medium" }
+    {
+      locale = "en-GB",
+      tz = "Europe/London",
+      options = { dateStyle: "medium" as const },
+    } = {}
   ): string => {
-    // Normalize to Instant for consistent epoch time formatting
     let instant: Temporal.Instant
 
-    if ( temporal instanceof Temporal.Instant ) {
-      instant = temporal
-    } else if ( temporal instanceof Temporal.ZonedDateTime ) {
-      instant = temporal.toInstant()
-    } else if ( temporal instanceof Temporal.PlainDateTime ) {
-      instant = temporal.toZonedDateTime( tz ).toInstant()
-    } else if ( temporal instanceof Temporal.PlainDate ) {
-      instant = temporal.toPlainDateTime( { hour: 0 } ).toZonedDateTime( tz ).toInstant()
+    if ( "epochMilliseconds" in temporal ) {
+    // ✅ Temporal.Instant
+      instant = temporal as Temporal.Instant
+    } else if ( "toInstant" in temporal ) {
+    // ✅ Temporal.ZonedDateTime
+      instant = ( temporal as unknown as Temporal.ZonedDateTime ).toInstant()
+    } else if ( "toZonedDateTime" in temporal && "hour" in temporal ) {
+    // ✅ Temporal.PlainDateTime
+      instant = ( temporal as Temporal.PlainDateTime )
+        .toZonedDateTime( tz )
+        .toInstant()
+    } else if ( "toPlainDateTime" in temporal ) {
+    // ✅ Temporal.PlainDate
+      instant = ( temporal as Temporal.PlainDate )
+        .toPlainDateTime( { hour: 0 } )
+        .toZonedDateTime( tz )
+        .toInstant()
     } else {
       throw new TypeError( "Unsupported Temporal type" )
     }
 
-    return new Intl.DateTimeFormat( locale, options ).format(
+    return new Intl.DateTimeFormat( locale, { ...options, timeZone: tz } ).format(
       instant.epochMilliseconds
     )
   }
