@@ -305,7 +305,7 @@
     title="Performance"
   >
     <template #description>
-      Performance in events relative to the event leader if appearing in top 100 rankings (200 for national) in the last 12 months.
+      Performance in events relative to the event leader if appearing in top 100 rankings in the last 12 months.
     </template>
     <template #controls>
       <SwimmerSelector
