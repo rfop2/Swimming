@@ -1,9 +1,13 @@
 import type { Browser, Page, LaunchOptions } from "puppeteer"
 
-const blockedDomainPatterns = [
+const allowDomainPatterns: RegExp[] = [
+  // /(^|\.)cloudflare/i,
+]
+
+const blockedDomainPatterns: RegExp[] = [
   /(^|\.)google\./i,
   /(^|\.)gstatic\./i,
-  /(^|\.)cloudflare/i,
+  // /(^|\.)cloudflare/i,
   /(^|\.)doubleclick\.net$/i,
   /(^|\.)newrelic\./i,
   /(^|\.)nr-data\./i,
@@ -11,7 +15,11 @@ const blockedDomainPatterns = [
   /(^|\.)twitter\.com$/i,
 ]
 
-const blockedPathPatterns = [
+const allowPathPatterns: RegExp[] = [
+  /\/cdn-cgi\/scripts\/.*email-decode/i,   // Required to not get 'email protected' on contacts
+]
+
+const blockedPathPatterns: RegExp[] = [
   /\/analytics/i,           // block any URL containing /analytics
   /\/javascripts\//i,            // block JS bundles
   /\/css\//i,             // block CSS files
@@ -54,10 +62,30 @@ export const getBrowserPage = async () => {
 
   if ( !page || page.isClosed() ) {
     page = await browser.newPage()
+
     page.setDefaultNavigationTimeout( 120_000 )
     page.setDefaultTimeout( 120_000 )
 
     await page.authenticate( { username, password: password as string } )
+
+    const client = await page.createCDPSession()
+    await client.send( "Network.enable" )
+    await client.send( "Network.setBlockedURLs", {
+      urls: [
+        "*://*.google.*/*",
+        "*://*.gstatic.com/*",
+        "*://*.googleapis.com/*",
+        "*://*.recaptcha.net/*",
+      ],
+    } )
+
+    // For visibility:
+    client.on( "Network.requestWillBeSent", ( params ) => {
+      if ( params.request.url.includes( "google." ) ) {
+        console.log( "⚠️  Would have hit Google:", params.request.url )
+      }
+    } )
+
     await page.setRequestInterception( true )
 
     page.on( "request", ( req ) => {
@@ -68,6 +96,11 @@ export const getBrowserPage = async () => {
         // Block by domain regex
         const hostname = new URL( url ).hostname
         console.log( "H", hostname )
+        if ( allowDomainPatterns.some( ( re ) => re.test( hostname ) ) ) {
+          console.log( `Force allowed request to domain ${hostname}` )
+          return void req.continue()
+        }
+
         if ( blockedDomainPatterns.some( ( re ) => re.test( hostname ) ) ) {
           console.log( `Blocked request to domain ${hostname}` )
           return void req.abort()
@@ -75,6 +108,12 @@ export const getBrowserPage = async () => {
 
         // Block by path regex
         const pathname = new URL( url ).pathname
+
+        if ( allowPathPatterns.some( ( re ) => re.test( pathname ) ) ) {
+          console.log( `Force allowed request to path ${pathname}` )
+          return void req.continue()
+        }
+
         if ( blockedPathPatterns.some( ( re ) => re.test( pathname ) ) ) {
           console.log( `Blocked request to path ${pathname}` )
           return void req.abort()
