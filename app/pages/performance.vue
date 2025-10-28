@@ -152,22 +152,28 @@
       if ( !swimmer.value )
         return []
 
-      const performanceRecordsMap = new Map<string, AreaDetail>( ( performanceRecords.value ?? [] ).map( record => {
-        const { course, stroke, distance, scope, position, rank, time, time_date, best, best_date, difference } = record
-        const key = `${distance}_${stroke}_${course}_${scope}`
-        const page = Math.floor( rank / 100 ) + 1
-        const url = generateRankingUrl( swimmer.value as Swimmer, course, stroke, distance, scope, page )
-        return [ key, {
-          url,
-          position,
-          rank,
-          time,
-          time_date,
-          best,
-          best_date,
-          difference
-        } ]
-      } ) )
+      const currentYear = getYear( new Date() )
+
+      const performanceRecordsMap = new Map<string, AreaDetail>( ( performanceRecords.value ?? [] )
+        .filter( record => (
+          Number( format( parseISO( record.time_date ), "yyyy" ) ) >= currentYear
+        ) )
+        .map( record => {
+          const { course, stroke, distance, scope, position, rank, time, time_date, best, best_date, difference } = record
+          const key = `${distance}_${stroke}_${course}_${scope}`
+          const page = Math.floor( rank / 100 ) + 1
+          const url = generateRankingUrl( swimmer.value as Swimmer, course, stroke, distance, scope, page )
+          return [ key, {
+            url,
+            position,
+            rank,
+            time,
+            time_date,
+            best,
+            best_date,
+            difference
+          } ]
+        } ) )
       // console.log( "PerfMap", performanceRecordsMap )
 
       const qualifyingRecords = ( personalRecords.value ?? [] ).map( record => {
@@ -315,7 +321,7 @@
       </div>
     </template>
     <template #key>
-      Key &ndash; Best times recorded qualify for <span class="px-2 mr-1 qualifiedArea1" /> county, <span class="px-2 mr-1 qualifiedArea2" /> region<!--, <span class="px-2 mr-1 qualifiedArea3" /> country-->.
+      Key &ndash; Best times recorded in current calendar year qualify for <span class="px-2 mr-1 qualifiedArea1" /> county, <span class="px-2 mr-1 qualifiedArea2" /> region<!--, <span class="px-2 mr-1 qualifiedArea3" /> country-->.
       Event ranking is in the <span class="px-2 mr-1 rank-10" /> top 10, <span class="px-2 mr-1 rank-20" /> top 20, <span class="px-2 mr-1 rank-50" /> top 50. Times in <span class="time-pb">purple</span> are personal bests.
     </template>
     <div>
