@@ -269,9 +269,10 @@
             type: "box",
             yMin: regionQualifying.value?.courseTime,
             yMax: countyQualifying.value?.courseTime,
-            backgroundColor: "#22c55e20",
+            backgroundColor: "#22c55e30",
             display: !!countyQualifying.value,
             borderWidth: 0,
+            drawTime: "beforeDatasetsDraw", // <<--- important
             label: {
               display: true,
               content: `${ucFirst( countyQualifying.value?.scope ?? "" )}: ${secondsToTime( countyQualifying.value?.courseTime || 0 )}`,
@@ -295,9 +296,10 @@
             type: "box",
             yMin: 0,
             yMax: regionQualifying.value?.courseTime,
-            backgroundColor: "#f9741620",
+            backgroundColor: "#f9741642",
             display: !!regionQualifying.value,
             borderWidth: 0,
+            drawTime: "beforeDatasetsDraw", // <<--- important
             label: {
               display: true,
               content: `${ucFirst( regionQualifying.value?.scope ?? "" )}: ${secondsToTime( regionQualifying.value?.courseTime || 0 )}`,
