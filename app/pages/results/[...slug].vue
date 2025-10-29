@@ -169,10 +169,32 @@
       {
         label: "Time",
         borderColor: "#60a5fa", // line color
-        borderWidth: 2, // line thickness
-        pointRadius: 2, // point size
-        pointBackgroundColor: "#3b82f6", // point color
+        borderWidth: 1.5, // line thickness
         data: dataValues.value,
+        segment: {
+          borderColor: ctx => {
+            const p0 = ctx.p0?.parsed?.y
+            const p1 = ctx.p1?.parsed?.y
+            if ( p1 < p0 ) return "#22c55e" // going up → green
+            if ( p1 > p0 ) return "#ef4444" // going down → red
+            return "#3b82f6" // flat
+          },
+          borderDash: ctx => {
+            const p0 = ctx.p0?.parsed?.y
+            const p1 = ctx.p1?.parsed?.y
+            return p1 > p0 ? [ 6, 2 ] : [] // dashed if going down
+          }
+        },
+        pointStyle: ctx => {
+          const data = ctx.chart.data.datasets[0].data as number[]
+          const minVal = Math.min( ...data )
+          return ctx.parsed.y === minVal ? "rectRot" : "circle"
+        },
+        pointRadius: ctx => {
+          const data = ctx.chart.data.datasets[0].data as number[]
+          const minVal = Math.min( ...data )
+          return ctx.parsed.y === minVal ? 4 : 2 // make diamond slightly larger
+        },
       }
     ]
   } ) )
