@@ -172,13 +172,6 @@
         borderWidth: 1.5, // line thickness
         data: dataValues.value,
         segment: {
-          borderColor: ctx => {
-            const p0 = ctx.p0?.parsed?.y
-            const p1 = ctx.p1?.parsed?.y
-            if ( p1 < p0 ) return "#22c55e" // going up → green
-            if ( p1 > p0 ) return "#ef4444" // going down → red
-            return "#3b82f6" // flat
-          },
           borderDash: ctx => {
             const p0 = ctx.p0?.parsed?.y
             const p1 = ctx.p1?.parsed?.y
