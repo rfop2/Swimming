@@ -2,32 +2,21 @@ import type { UserClub } from "lib"
 
 export const useUserClubs = ( userId?: string ) => {
   const userClubs = useState<UserClub[]>( `${userId ?? "0"}:userClubs`, () => [] )
-  const loading = useState<boolean>( `${userId ?? "0"}:userClubsLoading`, () => false )
-  const fetchError = useState<unknown>( `${userId ?? "0"}:userClubsError`, () => null )
 
-  const fetchUserClubs = async () => {
-    if ( loading.value ) return
-    loading.value = true
-    fetchError.value = null
-
-    try {
-      const { data, error } = await useFetch<UserClub[]>( `/api/userclubs/${userId ?? ""}`, {
-        // key: `clubs-${userId}`,
-      } )
-
-      if ( error.value ) {
-        fetchError.value = error.value
-      } else {
-        userClubs.value = ( data.value || [] ).sort( ( a, b ) => {
-          return ( a?.clubName ?? "" ).localeCompare( b?.clubName ?? "" )
-        } )
-      }
-    } catch ( err ) {
-      fetchError.value = err
-    } finally {
-      loading.value = false
-    }
+  const fetchUserClubs = async (): Promise<UserClub[]> => {
+    const data = await $fetch<UserClub[]>( `/api/userclubs/${userId ?? ""}` )
+    return data
   }
+
+  // ✅ This actually produces serialized data in the SSR payload
+  const { data, pending, error, refresh } = useAsyncData( `userclubs-${userId ?? "0"}`, fetchUserClubs, { default: () => [] } )
+
+  // ✅ Keep global reactive state in sync with SSR data
+  watchEffect( () => {
+    if ( data.value ) {
+      userClubs.value = data.value
+    }
+  } )
 
   // --- Mutations ---
   /*
@@ -69,25 +58,19 @@ export const useUserClubs = ( userId?: string ) => {
   */
 
   // --- Clear everything ---
-  const clearUserClubs = (): void => {
+  const clear = () => {
     userClubs.value = []
-    fetchError.value = null
-    clearNuxtData( "userClubs" ) // invalidate fetch cache
-  }
-
-  // --- Public API ---
-  if ( !userClubs.value.length ) {
-    fetchUserClubs()
+    clearNuxtData( `userclubs-${userId}` )
   }
 
   return {
     userClubs,
-    loading,
-    fetchError,
-    refresh: fetchUserClubs,
+    loading: pending,
+    fetchError: error,
+    refresh,
     // addClub,
     // updateClub,
     // deleteClub,
-    clear: clearUserClubs,
+    clear
   }
 }
