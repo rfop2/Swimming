@@ -1,10 +1,6 @@
 <script setup lang="ts">
   import classNames from "classnames"
 
-  interface UISelection {
-    label?: string
-    value: string | number
-  }
   const model = defineModel<string | number>()
   defineOptions( { inheritAttrs: false } )
 
