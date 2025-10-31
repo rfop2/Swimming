@@ -28,7 +28,7 @@
     v-if="props.label"
     :for="props.id ?? defaultId"
     class="block text-sm/6 font-medium text-gray-900"
-  >{{ props.label }}</label>
+  >{{ props.label }}{{ !!required ? "*" : "" }}</label>
   <div :class="classNames( props.label ? 'mt-2' : 'mt-0', 'grid grid-cols-1' )">
     <select
       :id="props.id ?? defaultId"

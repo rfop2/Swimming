@@ -90,7 +90,7 @@
       v-if="props.label"
       class="block text-sm/6 font-medium text-gray-900"
     >
-      {{ props.label }}
+      {{ props.label }}{{ !!required ? "*" : "" }}
     </ComboboxLabel>
     <div :class="classNames( 'relative', { 'mt-2': props.label } )">
       <ComboboxInput

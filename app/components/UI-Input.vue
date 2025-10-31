@@ -29,7 +29,7 @@
     v-if="props.label"
     :for="props.id ?? defaultId"
     class="block text-sm/6 font-medium text-gray-900"
-  >{{ props.label }}</label>
+  >{{ props.label }}{{ !!required ? "*" : "" }}</label>
   <div :class="classNames({ 'mt-2': props.label })">
     <span
       v-if="props.type === 'checkbox' || props.type === 'radio'"
