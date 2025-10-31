@@ -86,40 +86,40 @@ export default defineEventHandler( async ( event ) => {
 
       const insertSwimmerSql =
         `INSERT INTO Swimmers (
-        id,
-        firstName,
-        middleName,
-        lastName,
-        birthday,
-        gender,
-        nationality,
-        region,
-        county,
-        active
-      )
-      VALUES (
-        :id,
-        :firstName,
-        :middleName,
-        :lastName,
-        :birthday,
-        :gender,
-        :nationality,
-        :region,
-        :county,
-        :active
-      )
-      ON DUPLICATE KEY UPDATE
-        firstName   = :firstName,
-        middleName  = :middleName,
-        lastName    = :lastName,
-        birthday    = :birthday,
-        gender      = :gender,
-        nationality = :nationality,
-        region      = :region,
-        county      = :county,
-        active      = :active
-      ;`
+          id,
+          firstName,
+          middleName,
+          lastName,
+          birthday,
+          gender,
+          nationality,
+          region,
+          county,
+          active
+        )
+        VALUES (
+          :id,
+          :firstName,
+          :middleName,
+          :lastName,
+          :birthday,
+          :gender,
+          :nationality,
+          :region,
+          :county,
+          :active
+        )
+        ON DUPLICATE KEY UPDATE
+          firstName   = :firstName,
+          middleName  = :middleName,
+          lastName    = :lastName,
+          birthday    = :birthday,
+          gender      = :gender,
+          nationality = :nationality,
+          region      = :region,
+          county      = :county,
+          active      = :active
+        ;`
 
       const insertClubSwimmerSql =
         `INSERT IGNORE INTO ClubSwimmers (
