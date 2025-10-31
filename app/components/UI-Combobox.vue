@@ -11,7 +11,7 @@
   import classNames from "classnames"
   import { XMarkIcon } from "@heroicons/vue/24/outline"
 
-  const model = defineModel<UISelection | Array<UISelection>>()
+  const model = defineModel<UISelection["value"] | Array<UISelection["value"]>>()
 
   const defaultId = useId()
 
@@ -62,14 +62,12 @@
     if ( props.fetchOptions ) {
       runSearch( val )
     } else {
-      internalOptions.value = props.options.filter( ( opt ) =>
-        ( opt.label ?? String( opt.value ) ).toLowerCase().includes( val.toLowerCase() )
-      )
+      internalOptions.value = props.options.filter( ( opt ) => ( opt.label ?? String( opt.value ) ).toLowerCase().includes( val.toLowerCase() ) )
     }
   } )
 
   const queryValue = computed( () => {
-    return query.value === "" ? null : { label: query.value, value: query.value }
+    return query.value === "" ? null : query.value
   } )
 
   const clearSelection = () => {
@@ -82,6 +80,7 @@
 <template>
   <Combobox
     :id="props.id ?? defaultId"
+    :key="Array.isArray(model) ? model.join('|') || 'empty' : model ?? 'empty'"
     v-model="model"
     as="div"
     @update:model-value="query = ''"
@@ -98,29 +97,31 @@
         :display-value="(option) => (option as UISelection).label ?? ''"
         :placeholder="placeholder"
         @change="query = $event.target.value"
-        @blur="query = ''"
       />
-      <!-- Clear button -->
-      <ComboboxButton
-        v-if="clearable && model"
-        type="button"
-        class="absolute inset-y-0 right-2 flex items-center text-gray-400 hover:text-gray-600"
-        @click="clearSelection"
-      >
-        <XMarkIcon
-          class="size-5 text-gray-400"
-          aria-hidden="true"
-        />
-      </ComboboxButton>
-      <ComboboxButton
-        v-if="internalOptions.length"
-        class="absolute inset-y-0 right-0 flex items-center rounded-r-md px-2 focus:outline-none"
-      >
-        <ChevronDownIcon
-          class="size-5 text-gray-400"
-          aria-hidden="true"
-        />
-      </ComboboxButton>
+      <div class="absolute inset-y-0 right-2 flex">
+        <!-- Dropdown button -->
+        <ComboboxButton
+          v-if="internalOptions.length"
+          class="relative items-center rounded-r-md focus:outline-none"
+        >
+          <ChevronDownIcon
+            class="size-5 text-gray-400"
+            aria-hidden="true"
+          />
+        </ComboboxButton>
+        <!-- Clear button -->
+        <ComboboxButton
+          v-if="clearable && model"
+          type="button"
+          class="relative items-center rounded-r-md focus:outline-none"
+          @click="clearSelection"
+        >
+          <XMarkIcon
+            class="size-5 text-gray-400"
+            aria-hidden="true"
+          />
+        </ComboboxButton>
+      </div>
 
       <transition
         leave-active-class="transition ease-in duration-100"
@@ -159,7 +160,7 @@
             v-for="option in internalOptions"
             :key="option.value"
             v-slot="{ active }"
-            :value="option"
+            :value="option.value"
             as="template"
           >
             <li :class="['relative cursor-default select-none px-3 py-2', active ? 'bg-indigo-600 text-white outline-none' : 'text-gray-900']">
