@@ -229,7 +229,7 @@
 
   const searchClubs = async ( query: string ) => {
     if ( !query ) return []
-    const res = await $fetch( `/api/clubs?search=${encodeURIComponent( query )}` )
+    const res = await $fetch( `/api/clubs/search?search=${encodeURIComponent( query )}` )
     return res.map( ( u: Club ) => ( {
       label: u.clubName,
       value: u.clubId,

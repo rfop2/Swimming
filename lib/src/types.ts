@@ -121,6 +121,7 @@ export interface Club {
 export interface UserClub {
   clubId: Club["clubId"]
   clubName?: string
+  clubAlias?: string
   clubCounty?: string
   clubRegion?: string
   clubOwner: number
