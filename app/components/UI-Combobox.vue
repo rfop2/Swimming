@@ -96,6 +96,7 @@
         class="block w-full rounded-md bg-white py-1.5 pl-3 pr-12 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
         :display-value="(option) => (option as UISelection).label ?? ''"
         :placeholder="placeholder"
+        v-bind="$attrs"
         @change="query = $event.target.value"
       />
       <div class="absolute inset-y-0 right-2 flex">
