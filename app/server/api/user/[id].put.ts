@@ -1,5 +1,5 @@
 import { hash } from "@node-rs/argon2"
-import { getPool, prepareStatement, runTransaction, type UserClub, type ExtSwimmer } from "lib"
+import { getPool, prepareStatement, runTransaction, type UserClub, type ExtSwimmer, addSwimmerTask } from "lib"
 import type { PoolConnection } from "mysql2/promise"
 
 interface UserData {
@@ -121,42 +121,46 @@ export default defineEventHandler( async ( event ) => {
           active      = :active
         ;`
 
-      const insertClubSwimmerSql =
-        `INSERT IGNORE INTO ClubSwimmers (
-          clubId,
+      const insertUserSwimmerSql =
+        `INSERT IGNORE INTO UserSwimmers (
+          userId,
           swimmerId
         )
         VALUES (
+          :userId,
+          :id
+        )`
+
+      const insertClubSwimmerSql =
+        `INSERT IGNORE INTO ClubSwimmers (
+          clubId,
+          swimmerId,
+          rankedClub,
+          squad
+        )
+        VALUES (
           :clubId,
-          :swimmerId
-        );`
+          :swimmerId,
+          1
+          :squad
+        )
+        ON DUPLICATE KEY UPDATE
+          rankedClub = VALUES(rankedClub),
+          squad = VALUES(squad)
+        ;`
 
       const insertSwimmer = prepareStatement( conn, insertSwimmerSql )
+      const insertUserSwimmer = prepareStatement( conn, insertUserSwimmerSql )
       const insertClubSwimmer = prepareStatement( conn, insertClubSwimmerSql )
       for ( const swimmer of userData.swimmers ) {
         await insertSwimmer.run( swimmer )
+        const { affectedRows } = await insertUserSwimmer.run( { userId, id: swimmer.id } )
         if ( swimmer.clubId ) {
-          await insertClubSwimmer.run( { clubId: swimmer.clubId, swimmerId: swimmer.id } )
+          await insertClubSwimmer.run( { clubId: swimmer.clubId, swimmerId: swimmer.id, squad: swimmer.squad } )
         }
-      }
-
-      const insertUserSwimmerSql =
-        `INSERT INTO UserSwimmers (
-        userId,
-        swimmerId,
-        squad
-      )
-      VALUES (
-        :userId,
-        :id,
-        :squad
-      )
-      ON DUPLICATE KEY UPDATE
-        squad   = :squad
-      ;`
-      const insertUserSwimmer = prepareStatement( conn, insertUserSwimmerSql )
-      for ( const swimmer of userData.swimmers ) {
-        await insertUserSwimmer.run( { userId, id: swimmer.id, squad: swimmer.squad } )
+        if ( affectedRows === 1 ) {
+          addSwimmerTask( conn, userId, swimmer )
+        }
       }
     }
 

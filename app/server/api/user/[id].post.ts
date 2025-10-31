@@ -1,5 +1,5 @@
 import { hash } from "@node-rs/argon2"
-import { getPool, isMySql2Error, prepareStatement, runTransaction, type UserClub, type ExtSwimmer } from "lib"
+import { getPool, isMySql2Error, prepareStatement, runTransaction, type UserClub, type ExtSwimmer, addSwimmerTask } from "lib"
 import { generateId } from "lucia"
 import type { PoolConnection } from "mysql2/promise"
 
@@ -190,7 +190,11 @@ export default defineEventHandler( async ( event ) => {
       ;`
     const insertUserSwimmer = prepareStatement( conn, insertUserSwimmerSql )
     for ( const swimmer of userData.swimmers ) {
-      await insertUserSwimmer.run( { userId, id: swimmer.id, squad: swimmer.squad } )
+      const result = await insertUserSwimmer.run( { userId, id: swimmer.id, squad: swimmer.squad } )
+      if ( result.affectedRows ) {
+        // We have added a new swimmer. Queue an update
+        addSwimmerTask( conn, userId, swimmer )
+      }
     }
   }
 
