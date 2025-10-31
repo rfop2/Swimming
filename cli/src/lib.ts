@@ -5,59 +5,59 @@ import type { User } from "lucia"
 
 const insertSwimmerSql =
   `INSERT IGNORE INTO Swimmers (
-  id,
-  firstName,
-  lastName,
-  birthday,
-  gender,
-  nationality,
-  region,
-  county,
-  active
-)
-VALUES (
-  :id,
-  :firstName,
-  :lastName,
-  :birthday,
-  :gender,
-  :nationality,
-  :region,
-  :county,
-  :active
-)
-ON DUPLICATE KEY UPDATE
-  firstName   = :firstName,
-  lastName    = :lastName,
-  birthday    = :birthday,
-  gender      = :gender,
-  nationality = :nationality,
-  region      = :region,
-  county      = :county,
-  active      = :active
-;`
+    id,
+    firstName,
+    lastName,
+    birthday,
+    gender,
+    nationality,
+    region,
+    county,
+    active
+  )
+  VALUES (
+    :id,
+    :firstName,
+    :lastName,
+    :birthday,
+    :gender,
+    :nationality,
+    :region,
+    :county,
+    :active
+  )
+  ON DUPLICATE KEY UPDATE
+    firstName   = :firstName,
+    lastName    = :lastName,
+    birthday    = :birthday,
+    gender      = :gender,
+    nationality = :nationality,
+    region      = :region,
+    county      = :county,
+    active      = :active
+  ;`
 
 const insertUserSwimmerSql =
   `INSERT IGNORE INTO UserSwimmers (
-  userId,
-  swimmerId
-)
-VALUES (
-  :userId,
-  :swimmerId
-);`
+    userId,
+    swimmerId
+  )
+  VALUES (
+    :userId,
+    :swimmerId
+  );`
 
 const insertClubSwimmerSql =
   `INSERT IGNORE INTO ClubSwimmers (
-  clubId,
-  swimmerId,
-  rankedClub
-)
-VALUES (
-  :clubId,
-  :swimmerId,
-  :rankedClub
-);`
+    clubId,
+    swimmerId,
+    rankedClub
+  )
+  VALUES (
+    :clubId,
+    :swimmerId,
+    :rankedClub
+  );`
 
 export const addClubSwimmers = async ( user: User, clubOrCode: string | Club, country?: string, region?: string, county?: string ) => {
   let club = null
