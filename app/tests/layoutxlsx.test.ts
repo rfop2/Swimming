@@ -116,7 +116,8 @@ describe( "Xlsx Swimming Parser", () => {
           } catch ( err ) {
             throw new Error(
               `Failure in event ${eventName}, gender ${gender}, age ${expectedRecord.age}: ` +
-              `expected time ${expectedRecord.time}, received ${actualRecord.time}`
+              `expected time ${expectedRecord.time}, received ${actualRecord.time}`,
+              { cause: err as unknown }
             )
           }
         } )

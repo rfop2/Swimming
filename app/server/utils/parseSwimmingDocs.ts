@@ -11,6 +11,21 @@ interface ImportEvent {
   time: string | null
 }
 
+type Gender = "male" | "female"
+
+// For layout 3 (it builds an intermediate structure before normalization)
+interface AgeTime {
+  age: string
+  time: string | null
+}
+interface Layout3Event {
+  gender: Gender | null
+  event: string
+  distance: string
+  stroke: string
+  times: AgeTime[]
+}
+
 // 2025-SECC-Qualifying-Times_updated-Nov-2024_-final
 export function parseSwimmingPdf( text: string ) {
   const ages = [ "10 & 11", "12", "13", "14", "15", "16", "17+" ]
@@ -152,7 +167,7 @@ export function parseSwimmingPdfLayout3( text: string ) {
   const ages = [ "10/11", "12", "13", "14", "15", "16", "17/OV" ]
   const rawLines = text.split( "\n" ).map( l => l.trim() ).filter( Boolean )
 
-  const events: any[] = []
+  const events: Layout3Event[] = []
   let currentGender: "male" | "female" | null = null
   let currentStroke: string | null = null
 
@@ -212,7 +227,7 @@ export function parseSwimmingPdfLayout3( text: string ) {
   return normalizeLayout3( events )
 }
 
-export function normalizeLayout3( events: any[] ) {
+export function normalizeLayout3( events: Layout3Event[] ): ImportEvent[] {
   const normalized: ImportEvent[] = []
 
   events.forEach( event => {
@@ -678,7 +693,7 @@ export function parseSwimmingPdfLayout7( text: string ) {
   const lines = text.split( "\n" ).map( l => l.trim() ).filter( Boolean )
 
   const AGES = [ "10-11", "12", "13", "14", "15", "16", "17+" ] as const
-  const structured: any[] = []
+  const structured: ImportEvent[] = []
 
   let gender: "female" | "male" | null = null
 
@@ -793,7 +808,7 @@ export function parseSwimmingPdfLayout8( text: string ) {
       .replace( /y$/i, "" ) // "13y"  -> "13"
 
   const pushRows = (
-    out: any[],
+    out: ImportEvent[] = [],
     gender: Gender,
     course: Course,
     strokeRaw: string,
@@ -823,7 +838,7 @@ export function parseSwimmingPdfLayout8( text: string ) {
     }
   }
 
-  const structured: any[] = []
+  const structured: ImportEvent[] = []
 
   let currentCourse: Course | null = null
   let currentGender: Gender | null = null
@@ -919,7 +934,7 @@ export function parseSwimmingPdfLayout9( text: string ) {
     /(?:(?:\d{1,2}[:.])?\d{1,2}[:.]\d{2}(?:[:.]\d{2})?)|(?:\d{1,2}[.]\d{2})/g
 
   const lines = text.split( "\n" ).map( s => s.trim() ).filter( Boolean )
-  const structured: any[] = []
+  const structured: ImportEvent[] = []
 
   let gender: Gender | null = null
 
@@ -956,12 +971,16 @@ export function parseSwimmingPdfLayout9( text: string ) {
     return 7
   }
 
-  const alignTo7 = ( distance: string, stroke: string, tokens: string[] ) => {
+  const alignTo7 = (
+    distance: string,
+    stroke: string,
+    tokens: string[]
+  ): ( string | null )[] => {
     const need = expectedCount( distance, stroke )
-    let arr = tokens.slice( 0, need )
-    if ( need === 6 ) arr = [ null as any ].concat( arr )
-    while ( arr.length < 7 ) arr.push( null as any )
-    return arr as ( string | null )[]
+    let arr: ( string | null )[] = tokens.slice( 0, need )
+    if ( need === 6 ) arr = [ null, ...arr ]
+    while ( arr.length < 7 ) arr.push( null )
+    return arr
   }
 
   const pushEvent = ( gender: Gender, distanceNum: string, strokeRaw: string, tokens: string[] ) => {
@@ -1102,7 +1121,7 @@ export function parseSwimmingPdfLayout10( text: string ) {
 
   // Emit rows for one event
   function pushAgeRows(
-    out: any[],
+    out: ImportEvent[],
     gender: Gender,
     distance: string,
     stroke: string,
@@ -1125,7 +1144,7 @@ export function parseSwimmingPdfLayout10( text: string ) {
     }
   }
 
-  const structured: any[] = []
+  const structured: ImportEvent[] = []
   let currentGender: Gender | null = null
 
   // Walk the lines
@@ -1236,7 +1255,7 @@ export function parseSwimmingPdfLayout11( text: string ) {
     return arr as ( string | null )[]
   }
 
-  const pushAgeRows = ( out: any[], gender: "female" | "male", distanceNum: string, strokeRaw: string, tokens: string[] ) => {
+  const pushAgeRows = ( out: ImportEvent[], gender: "female" | "male", distanceNum: string, strokeRaw: string, tokens: string[] ) => {
     const distance = `${distanceNum}m`
     const stroke = normalizeStroke( strokeRaw )
     const event = `${stroke} ${distance}`
@@ -1276,7 +1295,7 @@ export function parseSwimmingPdfLayout11( text: string ) {
     return tokens.slice( 0, need )
   }
 
-  const out: any[] = []
+  const out: ImportEvent[] = []
 
   for ( let i = 0; i < lines.length; i++ ) {
     if ( used[i] ) continue
@@ -1372,7 +1391,7 @@ export function parseSwimmingPdfLayout12( text: string ) {
     || /^\d{4}s?$/.test( s )
     || /^201\d(?:\s*201\d)*$/.test( s )
 
-  const out: any[] = []
+  const out: ImportEvent[] = []
   let leftBuf: string[] = []
   let eventsSeen = 0
   const currentCourse = (): "lc" | "sc" => ( eventsSeen < 17 ? "lc" : "sc" )
@@ -1466,12 +1485,6 @@ export function parseSwimmingPdfLayout13( text: string ) {
   const deglueBoundary = ( s: string ) =>
     s.replace( /(\d{1,2}\.\d{2})(?=\d{2,4}\s*m\b)/g, "$1 " )
 
-  const normTime = ( t: string | null ) => {
-    if ( t == null ) return null
-    const fn = ( globalThis as any ).normalizeTime
-    return typeof fn === "function" ? fn( t ) : t
-  }
-
   const parseHeaderPair = ( i: number ) => {
     const strokeLine = normInline( lines[i] ).replace( /\s+/g, "" )
     const distLine = normInline( lines[i + 1] ).replace( /\s+/g, "" )
@@ -1501,7 +1514,7 @@ export function parseSwimmingPdfLayout13( text: string ) {
     return s.trim()
   }
 
-  const out: any[] = []
+  const out: ImportEvent[] = []
   let blockIndex = 0 // 0 = female, 1 = male
 
   for ( let i = 0; i < lines.length - 1; i++ ) {
@@ -1535,7 +1548,7 @@ export function parseSwimmingPdfLayout13( text: string ) {
       const ageLabel = mAge ? mAge[0] : ""
       const ages = labelToAges( ageLabel )
 
-      const tokens = timesFrom( raw ).slice( 0, numCols )
+      const tokens: ( string | null )[] = timesFrom( raw ).slice( 0, numCols )
 
       if ( tokens.length < numCols && r + 1 < lines.length ) {
         const nxt = normInline( lines[r + 1] )
@@ -1546,7 +1559,7 @@ export function parseSwimmingPdfLayout13( text: string ) {
         }
       }
 
-      while ( tokens.length < numCols ) tokens.push( null as any )
+      while ( tokens.length < numCols ) tokens.push( null )
 
       for ( let c = 0; c < numCols; c++ ) {
         const { stroke, distance, event } = cols[c]

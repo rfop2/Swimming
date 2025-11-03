@@ -7,21 +7,64 @@
     middleware: [ "protected" ]
   } )
 
-  const structuredData = ref( [] )
-  const selections = ref( [] )
-  const activeGender = ref( "Male" )
-  const activeStroke = ref( "All" )
-  const activeCourse = ref( "lc" )
+  type Course = "lc" | "sc"
+  type Gender = "Male" | "Female"
 
-  const courses = [
+  interface Labeled<T = string> {
+    value: T
+    label: string
+  }
+
+  type CourseSelection = Labeled<Course | "both"> | Course | "both"
+
+  interface Selections {
+    year: Labeled<number | string>
+    scope: Labeled<string>
+    area: Labeled<string>
+    course: CourseSelection
+  }
+
+  interface StructuredRow {
+    gender: string
+    course?: string | null
+    event: string
+    distance: string
+    stroke: string
+    age: string
+    time?: string | null
+  }
+
+  interface ImportRow {
+    created: Date
+    year: number | string
+    course: Course | null
+    scope: string
+    area: string
+    gender: string
+    age: string
+    distance: string
+    stroke: string
+    timeString: string
+    time: number
+  }
+
+  const structuredData = ref<StructuredRow[]>( [] )
+  const selections = ref<Selections | null>( null )
+
+  const activeGender = ref<Gender>( "Male" )
+  const activeStroke = ref<string>( "All" )
+  const activeCourse = ref<Course>( "lc" )
+
+  const courses: Array<{ value: Course, label: string }> = [
     { value: "lc", label: "Long Course" },
     { value: "sc", label: "Short Course" }
   ]
 
-  const genders = [ "Male", "Female" ]
-  const editingTime = ref( {} )
+  const genders: Gender[] = [ "Male", "Female" ]
+  const editingTime = ref<Record<string, boolean>>( {} )
   const errorVisible = ref( false )
   const errorText = ref( "" )
+  const saveSuccess = ref( false )
 
   const sanitizeTime = ( val: string ) =>
     val
@@ -30,7 +73,7 @@
       .replace( /\.{2,}/g, "." )
       .slice( 0, 12 )
 
-  const allowedNav = new Set( [
+  const allowedNav = new Set<string>( [
     "Backspace", "Delete", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown",
     "Home", "End", "Tab", "Enter", "Escape"
   ] )
@@ -38,9 +81,7 @@
   function onTimeKeydown( e: KeyboardEvent ) {
     const k = e.key
     if ( allowedNav.has( k ) ) return
-    // allow Ctrl/Cmd + A/C/V/X
     if ( ( e.ctrlKey || e.metaKey ) && [ "a", "c", "v", "x" ].includes( k.toLowerCase() ) ) return
-    // allow digits, colon, dot
     if ( /^\d$/.test( k ) || k === ":" || k === "." ) return
     e.preventDefault()
   }
@@ -53,46 +94,42 @@
   onMounted( () => {
     const stored = sessionStorage.getItem( "parsedData" )
     if ( stored ) {
-      const parsed = JSON.parse( stored )
-      structuredData.value = parsed.structured
-      selections.value = parsed.selections
+      const parsed = JSON.parse( stored ) as { structured: StructuredRow[], selections: Selections }
+      structuredData.value = parsed.structured ?? []
+      selections.value = parsed.selections ?? null
     } else {
       console.warn( "No parsedData found in sessionStorage" )
     }
   } )
 
-  const strokes = computed( () => {
+  const strokes = computed<string[]>( () => {
     const allStrokes = structuredData.value.map( item => item.stroke ).filter( Boolean )
     return [ "All", ...Array.from( new Set( allStrokes ) ) ]
   } )
 
-  const filteredData = computed( () => {
+  const filteredData = computed<Record<string, StructuredRow[]>>( () => {
     let filtered = structuredData.value
-      .filter( item =>
-        item.gender?.toLowerCase() === activeGender.value.toLowerCase()
-      )
-      .filter( item =>
-        activeStroke.value === "All" || item.stroke === activeStroke.value
-      )
-    if ( selections.value?.course?.value === "both" ) {
+      .filter( item => item.gender?.toLowerCase() === activeGender.value.toLowerCase() )
+      .filter( item => activeStroke.value === "All" || item.stroke === activeStroke.value )
+
+    if ( selections.value?.course?.value === "both" || selections.value?.course === "both" ) {
       filtered = filtered.filter( item => item.course === activeCourse.value )
     }
 
-    return filtered.reduce( ( acc, item ) => {
-      if ( !acc[item.event] ) acc[item.event] = []
-      acc[item.event].push( item )
+    return filtered.reduce<Record<string, StructuredRow[]>>( ( acc, item ) => {
+      const key = item.event || `${item.stroke} ${item.distance}`
+      if ( !acc[key] ) acc[key] = []
+      acc[key].push( item )
       return acc
     }, {} )
   } )
 
-  const saveSuccess = ref( false )
-  const errString = ref<string | null>( null )
   function normalizeStroke( stroke: string ) {
     switch ( stroke.toLowerCase() ) {
-      case "Backstroke": return "backstroke"
-      case "Breaststroke": return "breaststroke"
-      case "Butterfly": return "butterfly"
-      case "Freestyle": return "freestyle"
+      case "backstroke": return "backstroke"
+      case "breaststroke": return "breaststroke"
+      case "butterfly": return "butterfly"
+      case "freestyle": return "freestyle"
       case "im":
       case "medley":
       case "individual medley":
@@ -101,47 +138,65 @@
         return stroke.toLowerCase()
     }
   }
-  // if the documents has both long/short course map to the correct course
-  function resolveCourseForRow( item: any, selections: any ) {
-    const sel = selections?.course?.value ?? selections?.course
-    if ( sel === "both" ) return item?.course ?? null
-    return item?.course ?? sel ?? null
+
+  function resolveCourseForRow( item: StructuredRow, sel: Selections | null ): Course | null {
+    const choose = ( v: unknown ): Course | null => {
+      if ( v === "lc" || v === "sc" ) return v
+      return null
+    }
+    const fromRow = choose( item?.course ?? null )
+    if ( fromRow ) return fromRow
+
+    const rawSel = sel?.course
+    if ( typeof rawSel === "string" ) return choose( rawSel )
+    if ( rawSel && "value" in ( rawSel as Labeled ) ) {
+      const v = ( rawSel as Labeled<Course | "both"> ).value
+      if ( v === "both" ) return item?.course === "sc" ? "sc" : "lc"
+      return choose( v )
+    }
+    return null
   }
-  function mapToImportRows( structured: any[], selections: any ) {
+
+  function mapToImportRows( structured: StructuredRow[], sel: Selections | null ): ImportRow[] {
     const created = new Date()
-    return structured.map( item => ( {
-      created,
-      year: selections.year.value,
-      course: resolveCourseForRow( item, selections ),
-      scope: selections.scope.value,
-      area: selections.area.value,
-      gender: item.gender,
-      age: item.age,
-      distance: item.distance,
-      stroke: normalizeStroke( item.stroke ),
-      timeString: item.time || "00:00.00",
-      time: item.time ? timeToSeconds( item.time ) : 0.0,
-    } ) )
+    const year = sel?.year?.value ?? ""
+    const scope = sel?.scope?.value ?? ""
+    const area = sel?.area?.value ?? ""
+
+    return structured.map( item => {
+      const course = resolveCourseForRow( item, sel )
+      const timeString = item.time || "00:00.00"
+      const time = item.time ? timeToSeconds( item.time ) : 0.0
+
+      return {
+        created,
+        year,
+        course,
+        scope,
+        area,
+        gender: item.gender,
+        age: item.age,
+        distance: item.distance,
+        stroke: normalizeStroke( item.stroke ),
+        timeString,
+        time,
+      }
+    } )
   }
 
   function looksLikeTime( s: string ) {
-    // SS(.sss) | MM:SS(.sss) | HH:MM:SS(.sss)
     return /^(?:\d{1,2}(?:\.\d{1,3})?|\d{1,2}:\d{2}(?:\.\d{1,3})?|\d{1,2}:\d{2}:\d{2}(?:\.\d{1,3})?)$/.test( s )
   }
 
-  function genderLabel( row: any ) {
+  function genderLabel( row: StructuredRow ) {
     const g = ( row?.gender ?? "" ).toString().trim().toLowerCase()
     if ( g.startsWith( "f" ) ) return "Female"
     if ( g.startsWith( "m" ) ) return "Male"
     return "Male/Female"
   }
 
-  function courseLabel( row: any, selections?: any ) {
-    const v =
-      row?.course ??
-      selections?.course?.value ??
-      selections?.course ??
-      ""
+  function courseLabel( row: StructuredRow, sel?: Selections | null ) {
+    const v = row?.course ?? ( sel?.course && typeof sel.course !== "string" ? sel.course.value : sel?.course ) ?? ""
 
     if ( typeof v === "string" ) {
       if ( v.toLowerCase() === "lc" || /long\s*course/i.test( v ) ) return "LC"
@@ -150,14 +205,14 @@
     return "LC/SC"
   }
 
-  function validateStructuredTimesWithCourse( structured: any[], selections?: any ) {
+  function validateStructuredTimesWithCourse( structured: StructuredRow[], sel?: Selections | null ) {
     const bad: string[] = []
 
     for ( const row of structured ) {
       const t = ( row.time ?? "" ).toString().trim()
-      if ( !t ) continue // allow empty
+      if ( !t ) continue
       if ( !looksLikeTime( t ) ) {
-        const courseTag = courseLabel( row, selections )
+        const courseTag = courseLabel( row, sel ?? null )
         const genderTag = genderLabel( row )
         const eventLabel = row.event || `${row.stroke} ${row.distance}`
         bad.push( `[${courseTag} • ${genderTag} • ${eventLabel} • ${row.age}] "${t}"` )
@@ -166,12 +221,13 @@
 
     if ( bad.length ) {
       return {
-        ok: false,
+        ok: false as const,
         message: `There ${bad.length === 1 ? "is" : "are"} ${bad.length} invalid time value${bad.length === 1 ? "" : "s"}: ${bad.join( "; " )}`
       }
     }
-    return { ok: true }
+    return { ok: true as const }
   }
+
   async function save() {
     const check = validateStructuredTimesWithCourse( structuredData.value, selections.value )
     if ( !check.ok ) {
@@ -186,11 +242,10 @@
       saveSuccess.value = true
       await refreshNuxtData( "import" )
     } catch ( error ) {
-      errorText.value = ( error as any )?.message || "Import failed."
+      errorText.value = ( error as Error )?.message || "Import failed."
       errorVisible.value = true
     }
   }
-
 </script>
 
 <template>
