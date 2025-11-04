@@ -106,8 +106,8 @@
   type MainNavOption = NavOptionLink | NavOptionClick | NavOptionChildren
 
   const navigation = computed<MainNavOption[]>( () => [
-    { name: "Race", children: [
-      { name: "Performance", href: "/performance" },
+    { name: "Performance", children: [
+      { name: "Personal Bests", href: "/performance" },
       { name: "Results", href: "/results" },
     ] },
     { name: "Training", children: [
