@@ -1,21 +1,24 @@
 <script setup lang="ts">
-  import { useForm, useFieldArray } from "vee-validate"
+  import { useForm, useFieldArray, type FieldEntry } from "vee-validate"
   import * as yup from "yup"
   import { toTypedSchema } from "@vee-validate/yup"
-  import { CheckIcon, ExclamationTriangleIcon, PencilSquareIcon, TrashIcon, UserGroupIcon, UserPlusIcon, XCircleIcon, XMarkIcon } from "@heroicons/vue/24/outline"
+  import { CheckIcon, ExclamationTriangleIcon, PencilSquareIcon, TrashIcon, UserGroupIcon, UserPlusIcon, XCircleIcon } from "@heroicons/vue/24/outline"
 
   import type { FetchError } from "ofetch"
-  import { COUNTIES, NATIONALITIES, NATIONALITY, REGIONS, type Club, type ExtSwimmer, type Swimmer, type Task, type UserClub } from "lib"
+  import { COUNTIES, NATIONALITIES, NATIONALITY, REGIONS } from "lib"
+  import type { Club, ExtSwimmer, Task, UserClub } from "lib"
   import { useDebounceAsync } from "~/composables/useDebounceAsync"
   import type { User } from "lucia"
 
   const props = defineProps<{
     user: User
     clubs: UserClub[]
-    swimmers: Swimmer[]
+    swimmers: ExtSwimmer[]
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     saveFn: ( values: any ) => void
   }>()
+
+  const clubLookups: Array<UserClub | Club> = props.clubs
 
   const currentUser = useAuthenticatedUser()
   const isAdmin = !!Number( currentUser.value.admin )
@@ -115,7 +118,7 @@
   const [ location, locationAttrs ] = defineField( "location" )
   const [ type, typeAttrs ] = defineField( "type" )
   const { replace: replaceUserClub } = useFieldArray<UserClub>( "clubs" )
-  const { remove: removeSwimmer, push: pushSwimmer, update: updateSwimmer, fields: userSwimmers } = useFieldArray<Swimmer>( "swimmers" )
+  const { remove: removeSwimmer, push: pushSwimmer, update: updateSwimmer, fields: userSwimmers } = useFieldArray<ExtSwimmer>( "swimmers" )
 
   // Should come from DB
   const userTypes =
@@ -150,6 +153,7 @@
   const swimmerData = ref<string | null>( null )
 
   const foundSwimmer = ref<Partial<ExtSwimmer>>( {} )
+  const foundSwimmers = ref<UISelection[]>( [] )
 
   const addSwimmer = () => {
     const newSwimmer = {
@@ -163,7 +167,12 @@
         nationality: "",
         region: "",
         county: "",
+        clubId: "",
+        clubIds: "",
+        rankedClub: 1,
+        rankedClubs: "",
         squad: "",
+        squads: "",
         active: 1,
       },
       ...foundSwimmer.value
@@ -173,10 +182,19 @@
     editing.value = userSwimmers.value.length - 1
   }
 
-  const editSwimmer = ( swimmerIndex: number ) => {
+  const selectedSwimmer: Ref<FieldEntry<ExtSwimmer> | null> = ref( null )
+  const editingSwimmer = ref( false )
+
+  const editSwimmer = async ( swimmerIndex: number ) => {
     editing.value = swimmerIndex
     if ( squads.value.length ) {
       selectedSquad.value = squads.value.find( s => s.value === userSwimmers.value[swimmerIndex].value.squad )
+    }
+    selectedSwimmer.value = userSwimmers.value[swimmerIndex]
+    editingSwimmer.value = true
+    if ( selectedSwimmer.value.value.clubId ) {
+      const club: Club | undefined = await $fetch( `/api/clubs/${selectedSwimmer.value.value.clubId}` )
+      swimmerClub.value = club ? { label: club.clubName, value: club.clubId } : undefined
     }
     swimmerData.value = JSON.stringify( userSwimmers.value[swimmerIndex].value )
   }
@@ -200,6 +218,8 @@
     deleting.value = null
   }
 
+  const swimmerClub = ref<UISelection | undefined>()
+
   const squads = computed( () => Array.from( userSwimmers.value.reduce( ( sq, s ) => {
     if ( s.value.squad )
       sq.add( s.value.squad )
@@ -213,13 +233,17 @@
     }
   } )
 
-  const selectedClub = ref<UISelection | undefined>( props.clubs.length ? { label: props.clubs[0].clubName, value: props.clubs[0].clubId } : undefined )
+  const userClubId = ref<string | undefined>( props.clubs.length ? props.clubs[0].clubId : undefined )
+  const userClubName = ref<string | undefined>()
+  watchEffect( () => {
+    userClubName.value = props.clubs.find( c => c.clubId === userClubId.value )?.clubName
+  } )
   const clubOwner = ref<0 | 1>( props.clubs.length && props.clubs[0].clubOwner ? 1 : 0 )
 
   watchEffect( () => {
-    if ( selectedClub.value?.value ) {
+    if ( userClubId.value ) {
       replaceUserClub( [ {
-        clubId: String( selectedClub.value?.value ),
+        clubId: String( userClubId.value ),
         clubOwner: clubOwner.value,
       } ] )
     } else {
@@ -230,10 +254,12 @@
   const searchClubs = async ( query: string ) => {
     if ( !query ) return []
     const res = await $fetch( `/api/clubs/search?search=${encodeURIComponent( query )}` )
-    return res.map( ( u: Club ) => ( {
+    const foundClubs = res.map( ( u: Club ) => ( {
       label: u.clubName,
       value: u.clubId,
     } ) )
+    clubLookups.push( ...res )
+    return foundClubs
   }
   const saveSuccess = ref( false )
   const save = handleSubmit( async () => {
@@ -329,12 +355,12 @@
 
   const { createTask } = useTasks()
   const addClubSwimmers = async () => {
-    if ( selectedClub.value ) {
+    if ( userClubId.value ) {
       try {
         const task: Partial<Task> = {
           taskType: "add",
-          taskOptions: JSON.stringify( { club: selectedClub.value.value as string } ),
-          taskDescription: `Add club swimmers for '${selectedClub.value.label}' to account`,
+          taskOptions: JSON.stringify( { club: userClubId.value as string } ),
+          taskDescription: `Add club swimmers for '${userClubName.value}' to account`,
           targetType: "user",
           targetId: props.user.id,
         }
@@ -347,6 +373,15 @@
       }
     }
   }
+
+  watch( selectedSwimmer, ( newValue, oldValue ) => {
+    if ( newValue && oldValue ) {
+      console.log( newValue.value, oldValue.value )
+      if ( !!newValue.value.clubId && !oldValue.value.clubId ) {
+        newValue.value.rankedClub = 1
+      }
+    }
+  }, { deep: true } )
 </script>
 
 <template>
@@ -506,9 +541,10 @@
             >
               <UI-Combobox
                 id="club"
-                v-model="selectedClub"
+                v-model="userClubId"
                 label="Club"
                 placeholder="Select or type club name"
+                :options="props.clubs.map( c => ({ label: c.clubName, value: c.clubId }))"
                 :fetch-options="searchClubs"
               />
             </div>
@@ -520,7 +556,7 @@
                 v-model="clubOwner"
                 type="checkbox"
                 label="Club Admin"
-                :disabled="!selectedClub"
+                :disabled="!userClubId"
                 :true-value="1"
                 :false-value="0"
               />
@@ -543,7 +579,7 @@
           </div>
           <div class="mt-4 sm:mt-0 sm:ml-8 sm:flex-none">
             <button
-              v-if="selectedClub && clubOwner"
+              v-if="userClubId && clubOwner"
               type="button"
               class="inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
               @click="addClubSwimmers"
@@ -627,13 +663,13 @@
                       scope="col"
                       class="px-1 py-3.5 text-left text-sm font-semibold text-gray-900"
                     >
-                      Squad
+                      Club
                     </th>
                     <th
                       scope="col"
                       class="px-1 py-3.5 text-left text-sm font-semibold text-gray-900"
                     >
-                      Active
+                      Squad
                     </th>
                     <th
                       scope="col"
@@ -647,161 +683,63 @@
                   <tr
                     v-for="(swimmer, swimmerIndex) in userSwimmers"
                     :key="swimmer.value.id"
+                    :class="`active-${swimmer.value.active}`"
                   >
                     <td class="py-1 pr-1 pl-2 text-sm font-medium whitespace-nowrap text-gray-900 sm:pl-0">
-                      <input
-                        v-if="editing === swimmerIndex"
-                        :id="`swimmer-id-${swimmerIndex}`"
-                        v-model="swimmer.value.id"
-                        class="block w-full rounded-md bg-white text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
-                      >
-                      <span v-else>{{ swimmer.value.id }}</span>
+                      {{ swimmer.value.id }}
                     </td>
                     <td class="px-1 py-2 text-sm whitespace-nowrap text-gray-500">
-                      <input
-                        v-if="editing === swimmerIndex"
-                        :id="`swimmer-firstname-${swimmerIndex}`"
-                        v-model="swimmer.value.firstName"
-                        class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
-                      >
-                      <span v-else>{{ swimmer.value.firstName }}</span>
+                      {{ swimmer.value.firstName }}
                     </td>
                     <td class="px-1 py-2 text-sm whitespace-nowrap text-gray-500">
-                      <input
-                        v-if="editing === swimmerIndex"
-                        :id="`swimmer-lastname-${swimmerIndex}`"
-                        v-model="swimmer.value.lastName"
-                        class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
-                      >
-                      <span v-else>{{ swimmer.value.lastName }}</span>
+                      {{ swimmer.value.lastName }}
                     </td>
                     <td class="px-1 py-2 text-sm whitespace-nowrap text-gray-500">
-                      <UI-Select
-                        v-if="editing === swimmerIndex"
-                        :id="`swimmer-gender-${swimmerIndex}`"
-                        v-model="swimmer.value.gender"
-                        :options="genders"
-                      />
-                      <span v-else>{{ genders.find( item => item.value === swimmer.value.gender )?.label }}</span>
+                      {{ genders.find( item => item.value === swimmer.value.gender )?.label }}
                     </td>
                     <td class="px-1 py-2 text-sm whitespace-nowrap text-gray-500">
-                      <UI-Input
-                        v-if="editing === swimmerIndex"
-                        v-model="swimmer.value.birthday"
-                        type="date"
-                      />
-                      <span v-else>{{ swimmer.value.birthday }}</span>
+                      {{ swimmer.value.birthday }}
                     </td>
                     <td class="px-1 py-2 text-sm whitespace-nowrap text-gray-500">
-                      <UI-Select
-                        v-if="editing === swimmerIndex"
-                        :id="`swimmer-nationality-${swimmerIndex}`"
-                        v-model="swimmer.value.nationality"
-                        :options="nationalities"
-                      />
-                      <span v-else>{{ nationalities.find( item => item.value === swimmer.value.nationality )?.label }}</span>
+                      {{ nationalities.find( item => item.value === swimmer.value.nationality )?.label }}
                     </td>
                     <td class="px-1 py-2 text-sm whitespace-nowrap text-gray-500">
-                      <UI-Select
-                        v-if="editing === swimmerIndex"
-                        :id="`swimmer-region-${swimmerIndex}`"
-                        v-model="swimmer.value.region"
-                        :options="regions"
-                      />
-                      <span v-else>{{ regions.find( item => item.value === swimmer.value.region )?.label }}</span>
+                      {{ regions.find( item => item.value === swimmer.value.region )?.label }}
                     </td>
                     <td class="px-1 py-2 text-sm whitespace-nowrap text-gray-500">
-                      <UI-Select
-                        v-if="editing === swimmerIndex"
-                        :id="`swimmer-county-${swimmerIndex}`"
-                        v-model="swimmer.value.county"
-                        :options="counties"
-                      />
-                      <span v-else>{{ counties.find( item => item.value === swimmer.value.county )?.label }}</span>
+                      {{ counties.find( item => item.value === swimmer.value.county )?.label }}
                     </td>
                     <td class="px-1 py-2 text-sm whitespace-nowrap text-gray-500">
-                      <UI-Combobox
-                        v-if="editing === swimmerIndex"
-                        :id="`swimmer-squad-${swimmerIndex}`"
-                        v-model="selectedSquad"
-                        :options="squads"
-                      />
-                      <span v-else>{{ swimmer.value.squad }}</span>
+                      {{ clubs.find( c => c.clubId === swimmer.value.clubId )?.clubName }}
                     </td>
                     <td class="px-1 py-2 text-sm whitespace-nowrap text-gray-500">
-                      <input
-                        v-if="editing === swimmerIndex"
-                        v-model="swimmer.value.active"
-                        type="checkbox"
-                        :true-value="1"
-                        :false-value="0"
-                      >
-                      <span v-else>
-                        <CheckIcon
-                          v-if="!!swimmer.value.active"
-                          class="block h-6 w-6"
-                        />
-                        <XMarkIcon
-                          v-if="!swimmer.value.active"
-                          class="block h-6 w-6"
-                        />
-                      </span>
+                      {{ swimmer.value.squad }}
                     </td>
                     <td class="py-2 pr-2 pl-1 text-right text-sm font-medium whitespace-nowrap sm:pr-0">
                       <div class="flex gap-2 justify-end">
                         <button
-                          v-if="editing !== swimmerIndex"
                           type="button"
                           :disabled="editing !== null && editing !== swimmerIndex"
-                          class="inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                          class="inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 px-2 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                           @click="() => editSwimmer( swimmerIndex )"
                         >
                           <PencilSquareIcon
-                            class="-ml-0.5 size-5"
+                            class="size-5"
                             aria-hidden="true"
                           />
-
                           <span class="sr-only">Edit, {{ swimmer.value.fullName }}</span>
                         </button>
                         <button
-                          v-if="editing !== swimmerIndex"
                           type="button"
                           :disabled="editing !== null && editing !== swimmerIndex"
-                          class="inline-flex items-center gap-x-1.5 rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600"
+                          class="inline-flex items-center gap-x-1.5 rounded-md bg-red-600 px-2 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600"
                           @click="() => { deleting = swimmerIndex }"
                         >
                           <TrashIcon
-                            class="-ml-0.5 size-5"
+                            class="size-5"
                             aria-hidden="true"
                           />
                           <span class="sr-only">Delete, {{ swimmer.value.fullName }}</span>
-                        </button>
-                      </div>
-                      <div class="flex gap-2 justify-end">
-                        <button
-                          v-if="editing === swimmerIndex"
-                          type="button"
-                          class="inline-flex items-center gap-x-1.5 rounded-md bg-lime-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-lime-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lime-600  disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
-                          :disabled="swimmerErrors(swimmerIndex)"
-                          @click="() => { editing = null }"
-                        >
-                          <CheckIcon
-                            class="-ml-0.5 size-5"
-                            aria-hidden="true"
-                          />
-                          <span class="sr-only">Update, {{ swimmer.value.fullName }}</span>
-                        </button>
-                        <button
-                          v-if="editing === swimmerIndex"
-                          type="button"
-                          class="inline-flex items-center gap-x-1.5 rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
-                          @click="() => resetSwimmer()"
-                        >
-                          <XMarkIcon
-                            class="-ml-0.5 size-5"
-                            aria-hidden="true"
-                          />
-                          <span class="sr-only">Cancel Editing, {{ swimmer.value.fullName }}</span>
                         </button>
                       </div>
                     </td>
@@ -895,59 +833,209 @@
         Save
       </button>
     </div>
-
-    <UI-Confirm
-      v-if="deleting !== null"
-      title="Delete swimmer"
-      :text="`Are you sure you want to delete swimmer '${userSwimmers[deleting].value.fullName}' from your account?`"
-      confirm-label="Delete"
-      :action="deleteSwimmer"
-    />
-    <UI-Dialog
-      v-model="showLookup"
-      title="Lookup swimmer"
-      confirm-label="Select"
-      :confirm-enabled="() => !!foundSwimmer.id"
-      :action="async () => { await addSwimmer() }"
-    >
-      <div class="px-3 py-5 sm:p-6">
-        <div class="mt-2 max-w-xl text-sm text-gray-500">
-          <p>Enter a swimmer id to lookup details.</p>
-        </div>
-        <form class="mt-5 sm:flex sm:items-center">
-          <div class="w-full sm:max-w-xs">
-            <input
-              id="swimmerId"
-              v-model="swimmerId"
-              type="text"
-              aria-label="Swimmer Id"
-              class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600  sm:text-sm/6"
-              placeholder="1234567890"
-            >
-          </div>
-          <button
-            type="button"
-            class="mt-3 inline-flex w-full items-center justify-center rounded-md bg-indigo-50 px-3 py-2 text-sm font-semibold text-indigo-600 shadow-sm hover:bg-indigo-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600  disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed sm:ml-3 sm:mt-0 sm:w-auto"
-            :disabled="!swimmerId.length"
-            @click="lookupSwimmer"
-          >
-            Lookup
-          </button>
-        </form>
-        <div
-          v-if="foundSwimmer.id"
-          class="mt-2 max-w-xl text-sm text-gray-500"
-        >
-          <p>
-            Found - {{ foundSwimmer.firstName }} {{ foundSwimmer.lastName }} ({{ foundSwimmer.birthday?.substring( 0, 4 ) }}) click 'Select' to continue,
-          </p>
-        </div>
-      </div>
-    </UI-Dialog>
   </form>
+
+  <UI-Confirm
+    v-if="deleting !== null"
+    title="Delete swimmer"
+    :text="`Are you sure you want to delete swimmer '${userSwimmers[deleting].value.fullName}' from your account?`"
+    confirm-label="Delete"
+    :action="deleteSwimmer"
+  />
+  <UI-Dialog
+    v-model="showLookup"
+    title="Find a swimmer"
+    confirm-label="Select"
+    :confirm-enabled="() => !!foundSwimmer.id"
+    :action="async () => { await addSwimmer() }"
+  >
+    <div class="px-3 py-5 sm:p-3">
+      <div class="mt-2 max-w-xl text-sm text-gray-500">
+        <p>Enter a swimmer id or name to search for details.<br>Name searches will return matches for your selected club first if present.</p>
+      </div>
+      <form class="mt-5 sm:flex sm:items-center">
+        <div class="w-full sm:max-w-xs">
+          <UI-Input
+            id="swimmerId"
+            v-model="swimmerId"
+            type="text"
+            aria-label="Swimmer Id"
+            class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600  sm:text-sm/6"
+            placeholder="Number or surname"
+            clearable
+          />
+        </div>
+        <button
+          type="button"
+          class="mt-3 inline-flex w-full items-center justify-center rounded-md bg-indigo-50 px-3 py-2 text-sm font-semibold text-indigo-600 shadow-sm hover:bg-indigo-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600  disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed sm:ml-3 sm:mt-0 sm:w-auto"
+          :disabled="!swimmerId.length"
+          @click="lookupSwimmer"
+        >
+          Search
+        </button>
+      </form>
+      <div v-if="foundSwimmers.length>1">
+        <UI-Select
+          :options="foundSwimmers"
+        />
+      </div>
+      <div
+        v-if="foundSwimmer.id"
+        class="mt-2 max-w-xl text-sm text-gray-500"
+      >
+        <p>
+          Found - {{ foundSwimmer.firstName }} {{ foundSwimmer.lastName }} ({{ foundSwimmer.birthday?.substring( 0, 4 ) }}) click 'Select' to continue,
+        </p>
+      </div>
+    </div>
+  </UI-Dialog>
+  <UI-Dialog
+    v-model="editingSwimmer"
+    title="Edit Swimmer"
+    confirm-label="Update"
+    :confirm-enabled="() => !swimmerErrors(editing!)"
+    :action="() => { editing = null }"
+    :cancel-action="() => resetSwimmer()"
+  >
+    <div class="px-3 py-5 sm:p-4">
+      <form
+        v-if="selectedSwimmer"
+        class="sm:flex sm:items-center"
+      >
+        <div class="grid grid-cols-1 gap-x-6 gap-y-2 sm:grid-cols-6">
+          <div class="sm:col-span-3">
+            <UI-Input
+              v-model="selectedSwimmer.value.id"
+              label="Swimmer Id"
+              required
+            />
+          </div>
+          <div class="hidden sm:block sm:col-span-2" />
+          <div class="sm:col-span-1">
+            <UI-Input
+              v-model="selectedSwimmer.value.active"
+              label="Active"
+              type="checkbox"
+              :true-value="1"
+              :false-value="0"
+            />
+          </div>
+          <div class="sm:col-span-3">
+            <UI-Input
+              v-model="selectedSwimmer.value.firstName"
+              label="First Name"
+              required
+            />
+          </div>
+          <div class="sm:col-span-3">
+            <UI-Input
+              v-model="selectedSwimmer.value.lastName"
+              label="Last Name"
+              required
+            />
+          </div>
+          <div class="sm:col-span-3">
+            <UI-Select
+              v-model="selectedSwimmer.value.gender"
+              label="Gender"
+              required
+              :options="genders"
+            />
+          </div>
+          <div class="sm:col-span-3">
+            <UI-Input
+              v-model="selectedSwimmer.value.birthday"
+              label="Birthday"
+              type="date"
+              required
+            />
+          </div>
+          <div class="sm:col-span-3">
+            <UI-Select
+              v-model="selectedSwimmer.value.nationality"
+              label="Nationality"
+              required
+              :options="nationalities"
+            />
+          </div>
+          <div class="sm:col-span-3">
+            <UI-Select
+              v-model="selectedSwimmer.value.region"
+              label="Region"
+              required
+              :options="regions"
+            />
+          </div>
+          <div class="sm:col-span-4">
+            <UI-Select
+              v-model="selectedSwimmer.value.county"
+              label="County"
+              required
+              :options="counties"
+            />
+          </div>
+          <div class="sm:col-span-5">
+            <UI-Combobox
+              v-model="selectedSwimmer.value.clubId"
+              label="Club"
+              placeholder="Select or type club name"
+              :options="props.clubs.map( c => ({ label: c.clubName, value: c.clubId }))"
+              :fetch-options="searchClubs"
+              @update:model-value="( value ) => { if ( value && selectedSwimmer ) selectedSwimmer.value.rankedClub = 1 }"
+            />
+          </div>
+          <div class="sm:col-span-1">
+            <UI-Input
+              v-model="selectedSwimmer.value.rankedClub"
+              label="Ranked"
+              type="checkbox"
+              :disabled="!selectedSwimmer.value.clubId"
+              :true-value="1"
+              :false-value="0"
+            />
+          </div>
+          <div
+            v-if="userClubId && !selectedSwimmer.value.clubId"
+            class="sm:col-span-6"
+          >
+            <button
+              type="button"
+              class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+              @click="swimmerClub?.value === userClubId"
+            >
+              Set to {{ userClubName }}
+            </button>
+          </div>
+          <div class="sm:col-span-3">
+            <UI-Combobox
+              v-model="selectedSwimmer.value.squad"
+              :disabled="!clubOwner"
+              label="Squad"
+              :strict="false"
+              :options="squads"
+            />
+          </div>
+          <div class="sm:col-span-6">
+            {{ swimmerErrors( editing! ) }}
+            {{ errors }}
+          </div>
+        </div>
+      </form>
+    </div>
+  </UI-Dialog>
   <UI-SuccessNotification
     v-model="saveSuccess"
     title="Successfully saved!"
     text="Account details have been updated."
   />
 </template>
+
+<style lang="scss">
+tr {
+  &.active-0 {
+    td {
+      font-style: italic;
+    }
+  }
+}
+</style>
