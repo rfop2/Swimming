@@ -150,14 +150,14 @@
   const { state: selections } = usePersisted( "meets-selection", {
     course: courses[0],
     level: levels,
-    club: { label: "All Clubs", value: "XXXX" },
+    club: "",
     distance: distances[0],
     tagged: taggings[0],
   }, "reactive" )
 
   const searchClubs = async ( query: string ) => {
-    if ( !query ) return []
-    const res = await $fetch( `/api/clubs?search=${encodeURIComponent( query )}` )
+    if ( !query ) return [ { label: "All Clubs", value: "" } ]
+    const res = await $fetch<Club[]>( `/api/clubs/search?search=${encodeURIComponent( query )}` )
     return res.map( ( u: Club ) => ( {
       label: u.clubName,
       value: u.clubId,
