@@ -24,7 +24,7 @@ export default defineEventHandler( async ( event ) => {
 
   const selectRecords = prepareStatement<{ userId: string, isAdmin: number }, Task>(
     await getPool(),
-    "SELECT * FROM Tasks WHERE creatorId = :userId OR :isAdmin = 1 AND created >= NOW() - INTERVAL 1 DAY"
+    "SELECT * FROM Tasks WHERE (creatorId = :userId OR :isAdmin = 1) AND created >= NOW() - INTERVAL 1 DAY"
   )
   const tasks = await selectRecords.all( { userId, isAdmin } )
   return tasks
