@@ -70,6 +70,7 @@ DROP TABLE IF EXISTS `ClubSwimmers`;
 CREATE TABLE `ClubSwimmers` (
   `clubId` varchar(8) NOT NULL,
   `swimmerId` varchar(8) NOT NULL,
+  `squad` varchar(32) NOT NULL DEFAULT '',
   `rankedClub` tinyint(1) unsigned NOT NULL DEFAULT 0,
   `created` timestamp NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`clubId`,`swimmerId`) USING BTREE,
@@ -571,7 +572,6 @@ DROP TABLE IF EXISTS `UserSwimmers`;
 CREATE TABLE `UserSwimmers` (
   `userId` varchar(16) NOT NULL,
   `swimmerId` varchar(8) NOT NULL,
-  `squad` varchar(32) NOT NULL,
   `created` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
   PRIMARY KEY (`userId`,`swimmerId`),
@@ -580,29 +580,6 @@ CREATE TABLE `UserSwimmers` (
   CONSTRAINT `UserSwimmers_ibfk_2` FOREIGN KEY (`swimmerId`) REFERENCES `Swimmers` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Temporary table structure for view `UserSwimmersView`
---
-
-DROP TABLE IF EXISTS `UserSwimmersView`;
-/*!50001 DROP VIEW IF EXISTS `UserSwimmersView`*/;
-SET @saved_cs_client     = @@character_set_client;
-SET character_set_client = utf8mb4;
-/*!50001 CREATE VIEW `UserSwimmersView` AS SELECT
- 1 AS `id`,
-  1 AS `fullName`,
-  1 AS `firstName`,
-  1 AS `middleName`,
-  1 AS `lastName`,
-  1 AS `birthday`,
-  1 AS `gender`,
-  1 AS `nationality`,
-  1 AS `region`,
-  1 AS `county`,
-  1 AS `squad`,
-  1 AS `active` */;
-SET character_set_client = @saved_cs_client;
 
 --
 -- Table structure for table `UserTypes`
@@ -643,24 +620,6 @@ USE `swimming`;
 /*!50001 CREATE ALGORITHM=UNDEFINED */
 /*!50013 DEFINER=`root`@`%` SQL SECURITY DEFINER */
 /*!50001 VIEW `MeetsView` AS select `Meets`.`id` AS `id`,`Meets`.`code` AS `code`,`Meets`.`date` AS `date`,`Meets`.`duration` AS `duration`,`Meets`.`name` AS `name`,`Meets`.`country` AS `country`,`Meets`.`region` AS `region`,`Meets`.`location` AS `location`,`Locations`.`latitude` AS `latitude`,`Locations`.`longitude` AS `longitude`,`Meets`.`course` AS `course`,`Meets`.`level` AS `level`,`Meets`.`type` AS `type`,`Meets`.`contact` AS `contact`,`Meets`.`email` AS `email` from (`Meets` left join `Locations` on(`Meets`.`locationId` = `Locations`.`locationId`)) */;
-/*!50001 SET character_set_client      = @saved_cs_client */;
-/*!50001 SET character_set_results     = @saved_cs_results */;
-/*!50001 SET collation_connection      = @saved_col_connection */;
-
---
--- Final view structure for view `UserSwimmersView`
---
-
-/*!50001 DROP VIEW IF EXISTS `UserSwimmersView`*/;
-/*!50001 SET @saved_cs_client          = @@character_set_client */;
-/*!50001 SET @saved_cs_results         = @@character_set_results */;
-/*!50001 SET @saved_col_connection     = @@collation_connection */;
-/*!50001 SET character_set_client      = utf8mb4 */;
-/*!50001 SET character_set_results     = utf8mb4 */;
-/*!50001 SET collation_connection      = utf8mb4_uca1400_ai_ci */;
-/*!50001 CREATE ALGORITHM=UNDEFINED */
-/*!50013 DEFINER=`root`@`%` SQL SECURITY DEFINER */
-/*!50001 VIEW `UserSwimmersView` AS select `Swimmers`.`id` AS `id`,`Swimmers`.`fullName` AS `fullName`,`Swimmers`.`firstName` AS `firstName`,`Swimmers`.`middleName` AS `middleName`,`Swimmers`.`lastName` AS `lastName`,`Swimmers`.`birthday` AS `birthday`,`Swimmers`.`gender` AS `gender`,`Swimmers`.`nationality` AS `nationality`,`Swimmers`.`region` AS `region`,`Swimmers`.`county` AS `county`,`UserSwimmers`.`squad` AS `squad`,`Swimmers`.`active` AS `active` from (`UserSwimmers` join `Swimmers` on(`UserSwimmers`.`swimmerId` = `Swimmers`.`id`)) */;
 /*!50001 SET character_set_client      = @saved_cs_client */;
 /*!50001 SET character_set_results     = @saved_cs_results */;
 /*!50001 SET collation_connection      = @saved_col_connection */;

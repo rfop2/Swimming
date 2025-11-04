@@ -29,7 +29,7 @@
     v-if="props.label"
     :for="props.id ?? defaultId"
     class="block text-sm/6 font-medium text-gray-900"
-  >{{ props.label }}</label>
+  >{{ props.label }}{{ !!required ? "*" : "" }}</label>
   <div :class="classNames({ 'mt-2': props.label })">
     <span
       v-if="props.type === 'checkbox' || props.type === 'radio'"
@@ -67,25 +67,28 @@
 
     </span>
     <span v-else>
-      <input
-        :id="props.id ?? defaultId"
-        v-model="model"
-        :type="props.type"
-        class="block w-full rounded-md text-gray-900 border-gray-300 py-1.5 sm:text-sm sm:leading-6"
-        :placeholder="props.placeholder"
-        :required="props.required"
-        v-bind="$attrs"
-      >
-      <button
-        v-if="props.clearable"
-        type="button"
-        class="absolute top-1/2 right-2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
-        onclick="this.previousElementSibling.value = ''"
-      >
-        <XMarkIcon
-          class="block h-6 w-6"
-        />
-      </button>
+      <div class="relative w-full">
+        <input
+          :id="props.id ?? defaultId"
+          v-model="model"
+          :type="props.type"
+          class="block w-full rounded-md text-gray-900 border-gray-300 py-1.5 sm:text-sm sm:leading-6"
+          :placeholder="props.placeholder"
+          :required="props.required"
+          v-bind="$attrs"
+        >
+        <button
+          v-if="props.clearable"
+          :disabled="!model"
+          type="button"
+          class="absolute top-1/2 right-2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
+          onclick="this.previousElementSibling.value = ''"
+        >
+          <XMarkIcon
+            class="block h-6 w-6"
+          />
+        </button>
+      </div>
     </span>
   </div>
 </template>

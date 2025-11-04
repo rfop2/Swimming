@@ -16,7 +16,7 @@ export default defineEventHandler( async ( event ) => {
 
   const selectRecords = prepareStatement<{ userId: string }, UserClub>(
     await getPool(),
-    "SELECT Clubs.clubId, Clubs.clubName, Clubs.clubRegion, Clubs.clubCounty, UserClubs.clubOwner FROM Clubs INNER JOIN UserClubs ON (Clubs.clubId = UserClubs.clubId) WHERE UserClubs.userId = :userId"
+    "SELECT Clubs.clubId, Clubs.clubName, Clubs.clubAlias, Clubs.clubRegion, Clubs.clubCounty, UserClubs.clubOwner FROM Clubs INNER JOIN UserClubs ON (Clubs.clubId = UserClubs.clubId) WHERE UserClubs.userId = :userId"
   )
   const data = await selectRecords.all( { userId: userId ?? event.context.session.userId } )
   return data

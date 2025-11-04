@@ -20,14 +20,18 @@ export interface Swimmer {
   nationality: string
   region: string
   county: string
-  squad: string
   active: number
   lastUpdateTime?: Date
   lastUpdateType?: string
 }
 
 export interface ExtSwimmer extends Swimmer {
-  clubId: Club["clubId"]
+  clubId?: Club["clubId"]
+  clubIds: string
+  rankedClub?: number
+  rankedClubs: string
+  squad?: string
+  squads: string
 }
 
 export interface IndividualStats {
@@ -118,11 +122,11 @@ export interface Club {
   meetName: string
 }
 
-export interface UserClub {
-  clubId: Club["clubId"]
-  clubName?: string
-  clubCounty?: string
-  clubRegion?: string
+export type RequireOne<T, K extends keyof T> = Omit<T, K> & Required<Pick<T, K>>
+export type Optionalize<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>
+export type KeepRequired<T, K extends keyof T> = Pick<T, K> & Partial<Omit<T, K>>
+
+export interface UserClub extends KeepRequired<Club, "clubId"> {
   clubOwner: number
 }
 

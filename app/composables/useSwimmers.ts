@@ -1,15 +1,18 @@
 import { format } from "date-fns"
-import type { Swimmer } from "lib"
+import type { ExtSwimmer } from "lib"
 
 export const useSwimmers = ( userId?: string ) => {
-  const swimmers = useState<Swimmer[]>( `${userId ?? "0"}:swimmers`, () => [] )
+  const swimmers = useState<ExtSwimmer[]>( `${userId ?? "0"}:swimmers`, () => [] )
 
-  const fetchSwimmers = async (): Promise<Swimmer[]> => {
-    const data = await $fetch<Swimmer[]>( `/api/swimmers/${userId ?? ""}` )
+  const fetchSwimmers = async (): Promise<ExtSwimmer[]> => {
+    const data = await $fetch<ExtSwimmer[]>( `/api/swimmers/${userId ?? ""}` )
     return data
       .map( s => ( {
         ...s,
-        birthday: format( new Date( s.birthday ), "yyyy-MM-dd" )
+        birthday: format( new Date( s.birthday ), "yyyy-MM-dd" ),
+        clubId: s.clubIds.split( "|" )[0],
+        rankedClub: Number( s.rankedClubs.split( "|" )[0] ),
+        squad: s.squads.split( "|" )[0],
       } ) )
       .sort( ( a, b ) => {
         const last = a.lastName.localeCompare( b.lastName )

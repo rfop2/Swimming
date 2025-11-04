@@ -12,7 +12,7 @@ export default defineEventHandler( async ( event ) => {
 
   const selectRecords = prepareStatement<{ searchPattern: string }, Club>(
     await getPool(),
-    "SELECT * FROM Clubs WHERE ClubName LIKE :searchPattern ORDER BY ClubName ASC"
+    "SELECT * FROM Clubs WHERE ClubName LIKE :searchPattern OR ClubAlias LIKE :searchPattern ORDER BY ClubName ASC"
   )
   const data = await selectRecords.all( { searchPattern: `%${search}%` } )
   return data
