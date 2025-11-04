@@ -331,6 +331,27 @@ CREATE TABLE `Qualifying` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Table structure for table `QualifyingPeriods`
+--
+
+DROP TABLE IF EXISTS `QualifyingPeriods`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `QualifyingPeriods` (
+  `qualifyingYear` int(11) NOT NULL,
+  `qualifyingScope` enum('regional','county') NOT NULL,
+  `qualifyingArea` varchar(32) NOT NULL,
+  `notes` varchar(255) DEFAULT NULL,
+  `qualifyingType` enum('summer','winter') NOT NULL DEFAULT 'summer',
+  `qualifyingStart` date NOT NULL,
+  `qualifyingEnd` date DEFAULT NULL,
+  `created` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
+  PRIMARY KEY (`qualifyingYear`,`qualifyingScope`,`qualifyingArea`,`qualifyingType`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
 -- Table structure for table `Rankings`
 --
 
