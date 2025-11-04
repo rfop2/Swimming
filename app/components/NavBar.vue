@@ -136,6 +136,8 @@
 
   const router = useRouter()
 
+  const config = useRuntimeConfig()
+
   async function logout() {
     await $fetch( "/api/user/logout", {
       method: "POST"
@@ -260,7 +262,13 @@
         <!-- Right: version + profile -->
         <div class="hidden sm:ml-6 sm:flex sm:items-center pt-2">
           <p class="mr-2 text-sm text-gray-700">
-            <a href="/changelog">v11.9.1</a>
+            <nuxt-link
+              v-if="user.admin"
+              to="/changelog"
+            >
+              v{{ config.public.appVersion }}
+            </nuxt-link>
+            <span v-else>v{{ config.public.appVersion }}</span>
           </p>
           <button
             type="button"
