@@ -73,6 +73,7 @@ CREATE TABLE `ClubSwimmers` (
   `squad` varchar(32) NOT NULL DEFAULT '',
   `rankedClub` tinyint(1) unsigned NOT NULL DEFAULT 0,
   `created` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
   PRIMARY KEY (`clubId`,`swimmerId`) USING BTREE,
   KEY `swimmerId` (`swimmerId`),
   CONSTRAINT `ClubSwimmers_ibfk_1` FOREIGN KEY (`clubId`) REFERENCES `Clubs` (`clubId`) ON DELETE CASCADE ON UPDATE CASCADE,
