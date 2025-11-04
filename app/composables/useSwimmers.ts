@@ -10,9 +10,9 @@ export const useSwimmers = ( userId?: string ) => {
       .map( s => ( {
         ...s,
         birthday: format( new Date( s.birthday ), "yyyy-MM-dd" ),
-        clubId: s.clubIds.split( "|" )[0],
-        rankedClub: Number( s.rankedClubs.split( "|" )[0] ),
-        squad: s.squads.split( "|" )[0],
+        clubId: s.clubIds ? s.clubIds.split( "|" )[0] : undefined,
+        rankedClub: s.rankedClubs ? Number( s.rankedClubs.split( "|" )[0] ) : undefined,
+        squad: s.squads ? s.squads.split( "|" )[0] : "",
       } ) )
       .sort( ( a, b ) => {
         const last = a.lastName.localeCompare( b.lastName )
