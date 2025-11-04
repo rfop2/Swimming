@@ -1,7 +1,24 @@
 #!/bin/bash
 set -euo pipefail
 
+if [ $# -eq 0 ]
+then
+  echo "No backup file specified, aborting"
+  exit -1
+fi
+
 REPO_ROOT=$(git rev-parse --show-toplevel)
+
+backupFilePath=$1
+absBackupFilePath=$(realpath -s $backupFilePath)
+if [ ! -f $absBackupFilePath ]
+then
+  echo "Backup file $backupFilePath not found or not valid, aborting"
+  exit -1
+fi
+
+echo "Restoring from Backup file $backupFilePath"
+
 cd $REPO_ROOT/docker
 if [ -s .env ]
 then
@@ -11,20 +28,6 @@ fi
 BACKUP_DIR=$REPO_ROOT/backups
 DB_CONTAINER=db
 
-if [ $# -eq 0 ]
-then
-  echo "No backup file specified, aborting"
-  exit -1
-fi
-
-backupFile=$1
-if [ ! -f $backupFile ]
-then
-  echo "Backup file $backupFile not found or not valid, aborting"
-  exit -1
-fi
-
-echo "Restoring from Backup file $backupFile"
 
 # Generate a random path inside the container for safety
 REMOTE_CNF="/tmp/mydump-$$.cnf"
@@ -40,7 +43,7 @@ user=root
 password=$MARIADB_ROOT_PASSWORD
 EOF
 
-gunzip -c $backupFile | \
+gunzip -c $absBackupFilePath | \
   docker compose exec -T $DB_CONTAINER /bin/bash -c "mariadb --defaults-extra-file=$REMOTE_CNF $MARIADB_DATABASE"
 cleanup
 
