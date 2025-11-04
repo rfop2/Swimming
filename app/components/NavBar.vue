@@ -115,7 +115,7 @@
       { name: "Training", href: "/training" },
     ] },
     { name: "Competition", children: [
-      { name: "Qualifying", href: "/qualifying" },
+      { name: "Meets", href: "/meets" },
     ] },
     { name: "Qualifications", children: [
       { name: "Summer", href: "/qualifying" },
