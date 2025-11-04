@@ -256,7 +256,7 @@
     <UI-Confirm
       v-if="deleting !== null"
       title="Delete user"
-      :text="`Are you sure you want to delete user '${(users as User[])[deleting].username}' from the site?`"
+      :text="`Are you sure you want to delete user '${(filteredUsers as User[])[deleting].username}' from the site?`"
       confirm-label="Delete"
       :action="deleteUser"
     />
