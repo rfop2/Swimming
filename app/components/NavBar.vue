@@ -116,12 +116,11 @@
     ] },
     { name: "Competition", children: [
       { name: "Meets", href: "/meets" },
+      { name: "Results", href: "/meets" },
     ] },
     { name: "Qualifications", children: [
-      { name: "Summer", href: "/qualifying" },
-      { name: "Winter", href: "/qualifying" },
-      { name: "Regional", href: "/qualifying" },
-      { name: "County", href: "/qualifying" },
+      { name: "Cut-off Dates", href: "/qualifying" },
+      { name: "Times", href: "/qualifying" },
     ] },
   ] )
 
