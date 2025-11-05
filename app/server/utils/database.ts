@@ -62,6 +62,24 @@ const insertUserSwimmerSql =
     :id
   )`
 
+const insertClubSwimmerSql =
+  `INSERT IGNORE INTO ClubSwimmers (
+    clubId,
+    swimmerId,
+    rankedClub,
+    squad
+  ) VALUES (
+    :clubId,
+    :swimmerId,
+    1,
+    :squad
+  ) ON DUPLICATE KEY UPDATE
+    rankedClub = VALUES(rankedClub),
+    squad = VALUES(squad)
+  ;`
+
+const deleteClubSwimmerSql = "DELETE FROM ClubSwimmers WHERE swimmerId = :swimmerId"
+
 export const updateUserSwimmers = async ( conn: Pool | PoolConnection, userId: User["id"], swimmers: UserData["swimmers"] ) => {
   // Now do swimmers
   if ( swimmers.length === 0 ) {
@@ -99,23 +117,19 @@ export const updateUserSwimmers = async ( conn: Pool | PoolConnection, userId: U
   }
 }
 
-const insertClubSwimmerSql =
-  `INSERT IGNORE INTO ClubSwimmers (
+const insertUserClubSql =
+  `INSERT INTO UserClubs (
+    userId,
     clubId,
-    swimmerId,
-    rankedClub,
-    squad
+    clubOwner
   ) VALUES (
+    :userId,
     :clubId,
-    :swimmerId,
-    1
-    :squad
-  ) ON DUPLICATE KEY UPDATE
-    rankedClub = VALUES(rankedClub),
-    squad = VALUES(squad)
+    :clubOwner
+  )
+    ON DUPLICATE KEY UPDATE
+    clubOwner = :clubOwner
   ;`
-
-const deleteClubSwimmerSql = "DELETE FROM ClubSwimmers WHERE swimmerId = :swimmerId"
 
 export const updateUserClubs = async ( conn: Pool | PoolConnection, userId: User["id"], clubs: UserData["clubs"] ) => {
   if ( clubs.length === 0 ) {
@@ -134,20 +148,6 @@ export const updateUserClubs = async ( conn: Pool | PoolConnection, userId: User
     )
     await deleteClubs.run( { ...clubIdsValues, ...{ userId } } )
 
-    const insertUserClubSql =
-      `INSERT INTO UserClubs (
-        userId,
-        clubId,
-        clubOwner
-      )
-      VALUES (
-        :userId,
-        :clubId,
-        :clubOwner
-      )
-      ON DUPLICATE KEY UPDATE
-        clubOwner = :clubOwner
-      ;`
     const insertUserClub = prepareStatement( conn, insertUserClubSql )
     for ( const club of clubs ) {
       await insertUserClub.run( { ...club, userId } )
