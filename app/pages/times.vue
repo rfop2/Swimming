@@ -17,8 +17,6 @@
     ]
   } )
 
-  const strokeOptions = Object.entries( strokes ).map( ( [ stroke, strokeData ] ) => ( { value: stroke, label: strokeData.label } ) )
-
   const route = useRoute()
   const slug = Array.isArray( route.params.slug ) ? route.params.slug : []
 
@@ -30,9 +28,11 @@
     return sq
   }, new Set<string>() ) ).sort().map( s => ( { label: s, value: s } ) ), { label: "No squad", value: "" } ] )
 
+  const strokeOptions = Object.entries( strokes ).map( ( [ stroke, strokeData ] ) => ( { value: stroke, label: strokeData.label } ) )
+
   const { state: selections } = usePersisted( "times-selection", {
-    squad: squadOptions.value.find( option => option.value === slug[0] ) ?? squadOptions.value[0],
-    stroke: strokeOptions.find( option => option.value === slug[1] ) ?? strokeOptions[0],
+    squad: ( squadOptions.value.find( option => option.value === slug[0] ) ?? squadOptions.value[0] ).value,
+    stroke: ( strokeOptions.find( option => option.value === slug[1] ) ?? strokeOptions[0] ).value,
   }, "reactive" )
 
   const filteredSwimmers = computed( () => ( swimmers.value || [] ).filter( swimmer => selections.squad.value === "*" || swimmer.squad === selections.squad.value ) )
@@ -50,9 +50,9 @@
     "/api/qualifying",
   )
 
-  const filteredRecords = computed( () => ( records.value || [] ).filter( record => record.stroke === selections.stroke.value && swimmersMap.value[record.swimmer] ) )
+  const filteredRecords = computed( () => ( records.value || [] ).filter( record => record.stroke === selections.stroke && swimmersMap.value[record.swimmer] ) )
 
-  const distances = computed( () => strokes[selections.stroke.value].distances )
+  const distances = computed( () => strokes[selections.stroke].distances )
 
   interface QualifiedRow extends IndividualRow {
     qualified?: QualifyingRow

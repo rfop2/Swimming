@@ -105,17 +105,17 @@
   ]
 
   const selections = ref( {
-    year: years[0],
-    scope: scopes[0],
-    area: { label: "", value: "" },
-    gender: genders[0],
-    age: ages.value[0],
-    course: courses[0],
+    year: years[0].value,
+    scope: scopes[0].value,
+    area: "",
+    gender: "",
+    age: ages.value[0].value,
+    course: courses[0].value,
   } )
 
-  const areas = computed( () => areasFromScope( selections.value.scope.value ) )
+  const areas = computed( () => areasFromScope( selections.value.scope ) )
 
-  const filterArea = computed( () => selections.value.area.value )
+  const filterArea = computed( () => selections.value.area )
 
   const added = ref<Array<ExtQualifyingRow>>( [] )
   const deleted = ref<Array<ExtQualifyingRow>>( [] )
@@ -142,15 +142,15 @@
 
   const filteredQualifying = computed( () => {
     const filtered = effectiveQualifying.value.filter( row => {
-      if ( row.year !== selections.value.year.value )
+      if ( row.year !== selections.value.year )
         return false
-      if ( row.scope !== selections.value.scope.value )
+      if ( row.scope !== selections.value.scope )
         return false
       if ( row.area !== filterArea.value )
         return false
-      if ( row.gender !== selections.value.gender.value )
+      if ( row.gender !== selections.value.gender )
         return false
-      if ( row.age !== selections.value.age.value )
+      if ( row.age !== selections.value.age )
         return false
       return true
     } )
@@ -177,7 +177,7 @@
 
   watch( filteredQualifying, fq => {
     if ( fq.length > 0 ) {
-      selections.value.course = courses.find( course => course.value === fq[0].course ) ?? courses[0]
+      selections.value.course = ( courses.find( course => course.value === fq[0].course ) ?? courses[0] ).value
     }
   }, { deep: true } )
 
@@ -201,11 +201,11 @@
   async function paste( _e: Event ) {
     for ( const row of clipboard.value ) {
       added.value.push( { ...row, ...{
-        year: selections.value.year.value,
-        scope: selections.value.scope.value,
-        area: selections.value.area.value,
-        gender: selections.value.gender.value,
-        age: selections.value.age.value,
+        year: selections.value.year,
+        scope: selections.value.scope,
+        area: selections.value.area,
+        gender: selections.value.gender,
+        age: selections.value.age,
       } } )
     }
     dirty.value = true
@@ -222,14 +222,14 @@
       const { stroke = "", distance = "" } = { ...matches?.groups }
       addedData.push( {
         created,
-        year: selections.value.year.value,
-        course: selections.value.course.value,
+        year: selections.value.year,
+        course: selections.value.course,
         stroke,
         distance,
-        scope: selections.value.scope.value,
-        area: selections.value.area.value,
-        gender: selections.value.gender.value,
-        age: selections.value.age.value,
+        scope: selections.value.scope,
+        area: selections.value.area,
+        gender: selections.value.gender,
+        age: selections.value.age,
         timeString: "0",
         time: 0
       } )
@@ -251,14 +251,14 @@
       if ( !filteredQualifying.value.find( row => row.stroke === stroke && row.distance === distance ) ) {
         addedData.push( {
           created,
-          year: selections.value.year.value,
-          course: selections.value.course.value,
+          year: selections.value.year,
+          course: selections.value.course,
           stroke,
           distance,
-          scope: selections.value.scope.value,
-          area: selections.value.area.value,
-          gender: selections.value.gender.value,
-          age: selections.value.age.value,
+          scope: selections.value.scope,
+          area: selections.value.area,
+          gender: selections.value.gender,
+          age: selections.value.age,
           timeString: "0",
           time: 0
         } )
@@ -405,7 +405,7 @@
 
   const swimmerAreaSelection = ( swimmer: Swimmer, scope: string ) => {
     const swimmerArea = getSwimmerScopeArea( swimmer, scope )
-    return areas.value.find( area => area.value === swimmerArea ) ?? areas.value[0]
+    return ( areas.value.find( area => area.value === swimmerArea ) ?? areas.value[0] ).value
   }
 
   const updateFilters = ( swimmer: Swimmer ) => {
@@ -418,11 +418,11 @@
     }
 
     selections.value = {
-      year: years.find( year => year.value === filterYear ) ?? years[0],
+      year: ( years.find( year => year.value === filterYear ) ?? years[0] ).value,
       scope: selections.value.scope,
-      area: swimmerAreaSelection( swimmer, selections.value.scope.value ),
-      gender: genders.find( gender => gender.value === swimmer.gender ) ?? genders[0],
-      age: ages.value.find( age => age.value === qualifyingAge ) ?? ages.value[0],
+      area: ( swimmerAreaSelection( swimmer, selections.value.scope ) ),
+      gender: ( genders.find( gender => gender.value === swimmer.gender ) ?? genders[0] ).value,
+      age: ( ages.value.find( age => age.value === qualifyingAge ) ?? ages.value[0] ).value,
       course: selections.value.course,
     }
   }
@@ -435,7 +435,7 @@
 
   watch( () => selections.value.scope, newScope => {
     if ( swimmer.value ) {
-      selections.value.area = swimmerAreaSelection( swimmer.value, newScope.value )
+      selections.value.area = swimmerAreaSelection( swimmer.value, newScope )
     }
   }, {
     immediate: true,

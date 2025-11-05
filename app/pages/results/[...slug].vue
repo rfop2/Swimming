@@ -28,9 +28,9 @@
   const distanceOptions = reactive<{ value: string, label: string }[]>( strokes[slug[1] ?? Object.keys( strokes )[0]].distances.map( d => ( { value: d, label: d } ) ) )
 
   const { state: selections } = usePersisted( "results-selection", {
-    course: courseOptions.find( option => option.value === slug[0] ) ?? courseOptions[0],
-    stroke: strokeOptions.find( option => option.value === slug[1] ) ?? strokeOptions[0],
-    distance: distanceOptions.find( option => option.value === slug[2] ) ?? distanceOptions[0],
+    course: ( courseOptions.find( option => option.value === slug[0] ) ?? courseOptions[0] ).value,
+    stroke: ( strokeOptions.find( option => option.value === slug[1] ) ?? strokeOptions[0] ).value,
+    distance: ( distanceOptions.find( option => option.value === slug[2] ) ?? distanceOptions[0] ).value,
     period: {
       range: undefined,
       startDate: undefined,
@@ -40,9 +40,9 @@
 
   watch( () => selections.stroke, ( newStroke ) => {
     distanceOptions.length = 0
-    distanceOptions.push( ...strokes[newStroke.value].distances.map( d => ( { value: d, label: d } ) ) )
-    if ( selections.distance.value && !distanceOptions.find( o => o.value === selections.distance.value ) )
-      selections.distance = distanceOptions[0]
+    distanceOptions.push( ...strokes[newStroke].distances.map( d => ( { value: d, label: d } ) ) )
+    if ( selections.distance && !distanceOptions.find( o => o.value === selections.distance ) )
+      selections.distance = distanceOptions[0].value
   } )
 
   const rewritten = ref( false )
@@ -88,9 +88,9 @@
         startDate?: string
         endDate?: string
       } = {
-        course: selections.course.value,
-        stroke: selections.stroke.value,
-        distance: selections.distance.value,
+        course: selections.course,
+        stroke: selections.stroke,
+        distance: selections.distance,
       }
       if ( selections.period.startDate ) {
         query.startDate = selections.period.startDate
@@ -118,9 +118,9 @@
       qualifyingTimes.value = ( qualifyingInfo.value ?? [] as QualifyingRow[] ).filter( q => {
         if ( q.year !== currentYear )
           return false
-        if ( q.stroke !== selections.stroke.value )
+        if ( q.stroke !== selections.stroke )
           return false
-        if ( q.distance !== selections.distance.value )
+        if ( q.distance !== selections.distance )
           return false
         if ( q.gender !== swimmer.value.gender )
           return false
@@ -135,7 +135,7 @@
         return true
       } ).map( ( q ): ExtQualifyingRow => ( {
         ...q,
-        courseTime: convertTime( q.course, selections.course.value, selections.stroke.value, selections.distance.value, q.time )
+        courseTime: convertTime( q.course, selections.course, selections.stroke, selections.distance, q.time )
       } ) )
       countyQualifying.value = qualifyingTimes.value.find( q => q.scope === "county" )
       regionQualifying.value = qualifyingTimes.value.find( q => q.scope === "regional" )

@@ -27,7 +27,7 @@
       dateRanges.push( { label: `${currentYear - i}${i ? " - " + currentYear : ""}`, value: String( currentYear - i ) } )
     } )
 
-  const range = ref( dateRanges.find( r => r.value === model.value.range ) ?? ( !model.value.startDate && !model.value.endDate ? dateRanges[0] : dateRanges[dateRanges.length - 1] ) )
+  const range = ref( ( dateRanges.find( r => r.value === model.value.range ) ?? ( !model.value.startDate && !model.value.endDate ? dateRanges[0] : dateRanges[dateRanges.length - 1] ) ).value )
 
   const getDatesFromRange = ( range: string ) => {
     const tz = "Europe/London"
@@ -55,8 +55,8 @@
   }
 
   watch( range, ( newRange ) => {
-    model.value.range = String( newRange.value )
-    const dates = getDatesFromRange( String( newRange.value ) )
+    model.value.range = String( newRange )
+    const dates = getDatesFromRange( String( newRange ) )
     if ( dates ) {
       if ( dates.start ) {
         model.value.startDate = dates.start.toPlainDate().toString()

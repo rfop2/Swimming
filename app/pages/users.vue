@@ -32,8 +32,8 @@
   }, "reactive" )
 
   const selectedTypes = computed( {
-    get: () => typeOptions.value.filter( o => selections.type.includes( o.value ) ),
-    set: ( newTypes ) => selections.type = newTypes.map( o => o.value )
+    get: () => typeOptions.value.map( o => o.value ).filter( v => selections.type.includes( v ) ),
+    set: ( newTypes ) => selections.type = newTypes
   } )
 
   const filteredUsers = computed( () => ( users.value ?? [] ).filter( user => {

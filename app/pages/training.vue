@@ -58,36 +58,52 @@
   ]
 
   const { state: selections } = usePersisted( "training-selection", {
-    squad: squadOptions.value.find( option => option.value === slug[0] ) ?? squadOptions.value[0],
-    stroke: strokeOptions.find( option => option.value === slug[1] ) ?? strokeOptions[0],
-    course: courseOptions.find( option => option.value === slug[2] ) ?? courseOptions[0],
-    baseDistance: baseDistanceOptions.find( option => String( option.value ) === slug[3] ) ?? baseDistanceOptions.find( d => d.label === "100m" ) ?? baseDistanceOptions[0],
-    targetDistances: targetDistanceOptions.slice( 0, 4 ),
-    effort: effortOptions.find( option => option.label === slug[4] ) ?? effortOptions[3]
+    squad: ( squadOptions.value.find( option => option.value === slug[0] ) ?? squadOptions.value[0] ).value,
+    stroke: ( strokeOptions.find( option => option.value === slug[1] ) ?? strokeOptions[0] ).value,
+    course: ( courseOptions.find( option => option.value === slug[2] ) ?? courseOptions[0] ).value,
+    baseDistance: ( baseDistanceOptions.find( option => String( option.value ) === slug[3] ) ?? baseDistanceOptions.find( d => d.label === "100m" ) ?? baseDistanceOptions[0] ).value,
+    targetDistances: ( targetDistanceOptions.slice( 0, 4 ) ).map( o => o.value ),
+    effort: ( effortOptions.find( option => option.label === slug[4] ) ?? effortOptions[3] ).value,
   }, "reactive" )
 
   watch( () => selections.stroke, ( newStroke ) => {
     baseDistanceOptions.length = 0
-    baseDistanceOptions.push( ...strokes[newStroke.value].distances.map( d => ( { value: Number( d.replace( /m$/, "" ) ), label: d } ) ) )
-    if ( selections.baseDistance.value && !baseDistanceOptions.find( o => o.value === selections.baseDistance.value ) )
-      selections.baseDistance = baseDistanceOptions[0]
+    baseDistanceOptions.push( ...strokes[newStroke].distances.map( d => ( { value: Number( d.replace( /m$/, "" ) ), label: d } ) ) )
+    if ( selections.baseDistance && !baseDistanceOptions.find( o => o.value === selections.baseDistance ) )
+      selections.baseDistance = baseDistanceOptions[0].value
   } )
 
   type ApiResponse = InternalApi["/api/personal"]["get"]
 
-  const { data: records } = await useFetch<ApiResponse>(
+  interface ExtIndividualRow extends IndividualRow {
+    distanceMetres: number
+  }
+
+  const { data: records } = await useFetch(
     "/api/personal/",
-  )
+    {
+      key: "training",
+      transform: ( data: ApiResponse ): Array<ExtIndividualRow> => (
+        data.map( row => ( {
+          ...row,
+          ...{
+            // time: row.time || timeToSeconds( row.timeString ),
+            // timeString: row.timeString.replace( /^0+:?/, "" ),
+            distanceMetres: Number( row.distance.replace( /m$/, "" ) )
+          }
+        } ) )
+      ),
+    } )
 
   const bestTimes = computed( () => new Map<string, IndividualRow>( ( records.value || [] ).filter( ( r ) =>
-    r.stroke === selections.stroke.value && r.course === selections.course.value && r.distance === selections.baseDistance.label
+    r.stroke === selections.stroke && r.course === selections.course && r.distanceMetres === selections.baseDistance
   ).map( record => ( [ record.swimmer, record ] ) ) ) )
 
   // console.log( "bt", bestTimes.value )
 
   const filteredSwimmers = computed( () => new Map<string, Swimmer>( ( swimmers.value || [] ).filter( swimmer => {
     // Filter by squad
-    if ( selections.squad.value !== "*" && swimmer.squad !== selections.squad.value )
+    if ( selections.squad !== "*" && swimmer.squad !== selections.squad )
       return false
     if ( !bestTimes.value.has( swimmer.id ) )
       return false
@@ -102,7 +118,7 @@
     title="Training targets calculator"
   >
     <template #description>
-      Estimated target times for fractional distances based on fastest recorded time over {{ selections.baseDistance.label }}.
+      Estimated target times for fractional distances based on fastest recorded time over {{ baseDistanceOptions.find( o => o.value === selections.baseDistance)?.label }}.
     </template>
     <template #controls>
       <div class="min-w-48">
@@ -169,15 +185,15 @@
               scope="col"
               class="whitespace-nowrap align-bottom !border-r-2 !border-gray-400 px-2 py-3.5 text-right text-sm font-semibold text-gray-900"
             >
-              {{ selections.baseDistance.label }} Time
+              {{ baseDistanceOptions.find( o => o.value === selections.baseDistance )?.label }} Time
             </th>
             <th
               v-for="distance in selections.targetDistances"
-              :key="distance.label"
+              :key="distance"
               scope="col"
               class="whitespace-nowrap align-bottom px-2 py-3.5 text-right text-sm font-semibold text-gray-900"
             >
-              <span>{{ distance.label }}</span>
+              <span>{{ targetDistanceOptions.find( o => o.value === distance )?.label }}</span>
             </th>
           </tr>
         </thead>
@@ -198,11 +214,11 @@
               {{ secondsToTime( bestTimes.get( swimmer.id )?.time ?? 0, 1 ) }}
             </td>
             <td
-              v-for="distance in selections.targetDistances.sort( ( a, b ) => a.value - b.value )"
-              :key="distance.label"
+              v-for="distance in selections.targetDistances.sort( ( a, b ) => a - b )"
+              :key="distance"
               class="whitespace-nowrap px-2 py-2 text-right text-sm text-gray-900"
             >
-              {{ secondsToTime( ( ( ( bestTimes.get( swimmer.id )?.time ?? 0 ) * distance.value ) / ( selections.effort.value * selections.baseDistance.value ) ), 1 ) }}
+              {{ secondsToTime( ( ( ( bestTimes.get( swimmer.id )?.time ?? 0 ) * distance ) / ( selections.effort * selections.baseDistance ) ), 1 ) }}
             </td>
           </tr>
         </tbody>

@@ -148,11 +148,11 @@
   ]
 
   const { state: selections } = usePersisted( "meets-selection", {
-    course: courses[0],
-    level: levels,
+    course: courses[0].value,
+    level: levels.map( l => ( l.value ) ),
     club: "",
-    distance: distances[0],
-    tagged: taggings[0],
+    distance: distances[0].value,
+    tagged: taggings[0].value,
   }, "reactive" )
 
   const searchClubs = async ( query: string ) => {
@@ -203,13 +203,13 @@
       meet,
     } ) )
     const filteredEvents = calendarEvents.filter( event => {
-      if ( selections.course.value && selections.course.value !== event.meet.course )
+      if ( selections.course && selections.course !== event.meet.course )
         return false
-      if ( selections.level.length === 0 || !selections.level.map( level => level.value ).includes( event.meet.level ) )
+      if ( selections.level.length === 0 || !selections.level.includes( event.meet.level ) )
         return false
-      if ( selections.distance.value && event.meet.distance && selections.distance.value < event.meet.distance )
+      if ( selections.distance && event.meet.distance && selections.distance < event.meet.distance )
         return false
-      if ( selections.tagged.value && !event.meet.tagged )
+      if ( selections.tagged && !event.meet.tagged )
         return false
       return true
     } )

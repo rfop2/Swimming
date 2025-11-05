@@ -18,17 +18,17 @@
   const swimmersMap = new Map<Swimmer["id"], Swimmer>( swimmers.value.map( s => ( [ s.id, s ] ) ) )
 
   const swimmerOptions = computed( () => swimmers.value.map( s => ( { label: s.fullName, value: s.id } ) ) )
-  const selectedSwimmer = ref( swimmerOptions.value.find( so => so.value === swimmer.value?.id ) ?? swimmerOptions.value[0] ?? undefined )
+  const selectedSwimmer = ref( ( swimmerOptions.value.find( so => so.value === swimmer.value?.id ) ?? swimmerOptions.value[0] )?.value ?? undefined )
 
   const updated = useLastUpdate()
 
   watch(
     selectedSwimmer,
     async ( newSwimmer ) => {
-      if ( newSwimmer && newSwimmer.value ) {
-        model.value = swimmersMap.get( String( newSwimmer.value ) )
+      if ( newSwimmer ) {
+        model.value = swimmersMap.get( String( newSwimmer ) )
         try {
-          const lastUpdate = await $fetch( `/api/updated/${newSwimmer.value}` )
+          const lastUpdate = await $fetch( `/api/updated/${newSwimmer}` )
           updated.value = format( lastUpdate, "yyyy-MM-dd" )
         } catch ( error ) {
           updated.value = "<error>"

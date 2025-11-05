@@ -3,7 +3,7 @@
   import { CheckIcon, ChevronUpDownIcon } from "@heroicons/vue/24/outline"
   import classNames from "classnames"
 
-  const model = defineModel<UISelection | Array<UISelection>>()
+  const model = defineModel<UISelection["value"] | Array<UISelection["value"]>>()
 
   const defaultId = useId()
 
@@ -24,8 +24,8 @@
     placeholder: "Select Option",
   } )
 
-  const empty = computed( () => Array.isArray( model.value ) ? model.value.length === 0 : !model.value )
-  const prompt = computed( () => empty.value ? props.placeholder : ( props.multiple ? ( props.multipleLabel ?? ( ( model.value ?? [] ) as Array<UISelection> ).map( item => item.label ?? item.value ).join( ", " ) ) : ( model.value as UISelection ).label ?? ( model.value as UISelection ).value ) )
+  const empty = computed( () => Array.isArray( model.value ) ? model.value.length === 0 : ( model.value === null || model.value === undefined ) )
+  const prompt = computed( () => empty.value ? props.placeholder : ( props.multiple ? ( props.multipleLabel ?? ( ( model.value ?? [] ) as Array<UISelection["value"]> ).map( v => props.options.find( o => o.value === v )?.label ?? v ).join( ", " ) ) : ( props.options.find( o => o.value === model.value )?.label ?? model.value ) ) )
 </script>
 
 <template>
@@ -63,7 +63,7 @@
             :key="option.value"
             v-slot="{ active, selected }"
             as="template"
-            :value="option"
+            :value="option.value"
           >
             <li :class="[active ? 'bg-indigo-600 text-white' : 'text-gray-900', 'relative cursor-default select-none py-2 pl-3 pr-9']">
               <span :class="[selected ? 'font-semibold' : 'font-normal', 'block truncate']">{{ option.label ?? option.value }}</span>
