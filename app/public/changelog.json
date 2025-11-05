@@ -2,13 +2,47 @@
   {
     "isoDate": "2025-11-05",
     "niceDate": "5 November 2025",
-    "diff": "11.11.1..",
-    "href": "https://bitbucket.org/swimracing/swimming/compare/11.12.0..11.11.1",
+    "diff": "11.12.0..",
+    "href": "https://bitbucket.org/swimracing/swimming/compare/11.13.0..11.12.0",
     "major": false,
     "minor": false,
     "tag": null,
+    "title": "11.13.0",
+    "date": "2025-11-05T11:43:36.243Z",
+    "summary": null,
+    "commits": [
+      {
+        "hash": "80736929434c6b0fe6c6aebc06cbb3ba78a967ba",
+        "shorthash": "8073692",
+        "author": "Philip Coombes",
+        "email": "phil@web2wire.com",
+        "date": "2025-11-05T11:41:51.000Z",
+        "niceDate": "5 November 2025",
+        "subject": "Logo and icon updates",
+        "message": "Logo and icon updates",
+        "fixes": null,
+        "href": "https://bitbucket.org/swimracing/swimming/commits/80736929434c6b0fe6c6aebc06cbb3ba78a967ba",
+        "breaking": false,
+        "files": 9,
+        "insertions": 135,
+        "deletions": 24,
+        "merge": null
+      }
+    ],
+    "merges": [],
+    "fixes": []
+  },
+  {
+    "isoDate": "2025-11-05",
+    "niceDate": "5 November 2025",
+    "diff": "11.11.1..11.12.0",
+    "href": "https://bitbucket.org/swimracing/swimming/compare/11.12.0..11.11.1",
+    "major": false,
+    "minor": true,
+    "tag": "11.12.0",
+    "date": "2025-11-05",
     "title": "11.12.0",
-    "date": "2025-11-05T09:33:08.627Z",
+    "version": "11.12.0",
     "summary": null,
     "commits": [
       {
