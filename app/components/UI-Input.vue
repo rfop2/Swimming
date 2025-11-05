@@ -82,7 +82,7 @@
           :disabled="!model"
           type="button"
           class="absolute top-1/2 right-2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
-          onclick="this.previousElementSibling.value = ''"
+          @click="model = ''"
         >
           <XMarkIcon
             class="block h-6 w-6"
