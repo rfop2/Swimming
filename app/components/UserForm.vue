@@ -5,7 +5,7 @@
   import { CheckIcon, ExclamationTriangleIcon, PencilSquareIcon, TrashIcon, UserGroupIcon, UserPlusIcon, XCircleIcon } from "@heroicons/vue/24/outline"
 
   import type { FetchError } from "ofetch"
-  import { COUNTIES, NATIONALITIES, NATIONALITY, REGIONS } from "lib"
+  import { COUNTIES, NATIONALITIES, REGIONS } from "lib"
   import type { Club, ExtSwimmer, Task, UserClub } from "lib"
   import { useDebounceAsync } from "~/composables/useDebounceAsync"
   import type { User } from "lucia"
@@ -152,10 +152,7 @@
 
   const swimmerData = ref<string | null>( null )
 
-  const foundSwimmer = ref<Partial<ExtSwimmer>>( {} )
-  const foundSwimmers = ref<UISelection[]>( [] )
-
-  const addSwimmer = () => {
+  const addSwimmer = ( foundSwimmer: Partial<ExtSwimmer> ) => {
     const newSwimmer = {
       ...{
         id: "",
@@ -169,17 +166,18 @@
         county: "",
         clubId: "",
         clubIds: "",
-        rankedClub: 1,
+        rankedClub: 0,
         rankedClubs: "",
         squad: "",
         squads: "",
         active: 1,
+        added: true,
       },
-      ...foundSwimmer.value
+      ...foundSwimmer
     }
-    console.log( newSwimmer )
+    console.log( "New Swimmer", newSwimmer )
     pushSwimmer( newSwimmer )
-    editing.value = userSwimmers.value.length - 1
+    editSwimmer( userSwimmers.value.length - 1 )
   }
 
   const selectedSwimmer: Ref<FieldEntry<ExtSwimmer> | null> = ref( null )
@@ -201,7 +199,8 @@
 
   const resetSwimmer = () => {
     if ( editing.value !== null ) {
-      if ( userSwimmers.value[editing.value].value.id === foundSwimmer.value.id ) {
+      // Bit of a hack
+      if ( ( userSwimmers.value[editing.value].value as ExtSwimmer & { added: boolean } ).added ) {
         removeSwimmer( editing.value )
       } else if ( swimmerData.value ) {
         updateSwimmer( editing.value, JSON.parse( swimmerData.value ) )
@@ -305,53 +304,6 @@
   } ) )
 
   const showLookup = ref<boolean>( false )
-  const swimmerId = ref<string>( "" )
-  const lookupSwimmer = async () => {
-    const url = `https://www.swimmingresults.org/biogs/biogs_details.php?tiref=${swimmerId.value}`
-    const doc = await useHtmlFetch( url )
-    if ( doc ) {
-      const idCell = doc.querySelector( "#outerWrapper > div:nth-child(2) > div.boxRepeat.rankingsContent > div > div:nth-child(1) > div > table:nth-child(3) > tbody > tr:nth-child(2) > td:nth-child(2)" )
-      if ( idCell ) {
-        foundSwimmer.value.id = idCell.textContent
-      }
-      const nameCell = doc.querySelector( "#outerWrapper > div:nth-child(2) > div.boxRepeat.rankingsContent > div > div:nth-child(1) > div > table:nth-child(1) > tbody > tr:nth-child(2) > td:nth-child(2)" )
-      if ( nameCell ) {
-        [ foundSwimmer.value.firstName, foundSwimmer.value.lastName ] = nameCell.textContent.split( /\s+/ )
-      }
-      const yearCell = doc.querySelector( "#outerWrapper > div:nth-child(2) > div.boxRepeat.rankingsContent > div > div:nth-child(1) > div > table:nth-child(1) > tbody > tr:nth-child(4) > td:nth-child(2)" )
-      if ( yearCell ) {
-        foundSwimmer.value.birthday = `${yearCell.textContent}-01-01`
-      }
-      const genderCell = doc.querySelector( "#outerWrapper > div:nth-child(2) > div.boxRepeat.rankingsContent > div > div:nth-child(1) > div > table:nth-child(1) > tbody > tr:nth-child(5) > td:nth-child(2)" )
-      if ( genderCell ) {
-        const gender = genderCell.textContent.toLocaleLowerCase()
-        foundSwimmer.value.gender = gender === "female" ? gender : "male"
-      }
-      const clubCell = doc.querySelector( "#outerWrapper > div:nth-child(2) > div.boxRepeat.rankingsContent > div > div:nth-child(1) > div > table:nth-child(3) > tbody > tr:nth-child(4) > td:nth-child(2)" )
-      if ( clubCell ) {
-        const clubName = clubCell.textContent
-        const clubs = await $fetch( `/api/clubs?search=${encodeURIComponent( clubName )}` )
-        if ( clubs.length === 1 ) {
-          foundSwimmer.value.county = clubs[0].clubCounty
-          foundSwimmer.value.region = clubs[0].clubRegion
-          foundSwimmer.value.clubId = clubs[0].clubId
-        }
-      }
-
-      const countryCell = doc.querySelector( "#outerWrapper > div:nth-child(2) > div.boxRepeat.rankingsContent > div > div:nth-child(1) > div > table:nth-child(3) > tbody > tr:nth-child(5) > td:nth-child(2)" )
-      if ( countryCell ) {
-        const country = countryCell.textContent.toLocaleUpperCase()
-        foundSwimmer.value.nationality = NATIONALITY[country]
-      }
-      console.log( "N", foundSwimmer )
-    }
-  }
-  watch( showLookup, ( newValue, oldValue ) => {
-    if ( newValue && !oldValue ) {
-      swimmerId.value = ""
-      foundSwimmer.value = {}
-    }
-  } )
 
   const { createTask } = useTasks()
   const addClubSwimmers = async () => {
@@ -376,7 +328,6 @@
 
   watch( selectedSwimmer, ( newValue, oldValue ) => {
     if ( newValue && oldValue ) {
-      console.log( newValue.value, oldValue.value )
       if ( !!newValue.value.clubId && !oldValue.value.clubId ) {
         newValue.value.rankedClub = 1
       }
@@ -838,57 +789,18 @@
   <UI-Confirm
     v-if="deleting !== null"
     title="Delete swimmer"
-    :text="`Are you sure you want to delete swimmer '${userSwimmers[deleting].value.fullName}' from your account?`"
+    :text="`Are you sure you want to delete swimmer '${userSwimmers[deleting!].value.fullName}' from your account?`"
     confirm-label="Delete"
     :action="deleteSwimmer"
+    :cancel-action="() => { deleting = null }"
   />
-  <UI-Dialog
+
+  <SwimmerFinder
     v-model="showLookup"
-    title="Find a swimmer"
-    confirm-label="Select"
-    :confirm-enabled="() => !!foundSwimmer.id"
-    :action="async () => { await addSwimmer() }"
-  >
-    <div class="px-3 py-5 sm:p-3">
-      <div class="mt-2 max-w-xl text-sm text-gray-500">
-        <p>Enter a swimmer id or name to search for details.<br>Name searches will return matches for your selected club first if present.</p>
-      </div>
-      <form class="mt-5 sm:flex sm:items-center">
-        <div class="w-full sm:max-w-xs">
-          <UI-Input
-            id="swimmerId"
-            v-model="swimmerId"
-            type="text"
-            aria-label="Swimmer Id"
-            class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600  sm:text-sm/6"
-            placeholder="Number or surname"
-            clearable
-          />
-        </div>
-        <button
-          type="button"
-          class="mt-3 inline-flex w-full items-center justify-center rounded-md bg-indigo-50 px-3 py-2 text-sm font-semibold text-indigo-600 shadow-sm hover:bg-indigo-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600  disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed sm:ml-3 sm:mt-0 sm:w-auto"
-          :disabled="!swimmerId.length"
-          @click="lookupSwimmer"
-        >
-          Search
-        </button>
-      </form>
-      <div v-if="foundSwimmers.length>1">
-        <UI-Select
-          :options="foundSwimmers"
-        />
-      </div>
-      <div
-        v-if="foundSwimmer.id"
-        class="mt-2 max-w-xl text-sm text-gray-500"
-      >
-        <p>
-          Found - {{ foundSwimmer.firstName }} {{ foundSwimmer.lastName }} ({{ foundSwimmer.birthday?.substring( 0, 4 ) }}) click 'Select' to continue,
-        </p>
-      </div>
-    </div>
-  </UI-Dialog>
+    :clubs="props.clubs"
+    :action="async ( foundSwimmer: Partial<ExtSwimmer> ) => { await addSwimmer( foundSwimmer ) }"
+  />
+
   <UI-Dialog
     v-model="editingSwimmer"
     title="Edit Swimmer"
