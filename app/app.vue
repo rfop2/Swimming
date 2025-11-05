@@ -6,6 +6,11 @@
     ],
     link: [
       {
+        rel: "icon",
+        type: "image/png",
+        href: "/images/SwimRacingIcon.png"
+      },
+      {
         rel: "stylesheet",
         href: "https://rsms.me/inter/inter.css",
       // crossorigin: ''
