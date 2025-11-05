@@ -1,7 +1,8 @@
 <script setup lang="ts">
   import classNames from "classnames"
   import { getYear } from "date-fns"
-  import { COURSES, type IndividualRow, strokes, secondsToTime, getSwimmerAgeGroup, convertTime, getSwimmerAge, type QualifyingRow } from "lib"
+  import type { IndividualRow, QualifyingRow } from "lib"
+  import { COURSES, strokes, secondsToTime, getSwimmerAgeGroup, convertTime, getSwimmerAge } from "lib"
 
   import type { InternalApi } from "nitropack"
 
@@ -28,14 +29,63 @@
     return sq
   }, new Set<string>() ) ).sort().map( s => ( { label: s, value: s } ) ), { label: "No squad", value: "" } ] )
 
+  const genderOptions = [
+    {
+      value: "",
+      label: "All",
+    },
+    {
+      value: "male",
+      label: "Open/Male",
+    },
+    {
+      value: "female",
+      label: "Female",
+    },
+  ]
+
+  const ageOptions = computed( () => {
+    const ages = ( swimmers.value ?? [] ).reduce( ( ages, swimmer ) => {
+      ages.add( getSwimmerAgeGroup( swimmer ) )
+      return ages
+    }, new Set<string>() )
+    const sortedAges = Array.from( ages )
+      .sort( ( a, b ) => {
+        const aNum = Number( a )
+        const bNum = Number( b )
+        const aIsNum = !isNaN( aNum ) && a.toString().trim() !== ""
+        const bIsNum = !isNaN( bNum ) && b.toString().trim() !== ""
+
+        if ( aIsNum && !bIsNum ) return -1 // numbers first
+        if ( !aIsNum && bIsNum ) return 1 // strings after numbers
+        if ( aIsNum && bIsNum ) return aNum - bNum // numeric sort
+
+        // case-insensitive string sort
+        return a.toString().localeCompare( b.toString(), undefined, { sensitivity: "accent" } )
+      } ).map( a => ( { label: a, value: a } ) )
+    return [ { label: "All", value: "" } ].concat( sortedAges )
+  } )
+
   const strokeOptions = Object.entries( strokes ).map( ( [ stroke, strokeData ] ) => ( { value: stroke, label: strokeData.label } ) )
 
   const { state: selections } = usePersisted( "times-selection", {
     squad: ( squadOptions.value.find( option => option.value === slug[0] ) ?? squadOptions.value[0] ).value,
+    gender: "",
+    age: "",
     stroke: ( strokeOptions.find( option => option.value === slug[1] ) ?? strokeOptions[0] ).value,
   }, "reactive" )
 
-  const filteredSwimmers = computed( () => ( swimmers.value || [] ).filter( swimmer => selections.squad.value === "*" || swimmer.squad === selections.squad.value ) )
+  const filteredSwimmers = computed( () => ( swimmers.value || [] )
+    .filter( swimmer => {
+      if ( selections.squad !== "*" && swimmer.squad !== selections.squad )
+        return false
+      if ( selections.gender !== "" && swimmer.gender !== selections.gender )
+        return false
+      if ( selections.age !== "" && getSwimmerAgeGroup( swimmer ) !== selections.age )
+        return false
+      return true
+    } )
+  )
 
   const swimmersMap = computed( () => Object.fromEntries( filteredSwimmers.value.map( swimmer => [ swimmer.id, swimmer ] ) ) )
 
@@ -150,6 +200,22 @@
           placeholder="Choose Squad"
         />
       </div>
+      <div class="min-w-36">
+        <UI-Listbox
+          v-model="selections.gender"
+          :options="genderOptions"
+          label="Gender"
+          placeholder="Choose Gender"
+        />
+      </div>
+      <div class="min-w-28">
+        <UI-Listbox
+          v-model="selections.age"
+          :options="ageOptions"
+          label="Age"
+          placeholder="Choose Age"
+        />
+      </div>
       <div class="min-w-48">
         <UI-Listbox
           v-model="selections.stroke"
@@ -230,6 +296,11 @@
               </tr>
             </template>
           </tbody>
+          <tbody v-if="selections.gender !== 'female'">
+            <tr class="spacer">
+              <td :colspan="2 + distances.length" />
+            </tr>
+          </tbody>
           <tbody class="divide-y divide-gray-200 bg-white">
             <template
               v-for="[swimmerId,courseRecords] in [...groupedRecords].filter( ( [ id ] ) => swimmersMap[id].gender === 'female' )"
@@ -281,6 +352,12 @@
 </template>
 
 <style scoped>
+tr.spacer td {
+  height: 3em;
+  border: none;
+  background: transparent;
+}
+
 span {
   &.qualified-county {
     color: #22c55e;
