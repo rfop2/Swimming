@@ -1,12 +1,14 @@
 <script setup lang="ts">
   import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from "@headlessui/vue"
 
+  const model = defineModel<boolean>()
+
   const props = withDefaults( defineProps<{
-    modelValue: boolean
     title: string
     confirmLabel?: string
     confirmEnabled?: () => boolean
-    action: ( arg0: Event ) => void
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    action: ( ...arg: any[] ) => void
     cancelLabel?: string
     cancelAction?: () => void
   }>(), {
@@ -18,16 +20,18 @@
 
   const confirmAction = ( event: Event ) => {
     props.action( event )
-    emit( "update:modelValue", false )
+    model.value = false
+    // emit( "update:modelValue", false )
   }
 
-  const emit = defineEmits<{
+  /* const emit = defineEmits<{
     ( e: "update:modelValue", value: boolean ): void
-  }>()
+  }>() */
 
   const close = () => {
     props.cancelAction()
-    emit( "update:modelValue", false )
+    model.value = false
+    // emit( "update:modelValue", false )
   }
 </script>
 
