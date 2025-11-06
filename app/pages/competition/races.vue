@@ -1,5 +1,6 @@
 <script setup lang="ts">
   import type { InternalApi } from "nitropack"
+  import { Temporal } from "@js-temporal/polyfill"
   import {
     createCalendar,
     createViewDay,
@@ -9,12 +10,10 @@
     createViewWeek,
   } from "@schedule-x/calendar"
   import type { CalendarApp, CalendarEventExternal } from "@schedule-x/calendar"
-  import { createEventModalPlugin } from "@schedule-x/event-modal"
   import { createEventsServicePlugin } from "@schedule-x/events-service"
   import "@schedule-x/theme-default/dist/index.css"
-  import CalendarModal from "~/components/CalendarModal.vue"
   import StandardPage from "~/components/StandardPage.vue"
-  import { Temporal } from "temporal-polyfill"
+  import CalendarEvent from "~/components/CalendarEvent.vue"
 
   const ScheduleXCalendar = defineAsyncComponent( () =>
     import( "@schedule-x/vue" ).then( mod => mod.ScheduleXCalendar )
@@ -50,15 +49,15 @@
 
   type MeetStrokeResults = Map<string, MeetDistanceResults>
 
-  type MeetCourseResults = Map<string, MeetStrokeResults>
-
   interface MeetResults {
+    id: number
     name: string
     venue: string
     level: number
     date: Temporal.PlainDate
     duration: number
-    course: MeetCourseResults
+    course: string
+    results: MeetStrokeResults
   }
 
   const roundOrder = {
@@ -88,50 +87,52 @@
           distances.set( distanceMetres, [ race ] )
           const strokes: MeetStrokeResults = new Map()
           strokes.set( result.stroke, distances )
-          const courses: MeetCourseResults = new Map()
-          courses.set( result.course, strokes )
           const meetResult: MeetResults = {
+            id: meets.size + 1,
             name: result.meet,
             venue: result.venue,
             level: result.level,
             date: meetDate,
             duration: 1,
-            course: courses,
+            course: result.course,
+            results: strokes,
           }
           meets.set( result.meet, meetResult )
         } else {
-          if ( meetDate !== meet.date ) {
+          if ( Temporal.PlainDate.compare( meetDate, meet.date ) !== 0 ) {
             // find the earlier one
             const earliest = Temporal.PlainDate.compare( meetDate, meet.date ) <= 0 ? meetDate : meet.date
-            const latest = Temporal.PlainDate.compare( meetDate, meetDate ) <= 0 ? meet.date : meetDate
+            const latest = Temporal.PlainDate.compare( meetDate, meet.date ) <= 0 ? meet.date : meetDate
+            // console.log( "DIFF", JSON.stringify( earliest ), JSON.stringify( latest ), Temporal.PlainDate.compare( meetDate, meet.date ) )
+            // console.log( meetDate instanceof Temporal.PlainDate, meet.date instanceof Temporal.PlainDate )
+            // console.log( meetDate.constructor === meet.date.constructor )
+            // console.log( "Compare result:", Temporal.PlainDate.compare( meetDate, meet.date ) )
+            // dumpPlainDate( meetDate, "meetDate" )
+            // dumpPlainDate( meet.date, "meet.date" )
             meet.date = earliest
 
             // difference in days
-            meet.duration = latest.since( earliest ).days
+            meet.duration = 1 + latest.since( earliest ).days
+
+            // console.log( meet )
           }
-          const course = meet.course.get( result.course )
-          if ( !course ) {
+          if ( meet.course !== result.course ) {
+            console.error( "Course mismatch", meet, result )
+          }
+          const stroke = meet.results.get( result.stroke )
+          if ( !stroke ) {
             const distances: MeetDistanceResults = new Map()
             distances.set( distanceMetres, [ race ] )
-            const strokes: MeetStrokeResults = new Map()
-            strokes.set( result.stroke, distances )
-            meet.course.set( result.course, strokes )
+            meet.results.set( result.stroke, distances )
           } else {
-            const stroke = course.get( result.stroke )
-            if ( !stroke ) {
-              const distances: MeetDistanceResults = new Map()
-              distances.set( distanceMetres, [ race ] )
-              course.set( result.stroke, distances )
+            const distance = stroke.get( distanceMetres )
+            if ( !distance ) {
+              stroke.set( distanceMetres, [ race ] )
             } else {
-              const distance = stroke.get( distanceMetres )
-              if ( !distance ) {
-                stroke.set( distanceMetres, [ race ] )
-              } else {
-                distance.push( race )
-                distance.sort( ( a, b ) => (
-                  ( roundOrder[a.round as keyof typeof roundOrder] ?? 0 ) - ( roundOrder[b.round as keyof typeof roundOrder] ?? 0 )
-                ) )
-              }
+              distance.push( race )
+              distance.sort( ( a, b ) => (
+                ( roundOrder[a.round as keyof typeof roundOrder] ?? 0 ) - ( roundOrder[b.round as keyof typeof roundOrder] ?? 0 )
+              ) )
             }
           }
         }
@@ -189,14 +190,14 @@
 
   const events = computed( () => {
     const calendarEvents = ( meets.value || [] ).map( ( meet ): CalendarEvent => ( {
-      id: meet.name,
+      id: meet.id,
       start: meet.date,
-      end: meet.date.add( { days: 1 } ),
+      end: meet.date.add( { days: ( meet.duration ?? 1 ) - 1 } ),
       duration: meet.duration as number,
       title: `${meet.level}: ${meet.name}`,
       // color: distanceColor( meet.distance ,
       location: meet.venue,
-      // description: meet.type,
+      description: "xxx, yyy",
       _options: {
         disableDND: true,
         disableResize: true,
@@ -219,15 +220,15 @@
   } )
 
   const customComponents = {
-    eventModal: CalendarModal,
+    monthGridEvent: CalendarEvent,
   }
 
-  const eventModal = createEventModalPlugin()
   const eventsServicePlugin = createEventsServicePlugin()
 
   const calendarApp = import.meta.client
     ? createCalendar( {
-      selectedDate: Temporal.Now.plainDateISO(),
+      selectedDate: Temporal.Now.plainDateISO().subtract( { days: 30 } ),
+      maxDate: Temporal.Now.plainDateISO(),
       locale: "en-GB",
       timezone: "Europe/London",
       firstDayOfWeek: 1,
@@ -243,67 +244,8 @@
         nEventsPerDay: 8,
       },
       isResponsive: true,
-      callbacks: {
-        /* onEventClick( calendarEvent: CalendarEventExternal, _e: UIEvent ) {
-        console.log( "onEventClick", calendarEvent )
-      }, */
-        onDoubleClickEvent( calendarEvent: CalendarEventExternal, _e: UIEvent ) {
-          console.log( "onDoubleClickEvent", calendarEvent )
-          window.open( `https://www.swimmingresults.org/licensed_meets/meet.php?meet=${calendarEvent.id}&page=1&region=P&level=P&month=P&year=P`, "_blank", "noopener,noreferrer" )
-        },
-      },
-      calendars: {
-        distance25: {
-          colorName: "distance25",
-          lightColors: {
-            main: "#a8d5a2", // soft pastel green
-            container: "#e6f5e4", // very light green
-            onContainer: "#2f4a2d", // deep green text
-          }
-        },
-        distance50: {
-          colorName: "distance50",
-          lightColors: {
-            main: "#c5ce4e", // yellow-green
-            container: "#f3f7c6", // pale yellow-green
-            onContainer: "#464b1e", // dark olive text
-          }
-        },
-        distance75: {
-          colorName: "distance75",
-          lightColors: {
-            main: "#f9d71c", // bright pastel yellow
-            container: "#fff5aa", // soft yellow background
-            onContainer: "#594800", // dark yellow-brown text
-          }
-        },
-        distance100: {
-          colorName: "distance100",
-          lightColors: {
-            main: "#f4a259", // medium orange
-            container: "#ffe3c7", // light orange
-            onContainer: "#5a3200", // dark orange text
-          }
-        },
-        distanceFar: {
-          colorName: "distanceFar",
-          lightColors: {
-            main: "#e26d6d", // deeper pastel red
-            container: "#ffd6d6", // soft red background
-            onContainer: "#4f1d1d", // dark red text
-          }
-        },
-        distanceNone: {
-          colorName: "distanceNone",
-          lightColors: {
-            main: "#999999", // medium grey
-            container: "#e0e0e0", // light grey background
-            onContainer: "#333333", // dark grey text
-          }
-        },
-      },
       events: events.value,
-      plugins: [ eventModal, eventsServicePlugin ],
+      plugins: [ eventsServicePlugin ],
     } )
     : null
 
@@ -328,6 +270,7 @@
       Forthcoming events and competitions
     </template>
     <template #controls>
+      <SwimmerSelector v-model="swimmer" />
       <ClientOnly>
         <div class="min-w-48">
           <UI-Listbox
@@ -357,6 +300,9 @@
 </template>
 
 <style lang="scss">
+  .sx__month-grid-cell {
+    height: auto !important;
+  }
   .sx__month-grid-day {
     min-height: 9em;
   }
