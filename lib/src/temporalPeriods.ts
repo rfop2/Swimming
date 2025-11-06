@@ -1,4 +1,4 @@
-import { Temporal } from "temporal-polyfill"
+import { Temporal } from "@js-temporal/polyfill"
 
 export type Period = "hour" | "day" | "week" | "month" | "quarter" | "year"
 export type PeriodWhen = "current" | "last"

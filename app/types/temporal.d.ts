@@ -1,4 +1,4 @@
-import type { Temporal as TemporalType } from "temporal-polyfill"
+import type { Temporal as TemporalType } from "@js-temporal/polyfill"
 
 declare global {
   var Temporal: typeof TemporalType

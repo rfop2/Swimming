@@ -1,6 +1,6 @@
 <script setup lang="ts">
   import { getPeriodBounds, type Period, type PeriodWhen } from "lib"
-  import type { Temporal } from "temporal-polyfill"
+  import type { Temporal } from "@js-temporal/polyfill"
 
   export interface DateDefn {
     range: string | undefined

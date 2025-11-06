@@ -1,6 +1,6 @@
 <script setup lang="ts">
   import { getYear } from "date-fns"
-  import { Temporal } from "temporal-polyfill"
+  import { Temporal } from "@js-temporal/polyfill"
 
   export interface DateDefn {
     range: string | undefined
