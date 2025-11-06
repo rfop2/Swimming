@@ -22,14 +22,23 @@ export default defineEventHandler( async ( event ) => {
       status: 400,
     } )
   }
-  const selectRecords = prepareStatement<Params & { id: string }, ResultsRow>(
+
+  const selectFilteredRecords = prepareStatement<Params & { id: string }, ResultsRow>(
     await getPool(),
-    "SELECT * FROM Results WHERE swimmer = :id AND course = :course AND stroke = :stroke AND distance = :distance AND date > COALESCE( :startDate, '1970-01-01' ) AND date <= COALESCE( :endDate, CURDATE() )  ORDER BY date ASC"
+    "SELECT * FROM Results WHERE swimmer = :id AND course = :course AND stroke = :stroke AND distance = :distance AND date > COALESCE( :startDate, '1970-01-01' ) AND date <= COALESCE( :endDate, CURDATE() ) ORDER BY date ASC"
+  )
+
+  const selectAllRecords = prepareStatement<{ id: string }, ResultsRow>(
+    await getPool(),
+    "SELECT * FROM Results WHERE swimmer = :id ORDER BY date ASC"
   )
 
   const query = getQuery<Params>( event )
-  if ( !query.startDate ) query.startDate = null
-  if ( !query.endDate ) query.endDate = null
-  const data = await selectRecords.all( { id, ...query } )
-  return data
+  if ( Object.values( query ).length ) {
+    if ( !query.startDate ) query.startDate = null
+    if ( !query.endDate ) query.endDate = null
+    return await selectFilteredRecords.all( { id, ...query } )
+  } else {
+    return await selectAllRecords.all( { id } )
+  }
 } )

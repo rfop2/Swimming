@@ -1,0 +1,373 @@
+<script setup lang="ts">
+  import type { InternalApi } from "nitropack"
+  import {
+    createCalendar,
+    createViewDay,
+    createViewList,
+    createViewMonthAgenda,
+    createViewMonthGrid,
+    createViewWeek,
+  } from "@schedule-x/calendar"
+  import type { CalendarApp, CalendarEventExternal } from "@schedule-x/calendar"
+  import { createEventModalPlugin } from "@schedule-x/event-modal"
+  import { createEventsServicePlugin } from "@schedule-x/events-service"
+  import "@schedule-x/theme-default/dist/index.css"
+  import CalendarModal from "~/components/CalendarModal.vue"
+  import StandardPage from "~/components/StandardPage.vue"
+  import { Temporal } from "temporal-polyfill"
+
+  const ScheduleXCalendar = defineAsyncComponent( () =>
+    import( "@schedule-x/vue" ).then( mod => mod.ScheduleXCalendar )
+  )
+
+  definePageMeta( {
+    layout: "secure",
+    middleware: [ "protected" ]
+  } )
+
+  useHead( {
+    title: "Races",
+    meta: [
+      { name: "description", content: "View historical meets and results" }
+    ]
+  } )
+
+  const { swimmer } = useSwimmer()
+  console.log( "S", swimmer )
+
+  type ApiResponse = InternalApi["/api/results/:id"]["get"]
+
+  // Better type narrowing guard
+  const hasSwimmer = ( s: typeof swimmer ): s is typeof swimmer & { value: NonNullable<typeof s.value> } => s.value != null
+
+  interface MeetRaceResults {
+    round: string
+    time: number
+    points: number
+  }
+
+  type MeetDistanceResults = Map<number, Array<MeetRaceResults>>
+
+  type MeetStrokeResults = Map<string, MeetDistanceResults>
+
+  type MeetCourseResults = Map<string, MeetStrokeResults>
+
+  interface MeetResults {
+    name: string
+    venue: string
+    level: number
+    date: Temporal.PlainDate
+    duration: number
+    course: MeetCourseResults
+  }
+
+  const roundOrder = {
+    "": 0,
+    "H": 1,
+    "R": 2,
+    "S": 3,
+    "C": 3,
+    "F": 5,
+  }
+  const meets = ref<MeetResults[]>( [] )
+
+  watchEffect( async () => {
+    if ( hasSwimmer( swimmer ) ) {
+      const results = await $fetch<ApiResponse>( `/api/results/${swimmer.value.id}` )
+      const meetsMap = results.reduce( ( meets, result ) => {
+        const race: MeetRaceResults = {
+          round: result.round,
+          time: Number( result.time ),
+          points: result.wa_pts,
+        }
+        const distanceMetres = Number( result.distance.replace( /m$/, "" ) )
+        const meetDate = Temporal.Instant.from( result.date ).toZonedDateTimeISO( "Europe/London" ).toPlainDate()
+        const meet = meets.get( result.meet )
+        if ( !meet ) {
+          const distances: MeetDistanceResults = new Map()
+          distances.set( distanceMetres, [ race ] )
+          const strokes: MeetStrokeResults = new Map()
+          strokes.set( result.stroke, distances )
+          const courses: MeetCourseResults = new Map()
+          courses.set( result.course, strokes )
+          const meetResult: MeetResults = {
+            name: result.meet,
+            venue: result.venue,
+            level: result.level,
+            date: meetDate,
+            duration: 1,
+            course: courses,
+          }
+          meets.set( result.meet, meetResult )
+        } else {
+          if ( meetDate !== meet.date ) {
+            // find the earlier one
+            const earliest = Temporal.PlainDate.compare( meetDate, meet.date ) <= 0 ? meetDate : meet.date
+            const latest = Temporal.PlainDate.compare( meetDate, meetDate ) <= 0 ? meet.date : meetDate
+            meet.date = earliest
+
+            // difference in days
+            meet.duration = latest.since( earliest ).days
+          }
+          const course = meet.course.get( result.course )
+          if ( !course ) {
+            const distances: MeetDistanceResults = new Map()
+            distances.set( distanceMetres, [ race ] )
+            const strokes: MeetStrokeResults = new Map()
+            strokes.set( result.stroke, distances )
+            meet.course.set( result.course, strokes )
+          } else {
+            const stroke = course.get( result.stroke )
+            if ( !stroke ) {
+              const distances: MeetDistanceResults = new Map()
+              distances.set( distanceMetres, [ race ] )
+              course.set( result.stroke, distances )
+            } else {
+              const distance = stroke.get( distanceMetres )
+              if ( !distance ) {
+                stroke.set( distanceMetres, [ race ] )
+              } else {
+                distance.push( race )
+                distance.sort( ( a, b ) => (
+                  ( roundOrder[a.round as keyof typeof roundOrder] ?? 0 ) - ( roundOrder[b.round as keyof typeof roundOrder] ?? 0 )
+                ) )
+              }
+            }
+          }
+        }
+        return meets
+      }, new Map<string, MeetResults>() )
+      meets.value = Array.from( meetsMap.values() )
+      console.log( "MM", meetsMap, meets.value )
+    }
+  } )
+
+  interface CalendarEvent extends CalendarEventExternal {
+    duration: number
+    color?: string
+    meet: MeetResults
+  }
+
+  const courses = [
+    {
+      value: "",
+      label: "All Courses",
+    },
+    {
+      value: "sc",
+      label: "Short",
+    },
+    {
+      value: "lc",
+      label: "Long",
+    },
+  ]
+  const levels = [
+    {
+      value: 1,
+      label: "Level 1",
+    },
+    {
+      value: 2,
+      label: "Level 2",
+    },
+    {
+      value: 3,
+      label: "Level 3",
+    },
+    {
+      value: 4,
+      label: "Level 4",
+    },
+  ]
+
+  const { state: selections } = usePersisted( "races-selection", {
+    course: courses[0].value,
+    level: levels.map( l => ( l.value ) ),
+    club: "",
+  }, "reactive" )
+
+  const events = computed( () => {
+    const calendarEvents = ( meets.value || [] ).map( ( meet ): CalendarEvent => ( {
+      id: meet.name,
+      start: meet.date,
+      end: meet.date.add( { days: 1 } ),
+      duration: meet.duration as number,
+      title: `${meet.level}: ${meet.name}`,
+      // color: distanceColor( meet.distance ,
+      location: meet.venue,
+      // description: meet.type,
+      _options: {
+        disableDND: true,
+        disableResize: true,
+        additionalClasses: [
+          `course-${meet.course}`,
+          `level-${meet.level}`,
+        ],
+      },
+      // calendarId: distanceCalendar( meet.distance ),
+      meet,
+    } ) )
+    const filteredEvents = calendarEvents.filter( event => {
+      if ( selections.course && selections.course !== event.meet.course )
+        return false
+      if ( selections.level.length === 0 || !selections.level.includes( event.meet.level ) )
+        return false
+      return true
+    } )
+    return filteredEvents
+  } )
+
+  const customComponents = {
+    eventModal: CalendarModal,
+  }
+
+  const eventModal = createEventModalPlugin()
+  const eventsServicePlugin = createEventsServicePlugin()
+
+  const calendarApp = import.meta.client
+    ? createCalendar( {
+      selectedDate: Temporal.Now.plainDateISO(),
+      locale: "en-GB",
+      timezone: "Europe/London",
+      firstDayOfWeek: 1,
+      defaultView: "month-grid",
+      views: [
+        createViewDay(),
+        createViewWeek(),
+        createViewMonthGrid(),
+        createViewMonthAgenda(),
+        createViewList(),
+      ],
+      monthGridOptions: {
+        nEventsPerDay: 8,
+      },
+      isResponsive: true,
+      callbacks: {
+        /* onEventClick( calendarEvent: CalendarEventExternal, _e: UIEvent ) {
+        console.log( "onEventClick", calendarEvent )
+      }, */
+        onDoubleClickEvent( calendarEvent: CalendarEventExternal, _e: UIEvent ) {
+          console.log( "onDoubleClickEvent", calendarEvent )
+          window.open( `https://www.swimmingresults.org/licensed_meets/meet.php?meet=${calendarEvent.id}&page=1&region=P&level=P&month=P&year=P`, "_blank", "noopener,noreferrer" )
+        },
+      },
+      calendars: {
+        distance25: {
+          colorName: "distance25",
+          lightColors: {
+            main: "#a8d5a2", // soft pastel green
+            container: "#e6f5e4", // very light green
+            onContainer: "#2f4a2d", // deep green text
+          }
+        },
+        distance50: {
+          colorName: "distance50",
+          lightColors: {
+            main: "#c5ce4e", // yellow-green
+            container: "#f3f7c6", // pale yellow-green
+            onContainer: "#464b1e", // dark olive text
+          }
+        },
+        distance75: {
+          colorName: "distance75",
+          lightColors: {
+            main: "#f9d71c", // bright pastel yellow
+            container: "#fff5aa", // soft yellow background
+            onContainer: "#594800", // dark yellow-brown text
+          }
+        },
+        distance100: {
+          colorName: "distance100",
+          lightColors: {
+            main: "#f4a259", // medium orange
+            container: "#ffe3c7", // light orange
+            onContainer: "#5a3200", // dark orange text
+          }
+        },
+        distanceFar: {
+          colorName: "distanceFar",
+          lightColors: {
+            main: "#e26d6d", // deeper pastel red
+            container: "#ffd6d6", // soft red background
+            onContainer: "#4f1d1d", // dark red text
+          }
+        },
+        distanceNone: {
+          colorName: "distanceNone",
+          lightColors: {
+            main: "#999999", // medium grey
+            container: "#e0e0e0", // light grey background
+            onContainer: "#333333", // dark grey text
+          }
+        },
+      },
+      events: events.value,
+      plugins: [ eventModal, eventsServicePlugin ],
+    } )
+    : null
+
+  watchEffect( () => {
+    if ( import.meta.client ) {
+      if ( eventsServicePlugin && eventsServicePlugin.set ) {
+        eventsServicePlugin.set( events.value )
+      }
+    }
+  } )
+
+  watch( selections, ( ns ) => {
+    console.trace( "NS", ns )
+  }, { deep: true } )
+</script>
+
+<template>
+  <StandardPage
+    title="Meets"
+  >
+    <template #description>
+      Forthcoming events and competitions
+    </template>
+    <template #controls>
+      <ClientOnly>
+        <div class="min-w-48">
+          <UI-Listbox
+            v-model="selections.course"
+            :options="courses"
+            label="Course"
+          />
+        </div>
+        <div class="min-w-72">
+          <UI-Listbox
+            v-model="selections.level"
+            :options="levels"
+            label="Level"
+            placeholder="All Levels"
+            multiple
+          />
+        </div>
+      </ClientOnly>
+    </template>
+    <ClientOnly>
+      <ScheduleXCalendar
+        :calendar-app="calendarApp as CalendarApp"
+        :custom-components="customComponents"
+      />
+    </ClientOnly>
+  </StandardPage>
+</template>
+
+<style lang="scss">
+  .sx__month-grid-day {
+    min-height: 9em;
+  }
+  .course-lc {
+    .sx__month-grid-event-title {
+      font-style: italic;
+    }
+  }
+  .meet-tagged-1 {
+    .sx__month-grid-event-title {
+      font-weight: bold;
+    }
+  }
+</style>
