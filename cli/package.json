@@ -13,19 +13,19 @@
   "dependencies": {
     "@node-rs/argon2": "^2.0.2",
     "cheerio": "^1.1.2",
-    "commander": "^14.0.1",
+    "commander": "^14.0.2",
     "date-fns": "^4.1.0",
-    "dotenv": "^17.2.2",
+    "dotenv": "^17.2.3",
     "lib": "file:../lib",
     "lucia": "^3.2.2",
     "node-fetch": "^3.3.2"
   },
   "devDependencies": {
-    "@stylistic/eslint-plugin": "^5.3.1",
-    "@types/commander": "^2.12.0",
-    "@types/node": "^22.18.1",
-    "eslint": "^9.35.0",
-    "typescript": "^5.9.2",
-    "typescript-eslint": "^8.42.0"
+    "@stylistic/eslint-plugin": "^5.5.0",
+    "@types/commander": "^2.12.5",
+    "@types/node": "^22.19.0",
+    "eslint": "^9.39.1",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.46.3"
   }
 }
