@@ -119,8 +119,8 @@
       { name: "Races", href: "/competition/races" },
     ] },
     { name: "Qualifications", children: [
-      { name: "Cut-off Dates", href: "/qualifying" },
-      { name: "Times", href: "/qualifying" },
+      { name: "Cut-off Dates", href: "/qualifying/dates" },
+      { name: "Times", href: "/qualifying/times" },
     ] },
   ] )
 

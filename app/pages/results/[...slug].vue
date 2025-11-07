@@ -58,7 +58,7 @@
 
   // type QualifyingApiResponse = InternalApi["/api/qualifying"]["get"]
   const { data: qualifyingInfo } = await useFetch(
-    "/api/qualifying",
+    "/api/qualifying/times",
   )
 
   type ApiResponse = InternalApi["/api/results/:id"]["get"]

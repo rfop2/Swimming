@@ -25,7 +25,7 @@
 
   const user = useAuthenticatedUser()
 
-  type ApiResponse = InternalApi["/api/qualifying"]["get"]
+  type ApiResponse = InternalApi["/api/qualifying/times"]["get"]
 
   interface ExtQualifyingRow extends QualifyingRow {
     distanceMetres: number
@@ -44,7 +44,7 @@
   }
 
   const { data: qualifying } = await useFetch(
-    "/api/qualifying",
+    "/api/qualifying/times",
     {
       key: "qualifying",
       transform: transformQualifying,
@@ -280,7 +280,7 @@
   const saveSuccess = ref( false )
   async function save( _e: Event ) {
     try {
-      await $fetch( "/api/qualifying", {
+      await $fetch( "/api/qualifying/times", {
         method: "PUT",
         body: JSON.stringify( ( qualifying.value ?? [] ).concat( added.value.filter( data => data.time > 0 ) ) ),
       } )

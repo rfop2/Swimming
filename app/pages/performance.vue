@@ -41,7 +41,7 @@
 
   // type QualifyingApiResponse = InternalApi["/api/qualifying"]["get"]
   const { data: qualifyingInfo } = await useFetch(
-    "/api/qualifying",
+    "/api/qualifying/times",
   )
 
   const qualifyingYear = ref<number | undefined>( undefined )

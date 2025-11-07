@@ -97,7 +97,7 @@
 
   // type QualifyingApiResponse = InternalApi["/api/qualifying"]["get"]
   const { data: qualifyingInfo } = await useFetch(
-    "/api/qualifying",
+    "/api/qualifying/times",
   )
 
   const filteredRecords = computed( () => ( records.value || [] ).filter( record => record.stroke === selections.stroke && swimmersMap.value[record.swimmer] ) )
