@@ -174,7 +174,6 @@ export interface PageInfo {
 export type PageData = Array<PageInfo>
 
 export interface QualifyingRow {
-  created: string
   year: number
   course: string
   stroke: string
@@ -185,6 +184,18 @@ export interface QualifyingRow {
   age: string
   timeString: string
   time: number
+  created: string
+}
+
+export interface QualifyingPeriodRow {
+  qualifyingYear: number
+  qualifyingScope: string
+  qualifyingArea: string
+  qualifyingType: string
+  qualifyingStart: string
+  qualifyingEnd?: string
+  qualifyingNotes?: string
+  created: string
 }
 
 export interface Task {

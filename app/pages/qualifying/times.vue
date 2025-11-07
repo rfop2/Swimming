@@ -15,7 +15,7 @@
   } )
 
   useHead( {
-    title: "Qualifying",
+    title: "Qualifying Times",
     meta: [
       { name: "description", content: "View and manage county and regional qualifying times" }
     ]
