@@ -140,7 +140,7 @@
       </svg>
       <span v-if="meet.poolId">
         {{ meet.poolName }}<br>
-        {{ [ meet.poolStreet1, meet.poolStreet2, meet.poolSteet3 ].filter( s => !!s ).join( "," ) }}<br>
+        {{ [ meet.poolStreet1, meet.poolStreet2, meet.poolStreet3 ].filter( s => !!s ).join( "," ) }}<br>
         {{ meet.poolTown }}, {{ meet.poolPostCode }}<br>
         {{ meet.region }}<br>
         <a
