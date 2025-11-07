@@ -175,7 +175,7 @@
           borderDash: ctx => {
             const p0 = ctx.p0?.parsed?.y
             const p1 = ctx.p1?.parsed?.y
-            return p1 > p0 ? [ 6, 2 ] : [] // dashed if going down
+            return p1! > p0! ? [ 6, 2 ] : [] // dashed if going down
           }
         },
         pointStyle: ctx => {
