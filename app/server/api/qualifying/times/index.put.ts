@@ -2,7 +2,7 @@ import { format } from "date-fns"
 import { getPool, prepareStatement, runTransaction, type QualifyingRow } from "lib"
 
 const insertQualifyingTimesSql = `
-INSERT INTO Qualifying (
+INSERT INTO QualifyingTimes (
   created,
   year,
   course,
@@ -54,7 +54,7 @@ export default defineEventHandler( async ( event ) => {
       async( conn, qualifyingData: Array<QualifyingRow> ) => {
         const deleteQualifying = prepareStatement(
           conn,
-          "DELETE FROM Qualifying"
+          "DELETE FROM QualifyingTimes"
         )
         const updateQualifyingRow = prepareStatement<QualifyingRow>(
           conn,

@@ -9,7 +9,7 @@ export default defineEventHandler( async ( event ) => {
 
   const selectRecords = prepareStatement<unknown[], QualifyingRow>(
     await getPool(),
-    "SELECT * FROM Qualifying"
+    "SELECT * FROM QualifyingTimes"
   )
 
   const data = selectRecords.all()
