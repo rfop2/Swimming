@@ -278,12 +278,46 @@
       filter: false,
     },
     {
-      field: "qualifyingStart",
+      editable: () => !!user.value.admin,
+      headerName: "Qualifying Start",
+      cellEditor: "agDateStringCellEditor",
+      cellEditorParams: {
+        includeTime: false,
+      },
+      filter: false,
       valueFormatter: ( { value }: ValueFormatterParams ) => value ? format( parseISO( value ), "do MMM, yyyy" ) : "",
+      valueGetter: ( params: ValueGetterParams ) => {
+        return params.data.qualifyingStart
+      },
+      valueSetter: ( params: ValueSetterParams ): boolean => {
+        params.data.qualifyingStart = params.newValue
+        return true
+      },
+      onCellValueChanged: ( _event: NewValueParams ) => {
+        console.log( "Changed" )
+        dirty.value = true
+      },
     },
     {
-      field: "qualifyingEnd",
+      editable: () => !!user.value.admin,
+      headerName: "Qualifying End",
+      cellEditor: "agDateStringCellEditor",
+      cellEditorParams: {
+        includeTime: false,
+      },
+      filter: false,
       valueFormatter: ( { value }: ValueFormatterParams ) => value ? format( parseISO( value ), "do MMM, yyyy" ) : "",
+      valueGetter: ( params: ValueGetterParams ) => {
+        return params.data.qualifyingEnd
+      },
+      valueSetter: ( params: ValueSetterParams ): boolean => {
+        params.data.qualifyingEnd = params.newValue
+        return true
+      },
+      onCellValueChanged: ( _event: NewValueParams ) => {
+        console.log( "Changed" )
+        dirty.value = true
+      },
     },
     {
       editable: () => !!user.value.admin,
@@ -302,6 +336,7 @@
         return true
       },
       onCellValueChanged: ( _event: NewValueParams ) => {
+        console.log( "Changed" )
         dirty.value = true
       },
     },
