@@ -259,19 +259,23 @@
   const columns = computed( () => [
     {
       field: "qualifyingYear",
+      filter: false,
     },
     {
       field: "qualifyingScope",
+      filter: false,
       valueFormatter: ( { value }: ValueFormatterParams ) => lookupScope( value ),
       filterValueGetter: ( params: ValueGetterParams ) => lookupScope( params.data.quaifyingScope ),
     },
     {
       field: "qualifyingArea",
+      filter: false,
       valueFormatter: ( { value, data }: ValueFormatterParams ) => lookupArea( data.qualifyingScope, value ),
       filterValueGetter: ( params: ValueGetterParams ) => lookupArea( params.data.qualifyingScope, params.data.qualifyingArea ),
     },
     {
       field: "qualifyingType",
+      filter: false,
     },
     {
       field: "qualifyingStart",

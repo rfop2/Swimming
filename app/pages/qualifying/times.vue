@@ -331,31 +331,37 @@
   const columns = computed( () => [
     {
       field: "year",
+      filter: false,
     },
     {
       field: "scope",
+      filter: false,
       valueFormatter: ( { value }: ValueFormatterParams ) => lookupScope( value ),
       filterValueGetter: ( params: ValueGetterParams ) => lookupScope( params.data.scope ),
     },
     {
       field: "area",
+      filter: false,
       valueFormatter: ( { value, data }: ValueFormatterParams ) => lookupArea( data.scope, value ),
       filterValueGetter: ( params: ValueGetterParams ) => lookupArea( params.data.scope, params.data.area ),
     },
     {
       field: "distance",
+      filter: false,
       comparator: ( valueA: string, valueB: string, rowA: IRowNode, rowB: IRowNode ) => {
         return rowA.data.distanceMetres - rowB.data.distanceMetres
       }
     },
     {
       field: "stroke",
+      filter: false,
       // valueFormatter: ( { value }: ValueFormatterParams ) => value ? value.charAt( 0 ).toUpperCase() + value.slice( 1 ) : "",
       valueFormatter: ( { value }: ValueFormatterParams ) => value ? value.split( "_" ).map( ( word: string ) => word.charAt( 0 ).toUpperCase() + word.slice( 1 ) ).join( " " ) : ""
 
     },
     {
       field: "course",
+      filter: false,
       valueFormatter: ( { value }: ValueFormatterParams ) => value === "lc" ? "Long" : "Short",
       filterValueGetter: ( params: ValueGetterParams ) => {
         return params.data.course === "lc" ? "Long" : "Short"
@@ -363,10 +369,12 @@
     },
     {
       field: "gender",
+      filter: false,
       valueFormatter: ( { value }: ValueFormatterParams ) => value ? value.charAt( 0 ).toUpperCase() + value.slice( 1 ) : "",
     },
     {
       field: "age",
+      filter: false,
     },
     /* {
       editable: true,
