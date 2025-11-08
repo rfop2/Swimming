@@ -1,16 +1,23 @@
 <script setup lang="ts">
   import type { InternalApi } from "nitropack"
-  import type { CellValueChangedEvent, NewValueParams, ValueFormatterParams, ValueGetterParams, ValueSetterParams } from "ag-grid-community"
-  import { ModuleRegistry } from "ag-grid-community"
-  import "ag-grid-community/styles/ag-grid.css" // Mandatory CSS required by the Data Grid
-  import "ag-grid-community/styles/ag-theme-quartz.css" // Optional Theme applied to the Data Grid
+  import type { CellValueChangedEvent, NewValueParams, SizeColumnsToFitGridStrategy, ValueFormatterParams, ValueGetterParams, ValueSetterParams } from "ag-grid-community"
+  import { ModuleRegistry, DateEditorModule, ValidationModule, ClientSideRowModelModule, ColumnAutoSizeModule, TextFilterModule, CustomEditorModule, CellStyleModule, TextEditorModule } from "ag-grid-community"
   import { AgGridVue } from "ag-grid-vue3" // Vue Data Grid Component
   import { REGIONS, COUNTIES, NATIONALITIES, STROKE_DISTANCE, type QualifyingPeriodRow } from "lib"
   import { addMonths, format, getYear, parseISO } from "date-fns"
   import type { FetchError } from "ofetch"
   import { ArrowUturnLeftIcon, CheckIcon, ClipboardDocumentCheckIcon, ClipboardDocumentIcon, ClipboardDocumentListIcon, DocumentPlusIcon, PlusCircleIcon, TrashIcon } from "@heroicons/vue/24/outline"
 
+  // ModuleRegistry.registerModules( [ AllCommunityModule ] )
   ModuleRegistry.registerModules( [
+    ClientSideRowModelModule,
+    ColumnAutoSizeModule,
+    TextFilterModule,
+    CellStyleModule,
+    CustomEditorModule,
+    TextEditorModule,
+    DateEditorModule,
+    ...( process.env.NODE_ENV !== "production" ? [ ValidationModule ] : [] ),
   ] )
 
   definePageMeta( {
@@ -273,7 +280,7 @@
     {
       editable: () => !!user.value.admin,
       headerName: "Qualifying Start",
-      cellEditor: "agDateCellEditor ",
+      cellEditor: "agDateCellEditor",
       cellEditorParams: {
         includeTime: false,
       },
@@ -290,9 +297,29 @@
         dirty.value = true
       },
     },
+    {
+      editable: () => !!user.value.admin,
+      headerName: "Qualifying End",
+      cellEditor: "agDateCellEditor",
+      cellEditorParams: {
+        includeTime: false,
+      },
+      filter: false,
+      valueFormatter: ( { value }: ValueFormatterParams ) => value ? format( value, "do MMM, yyyy" ) : "",
+      valueGetter: ( params: ValueGetterParams ) => {
+        return params.data.endDate
+      },
+      valueSetter: ( params: ValueSetterParams ): boolean => {
+        params.data.endDate = params.newValue
+        return true
+      },
+      onCellValueChanged: ( _event: NewValueParams ) => {
+        dirty.value = true
+      },
+    },
   ] )
 
-  const autoSizeStrategy = {
+  const autoSizeStrategy: SizeColumnsToFitGridStrategy = {
     type: "fitGridWidth",
     defaultMinWidth: 100,
   }

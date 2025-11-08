@@ -1,13 +1,23 @@
 <script setup lang="ts">
   import type { InternalApi } from "nitropack"
-  import type { CellValueChangedEvent, GetQuickFilterTextParams, IRowNode, NewValueParams, ValueFormatterParams, ValueGetterParams, ValueSetterParams } from "ag-grid-community"
-  import "ag-grid-community/styles/ag-grid.css" // Mandatory CSS required by the Data Grid
-  import "ag-grid-community/styles/ag-theme-quartz.css" // Optional Theme applied to the Data Grid
+  import type { CellValueChangedEvent, GetQuickFilterTextParams, IRowNode, NewValueParams, SizeColumnsToFitGridStrategy, ValueFormatterParams, ValueGetterParams, ValueSetterParams } from "ag-grid-community"
+  import { ModuleRegistry, ValidationModule, ClientSideRowModelModule, TextEditorModule, QuickFilterModule, ColumnAutoSizeModule, TextFilterModule, CellStyleModule } from "ag-grid-community"
   import { AgGridVue } from "ag-grid-vue3" // Vue Data Grid Component
   import { type Swimmer, secondsToTime, strokeSort, timeToSeconds, type QualifyingRow, getCompetitionAge, REGIONS, COUNTIES, NATIONALITIES, STROKE_DISTANCE, AGES, getSwimmerScopeArea } from "lib"
   import { addMonths, format, getYear, parseISO } from "date-fns"
   import type { FetchError } from "ofetch"
   import { ArrowUturnLeftIcon, CheckIcon, ClipboardDocumentCheckIcon, ClipboardDocumentIcon, ClipboardDocumentListIcon, DocumentPlusIcon, PlusCircleIcon, TrashIcon } from "@heroicons/vue/24/outline"
+
+  // ModuleRegistry.registerModules( [ AllCommunityModule ] )
+  ModuleRegistry.registerModules( [
+    ClientSideRowModelModule,
+    TextEditorModule,
+    QuickFilterModule,
+    TextFilterModule,
+    ColumnAutoSizeModule,
+    CellStyleModule,
+    ...( process.env.NODE_ENV !== "production" ? [ ValidationModule ] : [] ),
+  ] )
 
   definePageMeta( {
     layout: "secure",
@@ -441,7 +451,7 @@
     immediate: true,
   } )
 
-  const autoSizeStrategy = {
+  const autoSizeStrategy: SizeColumnsToFitGridStrategy = {
     type: "fitGridWidth",
     defaultMinWidth: 100,
   }
