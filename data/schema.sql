@@ -307,31 +307,6 @@ CREATE TABLE `Pools` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Table structure for table `Qualifying`
---
-
-DROP TABLE IF EXISTS `Qualifying`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `Qualifying` (
-  `year` int(11) NOT NULL,
-  `course` varchar(8) NOT NULL,
-  `stroke` varchar(32) NOT NULL,
-  `distance` varchar(8) NOT NULL,
-  `scope` varchar(16) NOT NULL,
-  `area` varchar(16) NOT NULL,
-  `gender` varchar(16) NOT NULL,
-  `age` varchar(8) NOT NULL,
-  `timeString` varchar(16) NOT NULL,
-  `time` decimal(8,2) NOT NULL DEFAULT 0.00,
-  `created` timestamp NOT NULL DEFAULT current_timestamp(),
-  `updated` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
-  PRIMARY KEY (`year`,`course`,`stroke`,`distance`,`scope`,`area`,`gender`,`age`),
-  UNIQUE KEY `idx_qualifying` (`year`,`age`,`gender`,`course`,`stroke`,`distance`,`scope`,`area`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
 -- Table structure for table `QualifyingPeriods`
 --
 
@@ -349,6 +324,31 @@ CREATE TABLE `QualifyingPeriods` (
   `created` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
   PRIMARY KEY (`qualifyingYear`,`qualifyingScope`,`qualifyingArea`,`qualifyingType`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `QualifyingTimes`
+--
+
+DROP TABLE IF EXISTS `QualifyingTimes`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `QualifyingTimes` (
+  `year` int(11) NOT NULL,
+  `course` varchar(8) NOT NULL,
+  `stroke` varchar(32) NOT NULL,
+  `distance` varchar(8) NOT NULL,
+  `scope` varchar(16) NOT NULL,
+  `area` varchar(16) NOT NULL,
+  `gender` varchar(16) NOT NULL,
+  `age` varchar(8) NOT NULL,
+  `timeString` varchar(16) NOT NULL,
+  `time` decimal(8,2) NOT NULL DEFAULT 0.00,
+  `created` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
+  PRIMARY KEY (`year`,`course`,`stroke`,`distance`,`scope`,`area`,`gender`,`age`),
+  UNIQUE KEY `idx_qualifying` (`year`,`age`,`gender`,`course`,`stroke`,`distance`,`scope`,`area`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
