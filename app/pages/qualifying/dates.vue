@@ -328,11 +328,11 @@
 
 <template>
   <StandardPage
-    title="Qualifying"
+    title="Qualifying Cut-off Dates"
   >
     <template #description>
       <div class="sm:flex sm:justify-between">
-        <div>County and regional qualifying times for each event</div>
+        <div>Qualifying periods for winter, summer and general qualifying areas.</div>
         <div
           v-if="user.admin"
           class="sm:flex sm:items-end"

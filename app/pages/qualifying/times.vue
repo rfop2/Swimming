@@ -460,11 +460,11 @@
 
 <template>
   <StandardPage
-    title="Qualifying"
+    title="Qualifying Times"
   >
     <template #description>
       <div class="sm:flex sm:justify-between">
-        <div>County and regional qualifying times for each event</div>
+        <div>County and regional qualifying times for each event.</div>
         <div
           v-if="user.admin"
           class="sm:flex sm:items-end"
