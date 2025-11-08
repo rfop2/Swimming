@@ -145,7 +145,7 @@
     const filtered = effectiveQualifying.value.filter( row => {
       if ( row.qualifyingYear !== selections.value.year )
         return false
-      if ( row.qualifyingScope !== selections.value.scope )
+      if ( selections.value.scope && ( row.qualifyingScope !== selections.value.scope ) )
         return false
       if ( selections.value.area && ( row.qualifyingArea !== selections.value.area ) )
         return false
@@ -357,6 +357,7 @@
         return true
       },
       onCellValueChanged: ( _event: NewValueParams ) => {
+        console.log( "Changed" )
         dirty.value = true
       },
     },
