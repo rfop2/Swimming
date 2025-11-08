@@ -3,10 +3,10 @@
   import type { CellValueChangedEvent, NewValueParams, SizeColumnsToFitGridStrategy, ValueFormatterParams, ValueGetterParams, ValueSetterParams } from "ag-grid-community"
   import { ModuleRegistry, DateEditorModule, ValidationModule, ClientSideRowModelModule, ColumnAutoSizeModule, TextFilterModule, CustomEditorModule, CellStyleModule, TextEditorModule } from "ag-grid-community"
   import { AgGridVue } from "ag-grid-vue3" // Vue Data Grid Component
-  import { REGIONS, COUNTIES, NATIONALITIES, STROKE_DISTANCE, type QualifyingPeriodRow } from "lib"
+  import { REGIONS, COUNTIES, NATIONALITIES, type QualifyingPeriodRow } from "lib"
   import { addMonths, format, getYear, parseISO } from "date-fns"
   import type { FetchError } from "ofetch"
-  import { ArrowUturnLeftIcon, CheckIcon, ClipboardDocumentCheckIcon, ClipboardDocumentIcon, ClipboardDocumentListIcon, DocumentPlusIcon, PlusCircleIcon, TrashIcon } from "@heroicons/vue/24/outline"
+  import { ArrowUturnLeftIcon, CheckIcon, ClipboardDocumentCheckIcon, ClipboardDocumentIcon, ClipboardDocumentListIcon, TrashIcon } from "@heroicons/vue/24/outline"
 
   // ModuleRegistry.registerModules( [ AllCommunityModule ] )
   ModuleRegistry.registerModules( [
@@ -342,7 +342,7 @@
           class="sm:flex sm:items-end"
         >
           <div
-            v-if="filteredQualifying.length"
+            v-if="false && filteredQualifying.length"
             class="mt-4 sm:ml-4 sm:mt-0 sm:flex-none"
           >
             <button
@@ -365,7 +365,7 @@
             </button>
           </div>
           <div
-            v-if="clipboard.length && !filteredQualifying.length"
+            v-if="false && clipboard.length && !filteredQualifying.length"
             class="mt-4 sm:ml-4 sm:mt-0 sm:flex-none"
           >
             <button
@@ -382,7 +382,7 @@
             </button>
           </div>
           <div
-            v-if="filteredQualifying.length"
+            v-if="false && filteredQualifying.length"
             class="mt-4 sm:ml-4 sm:mt-0 sm:flex-none"
           >
             <button
@@ -396,40 +396,6 @@
                 aria-hidden="true"
               />
               Delete
-            </button>
-          </div>
-          <div
-            v-if="!filteredQualifying.length"
-            class="mt-4 sm:ml-4 sm:mt-0 sm:flex-none"
-          >
-            <button
-              type="button"
-              class="inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
-              title="Fill with default events"
-              @click="generate"
-            >
-              <DocumentPlusIcon
-                class="-ml-0.5 size-5"
-                aria-hidden="true"
-              />
-              Populate
-            </button>
-          </div>
-          <div
-            v-if="filteredQualifying.length>0 && filteredQualifying.length!==Object.keys(STROKE_DISTANCE).length"
-            class="mt-4 sm:ml-4 sm:mt-0 sm:flex-none"
-          >
-            <button
-              type="button"
-              class="inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
-              title="Add any missing strokes/distances"
-              @click="complete"
-            >
-              <PlusCircleIcon
-                class="-ml-0.5 size-5"
-                aria-hidden="true"
-              />
-              Complete
             </button>
           </div>
           <div class="mt-4 sm:ml-4 sm:mt-0 sm:flex-none">
