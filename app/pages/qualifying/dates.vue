@@ -67,6 +67,10 @@
 
   const scopeOptions = [
     {
+      label: "All Scopes",
+      value: "",
+    },
+    {
       value: "county",
       label: "County",
     },
@@ -478,7 +482,7 @@
         />
       </div>
       <div
-        v-if="user.admin"
+        v-if="selections.scope"
         class="min-w-64"
       >
         <UI-Listbox
