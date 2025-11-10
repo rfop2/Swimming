@@ -9,8 +9,14 @@
 
   // const { formatTemporal } = useTemporal()
 
-  const meet = ref( props.calendarEvent.meet )
+  const meet: Ref<MeetResults> = ref( props.calendarEvent.meet )
   console.log( "M", meet.value )
+
+  const roundNames = {
+    "H": "Heat",
+    "S": "Semi-Final",
+    "F": "Final",
+  }
 </script>
 
 <template>
@@ -25,9 +31,18 @@
           v-for="([distance,rounds],i) in [...distances.entries()]"
           :key="distance"
           class=""
-          :title="`${meet.name}\n${rounds.map( r => `${r.round}:${secondsToTime(r.time)}`)}`"
         >
-          <span v-if="i>0">,</span>{{ distance }}
+          <span v-if="i>0">,</span><UI-Tooltip>
+            <template #content>
+              <p>{{ meet.name }}</p>
+              <span
+                v-for="result in rounds"
+                :key="result.round"
+              >
+                {{ roundNames[result.round as keyof typeof roundNames] ?? "Unknown Round" }}: {{ secondsToTime(result.time) }}
+                <span /></span></template>
+            {{ distance }}
+          </UI-Tooltip>
         </span>
       </div>
     </div>
