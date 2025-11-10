@@ -39,27 +39,6 @@
   // Better type narrowing guard
   const hasSwimmer = ( s: typeof swimmer ): s is typeof swimmer & { value: NonNullable<typeof s.value> } => s.value != null
 
-  interface MeetRaceResults {
-    round: string
-    time: number
-    points: number
-  }
-
-  type MeetDistanceResults = Map<number, Array<MeetRaceResults>>
-
-  type MeetStrokeResults = Map<string, MeetDistanceResults>
-
-  interface MeetResults {
-    id: number
-    name: string
-    venue: string
-    level: number
-    date: Temporal.PlainDate
-    duration: number
-    course: string
-    results: MeetStrokeResults
-  }
-
   const roundOrder = {
     "": 0,
     "H": 1,
