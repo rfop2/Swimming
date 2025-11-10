@@ -26,6 +26,10 @@
     .forEach( i => {
       dateRanges.push( { label: `${currentYear - i}${i ? " - " + currentYear : ""}`, value: String( currentYear - i ) } )
     } )
+  dateRanges.push( {
+    label: "Custom",
+    value: "custom",
+  } )
 
   const range = ref( ( dateRanges.find( r => r.value === model.value.range ) ?? ( !model.value.startDate && !model.value.endDate ? dateRanges[0] : dateRanges[dateRanges.length - 1] ) ).value )
 
@@ -69,11 +73,27 @@
 </script>
 
 <template>
-  <UI-Listbox
-    v-model="range"
-    clearable
-    :label="props.labelled ? 'Period' : undefined"
-    placeholder="Date Range"
-    :options="dateRanges"
-  />
+  <div
+    class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-8"
+  >
+    <div class="sm:col-span-1">
+      <UI-Listbox
+        v-model="range"
+        clearable
+        :label="props.labelled ? 'Period' : undefined"
+        placeholder="Date Range"
+        :options="dateRanges"
+      />
+    </div>
+    <div class="sm:col-span-1">
+      <UI-Input
+        v-model="model.startDate"
+        type="date"
+        placeholder="Start Date"
+        :label="labelled ? 'Start Date' : undefined"
+        :max="model.endDate"
+        @change="range = dateRanges[dateRanges.length-1].value"
+      />
+    </div>
+  </div>
 </template>
