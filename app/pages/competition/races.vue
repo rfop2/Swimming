@@ -248,24 +248,6 @@
     </template>
     <template #controls>
       <SwimmerSelector v-model="swimmer" />
-      <ClientOnly>
-        <div class="min-w-48">
-          <UI-Listbox
-            v-model="selections.course"
-            :options="courses"
-            label="Course"
-          />
-        </div>
-        <div class="min-w-72">
-          <UI-Listbox
-            v-model="selections.level"
-            :options="levels"
-            label="Level"
-            placeholder="All Levels"
-            multiple
-          />
-        </div>
-      </ClientOnly>
     </template>
     <ClientOnly>
       <ScheduleXCalendar
