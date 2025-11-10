@@ -11,7 +11,8 @@ export const getPool = async () => {
       user: process.env.MARIADB_USER,
       password: process.env.MARIADB_PASSWORD,
       database: process.env.MARIADB_DATABASE,
-      namedPlaceholders: true
+      namedPlaceholders: true,
+      dateStrings: true,
     } )
   }
   return pool
