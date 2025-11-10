@@ -1,9 +1,7 @@
-import { format } from "date-fns"
 import { getPool, prepareStatement, runTransaction, type QualifyingRow } from "lib"
 
 const insertQualifyingTimesSql = `
 INSERT INTO QualifyingTimes (
-  created,
   year,
   course,
   stroke,
@@ -16,7 +14,6 @@ INSERT INTO QualifyingTimes (
   time
 )
 VALUES (
-  :created,
   :year,
   :course,
   :stroke,
@@ -62,7 +59,6 @@ export default defineEventHandler( async ( event ) => {
         )
         await deleteQualifying.run()
         for ( const row of qualifyingData ) {
-          row.created = format( row.created, "yyyy-MM-dd" )
           await updateQualifyingRow.run( row )
         }
       },
