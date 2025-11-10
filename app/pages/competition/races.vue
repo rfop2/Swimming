@@ -204,7 +204,7 @@
 
   const calendarApp = import.meta.client
     ? createCalendar( {
-      selectedDate: Temporal.Now.plainDateISO().subtract( { days: 30 } ),
+      selectedDate: Temporal.Now.plainDateISO(),
       maxDate: Temporal.Now.plainDateISO(),
       locale: "en-GB",
       timezone: "Europe/London",
