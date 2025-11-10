@@ -603,6 +603,7 @@ const updateMeets = async ( force: boolean ) => {
     updated: 0,
     deleted: 0,
   }
+  const saveMeets = prepareStatement( pool, insertMeetsSql )
   do {
     const page: PageInfo = {
       label: `meets_list_${region}-${pageNo}`,
@@ -618,7 +619,6 @@ const updateMeets = async ( force: boolean ) => {
     // console.log( meetsData )
     console.log( `Got records for ${meetsData.length} meets` )
 
-    const saveMeets = prepareStatement( pool, insertMeetsSql )
     for ( const meet of meetsData ) {
       let fetchMeet = true
       if ( !meet.id ) {
@@ -907,7 +907,11 @@ const updateMeetsResults = async ( options: MeetsResultsOptions ) => {
     .description( "Fetch data for new or updated meets" )
     .addOption( new Option( "-m, --mode <mode>", "fetching strategy versus caching" ).choices( [ "force", "lazy" ] ).default( "lazy" ) )
     .action( async ( options ) => {
-      await updateMeets( options.mode === "force" )
+      try {
+        await updateMeets( options.mode === "force" )
+      } catch ( e ) {
+        console.error( "Unable to update meets", e )
+      }
     } )
 
   program.command( "queue" )
