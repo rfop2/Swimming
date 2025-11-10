@@ -68,80 +68,78 @@
     "C": 3,
     "F": 5,
   }
-  const meets = ref<MeetResults[]>( [] )
+
+  const results: Ref<ApiResponse> = ref( [] )
 
   watchEffect( async () => {
     if ( hasSwimmer( swimmer ) ) {
-      const results = await $fetch<ApiResponse>( `/api/results/${swimmer.value.id}` )
-      const meetsMap = results.reduce( ( meets, result ) => {
-        const race: MeetRaceResults = {
-          round: result.round,
-          time: Number( result.time ),
-          points: result.wa_pts,
-        }
-        const distanceMetres = Number( result.distance.replace( /m$/, "" ) )
-        const meetDate = Temporal.Instant.from( result.date ).toZonedDateTimeISO( "Europe/London" ).toPlainDate()
-        const meet = meets.get( result.meet )
-        if ( !meet ) {
-          const distances: MeetDistanceResults = new Map()
-          distances.set( distanceMetres, [ race ] )
-          const strokes: MeetStrokeResults = new Map()
-          strokes.set( result.stroke, distances )
-          const meetResult: MeetResults = {
-            id: meets.size + 1,
-            name: result.meet,
-            venue: result.venue,
-            level: result.level,
-            date: meetDate,
-            duration: 1,
-            course: result.course,
-            results: strokes,
-          }
-          meets.set( result.meet, meetResult )
-        } else {
-          if ( Temporal.PlainDate.compare( meetDate, meet.date ) !== 0 ) {
-            // find the earlier one
-            const earliest = Temporal.PlainDate.compare( meetDate, meet.date ) <= 0 ? meetDate : meet.date
-            const latest = Temporal.PlainDate.compare( meetDate, meet.date ) <= 0 ? meet.date : meetDate
-            // console.log( "DIFF", JSON.stringify( earliest ), JSON.stringify( latest ), Temporal.PlainDate.compare( meetDate, meet.date ) )
-            // console.log( meetDate instanceof Temporal.PlainDate, meet.date instanceof Temporal.PlainDate )
-            // console.log( meetDate.constructor === meet.date.constructor )
-            // console.log( "Compare result:", Temporal.PlainDate.compare( meetDate, meet.date ) )
-            // dumpPlainDate( meetDate, "meetDate" )
-            // dumpPlainDate( meet.date, "meet.date" )
-            meet.date = earliest
-
-            // difference in days
-            meet.duration = 1 + latest.since( earliest ).days
-
-            // console.log( meet )
-          }
-          if ( meet.course !== result.course ) {
-            console.error( "Course mismatch", meet, result )
-          }
-          const stroke = meet.results.get( result.stroke )
-          if ( !stroke ) {
-            const distances: MeetDistanceResults = new Map()
-            distances.set( distanceMetres, [ race ] )
-            meet.results.set( result.stroke, distances )
-          } else {
-            const distance = stroke.get( distanceMetres )
-            if ( !distance ) {
-              stroke.set( distanceMetres, [ race ] )
-            } else {
-              distance.push( race )
-              distance.sort( ( a, b ) => (
-                ( roundOrder[a.round as keyof typeof roundOrder] ?? 0 ) - ( roundOrder[b.round as keyof typeof roundOrder] ?? 0 )
-              ) )
-            }
-          }
-        }
-        return meets
-      }, new Map<string, MeetResults>() )
-      meets.value = Array.from( meetsMap.values() )
-      console.log( "MM", meetsMap, meets.value )
+      results.value = await $fetch<ApiResponse>( `/api/results/${swimmer.value.id}` )
     }
   } )
+
+  const meetsMap = computed( () => results.value.reduce( ( meets, result ) => {
+    const race: MeetRaceResults = {
+      round: result.round,
+      time: Number( result.time ),
+      points: result.wa_pts,
+    }
+    const distanceMetres = Number( result.distance.replace( /m$/, "" ) )
+    const meetDate = Temporal.PlainDate.from( result.date )
+    const meet = meets.get( result.meet )
+    if ( !meet ) {
+      const distances: MeetDistanceResults = new Map()
+      distances.set( distanceMetres, [ race ] )
+      const strokes: MeetStrokeResults = new Map()
+      strokes.set( result.stroke, distances )
+      const meetResult: MeetResults = {
+        id: meets.size + 1,
+        name: result.meet,
+        venue: result.venue,
+        level: result.level,
+        date: meetDate,
+        duration: 1,
+        course: result.course,
+        results: strokes,
+      }
+      meets.set( result.meet, meetResult )
+    } else {
+      if ( Temporal.PlainDate.compare( meetDate, meet.date ) !== 0 ) {
+        // find the earlier one
+        const earliest = Temporal.PlainDate.compare( meetDate, meet.date ) <= 0 ? meetDate : meet.date
+        const latest = Temporal.PlainDate.compare( meetDate, meet.date ) <= 0 ? meet.date : meetDate
+        meet.date = earliest
+
+        // difference in days
+        meet.duration = 1 + latest.since( earliest ).days
+
+        // console.log( meet )
+      }
+      if ( meet.course !== result.course ) {
+        console.error( "Course mismatch", meet, result )
+      }
+      const stroke = meet.results.get( result.stroke )
+      if ( !stroke ) {
+        const distances: MeetDistanceResults = new Map()
+        distances.set( distanceMetres, [ race ] )
+        meet.results.set( result.stroke, distances )
+      } else {
+        const distance = stroke.get( distanceMetres )
+        if ( !distance ) {
+          stroke.set( distanceMetres, [ race ] )
+        } else {
+          distance.push( race )
+          distance.sort( ( a, b ) => (
+            ( roundOrder[a.round as keyof typeof roundOrder] ?? 0 ) - ( roundOrder[b.round as keyof typeof roundOrder] ?? 0 )
+          ) )
+        }
+      }
+    }
+    return meets
+  }, new Map<string, MeetResults>() )
+  )
+
+  // const meets = ref<MeetResults[]>( [] )
+  const meets = computed( () => Array.from( meetsMap.value.values() ) )
 
   interface CalendarEvent extends CalendarEventExternal {
     duration: number
