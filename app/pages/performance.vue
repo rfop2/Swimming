@@ -307,6 +307,7 @@
       <SwimmerSelector
         v-model="swimmer"
         :show-label="false"
+        :show-updated="true"
       />
     </template>
     <template #key>
