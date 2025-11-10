@@ -361,110 +361,118 @@
     </template>
     <div
       v-if="data.datasets[0].data.length > 0"
-      class="overflow-x-auto"
     >
       <div
-        id="chart-container"
-        class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8"
+        class="overflow-x-auto"
       >
-        <Line
-          height="300"
-          :data="data"
-          :options="options"
-        />
+        <div
+          id="chart-container"
+          class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8"
+        >
+          <Line
+            height="300"
+            :data="data"
+            :options="options"
+          />
+        </div>
+      </div>
+      <div class="overflow-x-auto">
+        <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
+          <table class="min-w-full divide-y divide-gray-300">
+            <thead>
+              <tr class="divide-x divide-gray-200">
+                <th
+                  scope="col"
+                  class="sortable whitespace-nowrap align-bottom pl-4 pr-3 py-3.5 text-right text-sm font-semibold text-gray-900 sm:pl-0"
+                  @click="updateSort('date')"
+                >
+                  <span>Date</span><i :class="getSortIcon('date')" />
+                </th>
+                <th
+                  scope="col"
+                  class="whitespace-nowrap align-bottom px-2 py-3.5 text-right text-sm font-semibold text-gray-900"
+                  @click="updateSort('time')"
+                >
+                  <span>Time</span><i :class="getSortIcon('time')" />
+                </th>
+                <th
+                  scope="col"
+                  class="whitespace-nowrap align-bottom px-2 py-3.5 text-right text-sm font-semibold text-gray-900"
+                >
+                  Points
+                </th>
+                <th
+                  scope="col"
+                  class="whitespace-nowrap align-bottom px-2 py-3.5 text-left text-sm font-semibold text-gray-900"
+                >
+                  Round
+                </th>
+                <th
+                  scope="col"
+                  class="whitespace-nowrap align-bottom px-2 py-3.5 text-left text-sm font-semibold text-gray-900"
+                >
+                  Meet
+                </th>
+                <th
+                  scope="col"
+                  class="whitespace-nowrap align-bottom px-2 py-3.5 text-left text-sm font-semibold text-gray-900"
+                >
+                  Venue
+                </th>
+                <th
+                  scope="col"
+                  class="whitespace-nowrap align-bottom px-2 py-3.5 text-left text-sm font-semibold text-gray-900"
+                >
+                  Club
+                </th>
+                <th
+                  scope="col"
+                  class="sortable whitespace-nowrap align-bottom px-2 py-3.5 text-left text-sm font-semibold text-gray-900"
+                >
+                  Level
+                </th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200 bg-white">
+              <tr
+                v-for="row in sortedRecords"
+                :key="`${row.date}-${row.round}`"
+                class="divide-x divide-gray-200"
+              >
+                <td class="whitespace-nowrap py-2 pl-4 pr-3 text-right text-sm font-medium text-gray-900 sm:pl-0">
+                  {{ format( row.date, "yyyy-MM-dd" ) }}
+                </td>
+                <td class="whitespace-nowrap p-2 text-right text-sm text-gray-900">
+                  {{ row.time ? secondsToTime( row.time ) : '' }}
+                </td>
+                <td class="whitespace-nowrap p-2 text-right text-sm text-gray-900">
+                  {{ row.wa_pts }}
+                </td>
+                <td class="whitespace-nowrap p-2 text-sm text-gray-900">
+                  {{ row.round === "H" ? "Heat" : ( row.round === "F" ? "Final" : "?" ) }}
+                </td>
+                <td class="whitespace-nowrap p-2 text-sm text-gray-900">
+                  {{ row.meet }}
+                </td>
+                <td class="whitespace-nowrap p-2 text-sm text-gray-900">
+                  {{ row.venue }}
+                </td>
+                <td class="whitespace-nowrap p-2 text-sm text-gray-900">
+                  {{ row.club_swam_under }}
+                </td>
+                <td class="whitespace-nowrap py-2 pl-3 pr-4 text-sm text-gray-500 sm:pr-0">
+                  {{ row.level }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
-    <div class="overflow-x-auto">
-      <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
-        <table class="min-w-full divide-y divide-gray-300">
-          <thead>
-            <tr class="divide-x divide-gray-200">
-              <th
-                scope="col"
-                class="sortable whitespace-nowrap align-bottom pl-4 pr-3 py-3.5 text-right text-sm font-semibold text-gray-900 sm:pl-0"
-                @click="updateSort('date')"
-              >
-                <span>Date</span><i :class="getSortIcon('date')" />
-              </th>
-              <th
-                scope="col"
-                class="whitespace-nowrap align-bottom px-2 py-3.5 text-right text-sm font-semibold text-gray-900"
-                @click="updateSort('time')"
-              >
-                <span>Time</span><i :class="getSortIcon('time')" />
-              </th>
-              <th
-                scope="col"
-                class="whitespace-nowrap align-bottom px-2 py-3.5 text-right text-sm font-semibold text-gray-900"
-              >
-                Points
-              </th>
-              <th
-                scope="col"
-                class="whitespace-nowrap align-bottom px-2 py-3.5 text-left text-sm font-semibold text-gray-900"
-              >
-                Round
-              </th>
-              <th
-                scope="col"
-                class="whitespace-nowrap align-bottom px-2 py-3.5 text-left text-sm font-semibold text-gray-900"
-              >
-                Meet
-              </th>
-              <th
-                scope="col"
-                class="whitespace-nowrap align-bottom px-2 py-3.5 text-left text-sm font-semibold text-gray-900"
-              >
-                Venue
-              </th>
-              <th
-                scope="col"
-                class="whitespace-nowrap align-bottom px-2 py-3.5 text-left text-sm font-semibold text-gray-900"
-              >
-                Club
-              </th>
-              <th
-                scope="col"
-                class="sortable whitespace-nowrap align-bottom px-2 py-3.5 text-left text-sm font-semibold text-gray-900"
-              >
-                Level
-              </th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-gray-200 bg-white">
-            <tr
-              v-for="row in sortedRecords"
-              :key="`${row.date}-${row.round}`"
-              class="divide-x divide-gray-200"
-            >
-              <td class="whitespace-nowrap py-2 pl-4 pr-3 text-right text-sm font-medium text-gray-900 sm:pl-0">
-                {{ format( row.date, "yyyy-MM-dd" ) }}
-              </td>
-              <td class="whitespace-nowrap p-2 text-right text-sm text-gray-900">
-                {{ row.time ? secondsToTime( row.time ) : '' }}
-              </td>
-              <td class="whitespace-nowrap p-2 text-right text-sm text-gray-900">
-                {{ row.wa_pts }}
-              </td>
-              <td class="whitespace-nowrap p-2 text-sm text-gray-900">
-                {{ row.round === "H" ? "Heat" : ( row.round === "F" ? "Final" : "?" ) }}
-              </td>
-              <td class="whitespace-nowrap p-2 text-sm text-gray-900">
-                {{ row.meet }}
-              </td>
-              <td class="whitespace-nowrap p-2 text-sm text-gray-900">
-                {{ row.venue }}
-              </td>
-              <td class="whitespace-nowrap p-2 text-sm text-gray-900">
-                {{ row.club_swam_under }}
-              </td>
-              <td class="whitespace-nowrap py-2 pl-3 pr-4 text-sm text-gray-500 sm:pr-0">
-                {{ row.level }}
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+    <div v-else>
+      <p class="p-6 mx-4 text-md text-center border-2 border-solid border-gray-200 rounded-md">
+        There are no results to display for the select swimmer, event and date range.
+      </p>
     </div>
   </StandardPage>
 </template>
