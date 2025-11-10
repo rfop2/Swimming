@@ -1,4 +1,5 @@
 <script setup lang="ts">
+  import { BookmarkIcon, BookmarkSlashIcon, PencilSquareIcon, TicketIcon } from "@heroicons/vue/24/outline"
   import type { CalendarEventExternal } from "@schedule-x/calendar"
 
   const props = defineProps<{
@@ -42,17 +43,6 @@
       >
         {{ meet.name }}
       </a>
-      <span
-        class="pt-1 pl-2"
-      >
-        <UI-Input
-          v-model="tagged"
-          type="checkbox"
-          :true-value="1"
-          :false-value="0"
-          title="Add to tagged meets"
-        />
-      </span>
     </div>
     <div class="sx__has-icon sx__event-modal__time">
       <svg
@@ -250,6 +240,80 @@
           >View / Download
           </a>
         </span>
+      </div>
+    </div>
+    <div
+      class="sx__has-icon sx__event-modal__description"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke-width="1.5"
+        stroke="currentColor"
+        class="invisible size-4"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0Z"
+        />
+      </svg>
+
+      <div class="flex w-full gap-2 justify-center">
+        <div class="flex">
+          <span
+            v-if="!tagged"
+          ><button
+            class="inline-flex items-center gap-x-1.5 rounded-md bg-white px-2 py-1 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+            @click.stop="tagged=1"
+          >
+            <BookmarkIcon
+              class="-ml-0.5 size-5"
+              aria-hidden="true"
+            />
+            Bookmark Meet
+          </button></span>
+          <span
+            v-else
+          ><button
+            class="inline-flex items-center gap-x-1.5 rounded-md bg-white px-2 py-1 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+            @click.stop="tagged=0"
+          >
+            <BookmarkSlashIcon
+              class="-ml-0.5 size-5"
+              aria-hidden="true"
+            />
+            Unbookmark Meet
+          </button></span>
+        </div>
+        <div class="flex">
+          <span
+            v-if="!tagged"
+          ><button
+            class="inline-flex items-center gap-x-1.5 rounded-md bg-white px-2 py-1 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+            @click.stop="tagged=1"
+          >
+            <TicketIcon
+              class="-ml-0.5 size-5"
+              aria-hidden="true"
+            />
+            Enter Swimmers
+          </button></span>
+          <span
+            v-else
+            class="mr-2"
+          ><button
+            class="inline-flex items-center gap-x-1.5 rounded-md bg-white px-2 py-1 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+            @click.stop="tagged=0"
+          >
+            <PencilSquareIcon
+              class="-ml-0.5 size-5"
+              aria-hidden="true"
+            />
+            Edit Entries
+          </button></span>
+        </div>
       </div>
     </div>
   </div>
