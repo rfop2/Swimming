@@ -318,7 +318,7 @@ CREATE TABLE `QualifyingPeriods` (
   `qualifyingScope` enum('regional','county') NOT NULL,
   `qualifyingArea` varchar(32) NOT NULL,
   `qualifyingType` enum('general','summer','winter') NOT NULL DEFAULT 'general',
-  `qualifyingStart` date NOT NULL,
+  `qualifyingStart` date DEFAULT NULL,
   `qualifyingEnd` date DEFAULT NULL,
   `qualifyingNotes` varchar(255) DEFAULT NULL,
   `created` timestamp NOT NULL DEFAULT current_timestamp(),
