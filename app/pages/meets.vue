@@ -181,8 +181,8 @@
   const events = computed( () => {
     const calendarEvents = ( meets.value || [] ).map( ( meet ): CalendarEvent => ( {
       id: meet.id,
-      start: Temporal.Instant.from( meet.date ).toZonedDateTimeISO( "Europe/London" ).toPlainDate(),
-      end: Temporal.Instant.from( meet.date ).toZonedDateTimeISO( "Europe/London" ).toPlainDate().add( { days: ( meet.duration ?? 1 ) - 1 } ),
+      start: Temporal.PlainDate.from( meet.date ),
+      end: Temporal.PlainDate.from( meet.date ).add( { days: ( meet.duration ?? 1 ) - 1 } ),
       // end: Temporal.PlainDate.from( formatISO( addDays( parseISO( meet.date ), ( meet.duration ?? 1 ) - 1 ), { representation: "date" } ) ),
       duration: meet.duration as number,
       title: `${meet.level}: ${meet.name}`,
