@@ -153,24 +153,16 @@
         return false
       return true
     } )
-    /* filtered.sort( ( a, b ) => {
-      if ( a.age < b.age ) {
-        return -1
-      } else if ( a.age > b.age ) {
-        return 1
-      }
-      if ( a.course < b.course ) {
-        return 1
-      } else if ( a.course > b.course ) {
-        return -1
-      }
-      if ( strokeSort[a.stroke] < strokeSort[b.stroke] ) {
-        return -1
-      } else if ( strokeSort[a.stroke] > strokeSort[b.stroke] ) {
-        return 1
-      }
-      return a.distanceMetres - b.distanceMetres
-    } ) */
+    filtered.sort( ( a, b ) => {
+      const diff1 = a.qualifyingYear - b.qualifyingYear
+      if ( diff1 !== 0 ) return diff1
+      const diff2 = a.qualifyingScope.localeCompare( b.qualifyingScope )
+      if ( diff2 !== 0 ) return diff2
+      const diff3 = a.qualifyingArea.localeCompare( b.qualifyingArea )
+      if ( diff3 !== 0 ) return diff3
+      const diff4 = a.qualifyingType.localeCompare( b.qualifyingType )
+      return diff4
+    } )
     return filtered
   } )
 
@@ -220,7 +212,7 @@
     try {
       await $fetch( "/api/qualifying/dates", {
         method: "PUT",
-        body: JSON.stringify( ( qualifying.value ?? [] ).concat( added.value.filter( data => data.time > 0 ) ) ),
+        body: JSON.stringify( ( qualifying.value ?? [] ).concat( added.value.filter( data => !!data.qualifyingStart ) ) ),
       } )
       saveSuccess.value = true
       await refreshNuxtData( "qualifying-dates" )
@@ -265,19 +257,21 @@
       field: "qualifyingScope",
       filter: false,
       valueFormatter: ( { value }: ValueFormatterParams ) => lookupScope( value ),
-      filterValueGetter: ( params: ValueGetterParams ) => lookupScope( params.data.quaifyingScope ),
+      // filterValueGetter: ( params: ValueGetterParams ) => lookupScope( params.data.quaifyingScope ),
     },
     {
       field: "qualifyingArea",
       filter: false,
       valueFormatter: ( { value, data }: ValueFormatterParams ) => lookupArea( data.qualifyingScope, value ),
-      filterValueGetter: ( params: ValueGetterParams ) => lookupArea( params.data.qualifyingScope, params.data.qualifyingArea ),
+      // filterValueGetter: ( params: ValueGetterParams ) => lookupArea( params.data.qualifyingScope, params.data.qualifyingArea ),
     },
     {
       field: "qualifyingType",
       filter: false,
+      valueGetter: ( params: ValueGetterParams ) => params.data.qualifyingType.charAt( 0 ).toUpperCase() + params.data.qualifyingType.slice( 1 )
     },
     {
+      field: "qualifyingStart",
       editable: () => !!user.value.admin,
       headerName: "Qualifying Start",
       cellEditor: "agDateStringCellEditor",
@@ -285,20 +279,17 @@
         includeTime: false,
       },
       filter: false,
-      valueFormatter: ( { value }: ValueFormatterParams ) => value ? format( parseISO( value ), "do MMM, yyyy" ) : "",
-      valueGetter: ( params: ValueGetterParams ) => {
-        return params.data.qualifyingStart
-      },
+      valueFormatter: ( { value }: ValueFormatterParams ) => value ? format( value, "do MMM, yyyy" ) : "",
       valueSetter: ( params: ValueSetterParams ): boolean => {
         params.data.qualifyingStart = params.newValue
         return true
       },
       onCellValueChanged: ( _event: NewValueParams ) => {
-        console.log( "Changed" )
         dirty.value = true
       },
     },
     {
+      field: "qualifyingEnd",
       editable: () => !!user.value.admin,
       headerName: "Qualifying End",
       cellEditor: "agDateStringCellEditor",
@@ -306,20 +297,17 @@
         includeTime: false,
       },
       filter: false,
-      valueFormatter: ( { value }: ValueFormatterParams ) => value ? format( parseISO( value ), "do MMM, yyyy" ) : "",
-      valueGetter: ( params: ValueGetterParams ) => {
-        return params.data.qualifyingEnd
-      },
+      valueFormatter: ( { value }: ValueFormatterParams ) => value ? format( value, "do MMM, yyyy" ) : "",
       valueSetter: ( params: ValueSetterParams ): boolean => {
         params.data.qualifyingEnd = params.newValue
         return true
       },
       onCellValueChanged: ( _event: NewValueParams ) => {
-        console.log( "Changed" )
         dirty.value = true
       },
     },
     {
+      field: "startDate",
       editable: () => !!user.value.admin,
       headerName: "Qualifying Start",
       cellEditor: "agDateCellEditor",
@@ -328,19 +316,18 @@
       },
       filter: false,
       valueFormatter: ( { value }: ValueFormatterParams ) => value ? format( value, "do MMM, yyyy" ) : "",
-      valueGetter: ( params: ValueGetterParams ) => {
-        return params.data.startDate
-      },
       valueSetter: ( params: ValueSetterParams ): boolean => {
+        if ( params.newValue?.valueOf() === params.data.startDate?.valueOf() ) return false
         params.data.startDate = params.newValue
+        params.data.qualifyingStart = params.newValue ? format( params.newValue, "yyyy-MM-dd" ) : null
         return true
       },
       onCellValueChanged: ( _event: NewValueParams ) => {
-        console.log( "Changed" )
         dirty.value = true
       },
     },
     {
+      field: "endDate",
       editable: () => !!user.value.admin,
       headerName: "Qualifying End",
       cellEditor: "agDateCellEditor",
@@ -349,15 +336,13 @@
       },
       filter: false,
       valueFormatter: ( { value }: ValueFormatterParams ) => value ? format( value, "do MMM, yyyy" ) : "",
-      valueGetter: ( params: ValueGetterParams ) => {
-        return params.data.endDate
-      },
       valueSetter: ( params: ValueSetterParams ): boolean => {
+        if ( params.newValue?.valueOf() === params.data.endDate?.valueOf() ) return false
         params.data.endDate = params.newValue
+        params.data.qualifyingEnd = params.newValue ? format( params.newValue, "yyyy-MM-dd" ) : null
         return true
       },
       onCellValueChanged: ( _event: NewValueParams ) => {
-        console.log( "Changed" )
         dirty.value = true
       },
     },
@@ -485,6 +470,7 @@
           :options="scopeOptions"
           label="Scope"
           placeholder="Choose Scope"
+          @update:model-value="()=>selections.area=''"
         />
       </div>
       <div
