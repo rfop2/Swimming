@@ -1,10 +1,9 @@
 <script setup lang="ts">
-  import type { InternalApi } from "nitropack"
   import type { CellValueChangedEvent, NewValueParams, SizeColumnsToFitGridStrategy, ValueFormatterParams, ValueGetterParams, ValueSetterParams } from "ag-grid-community"
   import { ModuleRegistry, DateEditorModule, ValidationModule, ClientSideRowModelModule, ColumnAutoSizeModule, TextFilterModule, CustomEditorModule, CellStyleModule, TextEditorModule } from "ag-grid-community"
   import { AgGridVue } from "ag-grid-vue3" // Vue Data Grid Component
   import { REGIONS, COUNTIES, NATIONALITIES, type QualifyingPeriodRow } from "lib"
-  import { addMonths, format, getYear, parseISO } from "date-fns"
+  import { addMonths, format, getYear } from "date-fns"
   import type { FetchError } from "ofetch"
   import { ArrowUturnLeftIcon, CheckIcon, ClipboardDocumentCheckIcon, ClipboardDocumentIcon, ClipboardDocumentListIcon, TrashIcon } from "@heroicons/vue/24/outline"
 
@@ -34,27 +33,10 @@
 
   const user = useAuthenticatedUser()
 
-  type ApiResponse = InternalApi["/api/qualifying/dates"]["get"]
-
-  interface ExtQualifyingPeriodRow extends QualifyingPeriodRow {
-    startDate?: Date
-    endDate?: Date
-  }
-
   const { data: qualifying } = await useFetch(
     "/api/qualifying/dates",
     {
       key: "qualifying-dates",
-      transform: ( data: ApiResponse ): Array<ExtQualifyingPeriodRow> => {
-        const extData = data.map( row => ( {
-          ...row,
-          ...{
-            startDate: row.qualifyingStart ? parseISO( row.qualifyingStart ) : undefined,
-            endDate: row.qualifyingEnd ? parseISO( row.qualifyingEnd ) : undefined,
-          }
-        } ) )
-        return extData
-      }
     }
   )
   watchEffect( () => {
@@ -118,8 +100,8 @@
 
   const areas = computed( () => areasFromScope( selections.value.scope ) )
 
-  const added = ref<Array<ExtQualifyingPeriodRow>>( [] )
-  const deleted = ref<Array<ExtQualifyingPeriodRow>>( [] )
+  const added = ref<Array<QualifyingPeriodRow>>( [] )
+  const deleted = ref<Array<QualifyingPeriodRow>>( [] )
 
   watch( added, eq => {
     console.log( "GE", eq )
@@ -169,7 +151,7 @@
   watchEffect( () => {
     console.log( "FQ", filteredQualifying.value )
   } )
-  const clipboard = ref<Array<ExtQualifyingPeriodRow>>( [] )
+  const clipboard = ref<Array<QualifyingPeriodRow>>( [] )
 
   watch( clipboard, eq => {
     console.log( "CB", eq )
@@ -300,46 +282,6 @@
       valueFormatter: ( { value }: ValueFormatterParams ) => value ? format( value, "do MMM, yyyy" ) : "",
       valueSetter: ( params: ValueSetterParams ): boolean => {
         params.data.qualifyingEnd = params.newValue
-        return true
-      },
-      onCellValueChanged: ( _event: NewValueParams ) => {
-        dirty.value = true
-      },
-    },
-    {
-      field: "startDate",
-      editable: () => !!user.value.admin,
-      headerName: "Qualifying Start",
-      cellEditor: "agDateCellEditor",
-      cellEditorParams: {
-        includeTime: false,
-      },
-      filter: false,
-      valueFormatter: ( { value }: ValueFormatterParams ) => value ? format( value, "do MMM, yyyy" ) : "",
-      valueSetter: ( params: ValueSetterParams ): boolean => {
-        if ( params.newValue?.valueOf() === params.data.startDate?.valueOf() ) return false
-        params.data.startDate = params.newValue
-        params.data.qualifyingStart = params.newValue ? format( params.newValue, "yyyy-MM-dd" ) : null
-        return true
-      },
-      onCellValueChanged: ( _event: NewValueParams ) => {
-        dirty.value = true
-      },
-    },
-    {
-      field: "endDate",
-      editable: () => !!user.value.admin,
-      headerName: "Qualifying End",
-      cellEditor: "agDateCellEditor",
-      cellEditorParams: {
-        includeTime: false,
-      },
-      filter: false,
-      valueFormatter: ( { value }: ValueFormatterParams ) => value ? format( value, "do MMM, yyyy" ) : "",
-      valueSetter: ( params: ValueSetterParams ): boolean => {
-        if ( params.newValue?.valueOf() === params.data.endDate?.valueOf() ) return false
-        params.data.endDate = params.newValue
-        params.data.qualifyingEnd = params.newValue ? format( params.newValue, "yyyy-MM-dd" ) : null
         return true
       },
       onCellValueChanged: ( _event: NewValueParams ) => {
