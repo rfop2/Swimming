@@ -34,6 +34,10 @@ export interface ExtSwimmer extends Swimmer {
   squads: string
 }
 
+export type CourseType = "lc" | "sc"
+export type StrokeType = "freestyle" | "breaststroke" | "butterfly" | "backstroke" | "individual_medley"
+export type DistanceType = "50m" | "100m" | "150m" | "200m" | "400m" | "800m" | "1500m"
+
 export interface IndividualStats {
   course: string
   stroke: string
