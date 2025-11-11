@@ -44,7 +44,7 @@
     try {
       const updateTasks: Array<Partial<Task>> = swimmers.value.map( s => ( {
         taskType: "update",
-        taskOptions: JSON.stringify( { updateType } ),
+        taskOptions: JSON.stringify( { updateType, force } ),
         taskDescription: `${updateType.charAt( 0 ).toUpperCase()}${updateType.slice( 1 )} update of swimmer '${s.fullName}'`,
         targetType: "swimmer",
         targetId: s.id,
@@ -61,7 +61,7 @@
     try {
       const updateTasks: Array<Partial<Task>> = swimmers.value.filter( ( s, i ) => selected.value[i] ).map( s => ( {
         taskType: "update",
-        taskOptions: JSON.stringify( { updateType } ),
+        taskOptions: JSON.stringify( { updateType, force } ),
         taskDescription: `${updateType.charAt( 0 ).toUpperCase()}${updateType.slice( 1 )} update of swimmer '${s.fullName}'`,
         targetType: "swimmer",
         targetId: s.id,
@@ -79,7 +79,7 @@
     try {
       await createTask( {
         taskType: "update",
-        taskOptions: JSON.stringify( { updateType } ),
+        taskOptions: JSON.stringify( { updateType, force } ),
         taskDescription: `${updateType.charAt( 0 ).toUpperCase()}${updateType.slice( 1 )} update of swimmer '${swimmer.fullName}'`,
         targetType: "swimmer",
         targetId: swimmer.id,
@@ -108,19 +108,19 @@
   }
 
   const updateOptions = [
-    { label: "Choose update", value: "" },
     { label: "Basic swimmer data only", value: "individual" },
     { label: "Basic data and event results", value: "results" },
     { label: "Basic data, event results and relative rankings", value: "rankings" },
   ]
-  const updateType = ref( updateOptions[0].value )
+  const updateType = ref( "" )
+  const force = ref( false )
 
   const selectUpdateType = ref<boolean>( false )
   const selectedForUpdate = ref<null | number | "selected" | "all">( null )
   watchEffect( () => {
     if ( selectedForUpdate.value !== null ) {
       selectUpdateType.value = true
-      updateType.value = updateOptions[0].value
+      updateType.value = ""
     }
   } )
 
@@ -346,6 +346,17 @@
             v-model="updateType"
             label="Update type"
             :options="updateOptions"
+            placeholder="Select update type"
+          />
+        </div>
+        <div class="w-full sm:max-w-xs pl-4">
+          <UI-input
+            v-if="!!user.admin"
+            v-model="force"
+            type="checkbox"
+            label="Force update"
+            :true-value="1"
+            :false-value="0"
           />
         </div>
       </form>
