@@ -1,6 +1,6 @@
 import { getPool, prepareStatement, runTransaction, type QualifyingRow } from "lib"
 
-const insertQualifyingTimesSql = `
+const upsertQualifyingTimesSql = `
 INSERT INTO QualifyingTimes (
   year,
   course,
@@ -8,6 +8,7 @@ INSERT INTO QualifyingTimes (
   distance,
   scope,
   area,
+  type,
   gender,
   age,
   timeString,
@@ -20,6 +21,7 @@ VALUES (
   :distance,
   :scope,
   :area,
+  :type,
   :gender,
   :age,
   :timeString,
@@ -28,6 +30,17 @@ VALUES (
 ON DUPLICATE KEY UPDATE
   time        = :time,
   timeString  = :timeString
+;`
+
+const deleteQualifyingTimesSql = `
+DELETE FROM QualifyingTimes WHERE
+  year = :year AND
+  course = :course AND
+  stroke = :stroke AND
+  distance = :distance AND
+  scope = :scope AND
+  area = :area AND
+  type = :type AND
 ;`
 
 export default defineEventHandler( async ( event ) => {
@@ -53,13 +66,21 @@ export default defineEventHandler( async ( event ) => {
           conn,
           "DELETE FROM QualifyingTimes"
         )
-        const updateQualifyingRow = prepareStatement<QualifyingRow>(
+        const upsertQualifyingRow = prepareStatement<QualifyingRow>(
           conn,
-          insertQualifyingTimesSql
+          upsertQualifyingTimesSql
+        )
+        const deleteQualifyingRow = prepareStatement<QualifyingRow>(
+          conn,
+          deleteQualifyingTimesSql
         )
         await deleteQualifying.run()
         for ( const row of qualifyingData ) {
-          await updateQualifyingRow.run( row )
+          if ( row.time ) {
+            await upsertQualifyingRow.run( row )
+          } else {
+            await deleteQualifyingRow.run( row )
+          }
         }
       },
       saveData

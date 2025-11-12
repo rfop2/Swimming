@@ -3,8 +3,8 @@
   import type { CellValueChangedEvent, GetQuickFilterTextParams, IRowNode, NewValueParams, SizeColumnsToFitGridStrategy, ValueFormatterParams, ValueGetterParams, ValueSetterParams } from "ag-grid-community"
   import { ModuleRegistry, ValidationModule, ClientSideRowModelModule, TextEditorModule, QuickFilterModule, ColumnAutoSizeModule, TextFilterModule, CellStyleModule } from "ag-grid-community"
   import { AgGridVue } from "ag-grid-vue3" // Vue Data Grid Component
-  import { type Swimmer, secondsToTime, strokeSort, timeToSeconds, type QualifyingRow, getCompetitionAge, REGIONS, COUNTIES, NATIONALITIES, STROKE_DISTANCE, AGES, getSwimmerScopeArea } from "lib"
-  import { addMonths, format, getYear, parseISO } from "date-fns"
+  import { type Swimmer, secondsToTime, strokeSort, timeToSeconds, type QualifyingRow, getCompetitionAge, REGIONS, COUNTIES, NATIONALITIES, STROKE_DISTANCE, AGES, getSwimmerScopeArea, type ScopeType, type CourseType, type QualifyingType, type GenderType, type StrokeType, type DistanceType } from "lib"
+  import { addMonths, getYear, parseISO } from "date-fns"
   import type { FetchError } from "ofetch"
   import { ArrowUturnLeftIcon, CheckIcon, ClipboardDocumentCheckIcon, ClipboardDocumentIcon, ClipboardDocumentListIcon, DocumentPlusIcon, PlusCircleIcon, TrashIcon } from "@heroicons/vue/24/outline"
 
@@ -63,9 +63,9 @@
 
   const filterYear = getYear( addMonths( new Date(), 1 ) )
 
-  const years = Array.from( { length: 6 }, ( _, i ) => filterYear - 3 + i ).map( year => ( { value: year } ) )
+  const yearOptions = Array.from( { length: 6 }, ( _, i ) => filterYear - 3 + i ).map( year => ( { value: year } ) )
 
-  const scopes = [
+  const scopeOptions = [
     {
       value: "county",
       label: "County",
@@ -74,23 +74,32 @@
       value: "regional",
       label: "Regional",
     },
-    /* {
-      value: "national",
-      label: "National",
-    }, */
   ]
 
-  const areasFromScope = ( scope: string ) => {
+  const areasFromScope = ( scope: ScopeType ) => {
     if ( scope === "county" )
       return Object.entries( COUNTIES ).map( ( [ k, v ] ) => ( { label: v, value: k } ) )
     if ( scope === "regional" )
       return Object.entries( REGIONS ).map( ( [ k, v ] ) => ( { label: v, value: k } ) )
-    if ( scope === "national" )
-      return Object.entries( NATIONALITIES ).map( ( [ k, v ] ) => ( { label: v, value: k } ) )
     return []
   }
 
-  const genders = [
+  const typeOptions = [
+    {
+      label: "General",
+      value: "general",
+    },
+    {
+      label: "Summer",
+      value: "summer",
+    },
+    {
+      label: "Winter",
+      value: "winter",
+    },
+  ]
+
+  const genderOptions = [
     {
       value: "male",
       label: "Open/Male",
@@ -101,9 +110,9 @@
     },
   ]
 
-  const ages = ref<Array<{ value: string }>>( user.value.admin ? AGES.map( age => ( { value: age } ) ) : [] )
+  const ageOptions = ref<Array<{ value: string }>>( user.value.admin ? AGES.map( age => ( { value: age } ) ) : [] )
 
-  const courses = [
+  const courseOptions = [
     {
       value: "lc",
       label: "Long",
@@ -115,15 +124,16 @@
   ]
 
   const selections = ref( {
-    year: years[0].value,
-    scope: scopes[0].value,
+    year: yearOptions[0].value,
+    scope: scopeOptions[0].value,
     area: "",
+    type: typeOptions[0].value,
     gender: "",
-    age: ages.value[0].value,
-    course: courses[0].value,
+    age: ageOptions.value[0].value,
+    course: courseOptions[0].value,
   } )
 
-  const areas = computed( () => areasFromScope( selections.value.scope ) )
+  const areas = computed( () => areasFromScope( selections.value.scope as ScopeType ) )
 
   const filterArea = computed( () => selections.value.area )
 
@@ -158,6 +168,8 @@
         return false
       if ( row.area !== filterArea.value )
         return false
+      if ( row.type !== selections.value.type )
+        return false
       if ( row.gender !== selections.value.gender )
         return false
       if ( row.age !== selections.value.age )
@@ -187,7 +199,7 @@
 
   watch( filteredQualifying, fq => {
     if ( fq.length > 0 ) {
-      selections.value.course = ( courses.find( course => course.value === fq[0].course ) ?? courses[0] ).value
+      selections.value.course = ( courseOptions.find( course => course.value === fq[0].course ) ?? courseOptions[0] ).value
     }
   }, { deep: true } )
 
@@ -212,9 +224,10 @@
     for ( const row of clipboard.value ) {
       added.value.push( { ...row, ...{
         year: selections.value.year,
-        scope: selections.value.scope,
+        scope: selections.value.scope as ScopeType,
         area: selections.value.area,
-        gender: selections.value.gender,
+        type: selections.value.type as QualifyingType,
+        gender: selections.value.gender as GenderType,
         age: selections.value.age,
       } } )
     }
@@ -222,7 +235,6 @@
   }
 
   async function generate( _e: Event ) {
-    const created = format( new Date(), "yyyy-MM-dd" )
     const addedData = []
     for ( const strokeDistance of Object.keys( STROKE_DISTANCE ) ) {
       const matches = strokeDistance.toLocaleLowerCase().match( /(?<stroke>\w+)__(?<distance>\d+m)$/ )
@@ -231,14 +243,14 @@
       }
       const { stroke = "", distance = "" } = { ...matches?.groups }
       addedData.push( {
-        created,
         year: selections.value.year,
-        course: selections.value.course,
-        stroke,
-        distance,
-        scope: selections.value.scope,
+        course: selections.value.course as CourseType,
+        stroke: stroke as StrokeType,
+        distance: distance as DistanceType,
+        scope: selections.value.scope as ScopeType,
         area: selections.value.area,
-        gender: selections.value.gender,
+        type: selections.value.type as QualifyingType,
+        gender: selections.value.gender as GenderType,
         age: selections.value.age,
         timeString: "0",
         time: 0
@@ -250,7 +262,6 @@
   }
 
   async function complete( _e: Event ) {
-    const created = format( new Date(), "yyyy-MM-dd" )
     const addedData = []
     for ( const strokeDistance of Object.keys( STROKE_DISTANCE ) ) {
       const matches = strokeDistance.toLocaleLowerCase().match( /(?<stroke>\w+)__(?<distance>\d+m)$/ )
@@ -260,14 +271,14 @@
       const { stroke = "", distance = "" } = { ...matches?.groups }
       if ( !filteredQualifying.value.find( row => row.stroke === stroke && row.distance === distance ) ) {
         addedData.push( {
-          created,
           year: selections.value.year,
-          course: selections.value.course,
-          stroke,
-          distance,
-          scope: selections.value.scope,
+          course: selections.value.course as CourseType,
+          stroke: stroke as StrokeType,
+          distance: distance as DistanceType,
+          scope: selections.value.scope as ScopeType,
           area: selections.value.area,
-          gender: selections.value.gender,
+          type: selections.value.type as QualifyingType,
+          gender: selections.value.gender as GenderType,
           age: selections.value.age,
           timeString: "0",
           time: 0
@@ -346,6 +357,11 @@
       filterValueGetter: ( params: ValueGetterParams ) => lookupArea( params.data.scope, params.data.area ),
     },
     {
+      field: "type",
+      filter: false,
+      valueFormatter: ( { value }: ValueFormatterParams ) => value ? value.charAt( 0 ).toUpperCase() + value.slice( 1 ) : "",
+    },
+    {
       field: "distance",
       filter: false,
       comparator: ( valueA: string, valueB: string, rowA: IRowNode, rowB: IRowNode ) => {
@@ -376,28 +392,6 @@
       field: "age",
       filter: false,
     },
-    /* {
-      editable: true,
-      headerName: "Time",
-      cellEditor: "agNumberCellEditor",
-      cellEditorParams: { min: 30, max: 1800 },
-      type: [ "numericColumn" ],
-      filter: false,
-      valueGetter: ( params: ValueGetterParams ) => {
-        return params.data.time
-      },
-      valueSetter: ( params: ValueSetterParams ): boolean => {
-        params.data.time = params.newValue
-        params.data.timeString = secondsToTime( params.newValue )
-        return true
-      },
-      getQuickFilterText: ( _params: GetQuickFilterTextParams ): string => {
-        return ""
-      },
-      onCellValueChanged: ( _event: NewValueParams ) => {
-        dirty.value = true
-      },
-    }, */
     {
       editable: () => !!user.value.admin,
       headerName: "Time (m:ss.SS)",
@@ -431,16 +425,17 @@
     const qualifyingAge = compAge < Number( AGES[0] ) ? String( AGES[0] ) : ( compAge > Number( AGES[AGES.length - 2] ) ? "Open" : String( compAge ) )
     if ( !user.value.admin ) {
       const ageIndex = AGES.findIndex( age => age === String( qualifyingAge ) )
-      ages.value = AGES.slice( Math.max( ageIndex - 1, 0 ), Math.min( ageIndex + 2, AGES.length ) ).map( age => ( { value: age } ) )
-      console.log( "AV", AGES, compAge, qualifyingAge, ageIndex, ages.value )
+      ageOptions.value = AGES.slice( Math.max( ageIndex - 1, 0 ), Math.min( ageIndex + 2, AGES.length ) ).map( age => ( { value: age } ) )
+      console.log( "AV", AGES, compAge, qualifyingAge, ageIndex, ageOptions.value )
     }
 
     selections.value = {
-      year: ( years.find( year => year.value === filterYear ) ?? years[0] ).value,
+      year: ( yearOptions.find( year => year.value === filterYear ) ?? yearOptions[0] ).value,
       scope: selections.value.scope,
       area: ( swimmerAreaSelection( swimmer, selections.value.scope ) ),
-      gender: ( genders.find( gender => gender.value === swimmer.gender ) ?? genders[0] ).value,
-      age: ( ages.value.find( age => age.value === qualifyingAge ) ?? ages.value[0] ).value,
+      type: selections.value.type,
+      gender: ( genderOptions.find( gender => gender.value === swimmer.gender ) ?? genderOptions[0] ).value,
+      age: ( ageOptions.value.find( age => age.value === qualifyingAge ) ?? ageOptions.value[0] ).value,
       course: selections.value.course,
     }
   }
@@ -605,7 +600,7 @@
       <div class="min-w-24">
         <UI-Listbox
           v-model="selections.year"
-          :options="years"
+          :options="yearOptions"
           label="Year"
           placeholder="Choose Year"
         />
@@ -613,7 +608,7 @@
       <div class="min-w-32">
         <UI-Listbox
           v-model="selections.scope"
-          :options="scopes"
+          :options="scopeOptions"
           label="Scope"
           placeholder="Choose Scope"
         />
@@ -631,8 +626,16 @@
       </div>
       <div class="min-w-28">
         <UI-Listbox
+          v-model="selections.type"
+          :options="typeOptions"
+          label="Type"
+          placeholder="Choose Type"
+        />
+      </div>
+      <div class="min-w-28">
+        <UI-Listbox
           v-model="selections.gender"
-          :options="genders"
+          :options="genderOptions"
           label="Gender"
           placeholder="Choose Gender"
         />
@@ -640,7 +643,7 @@
       <div class="min-w-28">
         <UI-Listbox
           v-model="selections.age"
-          :options="ages"
+          :options="ageOptions"
           label="Age"
           placeholder="Choose Age"
         />
@@ -651,7 +654,7 @@
       >
         <UI-Listbox
           v-model="selections.course"
-          :options="courses"
+          :options="courseOptions"
           label="Course"
           placeholder="Choose Course"
           :disabled="filteredQualifying.length>0"

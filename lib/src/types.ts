@@ -34,14 +34,18 @@ export interface ExtSwimmer extends Swimmer {
   squads: string
 }
 
+export type ScopeType = "regional" | "county"
+
 export type CourseType = "lc" | "sc"
 export type StrokeType = "freestyle" | "breaststroke" | "butterfly" | "backstroke" | "individual_medley"
 export type DistanceType = "50m" | "100m" | "150m" | "200m" | "400m" | "800m" | "1500m"
 
+export type GenderType = "male" | "female"
+
 export interface IndividualStats {
-  course: string
-  stroke: string
-  distance: string
+  course: CourseType
+  stroke: StrokeType
+  distance: DistanceType
   time: number
   converted_time: number
   wa_pts: number
@@ -90,10 +94,10 @@ export interface Ranking {
 
 export interface PerformanceRow extends RankingStats {
   created: string
-  course: string
-  stroke: string
-  distance: string
-  scope: string
+  course: CourseType
+  stroke: StrokeType
+  distance: DistanceType
+  scope: ScopeType
   area: string
 }
 
@@ -111,10 +115,10 @@ export interface ResultData {
 export type Results = Array<ResultData>
 
 export interface ResultsRow extends ResultData {
+  course: CourseType
+  stroke: StrokeType
+  distance: DistanceType
   created: string
-  course: string
-  stroke: string
-  distance: string
 }
 
 export interface Club {
@@ -179,27 +183,28 @@ export type PageData = Array<PageInfo>
 
 export interface QualifyingRow {
   year: number
-  course: string
-  stroke: string
-  distance: string
-  scope: string
+  course: CourseType
+  stroke: StrokeType
+  distance: DistanceType
+  scope: ScopeType
   area: string
-  gender: string
+  type: QualifyingType
+  gender: GenderType
   age: string
   timeString: string
   time: number
-  created: string
 }
+
+export type QualifyingType = "general" | "winter" | "summer"
 
 export interface QualifyingPeriodRow {
   qualifyingYear: number
-  qualifyingScope: string
+  qualifyingScope: ScopeType
   qualifyingArea: string
-  qualifyingType: string
+  qualifyingType: QualifyingType
   qualifyingStart: string
   qualifyingEnd?: string
   qualifyingNotes?: string
-  created: string
 }
 
 export interface Task {

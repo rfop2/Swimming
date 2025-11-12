@@ -130,8 +130,8 @@
           return false
         if ( q.scope === "regional" && q.area !== swimmer.value.region )
           return false
-        if ( q.scope === "national" && q.area !== swimmer.value.nationality )
-          return false
+        // if ( q.scope === "national" && q.area !== swimmer.value.nationality )
+        // return false
         return true
       } ).map( ( q ): ExtQualifyingRow => ( {
         ...q,

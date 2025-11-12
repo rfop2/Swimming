@@ -1,4 +1,4 @@
-import type { IndividualStats, Meet, MeetResults, PageInfo, Ranking, RankingRow, ResultData, Results, Swimmer } from "./types.js"
+import type { CourseType, DistanceType, IndividualStats, Meet, MeetResults, PageInfo, Ranking, RankingRow, ResultData, Results, StrokeType, Swimmer } from "./types.js"
 import { getSwimmerAgeGroup, sleep, timeToSeconds } from "./lib.js"
 import { CACHE_DIR } from "./config.js"
 import { differenceInDays, differenceInHours, format, parse } from "date-fns"
@@ -571,9 +571,9 @@ export const parseIndividual = ( _pageInfo: PageInfo, $: CheerioAPI ) => {
       const { distance = "", stroke = "" } = { ...matches?.groups }
 
       const courseRow: IndividualStats = {
-        course,
-        stroke: stroke.replace( /\s/g, "_" ).toLocaleLowerCase(),
-        distance: `${distance}m`,
+        course: course as CourseType,
+        stroke: stroke.replace( /\s/g, "_" ).toLocaleLowerCase() as StrokeType,
+        distance: `${distance}m` as DistanceType,
         time: timeToSeconds( course === "lc" ? row.lc_time : row.sc_time ),
         converted_time: timeToSeconds( course === "lc" ? row.converted_to_sc : row.converted_to_lc ),
         wa_pts: Number( course === "lc" ? row.lc_wa_pts : row.sc_wa_pts ),
