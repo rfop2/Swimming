@@ -450,6 +450,11 @@
     if ( swimmer.value ) {
       selections.value.area = swimmerAreaSelection( swimmer.value, newScope )
     }
+    if ( newScope === "county" ) {
+      selections.value.type = typeOptions[0].value
+    } else {
+      selections.value.type = typeOptions[1].value
+    }
   }, {
     immediate: true,
   } )
@@ -624,10 +629,13 @@
           placeholder="Choose Area"
         />
       </div>
-      <div class="min-w-28">
+      <div
+        v-show="selections.scope === 'regional'"
+        class="min-w-28"
+      >
         <UI-Listbox
           v-model="selections.type"
-          :options="typeOptions"
+          :options="selections.scope === 'county' ? typeOptions.slice( 0, 1 ) : typeOptions.slice( 1 )"
           label="Type"
           placeholder="Choose Type"
         />
