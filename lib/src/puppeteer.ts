@@ -87,7 +87,7 @@ export const getBrowserPage = async () => {
       ],
     } )
 
-    page.setRequestInterception( true )
+    await page.setRequestInterception( true )
     page.on( "request", ( req ) => {
       const url = req.url()
       const resource = req.resourceType()
