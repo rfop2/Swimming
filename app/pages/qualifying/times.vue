@@ -402,8 +402,13 @@
         return params.data.timeString
       },
       valueSetter: ( params: ValueSetterParams ): boolean => {
+        if ( params.newValue ) {
         params.data.time = timeToSeconds( params.newValue )
         params.data.timeString = secondsToTime( params.data.time )
+        } else {
+          params.data.time = 0
+          params.data.timeString = null
+        }
         return true
       },
       getQuickFilterText: ( _params: GetQuickFilterTextParams ) => {

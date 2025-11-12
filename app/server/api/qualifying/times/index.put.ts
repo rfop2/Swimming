@@ -40,7 +40,7 @@ DELETE FROM QualifyingTimes WHERE
   distance = :distance AND
   scope = :scope AND
   area = :area AND
-  type = :type AND
+  type = :type
 ;`
 
 export default defineEventHandler( async ( event ) => {
