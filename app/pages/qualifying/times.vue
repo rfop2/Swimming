@@ -261,7 +261,7 @@
     console.log( addedData )
   }
 
-  async function complete( _e: Event ) {
+  const complete = ( _e: Event ) => {
     const addedData = []
     for ( const strokeDistance of Object.keys( STROKE_DISTANCE ) ) {
       const matches = strokeDistance.toLocaleLowerCase().match( /(?<stroke>\w+)__(?<distance>\d+m)$/ )
@@ -289,7 +289,7 @@
     dirty.value = true
   }
 
-  async function reset( _e: Event ) {
+  const reset = async ( _e: Event ) => {
     added.value = []
     await refreshNuxtData( "qualifying" )
     deleted.value = []
@@ -299,7 +299,7 @@
   }
 
   const saveSuccess = ref( false )
-  async function save( _e: Event ) {
+  const save = async ( _e: Event ) => {
     try {
       await $fetch( "/api/qualifying/times", {
         method: "PUT",
