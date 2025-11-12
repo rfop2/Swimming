@@ -14,7 +14,7 @@ export default eventHandler( async ( event ) => {
       async ( conn, importData ) => {
         const insertRow = prepareStatement(
           conn,
-          `INSERT INTO Qualifying (
+          `INSERT INTO QualifyingTimes (
             created,
             year,
             course,

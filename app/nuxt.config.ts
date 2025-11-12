@@ -4,10 +4,17 @@ import { createRequire } from "module"
 import { visualizer } from "rollup-plugin-visualizer"
 
 // ESM-safe way to access Node builtins
-const require = createRequire( import.meta.url )
-const builtinModules = require( "module" ).builtinModules
+const require = createRequire(import.meta.url)
+const builtinModules = require("module").builtinModules
 
-export default defineNuxtConfig( {
+export default defineNuxtConfig({
+  nitro: {
+    externals: { inline: [ "pdf-parse", "pdfjs-dist" ] },
+    moduleSideEffects: [ "pdfjs-dist/legacy/build/pdf.worker.mjs" ],
+  },
+  build: {
+    transpile: [ "pdf-parse", "pdfjs-dist" ],
+  },
   devtools: { enabled: true },
 
   modules: [
@@ -46,11 +53,11 @@ export default defineNuxtConfig( {
       {
         name: "externalize-puppeteer",
         enforce: "pre",
-        resolveId( id ) {
+        resolveId(id) {
           if (
-            id.startsWith( "puppeteer" )
-            || id.startsWith( "@puppeteer/" )
-            || builtinModules.includes( id )
+            id.startsWith("puppeteer")
+            || id.startsWith("@puppeteer/")
+            || builtinModules.includes(id)
           ) {
             return { id, external: true }
           }
@@ -79,9 +86,9 @@ export default defineNuxtConfig( {
 
   typescript: {
     tsConfig: {
-      include: [ "types/**/*.d.ts" ]
+      include: ["types/**/*.d.ts"]
     }
   },
 
   compatibilityDate: "2024-11-21"
-} )
+})
