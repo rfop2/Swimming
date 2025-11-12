@@ -2,7 +2,7 @@
   import type { CellValueChangedEvent, NewValueParams, SizeColumnsToFitGridStrategy, ValueFormatterParams, ValueGetterParams, ValueSetterParams } from "ag-grid-community"
   import { ModuleRegistry, DateEditorModule, ValidationModule, ClientSideRowModelModule, ColumnAutoSizeModule, TextFilterModule, CustomEditorModule, CellStyleModule, TextEditorModule } from "ag-grid-community"
   import { AgGridVue } from "ag-grid-vue3" // Vue Data Grid Component
-  import { REGIONS, COUNTIES, NATIONALITIES, type QualifyingPeriodRow } from "lib"
+  import { REGIONS, COUNTIES, type QualifyingPeriodRow, type ScopeType } from "lib"
   import { addMonths, format, getYear } from "date-fns"
   import type { FetchError } from "ofetch"
   import { ArrowUturnLeftIcon, CheckIcon, ClipboardDocumentCheckIcon, ClipboardDocumentIcon, ClipboardDocumentListIcon, TrashIcon } from "@heroicons/vue/24/outline"
@@ -60,19 +60,13 @@
       value: "regional",
       label: "Regional",
     },
-    /* {
-      value: "national",
-      label: "National",
-    }, */
   ]
 
-  const areasFromScope = ( scope: string ) => {
+  const areasFromScope = ( scope: ScopeType ) => {
     if ( scope === "county" )
       return [ { label: "All Counties", value: "" } ].concat( Object.entries( COUNTIES ).map( ( [ k, v ] ) => ( { label: v, value: k } ) ).slice( 1 ) )
     if ( scope === "regional" )
       return [ { label: "All Regions", value: "" } ].concat( Object.entries( REGIONS ).map( ( [ k, v ] ) => ( { label: v, value: k } ) ).slice( 1 ) )
-    if ( scope === "national" )
-      return Object.entries( NATIONALITIES ).map( ( [ k, v ] ) => ( { label: v, value: k } ) )
     return []
   }
 
@@ -98,7 +92,7 @@
     type: [] as string[],
   } )
 
-  const areas = computed( () => areasFromScope( selections.value.scope ) )
+  const areas = computed( () => areasFromScope( selections.value.scope as ScopeType ) )
 
   const added = ref<Array<QualifyingPeriodRow>>( [] )
   const deleted = ref<Array<QualifyingPeriodRow>>( [] )
@@ -219,14 +213,12 @@
 
   useUnsavedWarning( () => dirty.value )
 
-  const lookupScope = ( scope: string ) => ( scope.charAt( 0 ).toUpperCase() + scope.slice( 1 ) )
-  const lookupArea = ( scope: string, area: string ) => {
+  const lookupScope = ( scope: ScopeType ) => ( scope.charAt( 0 ).toUpperCase() + scope.slice( 1 ) )
+  const lookupArea = ( scope: ScopeType, area: string ) => {
     if ( scope === "county" )
       return COUNTIES[area]
     if ( scope === "regional" )
       return REGIONS[area]
-    if ( scope === "national" )
-      return NATIONALITIES[area]
     return "<error>"
   }
 

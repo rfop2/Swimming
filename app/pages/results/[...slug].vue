@@ -130,8 +130,6 @@
           return false
         if ( q.scope === "regional" && q.area !== swimmer.value.region )
           return false
-        // if ( q.scope === "national" && q.area !== swimmer.value.nationality )
-        // return false
         return true
       } ).map( ( q ): ExtQualifyingRow => ( {
         ...q,
@@ -139,7 +137,6 @@
       } ) )
       countyQualifying.value = qualifyingTimes.value.find( q => q.scope === "county" )
       regionQualifying.value = qualifyingTimes.value.find( q => q.scope === "regional" )
-      // const nationQualifying = computed( () => qualifyingTimes.value.find( q => q.scope === "national" ) )
     }
   } )
 

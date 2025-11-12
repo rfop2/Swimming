@@ -3,7 +3,7 @@
   import type { CellValueChangedEvent, GetQuickFilterTextParams, IRowNode, NewValueParams, SizeColumnsToFitGridStrategy, ValueFormatterParams, ValueGetterParams, ValueSetterParams } from "ag-grid-community"
   import { ModuleRegistry, ValidationModule, ClientSideRowModelModule, TextEditorModule, QuickFilterModule, ColumnAutoSizeModule, TextFilterModule, CellStyleModule } from "ag-grid-community"
   import { AgGridVue } from "ag-grid-vue3" // Vue Data Grid Component
-  import { type Swimmer, secondsToTime, strokeSort, timeToSeconds, type QualifyingRow, getCompetitionAge, REGIONS, COUNTIES, NATIONALITIES, STROKE_DISTANCE, AGES, getSwimmerScopeArea, type ScopeType, type CourseType, type QualifyingType, type GenderType, type StrokeType, type DistanceType } from "lib"
+  import { type Swimmer, secondsToTime, strokeSort, timeToSeconds, type QualifyingRow, getCompetitionAge, REGIONS, COUNTIES, STROKE_DISTANCE, AGES, getSwimmerScopeArea, type ScopeType, type CourseType, type QualifyingType, type GenderType, type StrokeType, type DistanceType } from "lib"
   import { addMonths, getYear, parseISO } from "date-fns"
   import type { FetchError } from "ofetch"
   import { ArrowUturnLeftIcon, CheckIcon, ClipboardDocumentCheckIcon, ClipboardDocumentIcon, ClipboardDocumentListIcon, DocumentPlusIcon, PlusCircleIcon, TrashIcon } from "@heroicons/vue/24/outline"
@@ -328,14 +328,12 @@
 
   useUnsavedWarning( () => dirty.value )
 
-  const lookupScope = ( scope: string ) => ( scope.charAt( 0 ).toUpperCase() + scope.slice( 1 ) )
-  const lookupArea = ( scope: string, area: string ) => {
+  const lookupScope = ( scope: ScopeType ) => ( scope.charAt( 0 ).toUpperCase() + scope.slice( 1 ) )
+  const lookupArea = ( scope: ScopeType, area: string ) => {
     if ( scope === "county" )
       return COUNTIES[area]
     if ( scope === "regional" )
       return REGIONS[area]
-    if ( scope === "national" )
-      return NATIONALITIES[area]
     return "<error>"
   }
 
@@ -403,8 +401,8 @@
       },
       valueSetter: ( params: ValueSetterParams ): boolean => {
         if ( params.newValue ) {
-        params.data.time = timeToSeconds( params.newValue )
-        params.data.timeString = secondsToTime( params.data.time )
+          params.data.time = timeToSeconds( params.newValue )
+          params.data.timeString = secondsToTime( params.data.time )
         } else {
           params.data.time = 0
           params.data.timeString = null
@@ -420,7 +418,7 @@
     },
   ] )
 
-  const swimmerAreaSelection = ( swimmer: Swimmer, scope: string ) => {
+  const swimmerAreaSelection = ( swimmer: Swimmer, scope: ScopeType ) => {
     const swimmerArea = getSwimmerScopeArea( swimmer, scope )
     return ( areas.value.find( area => area.value === swimmerArea ) ?? areas.value[0] ).value
   }
@@ -437,7 +435,7 @@
     selections.value = {
       year: ( yearOptions.find( year => year.value === filterYear ) ?? yearOptions[0] ).value,
       scope: selections.value.scope,
-      area: ( swimmerAreaSelection( swimmer, selections.value.scope ) ),
+      area: ( swimmerAreaSelection( swimmer, selections.value.scope as ScopeType ) ),
       type: selections.value.type,
       gender: ( genderOptions.find( gender => gender.value === swimmer.gender ) ?? genderOptions[0] ).value,
       age: ( ageOptions.value.find( age => age.value === qualifyingAge ) ?? ageOptions.value[0] ).value,
@@ -453,7 +451,7 @@
 
   watch( () => selections.value.scope, newScope => {
     if ( swimmer.value ) {
-      selections.value.area = swimmerAreaSelection( swimmer.value, newScope )
+      selections.value.area = swimmerAreaSelection( swimmer.value, newScope as ScopeType )
     }
     if ( newScope === "county" ) {
       selections.value.type = typeOptions[0].value

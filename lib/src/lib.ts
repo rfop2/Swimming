@@ -159,12 +159,10 @@ export const getSwimmerAgeGroup = ( swimmer: Swimmer ): string => {
   return swimmerAge <= 18 ? String( swimmerAge ) : "OP"
 }
 
-export const getSwimmerScopeArea = ( swimmer: Swimmer, scope: string ) => {
+export const getSwimmerScopeArea = ( swimmer: Swimmer, scope: ScopeType ) => {
   if ( scope === "county" )
     return swimmer.county
   if ( scope === "regional" )
     return swimmer.region
-  if ( scope === "national" )
-    return swimmer.nationality
   throw new Error( `Unable to find swimmer area for scope '${scope}'` )
 }

@@ -136,8 +136,6 @@
           return false
         if ( q.scope === "regional" && q.area !== swimmer.region )
           return false
-        if ( q.scope === "national" && q.area !== swimmer.nationality )
-          return false
         return true
       } ).map( ( q ) => ( {
         ...q,
@@ -147,15 +145,13 @@
         return ( Number( row.time ) <= q.convertedTime )
       } )
       const qualified =
-        qualifyingTimes.find( q => q.scope === "national" ) ??
         qualifyingTimes.find( q => q.scope === "regional" ) ??
         qualifyingTimes.find( q => q.scope === "county" )
-      // console.log( "T", qualifyingTimes.find( q => q.scope === "national" ), qualifyingTimes.find( q => q.scope === "regional" ), qualifyingTimes.find( q => q.scope === "county" ) )
+      // console.log( "T", qualifyingTimes.find( q => q.scope === "regional" ), qualifyingTimes.find( q => q.scope === "county" ) )
       const altQualifyingTimes = baseQualifyingTimes.filter( q => {
         return ( Number( row.time ) <= q.convertedTime )
       } )
       const altQualified =
-        altQualifyingTimes.find( q => q.scope === "national" ) ??
         altQualifyingTimes.find( q => q.scope === "regional" ) ??
         altQualifyingTimes.find( q => q.scope === "county" )
       // console.log( unref( swimmer ), unref( row ), "B", unref( baseQualifyingTimes ), "Q", unref( qualifyingTimes ), qualified, "A", unref( altQualifyingTimes ), altQualified )
@@ -189,7 +185,7 @@
   >
     <template #description>
       Best times for strokes at each distance. Converted times shown in brackets if better than course time.
-      Times in colour are inside consideration times for <span class="qualified-county">county</span>, <span class="qualified-regional">region</span><!--, <span class="qualified-national">country</span>-->.
+      Times in colour are inside consideration times for <span class="qualified-county">county</span>, <span class="qualified-regional">region</span>.
     </template>
     <template #controls>
       <div class="min-w-48">
@@ -365,10 +361,6 @@ span {
 
   &.qualified-regional {
     color: #f97416;
-  }
-
-  &.qualified-national {
-    color: #ef4444;
   }
 }
 </style>

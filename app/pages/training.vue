@@ -236,9 +236,5 @@ span {
   &.qualified-regional {
     color: #f97416;
   }
-
-  &.qualified-national {
-    color: #ef4444;
-  }
 }
 </style>

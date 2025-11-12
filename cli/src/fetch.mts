@@ -394,22 +394,6 @@ const updateRankings = async ( swimmer: Swimmer, individualData: Array<Individua
         distance: event.distance,
       }
       const pages: Array<PageInfo> = [
-        /* {
-          label: `${event.distance}_${event.stroke}_${swimmer.gender}_${event.course}_${ageGroup.toLocaleLowerCase()}_national_${swimmer.nationality.toLocaleLowerCase()}`,
-          url: createUrl( rankBaseUrl, {
-            ...{ Stroke: stroke_distance, Pool: course },
-            ...globalRankParams( swimmer ),
-            ...nationalRankParams,
-          } ),
-          type: "ranking",
-          data: {
-            ...commonData,
-            ... {
-              scope: "national",
-              area: swimmer.nationality,
-            }
-          }
-        }, */
         {
           label: `${event.distance}_${event.stroke}_${swimmer.gender}_${event.course}_${ageGroup.toLocaleLowerCase()}_regional_${swimmer.region.toLocaleLowerCase()}`,
           url: createUrl( rankBaseUrl, {
