@@ -21,15 +21,16 @@
   const { swimmer } = useSwimmer()
 
   type PerformanceApiResponse = InternalApi["/api/relative/:id"]["get"]
-  interface AreaDetail extends Partial<PerformanceApiResponse[number]> {
-    url: URL
+  interface TypeDetail {
     qualifyTime?: string
     qualified?: boolean
-    summer?: boolean
-    winter?: boolean
+  }
+  interface AreaDetail extends Partial<PerformanceApiResponse[number]> {
+    url?: URL
+    types: Partial<Record<QualifyingType, TypeDetail>>
   }
 
-  type Qualifying = Record<ScopeType, Partial<AreaDetail>>
+  type Qualifying = Record<ScopeType, AreaDetail>
 
   const performanceRecords = ref<PerformanceApiResponse>( [] )
 
@@ -82,17 +83,14 @@
       }
 
       const defaultAge = getQualifyingAge( today.year )
-      const qualifyingPeriods: Record<ScopeType, Record<QualifyingType, { age: string, year: number } | undefined>> = {
-        regional: {
-          general: { age: defaultAge, year: today.year },
-          winter: { age: defaultAge, year: today.year },
-          summer: { age: defaultAge, year: today.year },
-        },
+      const qualifyingPeriods: Record<ScopeType, Partial<Record<QualifyingType, { age: string, year: number } | undefined>>> = {
         county: {
           general: { age: defaultAge, year: today.year },
-          winter: { age: defaultAge, year: today.year },
-          summer: { age: defaultAge, year: today.year },
-        }
+        },
+        regional: {
+          // winter: { age: defaultAge, year: today.year },
+          // summer: { age: defaultAge, year: today.year },
+        },
       }
       if ( qualifyingDates.value ) {
         qualifyingDates.value = qualifyingDates.value.filter( qp =>
@@ -100,14 +98,19 @@
           ( ( qp.qualifyingScope === "regional" && qp.qualifyingArea === swimmer.value?.region ) || ( qp.qualifyingScope === "county" && qp.qualifyingArea === swimmer.value?.county ) )
         )
         qualifyingDates.value.sort( ( a, b ) => a.qualifyingStart.localeCompare( b.qualifyingStart ) )
+        qualifyingDates.value = qualifyingDates.value.filter( qp => {
+          if ( qp.qualifyingEnd && Temporal.PlainDate.compare( today, Temporal.PlainDate.from( qp.qualifyingEnd ) ) > 0 )
+            return false
+          return ( Temporal.PlainDate.compare( today, Temporal.PlainDate.from( qp.qualifyingStart ) ) >= 0 )
+        } )
         console.log( "qd", qualifyingDates.value )
         for ( const qp of qualifyingDates.value ) {
-          if ( qp.qualifyingEnd && Temporal.PlainDate.compare( today, Temporal.PlainDate.from( qp.qualifyingEnd ) ) > 0 ) {
-            qualifyingPeriods[qp.qualifyingScope][qp.qualifyingType] = undefined
-          } else if ( Temporal.PlainDate.compare( today, Temporal.PlainDate.from( qp.qualifyingStart ) ) >= 0 ) {
-            const qa = getQualifyingAge( qp.qualifyingYear )
-            qualifyingPeriods[qp.qualifyingScope][qp.qualifyingType] = { age: qa, year: qp.qualifyingYear }
-          }
+          // if ( qp.qualifyingEnd && Temporal.PlainDate.compare( today, Temporal.PlainDate.from( qp.qualifyingEnd ) ) > 0 ) {
+          // qualifyingPeriods[qp.qualifyingScope][qp.qualifyingType] = undefined
+          // } else if ( Temporal.PlainDate.compare( today, Temporal.PlainDate.from( qp.qualifyingStart ) ) >= 0 ) {
+          const qa = getQualifyingAge( qp.qualifyingYear )
+          qualifyingPeriods[qp.qualifyingScope][qp.qualifyingType] = { age: qa, year: qp.qualifyingYear }
+          // }
         }
         console.log( "qp", qualifyingPeriods )
       }
@@ -132,7 +135,7 @@
     key: string
     age: number
     distanceMetres: number
-    qualifiedFor: number
+    qualified: Record<ScopeType, Set<QualifyingType>>
     qualifying: Qualifying
   }
 
@@ -184,7 +187,9 @@
             time_date,
             best,
             best_date,
-            difference
+            difference,
+            types: {
+            },
           } ]
         } ) )
       console.log( "PerfMap", performanceRecordsMap )
@@ -198,64 +203,52 @@
           ...record,
           age,
           distanceMetres: Number( distance.replace( /m$/, "" ) ),
-          qualifiedFor: 0,
+          qualified: {
+            county: new Set(),
+            regional: new Set(),
+          },
           qualifying: {
-            county: {},
-            regional: {},
+            county: {
+              types: {
+                general: {},
+              },
+            },
+            regional: {
+              types: {
+                summer: {},
+                winter: {},
+              },
+            },
           }
         }
         for ( const scope of Object.keys( qualifyingRecord.qualifying ) ) {
           const performanceRecord = performanceRecordsMap.get( `${key}_${scope}` )
           if ( performanceRecord ) {
-            qualifyingRecord.qualifying[scope as keyof Qualifying] = performanceRecord
-            if ( !qualifyingRecord.qtime || ( performanceRecord.time && performanceRecord.time < qualifyingRecord.qtime ) ) {
+            qualifyingRecord.qualifying[scope as ScopeType] = { ...performanceRecord, ...qualifyingRecord.qualifying[scope as ScopeType] }
+            if ( !qualifyingRecord.qtime || ( performanceRecord.time && performanceRecord.time <= qualifyingRecord.qtime ) ) {
               qualifyingRecord.qtime = performanceRecord.time
               qualifyingRecord.qdate = performanceRecord.time_date
             }
           }
-          const qualifyingEntry = ( qualifyingTimes.value || [] ).find( entry => (
-            entry.stroke === stroke && entry.distance === distance && entry.scope === scope && entry.area === getSwimmerScopeArea( swimmer.value as Swimmer, scope ) && entry.type === "general"
-          ) )
-          if ( qualifyingEntry ) {
-            const qualifyRaw = qualifyingEntry ? convertTime( qualifyingEntry.course, course, stroke, distance, qualifyingEntry.time ) : undefined
-            const qualifyTime = qualifyRaw ? secondsToTime( qualifyRaw ) : undefined
-            const qualified = !!performanceRecord?.time && ( performanceRecord.time <= ( qualifyRaw ?? 0 ) )
-            qualifyingRecord.qualifying[scope as keyof Qualifying].qualifyTime = qualifyTime
-            qualifyingRecord.qualifying[scope as keyof Qualifying].qualified = qualified
-            switch ( scope ) {
-              case "county" : {
-                qualifyingRecord.qualifiedFor = qualifyingRecord.qualifiedFor < 1 && qualified ? 1 : qualifyingRecord.qualifiedFor
-                break
+          for ( const type of Object.keys( qualifyingRecord.qualifying[scope as ScopeType].types ) ) {
+            const qr = qualifyingRecord.qualifying[scope as ScopeType].types[type as QualifyingType]
+            const qualifyingEntry = ( qualifyingTimes.value || [] ).find( entry => (
+              entry.stroke === stroke && entry.distance === distance && entry.scope === scope && entry.area === getSwimmerScopeArea( swimmer.value as Swimmer, scope ) && entry.type === type
+            ) )
+            if ( qualifyingEntry ) {
+              console.log( "qe", qualifyingEntry )
+              const qualifyRaw = qualifyingEntry ? convertTime( qualifyingEntry.course, course, stroke, distance, qualifyingEntry.time ) : undefined
+              const qualified = !!performanceRecord?.time && ( performanceRecord.time <= ( qualifyRaw ?? 0 ) )
+              console.log( qualified, qualifyRaw, performanceRecord?.time )
+              if ( qr ) {
+                const qualifyTime = qualifyRaw ? secondsToTime( qualifyRaw ) : undefined
+                qr.qualifyTime = qualifyTime
+                qr.qualified = qualified
               }
-              case "regional" : {
-                qualifyingRecord.qualifiedFor = qualifyingRecord.qualifiedFor < 2 && qualified ? 2 : qualifyingRecord.qualifiedFor
-                break
-              }
-              default : {
-                qualifyingRecord.qualifiedFor = qualifyingRecord.qualifiedFor < 3 && qualified ? 3 : qualifyingRecord.qualifiedFor
-                break
+              if ( qualified ) {
+                qualifyingRecord.qualified[scope as ScopeType].add( type as QualifyingType )
               }
             }
-          }
-          const seasonQualifyingEntries = new Map( ( qualifyingTimes.value || [] ).filter( entry => (
-            entry.stroke === stroke && entry.distance === distance && entry.scope === scope && entry.area === getSwimmerScopeArea( swimmer.value as Swimmer, scope ) && entry.type !== "general"
-          ) ).map( entry => [ entry.type, entry ] ) )
-          console.log( "sQE", seasonQualifyingEntries )
-          if ( seasonQualifyingEntries.has( "summer" ) ) {
-            const qualifyingEntry = seasonQualifyingEntries.get( "summer" )
-            const qualifyRaw = qualifyingEntry ? convertTime( qualifyingEntry.course, course, stroke, distance, qualifyingEntry.time ) : undefined
-            // const qualifyTime = qualifyRaw ? secondsToTime( qualifyRaw ) : undefined
-            const qualified = !!performanceRecord?.time && ( performanceRecord.time <= ( qualifyRaw ?? 0 ) )
-            console.log( "Summer", qualified, qualifyingEntry )
-            qualifyingRecord.qualifying.regional.summer = qualified
-          }
-          if ( seasonQualifyingEntries.has( "winter" ) ) {
-            const qualifyingEntry = seasonQualifyingEntries.get( "winter" )
-            const qualifyRaw = qualifyingEntry ? convertTime( qualifyingEntry.course, course, stroke, distance, qualifyingEntry.time ) : undefined
-            // const qualifyTime = qualifyRaw ? secondsToTime( qualifyRaw ) : undefined
-            const qualified = !!performanceRecord?.time && ( performanceRecord.time <= ( qualifyRaw ?? 0 ) )
-            console.log( "Winter", qualified, qualifyingEntry )
-            qualifyingRecord.qualifying.regional.winter = qualified
           }
         }
         if ( qualifyingRecord.qdate ) {
@@ -297,12 +290,17 @@
       county_best: record.qualifying.county.best,
       county_time: record.qualifying.county.time,
       county_diff: record.qualifying.county.difference,
-      county_qualify: record.qualifying.county.qualifyTime,
-      regional_rank: record.qualifying.regional.rank,
-      regional_best: record.qualifying.regional.best,
-      regional_time: record.qualifying.regional.time,
-      regional_diff: record.qualifying.regional.difference,
-      regional_qualify: record.qualifying.regional.qualifyTime,
+      county_qualify: record.qualifying.county.types.general?.qualifyTime,
+      summer_rank: record.qualifying.regional.rank,
+      summer_best: record.qualifying.regional.best,
+      summer_time: record.qualifying.regional.time,
+      summer_diff: record.qualifying.regional.difference,
+      summer_qualify: record.qualifying.regional.types.summer?.qualifyTime,
+      winter_rank: record.qualifying.regional.rank,
+      winter_best: record.qualifying.regional.best,
+      winter_time: record.qualifying.regional.time,
+      winter_diff: record.qualifying.regional.difference,
+      winter_qualify: record.qualifying.regional.types.winter?.qualifyTime,
     }
   } ) ) )
 
@@ -342,7 +340,7 @@
       />
     </template>
     <template #key>
-      Key &ndash; Best times recorded in current qualifying periods, reached qualifying standard for <span class="px-2 mr-1 qualifiedArea1" /> county, <span class="px-2 mr-1 qualifiedArea2" /> region<!--, <span class="px-2 mr-1 qualifiedArea3" /> country-->.
+      Key &ndash; Best times recorded in current qualifying periods, reached qualifying standard for <span class="px-2 mr-1 qualified-county" /> county, <span class="px-2 mr-1 qualified-summer" /> summer regionals, <span class="px-2 mr-1 qualified-winter" /> winter regionals.
       Event ranking is in the <span class="px-2 mr-1 rank-10" /> top 10, <span class="px-2 mr-1 rank-20" /> top 20, <span class="px-2 mr-1 rank-50" /> top 50. Times in <span class="time-pb">purple</span> are personal bests.
     </template>
     <div>
@@ -356,28 +354,28 @@
               <th
                 scope="col"
                 rowSpan="2"
-                class="whitespace-nowrap align-bottom pl-2 pr-1 py-3.5 text-right text-sm font-semibold text-gray-900 sm:pl-0"
+                class="whitespace-nowrap align-bottom pl-2 pr-1 py-1.5 text-right text-sm font-semibold text-gray-900 sm:pl-0"
               >
                 Dist.
               </th>
               <th
                 scope="col"
                 rowSpan="2"
-                class="whitespace-nowrap align-bottom px-1 py-3.5 text-left text-sm font-semibold text-gray-900"
+                class="whitespace-nowrap align-bottom px-1 py-1.5 text-left text-sm font-semibold text-gray-900"
               >
                 Stroke
               </th>
               <th
                 scope="col"
                 rowSpan="2"
-                class="whitespace-nowrap align-bottom px-1 py-3.5 text-left text-sm font-semibold text-gray-900"
+                class="whitespace-nowrap align-bottom px-1 py-1.5 text-left text-sm font-semibold text-gray-900"
               >
                 Course
               </th>
               <th
                 scope="col"
                 rowSpan="2"
-                class="whitespace-nowrap align-bottom px-1 py-4 text-sm font-semibold text-gray-900"
+                class="whitespace-nowrap align-bottom px-1 py-1.5 text-sm font-semibold text-gray-900"
               >
                 <div
                   class="flex justify-center"
@@ -388,14 +386,14 @@
               <th
                 scope="col"
                 rowSpan="2"
-                class="whitespace-nowrap align-bottom px-1 py-3.5 text-right text-sm font-semibold text-gray-900"
+                class="whitespace-nowrap align-bottom px-1 py-1.5 text-right text-sm font-semibold text-gray-900"
               >
                 Time
               </th>
               <th
                 scope="col"
                 rowSpan="2"
-                class="sortable whitespace-nowrap align-bottom px-1 py-3.5 text-right text-sm font-semibold text-gray-900"
+                class="sortable whitespace-nowrap align-bottom px-1 py-1.5 text-right text-sm font-semibold text-gray-900"
                 @click="updateSort('date')"
               >
                 <span>Date</span><i :class="getSortIcon('date')" />
@@ -403,14 +401,14 @@
               <th
                 scope="col"
                 colSpan="4"
-                class="!border-l-2 !border-gray-400 px-1 py-3.5 text-center text-sm font-semibold text-gray-900"
+                class="!border-l-2 !border-gray-400 px-1 py-1.5 text-center text-sm font-semibold text-gray-900"
               >
                 County ({{ COUNTIES[swimmer.county] }})
               </th>
               <th
                 scope="col"
                 colSpan="4"
-                class="!border-l-2 !border-gray-400 px-1 py-3.5 text-center text-sm font-semibold text-gray-900"
+                class="!border-l-2 !border-gray-400 px-1 py-1.5 text-center text-sm font-semibold text-gray-900"
               >
                 Regional ({{ REGIONS[swimmer.region] }})
               </th>
@@ -418,51 +416,59 @@
             <tr class="divide-x divide-gray-200">
               <th
                 scope="col"
-                class="whitespace-nowrap !border-l-2 !border-gray-400 px-1 py-3.5 text-right text-sm font-semibold text-gray-900"
+                class="whitespace-nowrap !border-l-2 !border-gray-400 px-1 py-1.5 align-bottom text-right text-sm font-semibold text-gray-900"
               >
                 Rank
               </th>
               <th
                 scope="col"
-                class="whitespace-nowrap px-1 py-3.5 text-right text-sm font-semibold text-gray-900"
+                class="whitespace-nowrap px-1 py-1.5 align-bottom text-right text-sm font-semibold text-gray-900"
               >
                 Lead
               </th>
               <th
                 scope="col"
-                class="whitespace-nowrap px-1 py-3.5 text-right text-sm font-semibold text-gray-900"
+                class="whitespace-nowrap px-1 py-1.5 align-bottom text-right text-sm font-semibold text-gray-900"
               >
                 Diff
               </th>
               <th
                 scope="col"
-                class="whitespace-nowrap px-1 py-3.5 text-right text-sm font-semibold text-gray-900"
+                class="whitespace-nowrap px-1 py-1.5 align-bottom text-right text-sm font-semibold text-gray-900"
               >
                 Qual.
               </th>
               <th
                 scope="col"
-                class="whitespace-nowrap !border-l-2 !border-gray-400 px-1 py-3.5 text-right text-sm font-semibold text-gray-900"
+                class="whitespace-nowrap !border-l-2 !border-gray-400 px-1 py-1.5 align-bottom text-right text-sm font-semibold text-gray-900"
               >
                 Rank
               </th>
               <th
                 scope="col"
-                class="whitespace-nowrap px-1 py-3.5 text-right text-sm font-semibold text-gray-900"
+                class="whitespace-nowrap px-1 py-1.5 align-bottom text-right text-sm font-semibold text-gray-900"
               >
                 Lead
               </th>
               <th
                 scope="col"
-                class="whitespace-nowrap px-1 py-3.5 text-right text-sm font-semibold text-gray-900"
+                class="whitespace-nowrap px-1 py-1.5 align-bottom text-right text-sm font-semibold text-gray-900"
               >
                 Diff
               </th>
               <th
                 scope="col"
-                class="whitespace-nowrap px-1 py-3.5 text-right text-sm font-semibold text-gray-900"
+                class="whitespace-nowrap px-1 py-1.5 align-bottom text-right text-sm font-semibold text-gray-900"
               >
-                Qual.
+                Qual.<br>
+                Summer
+              </th>
+              <th
+                scope="col"
+                class="whitespace-nowrap px-1 py-1.5 align-bottom text-right text-sm font-semibold text-gray-900"
+              >
+                Qual.<br>
+                Winter
               </th>
             </tr>
           </thead>
@@ -490,15 +496,9 @@
               </td>
               <td
                 class="whitespace-nowrap px-2 py-2 text-right text-sm text-gray-900"
-                :class="classNames( `qualifiedArea${row.qualifiedFor}`, { 'time-pb': !row.qtime || row.time === row.qtime } )"
+                :class="classNames( `qualified-${Object.keys(row.qualified)[0]}`, { 'time-pb': !row.qtime || row.time === row.qtime } )"
               >
                 {{ secondsToTime( row.qtime ?? row.time ) }}
-                <sup v-if="row.qualifying.regional.winter">
-                  w
-                </sup>
-                <sup v-if="row.qualifying.regional.summer">
-                  s
-                </sup>
               </td>
               <td :class="`whitespace-nowrap px-2 py-2 text-right text-sm text-gray-900 opacity-30 age-${row.age}`">
                 {{ format( parseISO( row.qdate ?? row.date ), "yyyy-MM-dd" ) }}
@@ -525,8 +525,11 @@
               <td class="whitespace-nowrap px-2 py-2 text-right text-sm text-gray-500">
                 {{ row.qualifying.county.difference ? secondsToTime( row.qualifying.county.difference ) : '' }}
               </td>
-              <td class="whitespace-nowrap px-2 py-2 text-right text-sm text-gray-500">
-                {{ row.qualifying.county.qualifyTime }}
+              <td
+                class="whitespace-nowrap px-2 py-2 text-right text-sm text-gray-500"
+                :class="{'qualified': row.qualified.county.has('general')}"
+              >
+                {{ row.qualifying.county.types.general?.qualifyTime }}
               </td>
               <td
                 class="whitespace-nowrap !border-l-2 !border-gray-400 px-2 py-2 text-right text-sm text-gray-900"
@@ -550,8 +553,17 @@
               <td class="whitespace-nowrap px-2 py-2 text-right text-sm text-gray-500">
                 {{ row.qualifying.regional.difference ? secondsToTime( row.qualifying.regional.difference ) : '' }}
               </td>
-              <td class="whitespace-nowrap px-2 py-2 text-right text-sm text-gray-500">
-                {{ row.qualifying.regional.qualifyTime }}
+              <td
+                class="whitespace-nowrap px-2 py-2 text-right text-sm text-gray-500"
+                :class="{'qualified': row.qualified.regional.has('summer')}"
+              >
+                {{ row.qualifying.regional.types.summer?.qualifyTime }}
+              </td>
+              <td
+                class="whitespace-nowrap px-2 py-2 text-right text-sm text-gray-500"
+                :class="{'qualified': row.qualified.regional.has('winter')}"
+              >
+                {{ row.qualifying.regional.types.winter?.qualifyTime }}
               </td>
             </tr>
           </tbody>
@@ -570,15 +582,19 @@
   margin-left: 0.25rem;
 }
 
-.qualifiedArea1 {
+.qualified {
   background-color: #22c55e30;
 }
 
-.qualifiedArea2 {
+.qualified-county {
+  background-color: #22c55e30;
+}
+
+.qualified-summer {
   background-color: #f9741642;
 }
 
-.qualifiedArea3 {
+.qualified-winter {
   background-color: #ef444459;
 }
 
