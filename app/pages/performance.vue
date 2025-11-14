@@ -1,10 +1,9 @@
 <script setup lang="ts">
   import type { InternalApi } from "nitropack"
   import { LinkIcon, ChartBarIcon } from "@heroicons/vue/24/outline"
-  import { COUNTIES, type IndividualStats, REGIONS, STROKE_DISTANCE, type Swimmer, convertTime, countyRankParams, createUrl, getSwimmerAge, getSwimmerScopeArea, globalRankParams, rankBaseUrl, regionalRankParams, secondsToTime, strokeSort, type ScopeType, type QualifyingType, type CourseType, type StrokeType, type DistanceType } from "lib"
+  import { COUNTIES, type IndividualStats, REGIONS, type Swimmer, convertTime, getSwimmerAge, getSwimmerScopeArea, secondsToTime, strokeSort, type ScopeType, type QualifyingType, type QualifyingPeriodRow, generateRankingUrl } from "lib"
   import { differenceInCalendarMonths, getYear, format, parseISO } from "date-fns"
   import { FetchError } from "ofetch"
-  import classNames from "classnames"
 
   definePageMeta( {
     layout: "secure",
@@ -43,20 +42,34 @@
     "/api/qualifying/times",
   )
 
-  const { data: qualifyingDates } = await useFetch(
+  const { data: qualifyingPeriods } = await useFetch(
     "/api/qualifying/dates",
   )
 
   const today = Temporal.Now.plainDateISO()
 
+  const getQualifyingAge = ( year: number ) => {
+    if ( !swimmer.value )
+      return ""
+    const age = getSwimmerAge( swimmer.value as Swimmer )
+    const yearAge = age + ( year - today.year )
+    return yearAge > 18 ? "Open" : String( yearAge )
+  }
+
+  const defaultAge = getQualifyingAge( today.year )
+
+  const activeQualifyingPeriods: Ref<Record<ScopeType, Partial<Record<QualifyingType, { age: string, year: number, period?: QualifyingPeriodRow } | undefined>>>> = ref( {
+    county: {
+      general: { age: defaultAge, year: today.year },
+    },
+    regional: {
+      // winter: { age: defaultAge, year: today.year },
+      // summer: { age: defaultAge, year: today.year },
+    },
+  } )
+
   watchEffect( async () => {
     if ( swimmer.value ) {
-      const getQualifyingAge = ( year: number ) => {
-        const age = getSwimmerAge( swimmer.value as Swimmer )
-        const yearAge = age + ( year - today.year )
-        return yearAge > 18 ? "Open" : String( yearAge )
-      }
-
       try {
         performanceRecords.value = await $fetch<PerformanceApiResponse>( `/api/relative/${swimmer.value.id}` )
       } catch ( error ) {
@@ -82,8 +95,7 @@
         }
       }
 
-      const defaultAge = getQualifyingAge( today.year )
-      const qualifyingPeriods: Record<ScopeType, Partial<Record<QualifyingType, { age: string, year: number } | undefined>>> = {
+      activeQualifyingPeriods.value = {
         county: {
           general: { age: defaultAge, year: today.year },
         },
@@ -92,35 +104,39 @@
           // summer: { age: defaultAge, year: today.year },
         },
       }
-      if ( qualifyingDates.value ) {
-        qualifyingDates.value = qualifyingDates.value.filter( qp =>
+      if ( qualifyingPeriods.value ) {
+        // Limit qualifying periods to swimmer's areas
+        qualifyingPeriods.value = qualifyingPeriods.value.filter( qp =>
           !!qp.qualifyingStart &&
           ( ( qp.qualifyingScope === "regional" && qp.qualifyingArea === swimmer.value?.region ) || ( qp.qualifyingScope === "county" && qp.qualifyingArea === swimmer.value?.county ) )
         )
-        qualifyingDates.value.sort( ( a, b ) => a.qualifyingStart.localeCompare( b.qualifyingStart ) )
-        qualifyingDates.value = qualifyingDates.value.filter( qp => {
+        // Sort by start date
+        qualifyingPeriods.value.sort( ( a, b ) => a.qualifyingStart.localeCompare( b.qualifyingStart ) )
+        // Remove ended or not started periods
+        qualifyingPeriods.value = qualifyingPeriods.value.filter( qp => {
+          // Remove periods that have already ended
           if ( qp.qualifyingEnd && Temporal.PlainDate.compare( today, Temporal.PlainDate.from( qp.qualifyingEnd ) ) > 0 )
             return false
           return ( Temporal.PlainDate.compare( today, Temporal.PlainDate.from( qp.qualifyingStart ) ) >= 0 )
         } )
-        console.log( "qd", qualifyingDates.value )
-        for ( const qp of qualifyingDates.value ) {
-          // if ( qp.qualifyingEnd && Temporal.PlainDate.compare( today, Temporal.PlainDate.from( qp.qualifyingEnd ) ) > 0 ) {
-          // qualifyingPeriods[qp.qualifyingScope][qp.qualifyingType] = undefined
-          // } else if ( Temporal.PlainDate.compare( today, Temporal.PlainDate.from( qp.qualifyingStart ) ) >= 0 ) {
-          const qa = getQualifyingAge( qp.qualifyingYear )
-          qualifyingPeriods[qp.qualifyingScope][qp.qualifyingType] = { age: qa, year: qp.qualifyingYear }
-          // }
+        console.log( "qp", qualifyingPeriods.value )
+        for ( const qp of qualifyingPeriods.value ) {
+          activeQualifyingPeriods.value[qp.qualifyingScope][qp.qualifyingType] = {
+            age: getQualifyingAge( qp.qualifyingYear ),
+            year: qp.qualifyingYear,
+            period: qp
+          }
         }
-        console.log( "qp", qualifyingPeriods )
+        console.log( "aqp", activeQualifyingPeriods )
       }
 
       if ( qualifyingTimes.value ) {
+        // Remove any qualifying times that don't apply to this swimmer
         qualifyingTimes.value = qualifyingTimes.value.filter( qt => {
-          const qp = qualifyingPeriods[qt.scope][qt.type]
-          return !!qp &&
-            ( qt.year === qp.year ) &&
-            ( qt.age === qp.age ) &&
+          const aqp = activeQualifyingPeriods.value[qt.scope][qt.type]
+          return !!aqp &&
+            ( qt.year === aqp.year ) &&
+            ( qt.age === aqp.age ) &&
             ( qt.gender === swimmer.value?.gender ) &&
             ( ( qt.scope === "regional" && qt.area === swimmer.value?.region ) || ( qt.scope === "county" && qt.area === swimmer.value?.county ) )
         } )
@@ -137,28 +153,6 @@
     distanceMetres: number
     qualified: Record<ScopeType, Set<QualifyingType>>
     qualifying: Qualifying
-  }
-
-  const generateRankingUrl = ( swimmer: Swimmer, course: CourseType, stroke: StrokeType, distance: DistanceType, scope: ScopeType, page: number ) => {
-    const stroke_distance = STROKE_DISTANCE[`${stroke}__${distance}`.toLocaleUpperCase() as keyof typeof STROKE_DISTANCE]
-    const pool = course.substring( 0, 1 ).toLocaleUpperCase()
-    switch ( scope ) {
-      case "regional" : {
-        return createUrl( rankBaseUrl, {
-          ...{ Stroke: stroke_distance, Pool: pool },
-          ...globalRankParams( swimmer, page ),
-          ...{ ...regionalRankParams, ...{ TargetRegion: swimmer.region } }
-        } )
-      }
-      case "county" : {
-        return createUrl( rankBaseUrl, {
-          ...{ Stroke: stroke_distance, Pool: pool },
-          ...globalRankParams( swimmer, page ),
-          ...{ ...countyRankParams, ...{ TargetCounty: swimmer.county } }
-        } )
-      }
-    }
-    throw new Error( `Can't generate ranking url from scope ${scope}` )
   }
 
   const records = computed( () => {
@@ -231,22 +225,25 @@
             }
           }
           for ( const type of Object.keys( qualifyingRecord.qualifying[scope as ScopeType].types ) ) {
-            const qr = qualifyingRecord.qualifying[scope as ScopeType].types[type as QualifyingType]
             const qualifyingEntry = ( qualifyingTimes.value || [] ).find( entry => (
               entry.stroke === stroke && entry.distance === distance && entry.scope === scope && entry.area === getSwimmerScopeArea( swimmer.value as Swimmer, scope ) && entry.type === type
             ) )
             if ( qualifyingEntry ) {
               console.log( "qe", qualifyingEntry )
-              const qualifyRaw = qualifyingEntry ? convertTime( qualifyingEntry.course, course, stroke, distance, qualifyingEntry.time ) : undefined
-              const qualified = !!performanceRecord?.time && ( performanceRecord.time <= ( qualifyRaw ?? 0 ) )
-              console.log( qualified, qualifyRaw, performanceRecord?.time )
-              if ( qr ) {
-                const qualifyTime = qualifyRaw ? secondsToTime( qualifyRaw ) : undefined
-                qr.qualifyTime = qualifyTime
-                qr.qualified = qualified
-              }
-              if ( qualified ) {
-                qualifyingRecord.qualified[scope as ScopeType].add( type as QualifyingType )
+              const aqp = activeQualifyingPeriods.value[scope as ScopeType][type as QualifyingType]
+              if ( aqp ) {
+                const qualifyRaw = qualifyingEntry ? convertTime( qualifyingEntry.course, course, stroke, distance, qualifyingEntry.time ) : undefined
+                const qualified = !!performanceRecord?.time && ( performanceRecord.time <= ( qualifyRaw ?? 0 ) )
+                console.log( qualified, qualifyRaw, performanceRecord?.time )
+                const qr = qualifyingRecord.qualifying[scope as ScopeType].types[type as QualifyingType]
+                if ( qr ) {
+                  const qualifyTime = qualifyRaw ? secondsToTime( qualifyRaw ) : undefined
+                  qr.qualifyTime = qualifyTime
+                  qr.qualified = qualified
+                }
+                if ( qualified ) {
+                  qualifyingRecord.qualified[scope as ScopeType].add( type as QualifyingType )
+                }
               }
             }
           }
@@ -496,7 +493,7 @@
               </td>
               <td
                 class="whitespace-nowrap px-2 py-2 text-right text-sm text-gray-900"
-                :class="classNames( `qualified-${Object.keys(row.qualified)[0]}`, { 'time-pb': !row.qtime || row.time === row.qtime } )"
+                :class="{ 'time-pb': !row.qtime || row.time === row.qtime }"
               >
                 {{ secondsToTime( row.qtime ?? row.time ) }}
               </td>

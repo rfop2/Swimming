@@ -1,4 +1,4 @@
-import type { CourseType, DistanceType, IndividualStats, Meet, MeetResults, PageInfo, Ranking, RankingRow, ResultData, Results, StrokeType, Swimmer } from "./types.js"
+import type { CourseType, DistanceType, IndividualStats, Meet, MeetResults, PageInfo, Ranking, RankingRow, ResultData, Results, ScopeType, StrokeType, Swimmer } from "./types.js"
 import { getSwimmerAgeGroup, sleep, timeToSeconds } from "./lib.js"
 import { CACHE_DIR } from "./config.js"
 import { differenceInDays, differenceInHours, format, parse } from "date-fns"
@@ -267,6 +267,28 @@ export const createUrl = ( base: string, params: Record<string, string> ) => {
   const url = new URL( BASE_URL + base )
   url.search = new URLSearchParams( params ).toString()
   return url
+}
+
+export const generateRankingUrl = ( swimmer: Swimmer, course: CourseType, stroke: StrokeType, distance: DistanceType, scope: ScopeType, page: number ) => {
+  const stroke_distance = STROKE_DISTANCE[`${stroke}__${distance}`.toLocaleUpperCase() as keyof typeof STROKE_DISTANCE]
+  const pool = course.substring( 0, 1 ).toLocaleUpperCase()
+  switch ( scope ) {
+    case "regional" : {
+      return createUrl( rankBaseUrl, {
+        ...{ Stroke: stroke_distance, Pool: pool },
+        ...globalRankParams( swimmer, page ),
+        ...{ ...regionalRankParams, ...{ TargetRegion: swimmer.region } }
+      } )
+    }
+    case "county" : {
+      return createUrl( rankBaseUrl, {
+        ...{ Stroke: stroke_distance, Pool: pool },
+        ...globalRankParams( swimmer, page ),
+        ...{ ...countyRankParams, ...{ TargetCounty: swimmer.county } }
+      } )
+    }
+  }
+  throw new Error( `Can't generate ranking url from scope ${scope}` )
 }
 
 const DEFAULT_CACHE_TIME = Number( process.env.PAGE_CACHE_TIME ?? 24 )
