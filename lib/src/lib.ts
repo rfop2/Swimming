@@ -1,5 +1,5 @@
 import { addMilliseconds, differenceInYears, endOfYear, format, parseISO } from "date-fns"
-import type { Swimmer } from "./types.js"
+import type { ScopeType, Swimmer } from "./types.js"
 
 const debugEnabled = !!( process.env?.DEBUG === "true" ) || false
 
