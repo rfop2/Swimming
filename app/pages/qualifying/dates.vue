@@ -119,24 +119,24 @@
 
   const filteredQualifying = computed( () => {
     const filtered = effectiveQualifying.value.filter( row => {
-      if ( row.qualifyingYear !== selections.value.year )
+      if ( row.year !== selections.value.year )
         return false
-      if ( selections.value.scope && ( row.qualifyingScope !== selections.value.scope ) )
+      if ( selections.value.scope && ( row.scope !== selections.value.scope ) )
         return false
-      if ( selections.value.area && ( row.qualifyingArea !== selections.value.area ) )
+      if ( selections.value.area && ( row.area !== selections.value.area ) )
         return false
-      if ( selections.value.type.length && !selections.value.type.includes( row.qualifyingType ) )
+      if ( selections.value.type.length && !selections.value.type.includes( row.type ) )
         return false
       return true
     } )
     filtered.sort( ( a, b ) => {
-      const diff1 = a.qualifyingYear - b.qualifyingYear
+      const diff1 = a.year - b.year
       if ( diff1 !== 0 ) return diff1
-      const diff2 = a.qualifyingScope.localeCompare( b.qualifyingScope )
+      const diff2 = a.scope.localeCompare( b.scope )
       if ( diff2 !== 0 ) return diff2
-      const diff3 = a.qualifyingArea.localeCompare( b.qualifyingArea )
+      const diff3 = a.area.localeCompare( b.area )
       if ( diff3 !== 0 ) return diff3
-      const diff4 = a.qualifyingType.localeCompare( b.qualifyingType )
+      const diff4 = a.type.localeCompare( b.type )
       return diff4
     } )
     return filtered
@@ -224,25 +224,25 @@
 
   const columns = computed( () => [
     {
-      field: "qualifyingYear",
+      field: "year",
       filter: false,
     },
     {
-      field: "qualifyingScope",
+      field: "scope",
       filter: false,
       valueFormatter: ( { value }: ValueFormatterParams ) => lookupScope( value ),
       // filterValueGetter: ( params: ValueGetterParams ) => lookupScope( params.data.quaifyingScope ),
     },
     {
-      field: "qualifyingArea",
+      field: "area",
       filter: false,
-      valueFormatter: ( { value, data }: ValueFormatterParams ) => lookupArea( data.qualifyingScope, value ),
-      // filterValueGetter: ( params: ValueGetterParams ) => lookupArea( params.data.qualifyingScope, params.data.qualifyingArea ),
+      valueFormatter: ( { value, data }: ValueFormatterParams ) => lookupArea( data.scope, value ),
+      // filterValueGetter: ( params: ValueGetterParams ) => lookupArea( params.data.scope, params.data.area ),
     },
     {
-      field: "qualifyingType",
+      field: "type",
       filter: false,
-      valueGetter: ( params: ValueGetterParams ) => params.data.qualifyingType.charAt( 0 ).toUpperCase() + params.data.qualifyingType.slice( 1 )
+      valueGetter: ( params: ValueGetterParams ) => params.data.type.charAt( 0 ).toUpperCase() + params.data.type.slice( 1 )
     },
     {
       field: "qualifyingStart",

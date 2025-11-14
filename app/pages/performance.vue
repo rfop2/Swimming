@@ -108,7 +108,7 @@
         // Limit qualifying periods to swimmer's areas
         qualifyingPeriods.value = qualifyingPeriods.value.filter( qp =>
           !!qp.qualifyingStart &&
-          ( ( qp.qualifyingScope === "regional" && qp.qualifyingArea === swimmer.value?.region ) || ( qp.qualifyingScope === "county" && qp.qualifyingArea === swimmer.value?.county ) )
+          ( ( qp.scope === "regional" && qp.area === swimmer.value?.region ) || ( qp.scope === "county" && qp.area === swimmer.value?.county ) )
         )
         // Sort by start date
         qualifyingPeriods.value.sort( ( a, b ) => a.qualifyingStart.localeCompare( b.qualifyingStart ) )
@@ -121,9 +121,9 @@
         } )
         console.log( "qp", qualifyingPeriods.value )
         for ( const qp of qualifyingPeriods.value ) {
-          activeQualifyingPeriods.value[qp.qualifyingScope][qp.qualifyingType] = {
-            age: getQualifyingAge( qp.qualifyingYear ),
-            year: qp.qualifyingYear,
+          activeQualifyingPeriods.value[qp.scope][qp.type] = {
+            age: getQualifyingAge( qp.year ),
+            year: qp.year,
             period: qp
           }
         }
@@ -157,7 +157,7 @@
 
   const records = computed( () => {
     try {
-      // console.log( "PF", personalRecords.value, performanceRecords.value, qualifyingYearInfo.value )
+      // console.log( "PF", personalRecords.value, performanceRecords.value, yearInfo.value )
       if ( !swimmer.value )
         return []
 

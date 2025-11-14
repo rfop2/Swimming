@@ -198,13 +198,15 @@ export interface QualifyingRow {
 export type QualifyingType = "general" | "winter" | "summer"
 
 export interface QualifyingPeriodRow {
-  qualifyingYear: number
-  qualifyingScope: ScopeType
-  qualifyingArea: string
-  qualifyingType: QualifyingType
+  year: number
+  scope: ScopeType
+  area: string
+  type: QualifyingType
   qualifyingStart: string
   qualifyingEnd?: string
-  qualifyingNotes?: string
+  eligibilityStart: string
+  eligibilityEnd?: string
+  notes?: string
 }
 
 export interface Task {

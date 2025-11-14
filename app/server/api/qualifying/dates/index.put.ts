@@ -2,18 +2,18 @@ import { type QualifyingPeriodRow, getPool, prepareStatement, runTransaction } f
 
 const upsertQualifyingPeriodsSql = `
 INSERT INTO QualifyingPeriods (
-  qualifyingYear,
-  qualifyingScope,
-  qualifyingArea,
-  qualifyingType,
+  year,
+  scope,
+  area,
+  type,
   qualifyingStart,
   qualifyingEnd
 )
 VALUES (
-  :qualifyingYear,
-  :qualifyingScope,
-  :qualifyingArea,
-  :qualifyingType,
+  :year,
+  :scope,
+  :area,
+  :type,
   :qualifyingStart,
   :qualifyingEnd
 )
