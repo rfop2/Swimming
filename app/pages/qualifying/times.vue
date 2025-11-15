@@ -3,7 +3,7 @@
   import type { CellValueChangedEvent, GetQuickFilterTextParams, IRowNode, NewValueParams, SizeColumnsToFitGridStrategy, ValueFormatterParams, ValueGetterParams, ValueSetterParams } from "ag-grid-community"
   import { ModuleRegistry, ValidationModule, ClientSideRowModelModule, TextEditorModule, QuickFilterModule, ColumnAutoSizeModule, TextFilterModule, CellStyleModule } from "ag-grid-community"
   import { AgGridVue } from "ag-grid-vue3" // Vue Data Grid Component
-  import { type Swimmer, secondsToTime, strokeSort, timeToSeconds, type QualifyingRow, getCompetitionAge, REGIONS, COUNTIES, STROKE_DISTANCE, AGES, getSwimmerScopeArea, type ScopeType, type CourseType, type QualifyingType, type GenderType, type StrokeType, type DistanceType } from "lib"
+  import { type Swimmer, secondsToTime, strokeSort, timeToSeconds, type QualifyingRow, getCompetitionAge, REGIONS, COUNTIES, STROKE_DISTANCE, AGES, getSwimmerScopeArea, type ScopeType, type CourseType, type QualifyingType, type GenderType, type StrokeType, type DistanceType, type QualifyingPeriodRow } from "lib"
   import { addMonths, getYear, parseISO } from "date-fns"
   import type { FetchError } from "ofetch"
   import { ArrowUturnLeftIcon, CheckIcon, ClipboardDocumentCheckIcon, ClipboardDocumentIcon, ClipboardDocumentListIcon, DocumentPlusIcon, PlusCircleIcon, TrashIcon } from "@heroicons/vue/24/outline"
@@ -35,14 +35,19 @@
 
   const user = useAuthenticatedUser()
 
-  type ApiResponse = InternalApi["/api/qualifying/times"]["get"]
+  type ApiResponse = InternalApi["/api/qualifying/search"]["get"]
 
   interface ExtQualifyingRow extends QualifyingRow {
     distanceMetres: number
   }
 
-  const transformQualifying = ( data: ApiResponse ): Array<ExtQualifyingRow> => {
-    const extData = data.map( row => ( {
+  interface Qualifying {
+    period?: QualifyingPeriodRow
+    times: ExtQualifyingRow[]
+  }
+
+  const transformQualifyingTimes = ( times: QualifyingRow[] ): ExtQualifyingRow[] => {
+    return times.map( row => ( {
       ...row,
       ...{
         time: row.time || timeToSeconds( row.timeString ),
@@ -50,16 +55,16 @@
         distanceMetres: Number( row.distance.replace( /m$/, "" ) )
       }
     } ) )
-    return extData
   }
 
-  const { data: qualifying } = await useFetch(
-    "/api/qualifying/times",
-    {
-      key: "qualifying",
-      transform: transformQualifying,
-    }
-  )
+  const transformQualifying = ( data: ApiResponse ) => {
+    const extTimes = transformQualifyingTimes( data.times )
+    return { ...data, times: extTimes }
+  }
+
+  const qualifying: Ref<Qualifying> = ref( {
+    times: []
+  } )
 
   const filterYear = getYear( addMonths( new Date(), 1 ) )
 
@@ -133,9 +138,20 @@
     course: courseOptions[0].value,
   } )
 
-  const areas = computed( () => areasFromScope( selections.value.scope as ScopeType ) )
+  const period = computed( () => (
+    qualifying.value.period ?? {
+      year: selections.value.year,
+      scope: selections.value.scope as ScopeType,
+      area: selections.value.area,
+      type: selections.value.type as QualifyingType,
+      qualifyingStart: "",
+      qualifyingEnd: "",
+      eligibilityStart: "",
+      eligibilityEnd: ""
+    } )
+  )
 
-  const filterArea = computed( () => selections.value.area )
+  const areas = computed( () => areasFromScope( selections.value.scope as ScopeType ) )
 
   const added = ref<Array<ExtQualifyingRow>>( [] )
   const deleted = ref<Array<ExtQualifyingRow>>( [] )
@@ -147,59 +163,61 @@
     console.log( "DE", eq )
   }, { deep: true } )
 
-  const effectiveQualifying = computed(
-    () =>
-      ( qualifying.value ?? [] )
+  watchEffect( async () => {
+    const query = {
+      year: selections.value.year ?? null,
+      scope: selections.value.scope ?? null,
+      area: selections.value.area ?? null,
+      type: selections.value.type ?? null,
+      gender: selections.value.gender ?? null,
+      age: selections.value.age ?? null,
+      course: null,
+    }
+    qualifying.value = await $fetch(
+      "/api/qualifying/search",
+      {
+        method: "GET",
+        query,
+        // key: "qualifying",
+        transform: transformQualifying,
+      }
+    )
+    console.log( qualifying.value )
+  } )
+
+  const effectiveQualifyingTimes = computed(
+    () => {
+      const times = qualifying.value.times
         .concat( added.value )
         .filter(
           row => !deleted.value.find( deletedRow => JSON.stringify( deletedRow ) === JSON.stringify( row ) )
         )
+      times.sort( ( a, b ) => {
+        if ( a.age < b.age ) {
+          return -1
+        } else if ( a.age > b.age ) {
+          return 1
+        }
+        if ( a.course < b.course ) {
+          return 1
+        } else if ( a.course > b.course ) {
+          return -1
+        }
+        if ( strokeSort[a.stroke] < strokeSort[b.stroke] ) {
+          return -1
+        } else if ( strokeSort[a.stroke] > strokeSort[b.stroke] ) {
+          return 1
+        }
+        return a.distanceMetres - b.distanceMetres
+      } )
+      return times
+    }
   )
 
-  watch( effectiveQualifying, eq => {
-    console.log( "EQ", eq )
-  }, { deep: true } )
-
-  const filteredQualifying = computed( () => {
-    const filtered = effectiveQualifying.value.filter( row => {
-      if ( row.year !== selections.value.year )
-        return false
-      if ( row.scope !== selections.value.scope )
-        return false
-      if ( row.area !== filterArea.value )
-        return false
-      if ( row.type !== selections.value.type )
-        return false
-      if ( row.gender !== selections.value.gender )
-        return false
-      if ( row.age !== selections.value.age )
-        return false
-      return true
-    } )
-    filtered.sort( ( a, b ) => {
-      if ( a.age < b.age ) {
-        return -1
-      } else if ( a.age > b.age ) {
-        return 1
-      }
-      if ( a.course < b.course ) {
-        return 1
-      } else if ( a.course > b.course ) {
-        return -1
-      }
-      if ( strokeSort[a.stroke] < strokeSort[b.stroke] ) {
-        return -1
-      } else if ( strokeSort[a.stroke] > strokeSort[b.stroke] ) {
-        return 1
-      }
-      return a.distanceMetres - b.distanceMetres
-    } )
-    return filtered
-  } )
-
-  watch( filteredQualifying, fq => {
-    if ( fq.length > 0 ) {
-      selections.value.course = ( courseOptions.find( course => course.value === fq[0].course ) ?? courseOptions[0] ).value
+  watch( effectiveQualifyingTimes, eq => {
+    console.log( "EQT", eq )
+    if ( effectiveQualifyingTimes.value.length > 0 ) {
+      selections.value.course = ( courseOptions.find( course => course.value === effectiveQualifyingTimes.value[0].course ) ?? courseOptions[0] ).value
     }
   }, { deep: true } )
 
@@ -212,12 +230,12 @@
   const errString = ref<string | null>( null )
 
   async function clear( _e: Event ) {
-    deleted.value = deleted.value.concat( filteredQualifying.value )
+    deleted.value = deleted.value.concat( effectiveQualifyingTimes.value )
     dirty.value = true
   }
 
   async function copy( _e: Event ) {
-    clipboard.value = JSON.parse( JSON.stringify( filteredQualifying.value ) )
+    clipboard.value = JSON.parse( JSON.stringify( effectiveQualifyingTimes.value ) )
   }
 
   async function paste( _e: Event ) {
@@ -256,7 +274,7 @@
         time: 0
       } )
     }
-    added.value = added.value.concat( transformQualifying( addedData ) )
+    added.value = added.value.concat( transformQualifyingTimes( addedData ) )
     dirty.value = true
     console.log( addedData )
   }
@@ -269,7 +287,7 @@
         throw new Error( `Can't match stroke/distance on '${strokeDistance}'` )
       }
       const { stroke = "", distance = "" } = { ...matches?.groups }
-      if ( !filteredQualifying.value.find( row => row.stroke === stroke && row.distance === distance ) ) {
+      if ( !effectiveQualifyingTimes.value.find( row => row.stroke === stroke && row.distance === distance ) ) {
         addedData.push( {
           year: selections.value.year,
           course: selections.value.course as CourseType,
@@ -285,7 +303,7 @@
         } )
       }
     }
-    added.value = added.value.concat( transformQualifying( addedData ) )
+    added.value = added.value.concat( transformQualifyingTimes( addedData ) )
     dirty.value = true
   }
 
@@ -301,9 +319,13 @@
   const saveSuccess = ref( false )
   const save = async ( _e: Event ) => {
     try {
+      await $fetch( "/api/qualifying/dates", {
+        method: "PUT",
+        body: JSON.stringify( [ period.value ] ),
+      } )
       await $fetch( "/api/qualifying/times", {
         method: "PUT",
-        body: JSON.stringify( ( qualifying.value ?? [] ).concat( added.value.filter( data => data.time > 0 ) ) ),
+        body: JSON.stringify( effectiveQualifyingTimes.value ),
       } )
       saveSuccess.value = true
       await refreshNuxtData( "qualifying" )
@@ -481,7 +503,7 @@
           class="sm:flex sm:items-end"
         >
           <div
-            v-if="filteredQualifying.length"
+            v-if="effectiveQualifyingTimes.length"
             class="mt-4 sm:ml-4 sm:mt-0 sm:flex-none"
           >
             <button
@@ -504,7 +526,7 @@
             </button>
           </div>
           <div
-            v-if="clipboard.length && !filteredQualifying.length"
+            v-if="clipboard.length && !effectiveQualifyingTimes.length"
             class="mt-4 sm:ml-4 sm:mt-0 sm:flex-none"
           >
             <button
@@ -521,7 +543,7 @@
             </button>
           </div>
           <div
-            v-if="filteredQualifying.length"
+            v-if="effectiveQualifyingTimes.length"
             class="mt-4 sm:ml-4 sm:mt-0 sm:flex-none"
           >
             <button
@@ -538,7 +560,7 @@
             </button>
           </div>
           <div
-            v-if="!filteredQualifying.length"
+            v-if="!effectiveQualifyingTimes.length"
             class="mt-4 sm:ml-4 sm:mt-0 sm:flex-none"
           >
             <button
@@ -555,7 +577,7 @@
             </button>
           </div>
           <div
-            v-if="filteredQualifying.length>0 && filteredQualifying.length!==Object.keys(STROKE_DISTANCE).length"
+            v-if="effectiveQualifyingTimes.length>0 && effectiveQualifyingTimes.length!==Object.keys(STROKE_DISTANCE).length"
             class="mt-4 sm:ml-4 sm:mt-0 sm:flex-none"
           >
             <button
@@ -668,15 +690,47 @@
           :options="courseOptions"
           label="Course"
           placeholder="Choose Course"
-          :disabled="filteredQualifying.length>0"
+          :disabled="effectiveQualifyingTimes.length>0"
         />
       </div>
     </template>
     <div class="overflow-x-auto">
+      <div
+        class="flex flex-col justify-center space-y-3 sm:flex-row sm:space-y-0 sm:space-x-4 mb-6"
+      >
+        <div class="min-w-36">
+          <UI-Input
+            v-model="period.qualifyingStart"
+            label="Qualifying Start Date"
+            type="date"
+          />
+        </div>
+        <div class="min-w-36">
+          <UI-Input
+            v-model="period.qualifyingEnd"
+            label="Qualifying End Date"
+            type="date"
+          />
+        </div>
+        <div class="min-w-36">
+          <UI-Input
+            v-model="period.eligibilityStart"
+            label="Eligibility Start Date"
+            type="date"
+          />
+        </div>
+        <div class="min-w-36">
+          <UI-Input
+            v-model="period.eligibilityEnd"
+            label="Eligibility End Date"
+            type="date"
+          />
+        </div>
+      </div>
       <ag-grid-vue
         :auto-size-strategy="autoSizeStrategy"
         :default-col-def="defaultColumnAttrs"
-        :row-data="filteredQualifying"
+        :row-data="effectiveQualifyingTimes"
         :column-defs="columns"
         dom-layout="autoHeight"
         class="ag-theme-quartz"
