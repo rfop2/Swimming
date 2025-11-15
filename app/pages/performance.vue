@@ -337,7 +337,7 @@
       />
     </template>
     <template #key>
-      Key &ndash; Best times recorded in current qualifying periods, reached qualifying standard for <span class="px-2 mr-1 qualified-county" /> county, <span class="px-2 mr-1 qualified-summer" /> summer regionals, <span class="px-2 mr-1 qualified-winter" /> winter regionals.
+      Key &ndash; Best times recorded in current qualifying periods. Qualifying times that have been achieved are <span class="px-2 mr-1 qualified" /> highlighted.
       Event ranking is in the <span class="px-2 mr-1 rank-10" /> top 10, <span class="px-2 mr-1 rank-20" /> top 20, <span class="px-2 mr-1 rank-50" /> top 50. Times in <span class="time-pb">purple</span> are personal bests.
     </template>
     <div>
