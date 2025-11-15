@@ -2,7 +2,7 @@
   import type { CellValueChangedEvent, NewValueParams, SizeColumnsToFitGridStrategy, ValueFormatterParams, ValueGetterParams, ValueSetterParams } from "ag-grid-community"
   import { ModuleRegistry, DateEditorModule, ValidationModule, ClientSideRowModelModule, ColumnAutoSizeModule, TextFilterModule, CustomEditorModule, CellStyleModule, TextEditorModule } from "ag-grid-community"
   import { AgGridVue } from "ag-grid-vue3" // Vue Data Grid Component
-  import { REGIONS, COUNTIES, type QualifyingPeriodRow, type ScopeType } from "lib"
+  import { REGIONS, COUNTIES, type QualifyingPeriodRow, type ScopeType, type QualifyingType } from "lib"
   import { addMonths, format, getYear } from "date-fns"
   import type { FetchError } from "ofetch"
   import { ArrowUturnLeftIcon, CheckIcon, ClipboardDocumentCheckIcon, ClipboardDocumentIcon, ClipboardDocumentListIcon, TrashIcon } from "@heroicons/vue/24/outline"
@@ -166,9 +166,9 @@
     for ( const row of clipboard.value ) {
       added.value.push( { ...row, ...{
         year: selections.value.year,
-        scope: selections.value.scope,
+        scope: selections.value.scope as ScopeType,
         area: selections.value.area,
-        type: selections.value.type,
+        type: selections.value.type as QualifyingType[],
       } } )
     }
     dirty.value = true
