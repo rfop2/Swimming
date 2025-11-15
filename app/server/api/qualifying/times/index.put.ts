@@ -62,10 +62,10 @@ export default defineEventHandler( async ( event ) => {
     await runTransaction(
       await getPool(),
       async( conn, qualifyingData: Array<QualifyingRow> ) => {
-        const deleteQualifying = prepareStatement(
+        /* const deleteQualifying = prepareStatement(
           conn,
           "DELETE FROM QualifyingTimes"
-        )
+        ) */
         const upsertQualifyingRow = prepareStatement<QualifyingRow>(
           conn,
           upsertQualifyingTimesSql
@@ -74,7 +74,7 @@ export default defineEventHandler( async ( event ) => {
           conn,
           deleteQualifyingTimesSql
         )
-        await deleteQualifying.run()
+        // await deleteQualifying.run()
         for ( const row of qualifyingData ) {
           if ( row.time ) {
             await upsertQualifyingRow.run( row )
