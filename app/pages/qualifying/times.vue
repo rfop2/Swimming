@@ -49,11 +49,9 @@
   const transformQualifyingTimes = ( times: QualifyingRow[] ): ExtQualifyingRow[] => {
     return times.map( row => ( {
       ...row,
-      ...{
-        time: row.time || timeToSeconds( row.timeString ),
-        timeString: row.timeString.replace( /^0+:?/, "" ),
-        distanceMetres: Number( row.distance.replace( /m$/, "" ) )
-      }
+      time: row.time || timeToSeconds( row.timeString ),
+      timeString: row.timeString.replace( /^0+:?/, "" ),
+      distanceMetres: Number( row.distance.replace( /m$/, "" ) )
     } ) )
   }
 
@@ -179,9 +177,8 @@
         method: "GET",
         query,
         // key: "qualifying",
-        transform: transformQualifying,
       }
-    )
+    ).then( data => transformQualifying( data ) )
     console.log( qualifying.value )
   } )
 
