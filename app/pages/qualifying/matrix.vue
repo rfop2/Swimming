@@ -358,7 +358,7 @@
     </div>
     <div
       v-if="countyCoverage.length"
-      class="overflow-x-auto mx-auto max-w-3xl"
+      class="overflow-x-auto mx-auto max-w-4xl"
     >
       <ag-grid-vue
         :auto-size-strategy="{ type: 'fitCellContents' }"
