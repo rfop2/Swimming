@@ -34,13 +34,20 @@ export interface ExtSwimmer extends Swimmer {
   squads: string
 }
 
-export type ScopeType = "regional" | "county"
+export const scopeTypes = [ "regional", "county" ] as const
+export type ScopeType = typeof scopeTypes[number]
 
-export type CourseType = "lc" | "sc"
-export type StrokeType = "freestyle" | "breaststroke" | "butterfly" | "backstroke" | "individual_medley"
-export type DistanceType = "50m" | "100m" | "150m" | "200m" | "400m" | "800m" | "1500m"
+export const courseTypes = [ "lc", "sc" ] as const
+export type CourseType = typeof courseTypes[number]
 
-export type GenderType = "male" | "female"
+export const strokeTypes = [ "freestyle", "breaststroke", "butterfly", "backstroke", "individual_medley" ] as const
+export type StrokeType = typeof strokeTypes[number]
+
+export const distanceTypes = [ "50m", "100m", "150m", "200m", "400m", "800m", "1500m" ] as const
+export type DistanceType = typeof distanceTypes[number]
+
+export const genderTypes = [ "male", "female" ] as const
+export type GenderType = typeof genderTypes[number]
 
 export interface IndividualStats {
   course: CourseType
@@ -195,7 +202,8 @@ export interface QualifyingRow {
   time: number
 }
 
-export type QualifyingType = "general" | "winter" | "summer"
+export const qualifyingTypes = [ "general", "winter", "summer" ] as const
+export type QualifyingType = typeof qualifyingTypes[number]
 
 export interface QualifyingPeriodRow {
   year: number
@@ -226,3 +234,5 @@ export interface Task {
 
 export type SwimmerUpdateType = "individual" | "results" | "rankings"
 export type SwimmerUpdateMode = "force" | "smart" | "lazy"
+
+export const typedKeys = <T extends object>( obj: T ): Array<keyof T> => Object.keys( obj ) as Array<keyof T>
