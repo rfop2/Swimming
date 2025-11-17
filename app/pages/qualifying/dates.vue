@@ -24,10 +24,11 @@
     middleware: [ "protected" ]
   } )
 
+  const description = "Qualifying periods and cut-off for summer, winter and general competitions."
   useHead( {
     title: "Qualifying Dates",
     meta: [
-      { name: "description", content: "Qualifying periods and cut-off for summer, winter and general competitions" }
+      { name: "description", content: description }
     ]
   } )
 
@@ -295,7 +296,7 @@
   >
     <template #description>
       <div class="sm:flex sm:justify-between">
-        <div>Qualifying periods for winter, summer and general qualifying areas.</div>
+        <div>{{ description }}</div>
         <div
           v-if="user.admin"
           class="sm:flex sm:items-end"
