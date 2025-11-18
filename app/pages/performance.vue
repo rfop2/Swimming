@@ -60,16 +60,6 @@
 
   const defaultAge = getQualifyingAge( today.year )
 
-  const activeQualifyingPeriods: Ref<Record<ScopeType, Partial<Record<QualifyingType, { age: string, year: number, period?: QualifyingPeriodRow } | undefined>>>> = ref( {
-    county: {
-      general: { age: defaultAge, year: today.year },
-    },
-    regional: {
-      // winter: { age: defaultAge, year: today.year },
-      // summer: { age: defaultAge, year: today.year },
-    },
-  } )
-
   watchEffect( async () => {
     if ( swimmer.value ) {
       try {
@@ -96,55 +86,77 @@
           }
         }
       }
-
-      activeQualifyingPeriods.value = {
-        county: {
-          general: { age: defaultAge, year: today.year },
-        },
-        regional: {
-          // winter: { age: defaultAge, year: today.year },
-          // summer: { age: defaultAge, year: today.year },
-        },
-      }
-      if ( qualifyingPeriods.value ) {
-        // Limit qualifying periods to swimmer's areas
-        qualifyingPeriods.value = qualifyingPeriods.value.filter( qp =>
-          !!qp.qualifyingStart &&
-          ( ( qp.scope === "regional" && qp.area === swimmer.value?.region ) || ( qp.scope === "county" && qp.area === swimmer.value?.county ) )
-        )
-        // Sort by start date
-        qualifyingPeriods.value.sort( ( a, b ) => a.qualifyingStart.localeCompare( b.qualifyingStart ) )
-        // Remove ended or not started periods
-        qualifyingPeriods.value = qualifyingPeriods.value.filter( qp => {
-          // Remove periods that have already ended
-          if ( qp.qualifyingEnd && Temporal.PlainDate.compare( today, Temporal.PlainDate.from( qp.qualifyingEnd ) ) > 0 )
-            return false
-          return ( Temporal.PlainDate.compare( today, Temporal.PlainDate.from( qp.qualifyingStart ) ) >= 0 )
-        } )
-        console.log( "qp", qualifyingPeriods.value )
-        for ( const qp of qualifyingPeriods.value ) {
-          activeQualifyingPeriods.value[qp.scope][qp.type] = {
-            age: getQualifyingAge( qp.year ),
-            year: qp.year,
-            period: qp
+      try {
+        personalRecords.value = await $fetch( `/api/qualifying/swimmer/${swimmer.value.id}` )
+      } catch ( error ) {
+        if ( error instanceof FetchError ) {
+          const apiError = error as FetchError
+          if ( apiError.status === 404 ) {
+            personalRecords.value = []
+          } else {
+            throw error
           }
         }
-        console.log( "aqp", activeQualifyingPeriods )
-      }
-
-      if ( qualifyingTimes.value ) {
-        // Remove any qualifying times that don't apply to this swimmer
-        qualifyingTimes.value = qualifyingTimes.value.filter( qt => {
-          const aqp = activeQualifyingPeriods.value[qt.scope][qt.type]
-          return !!aqp &&
-            ( qt.year === aqp.year ) &&
-            ( qt.age === aqp.age ) &&
-            ( qt.gender === swimmer.value?.gender ) &&
-            ( ( qt.scope === "regional" && qt.area === swimmer.value?.region ) || ( qt.scope === "county" && qt.area === swimmer.value?.county ) )
-        } )
-        console.log( "qt", swimmer.value, qualifyingTimes.value )
       }
     }
+  } )
+
+  const filteredQualifyingPeriods = computed( () => {
+    if ( !qualifyingPeriods.value )
+      return []
+    const filteredQualifyingPeriods = qualifyingPeriods.value.filter( qp => {
+      if ( !qp.qualifyingStart )
+        return false
+      // Limit qualifying periods to swimmer's areas
+      if ( ( qp.scope === "regional" && qp.area !== swimmer.value?.region ) || ( qp.scope === "county" && qp.area !== swimmer.value?.county ) )
+        return false
+      // Remove periods that have already ended
+      if ( qp.qualifyingEnd && Temporal.PlainDate.compare( today, Temporal.PlainDate.from( qp.qualifyingEnd ) ) > 0 )
+        return false
+      // Remove not started periods
+      return ( Temporal.PlainDate.compare( today, Temporal.PlainDate.from( qp.qualifyingStart ) ) >= 0 )
+    } )
+    // Sort by start date
+    filteredQualifyingPeriods.sort( ( a, b ) => a.qualifyingStart.localeCompare( b.qualifyingStart ) )
+    console.log( "fqp", filteredQualifyingPeriods )
+    return filteredQualifyingPeriods
+  } )
+
+  const activeQualifyingPeriods = computed( () => {
+    const activeQualifyingPeriods: Record<ScopeType, Partial<Record<QualifyingType, { age: string, year: number, period?: QualifyingPeriodRow } | undefined>>> = {
+      county: {
+        general: { age: defaultAge, year: today.year },
+      },
+      regional: {
+        // winter: { age: defaultAge, year: today.year },
+        // summer: { age: defaultAge, year: today.year },
+      },
+    }
+    if ( filteredQualifyingPeriods.value ) {
+      for ( const qp of filteredQualifyingPeriods.value ) {
+        activeQualifyingPeriods[qp.scope][qp.type] = {
+          age: getQualifyingAge( qp.year ),
+          year: qp.year,
+          period: qp
+        }
+      }
+      console.log( "aqp", activeQualifyingPeriods )
+    }
+    return activeQualifyingPeriods
+  } )
+
+  const filteredQualifyingTimes = computed( () => {
+    if ( !qualifyingTimes.value )
+      return []
+    // Remove any qualifying times that don't apply to this swimmer
+    return qualifyingTimes.value.filter( qt => {
+      const aqp = activeQualifyingPeriods.value[qt.scope][qt.type]
+      return !!aqp &&
+        ( qt.year === aqp.year ) &&
+        ( qt.age === aqp.age ) &&
+        ( qt.gender === swimmer.value?.gender ) &&
+        ( ( qt.scope === "regional" && qt.area === swimmer.value?.region ) || ( qt.scope === "county" && qt.area === swimmer.value?.county ) )
+    } )
   } )
 
   interface PersonalQualifyingType extends IndividualStats {
@@ -227,7 +239,7 @@
             }
           }
           for ( const type of Object.keys( qualifyingRecord.qualifying[scope as ScopeType].types ) ) {
-            const qualifyingEntry = ( qualifyingTimes.value || [] ).find( entry => (
+            const qualifyingEntry = filteredQualifyingTimes.value.find( entry => (
               entry.stroke === stroke && entry.distance === distance && entry.scope === scope && entry.area === getSwimmerScopeArea( swimmer.value as Swimmer, scope ) && entry.type === type
             ) )
             if ( qualifyingEntry ) {
