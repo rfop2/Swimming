@@ -86,18 +86,6 @@
           }
         }
       }
-      try {
-        personalRecords.value = await $fetch( `/api/qualifying/swimmer/${swimmer.value.id}` )
-      } catch ( error ) {
-        if ( error instanceof FetchError ) {
-          const apiError = error as FetchError
-          if ( apiError.status === 404 ) {
-            personalRecords.value = []
-          } else {
-            throw error
-          }
-        }
-      }
     }
   } )
 
