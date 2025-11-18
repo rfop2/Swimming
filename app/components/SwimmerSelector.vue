@@ -54,6 +54,7 @@
         :options="swimmerOptions"
         :label="props.showLabel ? 'Swimmer' : undefined"
         placeholder="Choose Swimmer"
+        v-bind="$attrs"
       />
       <span
         v-else
