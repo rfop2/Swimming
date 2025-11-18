@@ -619,13 +619,17 @@
       </div>
     </template>
     <template #controls>
-      <SwimmerSelector v-model="swimmer" />
+      <SwimmerSelector
+        v-model="swimmer"
+        :disabled="dirty"
+      />
       <div class="min-w-24">
         <UI-Listbox
           v-model="selections.year"
           :options="yearOptions"
           label="Year"
           placeholder="Choose Year"
+          :disabled="dirty"
         />
       </div>
       <div class="min-w-32">
@@ -634,6 +638,7 @@
           :options="scopeOptions"
           label="Scope"
           placeholder="Choose Scope"
+          :disabled="dirty"
         />
       </div>
       <div
@@ -645,6 +650,7 @@
           :options="areas"
           label="Area"
           placeholder="Choose Area"
+          :disabled="dirty"
         />
       </div>
       <div
@@ -656,6 +662,7 @@
           :options="selections.scope === 'county' ? typeOptions.slice( 0, 1 ) : typeOptions.slice( 1 )"
           label="Type"
           placeholder="Choose Type"
+          :disabled="dirty"
         />
       </div>
       <div class="min-w-28">
@@ -664,6 +671,7 @@
           :options="genderOptions"
           label="Gender"
           placeholder="Choose Gender"
+          :disabled="dirty"
         />
       </div>
       <div class="min-w-28">
@@ -672,6 +680,7 @@
           :options="ageOptions"
           label="Age"
           placeholder="Choose Age"
+          :disabled="dirty"
         />
       </div>
       <div
@@ -683,7 +692,7 @@
           :options="courseOptions"
           label="Course"
           placeholder="Choose Course"
-          :disabled="effectiveQualifyingTimes.length>0"
+          :disabled="dirty || effectiveQualifyingTimes.length>0"
         />
       </div>
     </template>
