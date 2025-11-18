@@ -242,7 +242,7 @@
                 if ( qr ) {
                   const qualifyTime = qualifyRaw ? secondsToTime( qualifyRaw ) : undefined
                   qr.qualifyTime = qualifyTime
-                  qr.qualifyDiff = qualifyDiff > 0 ? secondsToTime( qualifyDiff ) : ""
+                  qr.qualifyDiff = qualifyDiff && qualifyDiff > 0 ? secondsToTime( qualifyDiff ) : ""
                   qr.qualifyProx = qualifyRaw && qualifyDiff ? 100 * ( qualifyDiff / qualifyRaw ) : undefined
                   qr.qualified = qualified
                 }
@@ -285,9 +285,7 @@
     return []
   } )
 
-  type RecordKey = typeof flattenedRecords["value"][number]
-
-  const { updateSort, getSortIcon, sortRecords } = useMultiSort<RecordKey>()
+  const { updateSort, getSortIcon, sortRecords } = useMultiSort<PersonalQualifyingType>()
 
   const sortedRecords = computed( () => sortRecords( records.value ) )
   // console.log( "SR", sortedRecords )
@@ -303,6 +301,16 @@
       }
     }
     return null
+  }
+
+  const proxClass = ( prox?: number ) => {
+    if ( prox !== undefined ) {
+      if ( prox > 0 && prox <= 5 ) {
+        return "qualify-prox-5"
+      } else if ( prox > 5 && prox <= 10 ) {
+        return "qualify-prox-10"
+      }
+    }
   }
 </script>
 
@@ -533,10 +541,7 @@
               </td>
               <td
                 class="whitespace-nowrap px-2 py-2 text-right text-sm text-gray-500"
-                :class="{
-                  'qualify-prox-5': row.qualifying.county.types.general?.qualifyProx > 0 && row.qualifying.county.types.general?.qualifyProx <= 5,
-                  'qualify-prox-10': row.qualifying.county.types.general?.qualifyProx > 5 && row.qualifying.county.types.general?.qualifyProx <= 10,
-                }"
+                :class="proxClass( row.qualifying.county.types.general?.qualifyProx ?? 0 )"
               >
                 {{ row.qualifying.county.types.general?.qualifyDiff }}
               </td>
@@ -570,10 +575,7 @@
               </td>
               <td
                 class="whitespace-nowrap px-2 py-2 text-right text-sm text-gray-500"
-                :class="{
-                  'qualify-prox-5': row.qualifying.county.types.summer?.qualifyProx > 0 && row.qualifying.county.types.summer?.qualifyProx <= 5,
-                  'qualify-prox-10': row.qualifying.county.types.summer?.qualifyProx > 5 && row.qualifying.county.types.summer?.qualifyProx <= 10,
-                }"
+                :class="proxClass( row.qualifying.county.types.summer?.qualifyProx ?? 0 )"
               >
                 {{ row.qualifying.county.types.summer?.qualifyDiff }}
               </td>
@@ -585,10 +587,7 @@
               </td>
               <td
                 class="whitespace-nowrap px-2 py-2 text-right text-sm text-gray-500"
-                :class="{
-                  'qualify-prox-5': row.qualifying.county.types.winter?.qualifyProx > 0 && row.qualifying.county.types.winter?.qualifyProx <= 5,
-                  'qualify-prox-10': row.qualifying.county.types.winter?.qualifyProx > 5 && row.qualifying.county.types.winter?.qualifyProx <= 10,
-                }"
+                :class="proxClass( row.qualifying.county.types.winter?.qualifyProx ?? 0 )"
               >
                 {{ row.qualifying.county.types.winter?.qualifyDiff }}
               </td>
