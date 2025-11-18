@@ -575,9 +575,9 @@
               </td>
               <td
                 class="whitespace-nowrap px-2 py-2 text-right text-sm text-gray-500"
-                :class="proxClass( row.qualifying.county.types.summer?.qualifyProx ?? 0 )"
+                :class="proxClass( row.qualifying.regional.types.summer?.qualifyProx ?? 0 )"
               >
-                {{ row.qualifying.county.types.summer?.qualifyDiff }}
+                {{ row.qualifying.regional.types.summer?.qualifyDiff }}
               </td>
               <td
                 class="whitespace-nowrap px-2 py-2 text-right text-sm text-gray-500"
@@ -587,9 +587,9 @@
               </td>
               <td
                 class="whitespace-nowrap px-2 py-2 text-right text-sm text-gray-500"
-                :class="proxClass( row.qualifying.county.types.winter?.qualifyProx ?? 0 )"
+                :class="proxClass( row.qualifying.regional.types.winter?.qualifyProx ?? 0 )"
               >
-                {{ row.qualifying.county.types.winter?.qualifyDiff }}
+                {{ row.qualifying.regional.types.winter?.qualifyDiff }}
               </td>
             </tr>
           </tbody>
