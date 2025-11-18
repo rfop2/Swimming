@@ -1,6 +1,6 @@
 <script setup lang="ts">
   import type { InternalApi } from "nitropack"
-  import type { CellValueChangedEvent, GetQuickFilterTextParams, IRowNode, NewValueParams, SizeColumnsToFitGridStrategy, ValueFormatterParams, ValueGetterParams, ValueSetterParams } from "ag-grid-community"
+  import type { CellValueChangedEvent, GetQuickFilterTextParams, IRowNode, NewValueParams, ValueFormatterParams, ValueGetterParams, ValueSetterParams } from "ag-grid-community"
   import { ModuleRegistry, ValidationModule, ClientSideRowModelModule, TextEditorModule, QuickFilterModule, ColumnAutoSizeModule, TextFilterModule, CellStyleModule } from "ag-grid-community"
   import { AgGridVue } from "ag-grid-vue3" // Vue Data Grid Component
   import { type Swimmer, secondsToTime, strokeSort, timeToSeconds, type QualifyingRow, getCompetitionAge, REGIONS, COUNTIES, STROKE_DISTANCE, AGES, getSwimmerScopeArea, type ScopeType, type CourseType, type QualifyingType, type GenderType, type StrokeType, type DistanceType, type QualifyingPeriodRow } from "lib"
@@ -408,6 +408,7 @@
     {
       field: "age",
       filter: false,
+      width: 120,
     },
     {
       editable: () => !!user.value.admin,
@@ -480,11 +481,6 @@
   }, {
     immediate: true,
   } )
-
-  const autoSizeStrategy: SizeColumnsToFitGridStrategy = {
-    type: "fitGridWidth",
-    defaultMinWidth: 100,
-  }
 
 </script>
 
@@ -725,7 +721,7 @@
         </div>
       </div>
       <ag-grid-vue
-        :auto-size-strategy="autoSizeStrategy"
+        :auto-size-strategy="{ type: 'fitGridWidth', defaultMinWidth: 60 }"
         :default-col-def="defaultColumnAttrs"
         :row-data="effectiveQualifyingTimes"
         :column-defs="columns"
