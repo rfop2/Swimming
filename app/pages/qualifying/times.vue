@@ -324,6 +324,12 @@
         method: "PUT",
         body: JSON.stringify( effectiveQualifyingTimes.value ),
       } )
+      if ( deleted.value.length ) {
+        await $fetch( "/api/qualifying/times", {
+          method: "DELETE",
+          body: JSON.stringify( deleted.value ),
+        } )
+      }
       saveSuccess.value = true
       await refreshNuxtData( "qualifying" )
       added.value = []
