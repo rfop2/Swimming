@@ -2,10 +2,10 @@
   import type { CellValueChangedEvent, NewValueParams, SizeColumnsToFitGridStrategy, ValueFormatterParams, ValueGetterParams, ValueSetterParams } from "ag-grid-community"
   import { ModuleRegistry, DateEditorModule, ValidationModule, ClientSideRowModelModule, ColumnAutoSizeModule, TextFilterModule, CustomEditorModule, CellStyleModule, TextEditorModule } from "ag-grid-community"
   import { AgGridVue } from "ag-grid-vue3" // Vue Data Grid Component
-  import { REGIONS, COUNTIES, type QualifyingPeriodRow, type ScopeType, type QualifyingType } from "lib"
+  import { REGIONS, COUNTIES, type ScopeType } from "lib"
   import { addMonths, format, getYear } from "date-fns"
   import type { FetchError } from "ofetch"
-  import { ArrowUturnLeftIcon, CheckIcon, ClipboardDocumentCheckIcon, ClipboardDocumentIcon, ClipboardDocumentListIcon, TrashIcon } from "@heroicons/vue/24/outline"
+  import { ArrowUturnLeftIcon, CheckIcon } from "@heroicons/vue/24/outline"
 
   // ModuleRegistry.registerModules( [ AllCommunityModule ] )
   ModuleRegistry.registerModules( [
@@ -95,31 +95,8 @@
 
   const areas = computed( () => areasFromScope( selections.value.scope as ScopeType ) )
 
-  const added = ref<Array<QualifyingPeriodRow>>( [] )
-  const deleted = ref<Array<QualifyingPeriodRow>>( [] )
-
-  watch( added, eq => {
-    console.log( "GE", eq )
-  }, { deep: true } )
-  watch( deleted, eq => {
-    console.log( "DE", eq )
-  }, { deep: true } )
-
-  const effectiveQualifying = computed(
-    () =>
-      ( qualifying.value ?? [] )
-        .concat( added.value )
-        .filter(
-          row => !deleted.value.find( deletedRow => JSON.stringify( deletedRow ) === JSON.stringify( row ) )
-        )
-  )
-
-  watch( effectiveQualifying, eq => {
-    console.log( "EQ", eq )
-  }, { deep: true } )
-
   const filteredQualifying = computed( () => {
-    const filtered = effectiveQualifying.value.filter( row => {
+    const filtered = ( qualifying.value ?? [] ).filter( row => {
       if ( row.year !== selections.value.year )
         return false
       if ( selections.value.scope && ( row.scope !== selections.value.scope ) )
@@ -146,41 +123,11 @@
   watchEffect( () => {
     console.log( "FQ", filteredQualifying.value )
   } )
-  const clipboard = ref<Array<QualifyingPeriodRow>>( [] )
-
-  watch( clipboard, eq => {
-    console.log( "CB", eq )
-  } )
 
   const errString = ref<string | null>( null )
 
-  async function clear( _e: Event ) {
-    deleted.value = deleted.value.concat( filteredQualifying.value )
-    dirty.value = true
-  }
-
-  async function copy( _e: Event ) {
-    clipboard.value = JSON.parse( JSON.stringify( filteredQualifying.value ) )
-  }
-
-  async function paste( _e: Event ) {
-    for ( const row of clipboard.value ) {
-      added.value.push( { ...row, ...{
-        year: selections.value.year,
-        scope: selections.value.scope as ScopeType,
-        area: selections.value.area,
-        type: selections.value.type as QualifyingType[],
-      } } )
-    }
-    dirty.value = true
-  }
-
   async function reset( _e: Event ) {
-    added.value = []
     await refreshNuxtData( "qualifying-dates" )
-    deleted.value = []
-    added.value = []
-    clipboard.value = []
     dirty.value = false
   }
 
@@ -189,11 +136,10 @@
     try {
       await $fetch( "/api/qualifying/dates", {
         method: "PUT",
-        body: JSON.stringify( ( qualifying.value ?? [] ).concat( added.value.filter( data => !!data.qualifyingStart ) ) ),
+        body: JSON.stringify( ( qualifying.value ?? [] ) ),
       } )
       saveSuccess.value = true
       await refreshNuxtData( "qualifying-dates" )
-      added.value = []
       dirty.value = false
     } catch ( error ) {
       console.error( "Error", error )
@@ -301,63 +247,6 @@
           v-if="user.admin"
           class="sm:flex sm:items-end"
         >
-          <div
-            v-if="false && filteredQualifying.length"
-            class="mt-4 sm:ml-4 sm:mt-0 sm:flex-none"
-          >
-            <button
-              type="button"
-              class="inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
-              title="Copy the displayed times"
-              @click="copy"
-            >
-              <ClipboardDocumentIcon
-                v-if="!clipboard.length"
-                class="-ml-0.5 size-5"
-                aria-hidden="true"
-              />
-              <ClipboardDocumentCheckIcon
-                v-else
-                class="-ml-0.5 size-5"
-                aria-hidden="true"
-              />
-              Copy
-            </button>
-          </div>
-          <div
-            v-if="false && clipboard.length && !filteredQualifying.length"
-            class="mt-4 sm:ml-4 sm:mt-0 sm:flex-none"
-          >
-            <button
-              type="button"
-              class="inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
-              title="Paste the copied times"
-              @click="paste"
-            >
-              <ClipboardDocumentListIcon
-                class="-ml-0.5 size-5"
-                aria-hidden="true"
-              />
-              Paste
-            </button>
-          </div>
-          <div
-            v-if="false && filteredQualifying.length"
-            class="mt-4 sm:ml-4 sm:mt-0 sm:flex-none"
-          >
-            <button
-              type="button"
-              class="inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
-              title="Delete all displayed times"
-              @click="clear"
-            >
-              <TrashIcon
-                class="-ml-0.5 size-5"
-                aria-hidden="true"
-              />
-              Delete
-            </button>
-          </div>
           <div class="mt-4 sm:ml-4 sm:mt-0 sm:flex-none">
             <button
               type="button"
