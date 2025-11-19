@@ -2,24 +2,30 @@ import { type QualifyingPeriodRow, getPool, prepareStatement, runTransaction } f
 
 const upsertQualifyingPeriodsSql = `
 INSERT INTO QualifyingPeriods (
-  qualifyingYear,
-  qualifyingScope,
-  qualifyingArea,
-  qualifyingType,
+  year,
+  scope,
+  area,
+  type,
   qualifyingStart,
-  qualifyingEnd
+  qualifyingEnd,
+  eligibilityStart,
+  eligibilityEnd
 )
 VALUES (
-  :qualifyingYear,
-  :qualifyingScope,
-  :qualifyingArea,
-  :qualifyingType,
+  :year,
+  :scope,
+  :area,
+  :type,
   :qualifyingStart,
-  :qualifyingEnd
+  :qualifyingEnd,
+  :eligibilityStart,
+  :eligibilityEnd
 )
 ON DUPLICATE KEY UPDATE
   qualifyingStart = :qualifyingStart,
-  qualifyingEnd   = :qualifyingEnd
+  qualifyingEnd   = :qualifyingEnd,
+  eligibilityStart = :eligibilityStart,
+  eligibilityEnd   = :eligibilityEnd
 ;`
 
 export default defineEventHandler( async ( event ) => {

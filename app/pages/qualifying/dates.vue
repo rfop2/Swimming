@@ -2,10 +2,10 @@
   import type { CellValueChangedEvent, NewValueParams, SizeColumnsToFitGridStrategy, ValueFormatterParams, ValueGetterParams, ValueSetterParams } from "ag-grid-community"
   import { ModuleRegistry, DateEditorModule, ValidationModule, ClientSideRowModelModule, ColumnAutoSizeModule, TextFilterModule, CustomEditorModule, CellStyleModule, TextEditorModule } from "ag-grid-community"
   import { AgGridVue } from "ag-grid-vue3" // Vue Data Grid Component
-  import { REGIONS, COUNTIES, NATIONALITIES, type QualifyingPeriodRow } from "lib"
+  import { REGIONS, COUNTIES, type ScopeType } from "lib"
   import { addMonths, format, getYear } from "date-fns"
   import type { FetchError } from "ofetch"
-  import { ArrowUturnLeftIcon, CheckIcon, ClipboardDocumentCheckIcon, ClipboardDocumentIcon, ClipboardDocumentListIcon, TrashIcon } from "@heroicons/vue/24/outline"
+  import { ArrowUturnLeftIcon, CheckIcon } from "@heroicons/vue/24/outline"
 
   // ModuleRegistry.registerModules( [ AllCommunityModule ] )
   ModuleRegistry.registerModules( [
@@ -24,10 +24,11 @@
     middleware: [ "protected" ]
   } )
 
+  const description = "Qualifying periods and cut-off for summer, winter and general competitions."
   useHead( {
     title: "Qualifying Dates",
     meta: [
-      { name: "description", content: "Qualifying periods and cut-off for summer, winter and general competitions" }
+      { name: "description", content: description }
     ]
   } )
 
@@ -60,19 +61,13 @@
       value: "regional",
       label: "Regional",
     },
-    /* {
-      value: "national",
-      label: "National",
-    }, */
   ]
 
-  const areasFromScope = ( scope: string ) => {
+  const areasFromScope = ( scope: ScopeType ) => {
     if ( scope === "county" )
       return [ { label: "All Counties", value: "" } ].concat( Object.entries( COUNTIES ).map( ( [ k, v ] ) => ( { label: v, value: k } ) ).slice( 1 ) )
     if ( scope === "regional" )
       return [ { label: "All Regions", value: "" } ].concat( Object.entries( REGIONS ).map( ( [ k, v ] ) => ( { label: v, value: k } ) ).slice( 1 ) )
-    if ( scope === "national" )
-      return Object.entries( NATIONALITIES ).map( ( [ k, v ] ) => ( { label: v, value: k } ) )
     return []
   }
 
@@ -98,51 +93,28 @@
     type: [] as string[],
   } )
 
-  const areas = computed( () => areasFromScope( selections.value.scope ) )
-
-  const added = ref<Array<QualifyingPeriodRow>>( [] )
-  const deleted = ref<Array<QualifyingPeriodRow>>( [] )
-
-  watch( added, eq => {
-    console.log( "GE", eq )
-  }, { deep: true } )
-  watch( deleted, eq => {
-    console.log( "DE", eq )
-  }, { deep: true } )
-
-  const effectiveQualifying = computed(
-    () =>
-      ( qualifying.value ?? [] )
-        .concat( added.value )
-        .filter(
-          row => !deleted.value.find( deletedRow => JSON.stringify( deletedRow ) === JSON.stringify( row ) )
-        )
-  )
-
-  watch( effectiveQualifying, eq => {
-    console.log( "EQ", eq )
-  }, { deep: true } )
+  const areas = computed( () => areasFromScope( selections.value.scope as ScopeType ) )
 
   const filteredQualifying = computed( () => {
-    const filtered = effectiveQualifying.value.filter( row => {
-      if ( row.qualifyingYear !== selections.value.year )
+    const filtered = ( qualifying.value ?? [] ).filter( row => {
+      if ( row.year !== selections.value.year )
         return false
-      if ( selections.value.scope && ( row.qualifyingScope !== selections.value.scope ) )
+      if ( selections.value.scope && ( row.scope !== selections.value.scope ) )
         return false
-      if ( selections.value.area && ( row.qualifyingArea !== selections.value.area ) )
+      if ( selections.value.area && ( row.area !== selections.value.area ) )
         return false
-      if ( selections.value.type.length && !selections.value.type.includes( row.qualifyingType ) )
+      if ( selections.value.type.length && !selections.value.type.includes( row.type ) )
         return false
       return true
     } )
     filtered.sort( ( a, b ) => {
-      const diff1 = a.qualifyingYear - b.qualifyingYear
+      const diff1 = a.year - b.year
       if ( diff1 !== 0 ) return diff1
-      const diff2 = a.qualifyingScope.localeCompare( b.qualifyingScope )
+      const diff2 = a.scope.localeCompare( b.scope )
       if ( diff2 !== 0 ) return diff2
-      const diff3 = a.qualifyingArea.localeCompare( b.qualifyingArea )
+      const diff3 = a.area.localeCompare( b.area )
       if ( diff3 !== 0 ) return diff3
-      const diff4 = a.qualifyingType.localeCompare( b.qualifyingType )
+      const diff4 = a.type.localeCompare( b.type )
       return diff4
     } )
     return filtered
@@ -151,41 +123,11 @@
   watchEffect( () => {
     console.log( "FQ", filteredQualifying.value )
   } )
-  const clipboard = ref<Array<QualifyingPeriodRow>>( [] )
-
-  watch( clipboard, eq => {
-    console.log( "CB", eq )
-  } )
 
   const errString = ref<string | null>( null )
 
-  async function clear( _e: Event ) {
-    deleted.value = deleted.value.concat( filteredQualifying.value )
-    dirty.value = true
-  }
-
-  async function copy( _e: Event ) {
-    clipboard.value = JSON.parse( JSON.stringify( filteredQualifying.value ) )
-  }
-
-  async function paste( _e: Event ) {
-    for ( const row of clipboard.value ) {
-      added.value.push( { ...row, ...{
-        year: selections.value.year,
-        scope: selections.value.scope,
-        area: selections.value.area,
-        type: selections.value.type,
-      } } )
-    }
-    dirty.value = true
-  }
-
   async function reset( _e: Event ) {
-    added.value = []
     await refreshNuxtData( "qualifying-dates" )
-    deleted.value = []
-    added.value = []
-    clipboard.value = []
     dirty.value = false
   }
 
@@ -194,11 +136,10 @@
     try {
       await $fetch( "/api/qualifying/dates", {
         method: "PUT",
-        body: JSON.stringify( ( qualifying.value ?? [] ).concat( added.value.filter( data => !!data.qualifyingStart ) ) ),
+        body: JSON.stringify( ( qualifying.value ?? [] ) ),
       } )
       saveSuccess.value = true
       await refreshNuxtData( "qualifying-dates" )
-      added.value = []
       dirty.value = false
     } catch ( error ) {
       console.error( "Error", error )
@@ -219,38 +160,36 @@
 
   useUnsavedWarning( () => dirty.value )
 
-  const lookupScope = ( scope: string ) => ( scope.charAt( 0 ).toUpperCase() + scope.slice( 1 ) )
-  const lookupArea = ( scope: string, area: string ) => {
+  const lookupScope = ( scope: ScopeType ) => ( scope.charAt( 0 ).toUpperCase() + scope.slice( 1 ) )
+  const lookupArea = ( scope: ScopeType, area: string ) => {
     if ( scope === "county" )
       return COUNTIES[area]
     if ( scope === "regional" )
       return REGIONS[area]
-    if ( scope === "national" )
-      return NATIONALITIES[area]
     return "<error>"
   }
 
   const columns = computed( () => [
     {
-      field: "qualifyingYear",
+      field: "year",
       filter: false,
     },
     {
-      field: "qualifyingScope",
+      field: "scope",
       filter: false,
       valueFormatter: ( { value }: ValueFormatterParams ) => lookupScope( value ),
       // filterValueGetter: ( params: ValueGetterParams ) => lookupScope( params.data.quaifyingScope ),
     },
     {
-      field: "qualifyingArea",
+      field: "area",
       filter: false,
-      valueFormatter: ( { value, data }: ValueFormatterParams ) => lookupArea( data.qualifyingScope, value ),
-      // filterValueGetter: ( params: ValueGetterParams ) => lookupArea( params.data.qualifyingScope, params.data.qualifyingArea ),
+      valueFormatter: ( { value, data }: ValueFormatterParams ) => lookupArea( data.scope, value ),
+      // filterValueGetter: ( params: ValueGetterParams ) => lookupArea( params.data.scope, params.data.area ),
     },
     {
-      field: "qualifyingType",
+      field: "type",
       filter: false,
-      valueGetter: ( params: ValueGetterParams ) => params.data.qualifyingType.charAt( 0 ).toUpperCase() + params.data.qualifyingType.slice( 1 )
+      valueGetter: ( params: ValueGetterParams ) => params.data.type.charAt( 0 ).toUpperCase() + params.data.type.slice( 1 )
     },
     {
       field: "qualifyingStart",
@@ -303,68 +242,11 @@
   >
     <template #description>
       <div class="sm:flex sm:justify-between">
-        <div>Qualifying periods for winter, summer and general qualifying areas.</div>
+        <div>{{ description }}</div>
         <div
           v-if="user.admin"
           class="sm:flex sm:items-end"
         >
-          <div
-            v-if="false && filteredQualifying.length"
-            class="mt-4 sm:ml-4 sm:mt-0 sm:flex-none"
-          >
-            <button
-              type="button"
-              class="inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
-              title="Copy the displayed times"
-              @click="copy"
-            >
-              <ClipboardDocumentIcon
-                v-if="!clipboard.length"
-                class="-ml-0.5 size-5"
-                aria-hidden="true"
-              />
-              <ClipboardDocumentCheckIcon
-                v-else
-                class="-ml-0.5 size-5"
-                aria-hidden="true"
-              />
-              Copy
-            </button>
-          </div>
-          <div
-            v-if="false && clipboard.length && !filteredQualifying.length"
-            class="mt-4 sm:ml-4 sm:mt-0 sm:flex-none"
-          >
-            <button
-              type="button"
-              class="inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
-              title="Paste the copied times"
-              @click="paste"
-            >
-              <ClipboardDocumentListIcon
-                class="-ml-0.5 size-5"
-                aria-hidden="true"
-              />
-              Paste
-            </button>
-          </div>
-          <div
-            v-if="false && filteredQualifying.length"
-            class="mt-4 sm:ml-4 sm:mt-0 sm:flex-none"
-          >
-            <button
-              type="button"
-              class="inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
-              title="Delete all displayed times"
-              @click="clear"
-            >
-              <TrashIcon
-                class="-ml-0.5 size-5"
-                aria-hidden="true"
-              />
-              Delete
-            </button>
-          </div>
           <div class="mt-4 sm:ml-4 sm:mt-0 sm:flex-none">
             <button
               type="button"

@@ -1,12 +1,13 @@
 <script setup lang="ts">
-  import { COURSES, convertTime, getSwimmerAgeGroup, secondsToTime, strokes, type QualifyingRow } from "lib"
+  import { COURSES, convertTime, secondsToTime, strokes, type QualifyingRow } from "lib"
   import { Line } from "vue-chartjs"
   import { Chart as ChartJS, CategoryScale, LinearScale, TimeScale, PointElement, LineElement, Title, Tooltip, Legend, type ChartData, type ChartOptions, type TooltipItem } from "chart.js"
   import "chartjs-adapter-date-fns"
-  import annotationPlugin from "chartjs-plugin-annotation"
+  import annotationPlugin, { type AnnotationOptions } from "chartjs-plugin-annotation"
 
   import type { InternalApi } from "nitropack"
-  import { format, getYear } from "date-fns"
+  import { format } from "date-fns"
+  import { FetchError } from "ofetch"
 
   definePageMeta( {
     layout: "secure",
@@ -27,7 +28,7 @@
   const strokeOptions = Object.entries( strokes ).map( ( [ k, v ] ) => ( { value: k, label: v.label } ) )
   const distanceOptions = reactive<{ value: string, label: string }[]>( strokes[slug[1] ?? Object.keys( strokes )[0]].distances.map( d => ( { value: d, label: d } ) ) )
 
-  const { state: selections } = usePersisted( "results-selection", {
+  const selections = reactive( {
     course: ( courseOptions.find( option => option.value === slug[0] ) ?? courseOptions[0] ).value,
     stroke: ( strokeOptions.find( option => option.value === slug[1] ) ?? strokeOptions[0] ).value,
     distance: ( distanceOptions.find( option => option.value === slug[2] ) ?? distanceOptions[0] ).value,
@@ -36,7 +37,7 @@
       startDate: undefined,
       endDate: undefined,
     }
-  }, "reactive" )
+  } )
 
   watch( () => selections.stroke, ( newStroke ) => {
     distanceOptions.length = 0
@@ -56,28 +57,24 @@
 
   const { swimmer } = useSwimmer()
 
-  // type QualifyingApiResponse = InternalApi["/api/qualifying"]["get"]
-  const { data: qualifyingInfo } = await useFetch(
-    "/api/qualifying/times",
-  )
+  type ResultsApiResponse = InternalApi["/api/results/:id"]["get"]
+  type ResultType = ResultsApiResponse[number]
 
-  type ApiResponse = InternalApi["/api/results/:id"]["get"]
-  type ResultType = ApiResponse[number]
-  /* interface AreaDetail extends Partial<ApiResponse[number]> {
-    label: string
-  } */
+  type QualifyingApiResponse = InternalApi["/api/qualifying/swimmer/:id"]["get"]
 
   interface ExtQualifyingRow extends QualifyingRow {
     courseTime: number
   }
 
-  const records = ref<ApiResponse>( [] )
+  const records = ref<ResultsApiResponse>( [] )
+  const qualifying = ref<QualifyingApiResponse>( [] )
   const qualifyingTimes = ref<ExtQualifyingRow[]>( [] )
   const countyQualifying = ref<ExtQualifyingRow | undefined>( undefined )
-  const regionQualifying = ref<ExtQualifyingRow | undefined>( undefined )
+  const summerQualifying = ref<ExtQualifyingRow | undefined>( undefined )
+  const winterQualifying = ref<ExtQualifyingRow | undefined>( undefined )
 
   // Better type narrowing guard
-  const hasSwimmer = ( s: typeof swimmer ): s is typeof swimmer & { value: NonNullable<typeof s.value> } => s.value != null
+  const hasSwimmer = ( s: typeof swimmer ): s is typeof swimmer & { value: NonNullable<typeof s.value> } => s.value != null && s.value !== undefined
 
   watchEffect( async () => {
     if ( hasSwimmer( swimmer ) ) {
@@ -98,7 +95,7 @@
       if ( selections.period.endDate ) {
         query.endDate = selections.period.endDate
       }
-      records.value = await $fetch<ApiResponse>( `/api/results/${swimmer.value.id}`, { query } )
+      records.value = await $fetch<ResultsApiResponse>( `/api/results/${swimmer.value.id}`, { query } )
       records.value.sort( ( a, b ) => {
         if ( a.date < b.date ) {
           return -1
@@ -113,33 +110,62 @@
         return 0
       } )
 
-      const currentYear = getYear( new Date() )
-      const swimmerAge = getSwimmerAgeGroup( swimmer.value )
-      qualifyingTimes.value = ( qualifyingInfo.value ?? [] as QualifyingRow[] ).filter( q => {
-        if ( q.year !== currentYear )
-          return false
-        if ( q.stroke !== selections.stroke )
-          return false
-        if ( q.distance !== selections.distance )
-          return false
-        if ( q.gender !== swimmer.value.gender )
-          return false
-        if ( q.age !== swimmerAge )
-          return false
-        if ( q.scope === "county" && q.area !== swimmer.value.county )
-          return false
-        if ( q.scope === "regional" && q.area !== swimmer.value.region )
-          return false
-        if ( q.scope === "national" && q.area !== swimmer.value.nationality )
-          return false
-        return true
-      } ).map( ( q ): ExtQualifyingRow => ( {
-        ...q,
-        courseTime: convertTime( q.course, selections.course, selections.stroke, selections.distance, q.time )
-      } ) )
-      countyQualifying.value = qualifyingTimes.value.find( q => q.scope === "county" )
-      regionQualifying.value = qualifyingTimes.value.find( q => q.scope === "regional" )
-      // const nationQualifying = computed( () => qualifyingTimes.value.find( q => q.scope === "national" ) )
+      try {
+        qualifying.value = await $fetch<QualifyingApiResponse>( `/api/qualifying/swimmer/${swimmer.value.id}` )
+      } catch ( error ) {
+        if ( error instanceof FetchError ) {
+          const apiError = error as FetchError
+          if ( apiError.status === 404 ) {
+            qualifying.value = []
+          } else {
+            throw error
+          }
+        }
+      }
+
+      const qualifyingPeriods = ( qualifying.value ?? [] ).filter( v => ( v.period.qualifyingActive ) )
+      console.log( "qp", qualifyingPeriods )
+      const eligibilityPeriods = ( qualifying.value ?? [] ).filter( v => ( v.period.eligibilityActive ) )
+      console.log( "ep", eligibilityPeriods )
+
+      countyQualifying.value = ( qualifyingPeriods.find( v => v.period.scope === "county" )?.times ?? [] )
+        .map( q => ( {
+          ...q,
+          courseTime: convertTime( q.course, selections.course, selections.stroke, selections.distance, q.time )
+        } ) )
+        .find( t => {
+          if ( t.stroke !== selections.stroke )
+            return false
+          if ( t.distance !== selections.distance )
+            return false
+          return true
+        } )
+      summerQualifying.value = ( qualifyingPeriods.find( v => v.period.scope === "regional" && v.period.type === "summer" )?.times ?? [] )
+        .map( q => ( {
+          ...q,
+          courseTime: convertTime( q.course, selections.course, selections.stroke, selections.distance, q.time )
+        } ) )
+        .find( t => {
+          if ( t.stroke !== selections.stroke )
+            return false
+          if ( t.distance !== selections.distance )
+            return false
+          return true
+        } )
+      winterQualifying.value = ( qualifyingPeriods.find( v => v.period.scope === "regional" && v.period.type === "winter" )?.times ?? [] )
+        .map( q => ( {
+          ...q,
+          courseTime: convertTime( q.course, selections.course, selections.stroke, selections.distance, q.time )
+        } ) )
+        .find( t => {
+          if ( t.stroke !== selections.stroke )
+            return false
+          if ( t.distance !== selections.distance )
+            return false
+          return true
+        } )
+      qualifyingTimes.value = [ countyQualifying.value, summerQualifying.value, winterQualifying.value ].filter( q => !!q ).sort( ( a, b ) => a.courseTime - b.courseTime )
+      console.log( "Q", countyQualifying.value, summerQualifying.value, winterQualifying, qualifyingTimes.value )
     }
   } )
 
@@ -218,6 +244,52 @@
 
   const ucFirst = ( s: string ) => s.charAt( 0 ).toLocaleUpperCase() + s.slice( 1 )
 
+  const boxColours = {
+    "general": {
+      colour: "#137c3a",
+      background: "#22c55e30",
+    },
+    "summer": {
+      colour: "#b65e1f",
+      background: "#f9741642",
+    },
+    "winter": {
+      colour: "#5e90be",
+      background: "#3cadfd80",
+    },
+  }
+  const boxes = computed( () => Object.fromEntries( qualifyingTimes.value.map( ( time, i ) => ( [ `zone${i + 1}`, {
+    type: "box",
+    yMin: ( i > 0 ) ? qualifyingTimes.value[i - 1].courseTime : 0,
+    yMax: time.courseTime,
+    backgroundColor: boxColours[time.type].background,
+    borderWidth: 0,
+    drawTime: "beforeDatasetsDraw", // <<--- important
+    label: {
+      display: true,
+      content: `${ucFirst( time.scope === "county" ? time.scope : time.type )}: ${secondsToTime( time.courseTime )}`,
+      position: "start",
+      backgroundColor: boxColours[time.type].background,
+      color: boxColours[time.type].colour,
+      font: {
+        size: 12,
+        weight: "normal",
+      },
+      padding: {
+        top: 4,
+        right: 6,
+        bottom: 4,
+        left: 6,
+        padding: 4,
+        borderRadius: 4,
+      },
+    }
+  } as AnnotationOptions ] ) ) ) )
+
+  watchEffect( () => {
+    console.log( "BOX", boxes.value )
+  } )
+
   const options = computed<ChartOptions<"line">>( () => ( {
     responsive: true,
     maintainAspectRatio: false,
@@ -264,57 +336,7 @@
         }
       },
       annotation: {
-        annotations: {
-          zone1: {
-            type: "box",
-            yMin: regionQualifying.value?.courseTime,
-            yMax: countyQualifying.value?.courseTime,
-            backgroundColor: "#22c55e30",
-            display: !!countyQualifying.value,
-            borderWidth: 0,
-            drawTime: "beforeDatasetsDraw", // <<--- important
-            label: {
-              display: true,
-              content: `${ucFirst( countyQualifying.value?.scope ?? "" )}: ${secondsToTime( countyQualifying.value?.courseTime || 0 )}`,
-              position: "start",
-              backgroundColor: "#22c55e30",
-              color: "#137c3a",
-              font: {
-                size: 12,
-                weight: "normal",
-                // family: "Arial"
-              },
-              padding: {
-                top: 4,
-                right: 6,
-                bottom: 4,
-                left: 6
-              },
-            }
-          },
-          zone2: {
-            type: "box",
-            yMin: 0,
-            yMax: regionQualifying.value?.courseTime,
-            backgroundColor: "#f9741642",
-            display: !!regionQualifying.value,
-            borderWidth: 0,
-            drawTime: "beforeDatasetsDraw", // <<--- important
-            label: {
-              display: true,
-              content: `${ucFirst( regionQualifying.value?.scope ?? "" )}: ${secondsToTime( regionQualifying.value?.courseTime || 0 )}`,
-              position: "start",
-              backgroundColor: "#f9741642",
-              color: "#b65e1f",
-              font: {
-                size: 12,
-                weight: "normal"
-              },
-              padding: 4,
-              borderRadius: 4
-            }
-          },
-        }
+        annotations: boxes.value,
       }
     }
   } ) )

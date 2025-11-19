@@ -34,14 +34,25 @@ export interface ExtSwimmer extends Swimmer {
   squads: string
 }
 
-export type CourseType = "lc" | "sc"
-export type StrokeType = "freestyle" | "breaststroke" | "butterfly" | "backstroke" | "individual_medley"
-export type DistanceType = "50m" | "100m" | "150m" | "200m" | "400m" | "800m" | "1500m"
+export const scopeTypes = [ "regional", "county" ] as const
+export type ScopeType = typeof scopeTypes[number]
+
+export const courseTypes = [ "lc", "sc" ] as const
+export type CourseType = typeof courseTypes[number]
+
+export const strokeTypes = [ "freestyle", "breaststroke", "butterfly", "backstroke", "individual_medley" ] as const
+export type StrokeType = typeof strokeTypes[number]
+
+export const distanceTypes = [ "50m", "100m", "150m", "200m", "400m", "800m", "1500m" ] as const
+export type DistanceType = typeof distanceTypes[number]
+
+export const genderTypes = [ "male", "female" ] as const
+export type GenderType = typeof genderTypes[number]
 
 export interface IndividualStats {
-  course: string
-  stroke: string
-  distance: string
+  course: CourseType
+  stroke: StrokeType
+  distance: DistanceType
   time: number
   converted_time: number
   wa_pts: number
@@ -90,10 +101,10 @@ export interface Ranking {
 
 export interface PerformanceRow extends RankingStats {
   created: string
-  course: string
-  stroke: string
-  distance: string
-  scope: string
+  course: CourseType
+  stroke: StrokeType
+  distance: DistanceType
+  scope: ScopeType
   area: string
 }
 
@@ -111,10 +122,10 @@ export interface ResultData {
 export type Results = Array<ResultData>
 
 export interface ResultsRow extends ResultData {
+  course: CourseType
+  stroke: StrokeType
+  distance: DistanceType
   created: string
-  course: string
-  stroke: string
-  distance: string
 }
 
 export interface Club {
@@ -179,27 +190,31 @@ export type PageData = Array<PageInfo>
 
 export interface QualifyingRow {
   year: number
-  course: string
-  stroke: string
-  distance: string
-  scope: string
+  course: CourseType
+  stroke: StrokeType
+  distance: DistanceType
+  scope: ScopeType
   area: string
-  gender: string
+  type: QualifyingType
+  gender: GenderType
   age: string
   timeString: string
   time: number
-  created: string
 }
 
+export const qualifyingTypes = [ "general", "winter", "summer" ] as const
+export type QualifyingType = typeof qualifyingTypes[number]
+
 export interface QualifyingPeriodRow {
-  qualifyingYear: number
-  qualifyingScope: string
-  qualifyingArea: string
-  qualifyingType: string
+  year: number
+  scope: ScopeType
+  area: string
+  type: QualifyingType
   qualifyingStart: string
   qualifyingEnd?: string
-  qualifyingNotes?: string
-  created: string
+  eligibilityStart: string
+  eligibilityEnd?: string
+  notes?: string
 }
 
 export interface Task {
@@ -219,3 +234,5 @@ export interface Task {
 
 export type SwimmerUpdateType = "individual" | "results" | "rankings"
 export type SwimmerUpdateMode = "force" | "smart" | "lazy"
+
+export const typedKeys = <T extends object>( obj: T ): Array<keyof T> => Object.keys( obj ) as Array<keyof T>

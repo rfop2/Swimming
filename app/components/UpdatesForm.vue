@@ -40,7 +40,7 @@
     selectAll.value = newSelected.every( s => !!s )
   }, { deep: true } )
 
-  const updateAll = async ( updateType: string ) => {
+  const updateAll = async ( updateType: string, force: boolean ) => {
     try {
       const updateTasks: Array<Partial<Task>> = swimmers.value.map( s => ( {
         taskType: "update",
@@ -57,7 +57,7 @@
     }
   }
 
-  const updateSelected = async ( updateType: string ) => {
+  const updateSelected = async ( updateType: string, force: boolean ) => {
     try {
       const updateTasks: Array<Partial<Task>> = swimmers.value.filter( ( s, i ) => selected.value[i] ).map( s => ( {
         taskType: "update",
@@ -74,7 +74,7 @@
     }
   }
 
-  const updateSwimmer = async ( swimmerIndex: number, updateType: string ) => {
+  const updateSwimmer = async ( swimmerIndex: number, updateType: string, force: boolean ) => {
     const swimmer = swimmers.value[swimmerIndex]
     try {
       await createTask( {
@@ -126,11 +126,11 @@
 
   const queueUpdates = async () => {
     if ( selectedForUpdate.value === "all" ) {
-      await updateAll( updateType.value )
+      await updateAll( updateType.value, force.value )
     } else if ( selectedForUpdate.value === "selected" ) {
-      await updateSelected( updateType.value )
+      await updateSelected( updateType.value, force.value )
     } else if ( selectedForUpdate.value !== null ) {
-      await updateSwimmer( selectedForUpdate.value, updateType.value )
+      await updateSwimmer( selectedForUpdate.value, updateType.value, force.value )
     }
     selectedForUpdate.value = null
   }

@@ -314,16 +314,18 @@ DROP TABLE IF EXISTS `QualifyingPeriods`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `QualifyingPeriods` (
-  `qualifyingYear` int(11) NOT NULL,
-  `qualifyingScope` enum('regional','county') NOT NULL,
-  `qualifyingArea` varchar(32) NOT NULL,
-  `qualifyingType` enum('general','summer','winter') NOT NULL DEFAULT 'general',
+  `year` int(11) NOT NULL,
+  `scope` enum('regional','county') NOT NULL,
+  `area` varchar(32) NOT NULL,
+  `type` enum('general','summer','winter') NOT NULL DEFAULT 'general',
   `qualifyingStart` date DEFAULT NULL,
   `qualifyingEnd` date DEFAULT NULL,
-  `qualifyingNotes` varchar(255) DEFAULT NULL,
+  `eligibilityStart` date DEFAULT NULL,
+  `eligibilityEnd` date DEFAULT NULL,
+  `notes` varchar(255) DEFAULT NULL,
   `created` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
-  PRIMARY KEY (`qualifyingYear`,`qualifyingScope`,`qualifyingArea`,`qualifyingType`) USING BTREE
+  PRIMARY KEY (`year`,`scope`,`area`,`type`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -341,13 +343,14 @@ CREATE TABLE `QualifyingTimes` (
   `distance` varchar(8) NOT NULL,
   `scope` varchar(16) NOT NULL,
   `area` varchar(16) NOT NULL,
+  `type` enum('general','summer','winter') NOT NULL DEFAULT 'general',
   `gender` varchar(16) NOT NULL,
   `age` varchar(8) NOT NULL,
   `timeString` varchar(16) NOT NULL,
   `time` decimal(8,2) NOT NULL DEFAULT 0.00,
   `created` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
-  PRIMARY KEY (`year`,`course`,`stroke`,`distance`,`scope`,`area`,`gender`,`age`),
+  PRIMARY KEY (`year`,`course`,`stroke`,`distance`,`scope`,`area`,`type`,`gender`,`age`) USING BTREE,
   UNIQUE KEY `idx_qualifying` (`year`,`age`,`gender`,`course`,`stroke`,`distance`,`scope`,`area`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
