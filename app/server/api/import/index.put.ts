@@ -1,5 +1,5 @@
 import { format } from "date-fns"
-import { getPool, prepareStatement, runTransaction } from "lib/index.ts"
+import { getPool, prepareStatement, runTransaction } from "lib"
 
 export default eventHandler( async ( event ) => {
   if ( !event.context.session ) {
