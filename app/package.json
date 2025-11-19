@@ -9,7 +9,8 @@
     "dev": "nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare"
+    "postinstall": "nuxt prepare",
+    "test": "vitest"
   },
   "dependencies": {
     "@headlessui/vue": "^1.7.23",
@@ -38,11 +39,13 @@
     "mysql2": "^3.15.3",
     "node-fetch": "^3.3.2",
     "nuxt": "^3.20.1",
+    "pdf-parse": "^2.4.5",
     "primeicons": "^7.0.0",
     "seedrandom": "^3.0.5",
     "vue": "^3.5.24",
     "vue-chartjs": "^5.3.3",
-    "vue-router": "^4.6.3"
+    "vue-router": "^4.6.3",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@nuxt/eslint": "^1.10.0",
