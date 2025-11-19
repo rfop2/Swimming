@@ -3,7 +3,7 @@
   import { Line } from "vue-chartjs"
   import { Chart as ChartJS, CategoryScale, LinearScale, TimeScale, PointElement, LineElement, Title, Tooltip, Legend, type ChartData, type ChartOptions, type TooltipItem } from "chart.js"
   import "chartjs-adapter-date-fns"
-  import annotationPlugin from "chartjs-plugin-annotation"
+  import annotationPlugin, { type AnnotationOptions } from "chartjs-plugin-annotation"
 
   import type { InternalApi } from "nitropack"
   import { format } from "date-fns"
@@ -70,7 +70,8 @@
   const qualifying = ref<QualifyingApiResponse>( [] )
   const qualifyingTimes = ref<ExtQualifyingRow[]>( [] )
   const countyQualifying = ref<ExtQualifyingRow | undefined>( undefined )
-  const regionQualifying = ref<ExtQualifyingRow | undefined>( undefined )
+  const summerQualifying = ref<ExtQualifyingRow | undefined>( undefined )
+  const winterQualifying = ref<ExtQualifyingRow | undefined>( undefined )
 
   // Better type narrowing guard
   const hasSwimmer = ( s: typeof swimmer ): s is typeof swimmer & { value: NonNullable<typeof s.value> } => s.value != null && s.value !== undefined
@@ -139,7 +140,7 @@
             return false
           return true
         } )
-      regionQualifying.value = ( qualifyingPeriods.find( v => v.period.scope === "regional" )?.times ?? [] )
+      summerQualifying.value = ( qualifyingPeriods.find( v => v.period.scope === "regional" && v.period.type === "summer" )?.times ?? [] )
         .map( q => ( {
           ...q,
           courseTime: convertTime( q.course, selections.course, selections.stroke, selections.distance, q.time )
@@ -151,7 +152,7 @@
             return false
           return true
         } )
-      regionQualifying.value = ( qualifyingPeriods.find( v => v.period.scope === "regional" )?.times ?? [] )
+      winterQualifying.value = ( qualifyingPeriods.find( v => v.period.scope === "regional" && v.period.type === "winter" )?.times ?? [] )
         .map( q => ( {
           ...q,
           courseTime: convertTime( q.course, selections.course, selections.stroke, selections.distance, q.time )
@@ -163,8 +164,8 @@
             return false
           return true
         } )
-      qualifyingTimes.value = [ countyQualifying.value, regionQualifying.value ].filter( q => !!q )
-      console.log( "Q", countyQualifying.value, regionQualifying.value )
+      qualifyingTimes.value = [ countyQualifying.value, summerQualifying.value, winterQualifying.value ].filter( q => !!q ).sort( ( a, b ) => a.courseTime - b.courseTime )
+      console.log( "Q", countyQualifying.value, summerQualifying.value, winterQualifying, qualifyingTimes.value )
     }
   } )
 
@@ -243,6 +244,52 @@
 
   const ucFirst = ( s: string ) => s.charAt( 0 ).toLocaleUpperCase() + s.slice( 1 )
 
+  const boxColours = {
+    "general": {
+      colour: "#137c3a",
+      background: "#22c55e30",
+    },
+    "summer": {
+      colour: "#b65e1f",
+      background: "#f9741642",
+    },
+    "winter": {
+      colour: "#5e90be",
+      background: "#3cadfd80",
+    },
+  }
+  const boxes = computed( () => Object.fromEntries( qualifyingTimes.value.map( ( time, i ) => ( [ `zone${i + 1}`, {
+    type: "box",
+    yMin: ( i > 0 ) ? qualifyingTimes.value[i - 1].courseTime : 0,
+    yMax: time.courseTime,
+    backgroundColor: boxColours[time.type].background,
+    borderWidth: 0,
+    drawTime: "beforeDatasetsDraw", // <<--- important
+    label: {
+      display: true,
+      content: `${ucFirst( time.scope === "county" ? time.scope : time.type )}: ${secondsToTime( time.courseTime )}`,
+      position: "start",
+      backgroundColor: boxColours[time.type].background,
+      color: boxColours[time.type].colour,
+      font: {
+        size: 12,
+        weight: "normal",
+      },
+      padding: {
+        top: 4,
+        right: 6,
+        bottom: 4,
+        left: 6,
+        padding: 4,
+        borderRadius: 4,
+      },
+    }
+  } as AnnotationOptions ] ) ) ) )
+
+  watchEffect( () => {
+    console.log( "BOX", boxes.value )
+  } )
+
   const options = computed<ChartOptions<"line">>( () => ( {
     responsive: true,
     maintainAspectRatio: false,
@@ -289,57 +336,7 @@
         }
       },
       annotation: {
-        annotations: {
-          zone1: {
-            type: "box",
-            yMin: regionQualifying.value?.courseTime,
-            yMax: countyQualifying.value?.courseTime,
-            backgroundColor: "#22c55e30",
-            display: !!countyQualifying.value,
-            borderWidth: 0,
-            drawTime: "beforeDatasetsDraw", // <<--- important
-            label: {
-              display: true,
-              content: `${ucFirst( countyQualifying.value?.scope ?? "" )}: ${secondsToTime( countyQualifying.value?.courseTime || 0 )}`,
-              position: "start",
-              backgroundColor: "#22c55e30",
-              color: "#137c3a",
-              font: {
-                size: 12,
-                weight: "normal",
-                // family: "Arial"
-              },
-              padding: {
-                top: 4,
-                right: 6,
-                bottom: 4,
-                left: 6
-              },
-            }
-          },
-          zone2: {
-            type: "box",
-            yMin: 0,
-            yMax: regionQualifying.value?.courseTime,
-            backgroundColor: "#f9741642",
-            display: !!regionQualifying.value,
-            borderWidth: 0,
-            drawTime: "beforeDatasetsDraw", // <<--- important
-            label: {
-              display: true,
-              content: `${ucFirst( regionQualifying.value?.scope ?? "" )}: ${secondsToTime( regionQualifying.value?.courseTime || 0 )}`,
-              position: "start",
-              backgroundColor: "#f9741642",
-              color: "#b65e1f",
-              font: {
-                size: 12,
-                weight: "normal"
-              },
-              padding: 4,
-              borderRadius: 4
-            }
-          },
-        }
+        annotations: boxes.value,
       }
     }
   } ) )
