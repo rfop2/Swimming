@@ -2,13 +2,47 @@
   {
     "isoDate": "2025-11-19",
     "niceDate": "19 November 2025",
-    "diff": "11.16.1..",
-    "href": "https://bitbucket.org/swimracing/swimming/compare/12.0.0..11.16.1",
+    "diff": "12.0.0..",
+    "href": "https://bitbucket.org/swimracing/swimming/compare/12.1.0..12.0.0",
     "major": false,
     "minor": false,
     "tag": null,
+    "title": "12.1.0",
+    "date": "2025-11-19T14:23:48.442Z",
+    "summary": null,
+    "commits": [
+      {
+        "hash": "32e4b69796c0778a0ed9d5e86bdb051ec2a9ecda",
+        "shorthash": "32e4b69",
+        "author": "Philip Coombes",
+        "email": "phil@web2wire.com",
+        "date": "2025-11-19T14:23:31.000Z",
+        "niceDate": "19 November 2025",
+        "subject": "Initial attempt to apply stand disabled style across form elements.",
+        "message": "Initial attempt to apply stand disabled style across form elements.",
+        "fixes": null,
+        "href": "https://bitbucket.org/swimracing/swimming/commits/32e4b69796c0778a0ed9d5e86bdb051ec2a9ecda",
+        "breaking": false,
+        "files": 5,
+        "insertions": 57,
+        "deletions": 9,
+        "merge": null
+      }
+    ],
+    "merges": [],
+    "fixes": []
+  },
+  {
+    "isoDate": "2025-11-19",
+    "niceDate": "19 November 2025",
+    "diff": "11.16.1..12.0.0",
+    "href": "https://bitbucket.org/swimracing/swimming/compare/12.0.0..11.16.1",
+    "major": true,
+    "minor": false,
+    "tag": "12.0.0",
+    "date": "2025-11-19",
     "title": "12.0.0",
-    "date": "2025-11-19T14:18:24.070Z",
+    "version": "12.0.0",
     "summary": null,
     "commits": [
       {
