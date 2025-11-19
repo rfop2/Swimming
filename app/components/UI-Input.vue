@@ -39,7 +39,7 @@
           :id="props.id ?? defaultId"
           v-model="model"
           :type="props.type"
-          class="col-start-1 row-start-1 appearance-none rounded border border-gray-300 bg-white checked:border-indigo-600 checked:bg-indigo-600 indeterminate:border-indigo-600 indeterminate:bg-indigo-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:border-gray-300 disabled:bg-gray-100 disabled:checked:bg-gray-100 forced-colors:appearance-auto"
+          class="form-disabled col-start-1 row-start-1 appearance-none rounded border border-gray-300 bg-white checked:border-indigo-600 checked:bg-indigo-600 indeterminate:border-indigo-600 indeterminate:bg-indigo-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:border-gray-300 disabled:bg-gray-100 disabled:checked:bg-gray-100 forced-colors:appearance-auto"
           :required="props.required"
           v-bind="$attrs"
         >
@@ -72,7 +72,7 @@
           :id="props.id ?? defaultId"
           v-model="model"
           :type="props.type"
-          class="block w-full rounded-md text-gray-900 border-gray-300 py-1.5 sm:text-sm sm:leading-6"
+          class="form-disabled block w-full rounded-md text-gray-900 border-gray-300 py-1.5 sm:text-sm sm:leading-6"
           :placeholder="props.placeholder"
           :required="props.required"
           v-bind="$attrs"
