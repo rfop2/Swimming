@@ -49,6 +49,14 @@ export default defineNuxtConfig( {
   },
 
   vite: {
+    build: {
+      rollupOptions: {
+        plugins: [ visualizer( { open: true, gzipSize: true, brotliSize: true } ) ],
+        output: {
+          chunkFileNames: "chunks/[name]-[hash].js", // readable names
+        }
+      }
+    },
     plugins: [
       {
         name: "externalize-puppeteer",
