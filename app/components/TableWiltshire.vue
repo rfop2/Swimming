@@ -543,16 +543,16 @@
             5.40.00
           </td>
         </tr>
-      </tbody>
-      <!-- spacer -->
-      <tr>
-        <td
-          class="border border-gray-400 p-2"
-          colspan="9"
-        >
+        <!-- spacer -->
+        <tr>
+          <td
+            class="border border-gray-400 p-2"
+            colspan="9"
+          >
 &nbsp;
-        </td>
-      </tr>
+          </td>
+        </tr>
+      </tbody>
 
       <thead>
         <tr>
