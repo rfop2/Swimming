@@ -39,23 +39,24 @@ const blockedResourceTypes = [
 
 let browser: Browser | null = null
 let page: Page | null = null
+let localHttpProxy: string | null = null
 
 export const getBrowserPage = async () => {
-  const { anonymizeProxy } = await import( "proxy-chain" )
-
   const username = process.env.NORDVPN_SC_USERNAME!
   const password = process.env.NORDVPN_SC_PASSWORD!
 
   // closest to UK: Dublin or Amsterdam SOCKS5
-  const socksHost = "nl.socks.nordhold.net" // or "amsterdam.nl.socks.nordhold.net"
-  const socksPort = 1080
-
-  const nordSocks = `socks5://${encodeURIComponent( username )}:${encodeURIComponent( password )}@${socksHost}:${socksPort}`
-  const localHttpProxy = await anonymizeProxy( nordSocks ) // converts SOCKS5→HTTP for Puppeteer
-
   const puppeteer = await import( "puppeteer" ) // dynamic import
 
   if ( !browser ) {
+    const { anonymizeProxy } = await import( "proxy-chain" )
+
+    const socksHost = "nl.socks.nordhold.net" // or "amsterdam.nl.socks.nordhold.net"
+    const socksPort = 1080
+
+    const nordSocks = `socks5://${encodeURIComponent( username )}:${encodeURIComponent( password )}@${socksHost}:${socksPort}`
+    localHttpProxy = await anonymizeProxy( nordSocks ) // converts SOCKS5→HTTP for Puppeteer
+
     const launchOptions: LaunchOptions = {
       headless: true,
       args: [
@@ -66,6 +67,14 @@ export const getBrowserPage = async () => {
       ]
     }
     browser = await puppeteer.launch( launchOptions )
+    process.on( "exit", async () => {
+      try {
+        if ( browser ) await closeBrowser()
+      } catch ( _e ) {
+        // Ignore error
+      }
+    } )
+
   }
 
   if ( !page || page.isClosed() ) {
@@ -128,10 +137,19 @@ export const getBrowserPage = async () => {
 }
 
 export const closeBrowser = async () => {
+  const { closeAnonymizedProxy } = await import( "proxy-chain" )
+
   // Close browser
   if ( browser ) {
+    if ( page ) {
+      page.removeAllListeners()
+      await page.close()
+      page = null
+    }
     await browser.close()
     browser = null
-    page = null
+  }
+  if ( localHttpProxy ) {
+    await closeAnonymizedProxy( localHttpProxy, true )
   }
 }
