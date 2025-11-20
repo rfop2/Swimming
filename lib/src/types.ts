@@ -220,6 +220,7 @@ export interface QualifyingPeriodRow {
 export interface Task {
   taskId: number
   creatorId?: string
+  creatorName?: string
   taskType: string
   taskOptions?: string
   taskDescription?: string
@@ -228,8 +229,10 @@ export interface Task {
   taskSchedule?: string
   taskStatus?: string
   taskResult?: string
-  startTime?: Date
-  endTime?: Date
+  startTime?: string | null
+  endTime?: string | null
+  created?: string
+  updated?: string
 }
 
 export type SwimmerUpdateType = "individual" | "results" | "rankings"

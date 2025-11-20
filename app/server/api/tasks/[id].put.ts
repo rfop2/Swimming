@@ -18,7 +18,7 @@ export default defineEventHandler( async ( event ) => {
 
     const selectTask = prepareStatement<{ taskId: string }, Task>(
       await getPool(),
-      "SELECT * FROM Tasks WHERE Id = :taskId"
+      "SELECT * FROM Tasks WHERE TaskId = :taskId"
     )
     const task = await selectTask.get( { taskId } )
     if ( !task ) {
@@ -38,13 +38,13 @@ export default defineEventHandler( async ( event ) => {
 
     const taskJob = prepareStatement<{ taskId: string }>(
       await getPool(),
-      "UPDATE Tasks SET taskStatus = :taskStatus WHERE id = :taskId"
+      "UPDATE Tasks SET taskStatus = :taskStatus WHERE taskId = :taskId"
     )
     await taskJob.run( { ...jobData, ...{ taskId } } )
   } catch ( error ) {
     console.error( error )
     throw createError( {
-      message: "Unable to task job record",
+      message: "Unable update to task job record",
       status: 500
     } )
   }

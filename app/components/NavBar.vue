@@ -154,6 +154,7 @@
   const userNavigation = computed<UserNavOption[]>( () => [
     { name: "Account", href: "/account" },
     { name: "Updates", href: "/updates" },
+    { name: "Tasks", href: "/tasks" },
     { name: "Users", href: "/users", condition: () => !!Number( user.value.admin ) },
     // { name: "Settings", href: "#" },
     { name: "Revert user", click: revertUser, condition: () => !!impersonating.value },
