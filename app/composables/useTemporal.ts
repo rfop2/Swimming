@@ -68,6 +68,10 @@ export const useTemporal = () => {
       locale = "en-GB",
       tz = "Europe/London",
       options = { dateStyle: "medium" as const },
+    }: {
+      locale?: string
+      tz?: string
+      options?: Intl.DateTimeFormatOptions
     } = {}
   ): string => {
     let instant: Temporal.Instant
