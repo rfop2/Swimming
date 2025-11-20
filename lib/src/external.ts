@@ -1,5 +1,5 @@
 import type { CourseType, DistanceType, IndividualStats, Meet, MeetResults, PageInfo, Ranking, RankingRow, ResultData, Results, ScopeType, StrokeType, Swimmer } from "./types.js"
-import { getSwimmerAgeGroup, sleep, timeToSeconds } from "./lib.js"
+import { getSwimmerAgeGroup, sleep, timeToSeconds, ucFirst } from "./lib.js"
 import { CACHE_DIR } from "./config.js"
 import { differenceInDays, differenceInHours, format, parse } from "date-fns"
 import type { AnyNode } from "domhandler"
@@ -720,7 +720,14 @@ const extractMeetsTableData = ( $: CheerioAPI, table: Cheerio<AnyNode> ) => {
         case 2: {
           const image = $( valueCell ).find( "img" )[0]
           const src = $( image ).attr( "src" ) ?? ""
-          value = src.replace( /^.*calendar\/(?:swim-)?/, "" ).replace( /-logo\..*$/, "" )
+          const matches = src.match( /(england|wales|scotland)/ )
+          if ( matches ) {
+            value = ucFirst( matches[1] )
+          } else if ( src.match( /scot/ ) ) {
+            value = "Scotland"
+          } else {
+            throw new Error( `Can't find country in '${src}` )
+          }
           break
         }
         case 3: {
