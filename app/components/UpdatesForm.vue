@@ -3,7 +3,7 @@
   import type { FetchError } from "ofetch"
   import type { User } from "lucia"
   import { format } from "date-fns"
-  import type { Task } from "lib"
+  import { ucFirst, type Task } from "lib"
 
   const props = defineProps<{
     user: User
@@ -45,7 +45,7 @@
       const updateTasks: Array<Partial<Task>> = swimmers.value.map( s => ( {
         taskType: "update",
         taskOptions: JSON.stringify( { updateType, force } ),
-        taskDescription: `${updateType.charAt( 0 ).toUpperCase()}${updateType.slice( 1 )} update of swimmer '${s.fullName}'`,
+        taskDescription: `${ucFirst( updateType )} update of swimmer '${s.fullName}'`,
         targetType: "swimmer",
         targetId: s.id,
       } ) )
@@ -62,7 +62,7 @@
       const updateTasks: Array<Partial<Task>> = swimmers.value.filter( ( s, i ) => selected.value[i] ).map( s => ( {
         taskType: "update",
         taskOptions: JSON.stringify( { updateType, force } ),
-        taskDescription: `${updateType.charAt( 0 ).toUpperCase()}${updateType.slice( 1 )} update of swimmer '${s.fullName}'`,
+        taskDescription: `${ucFirst( updateType )} update of swimmer '${s.fullName}'`,
         targetType: "swimmer",
         targetId: s.id,
       } ) )
@@ -80,7 +80,7 @@
       await createTask( {
         taskType: "update",
         taskOptions: JSON.stringify( { updateType, force } ),
-        taskDescription: `${updateType.charAt( 0 ).toUpperCase()}${updateType.slice( 1 )} update of swimmer '${swimmer.fullName}'`,
+        taskDescription: `${ucFirst( updateType )} update of swimmer '${swimmer.fullName}'`,
         targetType: "swimmer",
         targetId: swimmer.id,
       } )

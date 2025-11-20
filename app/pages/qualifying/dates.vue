@@ -2,7 +2,7 @@
   import type { CellValueChangedEvent, NewValueParams, SizeColumnsToFitGridStrategy, ValueFormatterParams, ValueGetterParams, ValueSetterParams } from "ag-grid-community"
   import { ModuleRegistry, DateEditorModule, ValidationModule, ClientSideRowModelModule, ColumnAutoSizeModule, TextFilterModule, CustomEditorModule, CellStyleModule, TextEditorModule } from "ag-grid-community"
   import { AgGridVue } from "ag-grid-vue3" // Vue Data Grid Component
-  import { REGIONS, COUNTIES, type ScopeType } from "lib"
+  import { REGIONS, COUNTIES, type ScopeType, ucFirst } from "lib"
   import { addMonths, format, getYear } from "date-fns"
   import type { FetchError } from "ofetch"
   import { ArrowUturnLeftIcon, CheckIcon } from "@heroicons/vue/24/outline"
@@ -160,7 +160,6 @@
 
   useUnsavedWarning( () => dirty.value )
 
-  const lookupScope = ( scope: ScopeType ) => ( scope.charAt( 0 ).toUpperCase() + scope.slice( 1 ) )
   const lookupArea = ( scope: ScopeType, area: string ) => {
     if ( scope === "county" )
       return COUNTIES[area]
@@ -177,7 +176,7 @@
     {
       field: "scope",
       filter: false,
-      valueFormatter: ( { value }: ValueFormatterParams ) => lookupScope( value ),
+      valueFormatter: ( { value }: ValueFormatterParams ) => ucFirst( value ),
       // filterValueGetter: ( params: ValueGetterParams ) => lookupScope( params.data.quaifyingScope ),
     },
     {
@@ -189,7 +188,7 @@
     {
       field: "type",
       filter: false,
-      valueGetter: ( params: ValueGetterParams ) => params.data.type.charAt( 0 ).toUpperCase() + params.data.type.slice( 1 )
+      valueGetter: ( params: ValueGetterParams ) => ucFirst( params.data.type ),
     },
     {
       field: "qualifyingStart",

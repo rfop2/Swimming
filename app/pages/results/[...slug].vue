@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { COURSES, convertTime, secondsToTime, strokes, type QualifyingRow } from "lib"
+  import { COURSES, convertTime, secondsToTime, strokes, ucFirst, type QualifyingRow } from "lib"
   import { Line } from "vue-chartjs"
   import { Chart as ChartJS, CategoryScale, LinearScale, TimeScale, PointElement, LineElement, Title, Tooltip, Legend, type ChartData, type ChartOptions, type TooltipItem } from "chart.js"
   import "chartjs-adapter-date-fns"
@@ -241,8 +241,6 @@
 
     return Math.floor( ( minValue - padding ) / scale ) * scale
   } )
-
-  const ucFirst = ( s: string ) => s.charAt( 0 ).toLocaleUpperCase() + s.slice( 1 )
 
   const boxColours = {
     "general": {

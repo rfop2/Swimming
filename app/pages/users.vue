@@ -2,6 +2,7 @@
   import { ArrowRightEndOnRectangleIcon, PencilSquareIcon, TrashIcon, UserPlusIcon } from "@heroicons/vue/24/outline"
   import { format } from "date-fns"
   import type { User } from "lucia"
+  import { ucFirst } from "lib"
 
   definePageMeta( {
     layout: "secure",
@@ -25,7 +26,7 @@
     types.add( user.type )
     return types
   }, new Set<string>() ) )
-  const typeOptions = computed( () => Array.from( userTypes.value ).sort().map( type => ( { label: `${type.charAt( 0 ).toUpperCase()}${type.slice( 1 )}`, value: type } ) ) )
+  const typeOptions = computed( () => Array.from( userTypes.value ).sort().map( type => ( { label: ucFirst( type ), value: type } ) ) )
 
   const { state: selections } = usePersisted( "users-selection", {
     type: typeOptions.value.filter( option => option.value !== "other" ).map( ( { value } ) => ( value ) ),
@@ -198,7 +199,7 @@
                 {{ user.location }}
               </td>
               <td class="px-1 py-2 text-sm whitespace-nowrap text-gray-500">
-                {{ `${user.type.charAt( 0 ).toUpperCase()}${user.type.slice( 1 )}` }}
+                {{ ucFirst( user.type ) }}
               </td>
               <td class="px-1 py-2 text-sm whitespace-nowrap text-gray-500">
                 {{ user.clubs }}

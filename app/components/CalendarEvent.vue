@@ -1,6 +1,6 @@
 <script setup lang="ts">
   import type { CalendarEventExternal } from "@schedule-x/calendar"
-  import { secondsToTime } from "lib"
+  import { secondsToTime, ucFirst } from "lib"
 
   const props = defineProps<{
     calendarEvent: CalendarEventExternal
@@ -26,7 +26,7 @@
         v-for="([stroke,distances]) in [...meet.results.entries()]"
         :key="stroke"
       >
-        {{ stroke.split( "_" ).map( ( word: string ) => word.charAt( 0 ).toUpperCase() + word.slice( 1 ) ).join( " " ) }} -
+        {{ stroke.split( "_" ).map( ( word: string ) => ucFirst( word ) ).join( " " ) }} -
         <span
           v-for="([distance,rounds],i) in [...distances.entries()]"
           :key="distance"

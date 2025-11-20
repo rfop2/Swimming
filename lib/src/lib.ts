@@ -9,6 +9,8 @@ export const debug = ( ...args: unknown[] ) => {
   }
 }
 
+export const ucFirst = ( s: string ) => s.charAt( 0 ).toLocaleUpperCase() + s.slice( 1 )
+
 export const sleep = ( timeout: number ) => new Promise( r => setTimeout( r, timeout * 1_000 ) )
 
 export const shuffle = <T>( array: T[] ) => {

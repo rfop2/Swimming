@@ -3,10 +3,11 @@
   import type { CellValueChangedEvent, GetQuickFilterTextParams, IRowNode, NewValueParams, ValueFormatterParams, ValueGetterParams, ValueSetterParams } from "ag-grid-community"
   import { ModuleRegistry, ValidationModule, ClientSideRowModelModule, TextEditorModule, QuickFilterModule, ColumnAutoSizeModule, TextFilterModule, CellStyleModule } from "ag-grid-community"
   import { AgGridVue } from "ag-grid-vue3" // Vue Data Grid Component
-  import { type Swimmer, secondsToTime, strokeSort, timeToSeconds, type QualifyingRow, getCompetitionAge, REGIONS, COUNTIES, STROKE_DISTANCE, AGES, getSwimmerScopeArea, type ScopeType, type CourseType, type QualifyingType, type GenderType, type StrokeType, type DistanceType, type QualifyingPeriodRow } from "lib"
   import { addMonths, getYear, parseISO } from "date-fns"
   import type { FetchError } from "ofetch"
   import { ArrowUturnLeftIcon, CheckIcon, ClipboardDocumentCheckIcon, ClipboardDocumentIcon, ClipboardDocumentListIcon, DocumentPlusIcon, PlusCircleIcon, TrashIcon } from "@heroicons/vue/24/outline"
+  import type { Swimmer, QualifyingRow, ScopeType, CourseType, QualifyingType, GenderType, StrokeType, DistanceType, QualifyingPeriodRow } from "lib"
+  import { secondsToTime, strokeSort, timeToSeconds, getCompetitionAge, REGIONS, COUNTIES, STROKE_DISTANCE, AGES, getSwimmerScopeArea, ucFirst } from "lib"
 
   // ModuleRegistry.registerModules( [ AllCommunityModule ] )
   ModuleRegistry.registerModules( [
@@ -353,7 +354,6 @@
 
   useUnsavedWarning( () => dirty.value )
 
-  const lookupScope = ( scope: ScopeType ) => ( scope.charAt( 0 ).toUpperCase() + scope.slice( 1 ) )
   const lookupArea = ( scope: ScopeType, area: string ) => {
     if ( scope === "county" )
       return COUNTIES[area]
@@ -370,8 +370,8 @@
     {
       field: "scope",
       filter: false,
-      valueFormatter: ( { value }: ValueFormatterParams ) => lookupScope( value ),
-      filterValueGetter: ( params: ValueGetterParams ) => lookupScope( params.data.scope ),
+      valueFormatter: ( { value }: ValueFormatterParams ) => ucFirst( value ),
+      filterValueGetter: ( params: ValueGetterParams ) => ucFirst( params.data.scope ),
     },
     {
       field: "area",
@@ -382,7 +382,7 @@
     {
       field: "type",
       filter: false,
-      valueFormatter: ( { value }: ValueFormatterParams ) => value ? value.charAt( 0 ).toUpperCase() + value.slice( 1 ) : "",
+      valueFormatter: ( { value }: ValueFormatterParams ) => value ? ucFirst( value ) : "",
     },
     {
       field: "distance",
@@ -394,8 +394,7 @@
     {
       field: "stroke",
       filter: false,
-      // valueFormatter: ( { value }: ValueFormatterParams ) => value ? value.charAt( 0 ).toUpperCase() + value.slice( 1 ) : "",
-      valueFormatter: ( { value }: ValueFormatterParams ) => value ? value.split( "_" ).map( ( word: string ) => word.charAt( 0 ).toUpperCase() + word.slice( 1 ) ).join( " " ) : ""
+      valueFormatter: ( { value }: ValueFormatterParams ) => value ? value.split( "_" ).map( ( word: string ) => ucFirst( word ) ).join( " " ) : ""
 
     },
     {
@@ -409,7 +408,7 @@
     {
       field: "gender",
       filter: false,
-      valueFormatter: ( { value }: ValueFormatterParams ) => value ? value.charAt( 0 ).toUpperCase() + value.slice( 1 ) : "",
+      valueFormatter: ( { value }: ValueFormatterParams ) => value ? ucFirst( value ) : "",
     },
     {
       field: "age",
