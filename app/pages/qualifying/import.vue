@@ -1,178 +1,187 @@
-<script setup>
-  import { ref, computed } from "vue"
-  import { useRouter } from "vue-router"
-  import TableFemaleEventMale from "~/components/TableFemaleEventMale.vue"
-  import TableMaleFemaleOpen from "~/components/TableMaleFemaleOpen.vue"
-  import TableMaleOpen from "~/components/TableMaleOpen.vue"
-  import TableXlsx from "~/components/TableXlsx.vue"
-  import StandardPage from "~/components/StandardPage.vue"
-  import { addMonths, getYear } from "date-fns"
-  import { REGIONS, COUNTIES, NATIONALITIES } from "lib"
-  import TableFemaleMaleBothCourse from "~/components/TableFemaleMaleBothCourse.vue"
-  import TableAcceptedConsidered from "~/components/TableAcceptedConsidered.vue"
-  import TableFemaleMale from "~/components/TableFemaleMale.vue"
-  import TableFemaleMaleBerkshire from "~/components/TableFemaleMaleBerkshire.vue"
-  import TableLongShortWhite from "~/components/TableLongShortWhite.vue"
-  import TableFemaleMaleCornwall from "~/components/TableFemaleMaleCornwall.vue"
-  import TableMaleFemaleCornwallTogether from "~/components/TableMaleFemaleCornwallTogether.vue"
-  import TableWCSA from "~/components/TableWCSA.vue"
-  import TableSussexCounty from "~/components/TableSussexCounty.vue"
-  import TableWiltshire from "~/components/TableWiltshire.vue"
+<script setup lang="ts">
+import { ref, computed } from "vue"
+import { useRouter } from "vue-router"
+import StandardPage from "~/components/StandardPage.vue"
+import { addMonths, getYear } from "date-fns"
+import { REGIONS, COUNTIES, NATIONALITIES } from "lib"
 
-  definePageMeta( {
-    layout: "secure",
-    middleware: [ "admin" ]
-  } )
+import TableFemaleEventMale from "~/components/TableFemaleEventMale.vue"
+import TableMaleFemaleOpen from "~/components/TableMaleFemaleOpen.vue"
+import TableMaleOpen from "~/components/TableMaleOpen.vue"
+import TableXlsx from "~/components/TableXlsx.vue"
+import TableFemaleMaleBothCourse from "~/components/TableFemaleMaleBothCourse.vue"
+import TableAcceptedConsidered from "~/components/TableAcceptedConsidered.vue"
+import TableFemaleMale from "~/components/TableFemaleMale.vue"
+import TableFemaleMaleBerkshire from "~/components/TableFemaleMaleBerkshire.vue"
+import TableLongShortWhite from "~/components/TableLongShortWhite.vue"
+import TableFemaleMaleCornwall from "~/components/TableFemaleMaleCornwall.vue"
+import TableMaleFemaleCornwallTogether from "~/components/TableMaleFemaleCornwallTogether.vue"
+import TableWCSA from "~/components/TableWCSA.vue"
+import TableSussexCounty from "~/components/TableSussexCounty.vue"
+import TableWiltshire from "~/components/TableWiltshire.vue"
 
-  const filterYear = getYear( addMonths( new Date(), 1 ) )
-  const years = Array.from( { length: 6 }, ( _, i ) => filterYear - 3 + i ).map( year => ( { value: year } ) )
-  const scopes = [
-    {
-      value: "county",
-      label: "County",
-    },
-    {
-      value: "regional",
-      label: "Regional",
-    },
-    {
-      value: "national",
-      label: "National",
-    },
-  ]
-  const areasFromScope = ( scope ) => {
-    if ( scope === "county" )
-      return Object.entries( COUNTIES ).map( ( [ k, v ] ) => ( { label: v, value: k } ) )
-    if ( scope === "regional" )
-      return Object.entries( REGIONS ).map( ( [ k, v ] ) => ( { label: v, value: k } ) )
-    if ( scope === "national" )
-      return Object.entries( NATIONALITIES ).map( ( [ k, v ] ) => ( { label: v, value: k } ) )
-    return []
+definePageMeta({
+  layout: "secure",
+  middleware: ["admin"]
+})
+
+const filterYear = getYear(addMonths(new Date(), 1))
+
+const years = Array.from({ length: 6 }, (_, i) => filterYear - 3 + i).map(
+  (year) => ({ value: year, label: String(year) })
+)
+
+const scopes = [
+  { value: "county", label: "County" },
+  { value: "regional", label: "Regional" },
+  { value: "national", label: "National" }
+]
+
+const areasFromScope = (scope: string) => {
+  if (scope === "county") {
+    return Object.entries(COUNTIES).map(([k, v]) => ({ value: k, label: v }))
   }
-  const courses = [
-    {
-      value: "lc",
-      label: "Long",
-    },
-    {
-      value: "sc",
-      label: "Short",
-    },
-    {
-      value: "both",
-      label: "Both",
-    },
-  ]
-  const selections = ref( {
-    year: years[0],
-    scope: scopes[0],
-    area: { label: "", value: "" },
-    course: courses[0],
-  } )
-  const areas = computed( () => areasFromScope( selections.value.scope.value ) )
-
-  const fileUploaded = ref( false )
-  const router = useRouter()
-  const fileInput = ref( null )
-  const file = ref( null )
-  const fileType = ref( "" )
-  const pdfText = ref( "" )
-
-  const selectedLayoutIndex = ref( null )
-  const currentLayoutIndex = ref( 0 )
-
-  const layoutsPdf = [
-    { component: TableFemaleEventMale, id: "layout1" },
-    { component: TableMaleFemaleOpen, id: "layout2" },
-    { component: TableMaleOpen, id: "layout3" },
-    { component: TableFemaleMaleBothCourse, id: "layout4" },
-    { component: TableAcceptedConsidered, id: "layout5" },
-    { component: TableFemaleMale, id: "layout6" },
-    { component: TableFemaleMaleBerkshire, id: "layout7" },
-    { component: TableLongShortWhite, id: "layout8" },
-    { component: TableFemaleMaleCornwall, id: "layout9" },
-    { component: TableMaleFemaleCornwallTogether, id: "layout10" },
-    { component: TableWCSA, id: "layout11" },
-    { component: TableSussexCounty, id: "layout12" },
-    { component: TableWiltshire, id: "layout13" }
-  ]
-
-  const layoutsXlsx = [
-    { component: TableXlsx, id: "xlsx" },
-  ]
-
-  const layouts = computed( () => fileType.value === "xlsx" ? layoutsXlsx : layoutsPdf )
-
-  const currentLayoutComponent = computed( () => layouts.value[currentLayoutIndex.value].component )
-
-  function selectLayout( index ) {
-    selectedLayoutIndex.value = index
+  if (scope === "regional") {
+    return Object.entries(REGIONS).map(([k, v]) => ({ value: k, label: v }))
   }
-
-  function nextLayout() {
-    if ( currentLayoutIndex.value < layouts.value.length - 1 ) currentLayoutIndex.value++
+  if (scope === "national") {
+    return Object.entries(NATIONALITIES).map(([k, v]) => ({ value: k, label: v }))
   }
+  return []
+}
 
-  function prevLayout() {
-    if ( currentLayoutIndex.value > 0 ) currentLayoutIndex.value--
+const courses = [
+  { value: "lc", label: "Long" },
+  { value: "sc", label: "Short" },
+  { value: "both", label: "Both" }
+]
+
+const selections = ref({
+  year: years[0],
+  scope: scopes[0],
+  area: { label: "", value: "" },
+  course: courses[0]
+})
+
+const areas = computed(() =>
+  areasFromScope(selections.value.scope.value)
+)
+
+const fileUploaded = ref(false)
+const router = useRouter()
+const fileInput = ref<HTMLInputElement | null>(null)
+const file = ref<File | null>(null)
+const fileType = ref<"pdf" | "xlsx" | "">("")
+const pdfText = ref("")
+
+const selectedLayoutIndex = ref<number | null>(null)
+const currentLayoutIndex = ref(0)
+
+const layoutsPdf = [
+  { component: TableFemaleEventMale, id: "layout1" },
+  { component: TableMaleFemaleOpen, id: "layout2" },
+  { component: TableMaleOpen, id: "layout3" },
+  { component: TableFemaleMaleBothCourse, id: "layout4" },
+  { component: TableAcceptedConsidered, id: "layout5" },
+  { component: TableFemaleMale, id: "layout6" },
+  { component: TableFemaleMaleBerkshire, id: "layout7" },
+  { component: TableLongShortWhite, id: "layout8" },
+  { component: TableFemaleMaleCornwall, id: "layout9" },
+  { component: TableMaleFemaleCornwallTogether, id: "layout10" },
+  { component: TableWCSA, id: "layout11" },
+  { component: TableSussexCounty, id: "layout12" },
+  { component: TableWiltshire, id: "layout13" }
+]
+
+const layoutsXlsx = [{ component: TableXlsx, id: "xlsx" }]
+
+const layouts = computed(() =>
+  fileType.value === "xlsx" ? layoutsXlsx : layoutsPdf
+)
+
+const currentLayoutComponent = computed(
+  () => layouts.value[currentLayoutIndex.value].component
+)
+
+function selectLayout(index: number) {
+  selectedLayoutIndex.value = index
+}
+
+function nextLayout() {
+  if (currentLayoutIndex.value < layouts.value.length - 1) {
+    currentLayoutIndex.value++
   }
+}
 
-  async function sendFile() {
-    if ( !file.value ) return alert( "Please select a file" )
-    if ( selectedLayoutIndex.value === null ) return alert( "Please select a layout" )
+function prevLayout() {
+  if (currentLayoutIndex.value > 0) {
+    currentLayoutIndex.value--
+  }
+}
 
-    const formData = new FormData()
-    formData.append( "pdf_file", file.value )
-    formData.append( "layout", layouts.value[selectedLayoutIndex.value].id )
-
-    const res = await $fetch( "/api/import", {
-      method: "POST",
-      body: formData
-    } )
-
-    const mergedData = {
-      structured: res.structured,
-      selections: selections.value
-    }
-
-    sessionStorage.setItem( "parsedData", JSON.stringify( mergedData ) )
-
-    router.push( "/parsed" )
+async function sendFile() {
+  if (!file.value) {
+    alert("Please select a file")
+    return
+  }
+  if (selectedLayoutIndex.value === null) {
+    alert("Please select a layout")
+    return
   }
 
-  function handleFileUpload() {
-    if ( !fileInput.value?.files?.length ) return
+  const formData = new FormData()
+  formData.append("pdf_file", file.value)
+  formData.append("layout", layouts.value[selectedLayoutIndex.value].id)
 
-    file.value = fileInput.value.files[0]
+  const res = await $fetch("/api/import", {
+    method: "POST",
+    body: formData
+  })
 
-    const name = file.value.name.toLowerCase()
-    if ( name.endsWith( ".pdf" ) ) fileType.value = "pdf"
-    else if ( name.endsWith( ".xlsx" ) ) fileType.value = "xlsx"
-    else {
-      alert( "Unsupported file type. Please upload PDF or XLSX." )
-      fileInput.value.value = ""
-      return
-    }
-
-    fileUploaded.value = true
-    currentLayoutIndex.value = 0
-    selectedLayoutIndex.value = null
+  const mergedData = {
+    structured: res.structured,
+    selections: selections.value
   }
 
-  function resetUpload() {
-    fileUploaded.value = false
-    fileType.value = ""
-    currentLayoutIndex.value = 0
-    selectedLayoutIndex.value = null
-    file.value = null
+  sessionStorage.setItem("parsedData", JSON.stringify(mergedData))
+  router.push("/parsed")
+}
+
+function handleFileUpload() {
+  if (!fileInput.value?.files?.length) return
+
+  file.value = fileInput.value.files[0]
+
+  const name = file.value.name.toLowerCase()
+  if (name.endsWith(".pdf")) fileType.value = "pdf"
+  else if (name.endsWith(".xlsx")) fileType.value = "xlsx"
+  else {
+    alert("Unsupported file type. Please upload PDF or XLSX.")
+    fileInput.value.value = ""
+    return
   }
 
+  fileUploaded.value = true
+  currentLayoutIndex.value = 0
+  selectedLayoutIndex.value = null
+}
+
+function resetUpload() {
+  fileUploaded.value = false
+  fileType.value = ""
+  currentLayoutIndex.value = 0
+  selectedLayoutIndex.value = null
+  file.value = null
+}
 </script>
+
+
 <template>
   <StandardPage title="Import">
     <template #description>
       <div class="flex flex-col space-y-2">
         <div>Upload files for each event (PDF or XLSX)</div>
+
         <div v-if="file">
           <button
             class="px-4 py-2 bg-gray-300 text-black rounded mb-4 hover:bg-gray-400"
@@ -181,6 +190,7 @@
             Change file
           </button>
         </div>
+
         <div v-if="!file">
           <button
             class="px-6 py-3 bg-blue-600 text-white rounded hover:bg-blue-700"
@@ -195,6 +205,7 @@
             @change="handleFileUpload"
           >
         </div>
+
         <div
           v-else
           class="flex flex-col items-center justify-center"
@@ -203,10 +214,11 @@
             v-if="selectedLayoutIndex == null"
             class="text-3xl font-bold pb-10 mt-10"
           >
-            Please choose a layout similar to your {{ fileType.toUpperCase() }} file
+            Please choose a layout similar to your {{ fileType.toUpperCase() }}
+            file
           </h1>
           <h1
-            v-if="selectedLayoutIndex !== null"
+            v-else
             class="text-3xl font-bold pb-10 mt-10"
           >
             Please choose a year, scope, area and course
@@ -216,7 +228,8 @@
             v-if="file"
             class="mb-4 text-gray-700 font-medium"
           >
-            Selected file: <span class="font-semibold">{{ file.name }}</span>
+            Selected file:
+            <span class="font-semibold">{{ file.name }}</span>
           </div>
 
           <div class="flex flex-row space-x-4 mb-4">
@@ -232,6 +245,7 @@
                   placeholder="Choose Year"
                 />
               </div>
+
               <div class="min-w-32">
                 <UI-Listbox
                   v-model="selections.scope"
@@ -240,6 +254,7 @@
                   placeholder="Choose Scope"
                 />
               </div>
+
               <div class="min-w-48">
                 <UI-Listbox
                   v-model="selections.area"
@@ -248,6 +263,7 @@
                   placeholder="Choose Area"
                 />
               </div>
+
               <div class="min-w-28">
                 <UI-Listbox
                   v-model="selections.course"
@@ -264,6 +280,23 @@
               @click="selectLayout(currentLayoutIndex)"
             >
               Select this layout
+            </button>
+          </div>
+
+          <div
+            v-if="
+              selectedLayoutIndex !== null &&
+              selections.year.value &&
+              selections.scope.value &&
+              selections.area.value &&
+              selections.course.value
+            "
+          >
+            <button
+              class="mb-4 px-4 py-2 bg-blue-600 text-white rounded"
+              @click="sendFile"
+            >
+              Upload
             </button>
           </div>
 
@@ -285,17 +318,6 @@
               @click="nextLayout"
             >
               Next
-            </button>
-          </div>
-
-          <div
-            v-if="selectedLayoutIndex !== null && selections.year.value && selections.scope.value && selections.area.value"
-          >
-            <button
-              class="mb-4 px-4 py-2 bg-blue-600 text-white rounded"
-              @click="sendFile"
-            >
-              Upload
             </button>
           </div>
 

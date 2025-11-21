@@ -7,14 +7,8 @@ import { visualizer } from "rollup-plugin-visualizer"
 const require = createRequire( import.meta.url )
 const builtinModules = require( "module" ).builtinModules
 
+
 export default defineNuxtConfig( {
-  nitro: {
-    externals: { inline: [ "pdf-parse", "pdfjs-dist" ] },
-    moduleSideEffects: [ "pdfjs-dist/legacy/build/pdf.worker.mjs" ],
-  },
-  build: {
-    transpile: [ "pdf-parse", "pdfjs-dist" ],
-  },
   devtools: { enabled: true },
 
   modules: [

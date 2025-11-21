@@ -43,10 +43,8 @@ export default defineEventHandler( async ( event ) => {
       throw createError( { statusCode: 500, statusMessage: "PDF parser not available" } )
     }
 
-    // algumas versões aceitam injeção do pdfjs
     const parser = new PDFParse( { data: buffer } )
     const result = await parser.getText()
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const text = typeof result === "string" ? result : ( result as any ).text ?? ""
 
     if ( selectedLayout === "layout1" ) structured = parseSwimmingPdf( text )
