@@ -16,6 +16,14 @@ import {
 } from "../../utils/parseSwimmingDocs"
 import { readMultipartFormData } from "h3"
 
+type PdfParseResultObject = {
+  text?: string
+}
+
+const isPdfParseResultObject = ( value: unknown ): value is PdfParseResultObject => {
+  return typeof value === "object" && value !== null && "text" in value
+}
+
 export default defineEventHandler( async ( event ) => {
   const parts = await readMultipartFormData( event )
   if ( !parts ) {
@@ -45,7 +53,12 @@ export default defineEventHandler( async ( event ) => {
 
     const parser = new PDFParse( { data: buffer } )
     const result = await parser.getText()
-    const text = typeof result === "string" ? result : ( result as any ).text ?? ""
+    let text = ""
+    if ( typeof result === "string" ) {
+      text = result
+    } else if ( isPdfParseResultObject( result ) && typeof result.text === "string" ) {
+      text = result.text
+    }
 
     if ( selectedLayout === "layout1" ) structured = parseSwimmingPdf( text )
     else if ( selectedLayout === "layout2" ) structured = parseSwimmingPdfLayout2( text )
