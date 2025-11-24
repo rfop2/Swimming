@@ -52,10 +52,10 @@
         </h2>
         <ul class="list-disc list-inside space-y-1">
           <li
-            v-for="(item, idx) in entry.commits"
+            v-for="(item, idx) in entry.commits.sort( ( a: { date: string }, b: { date: string } ) => b.date.localeCompare( a.date ) )"
             :key="idx"
           >
-            {{ item.niceDate }} - {{ item.message }}
+            {{ item.niceDate }} - {{ item.author }} - {{ item.message }}
           </li>
         </ul>
       </div>
