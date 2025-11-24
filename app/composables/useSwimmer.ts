@@ -1,3 +1,5 @@
+import { FetchError } from "ofetch"
+import { format } from "date-fns"
 import type { Swimmer } from "lib"
 
 export const useSwimmer = () => {
@@ -15,12 +17,33 @@ export const useSwimmer = () => {
     },
   } )
 
+  const updated = useLastUpdate()
+
+  watch( swimmerId, async ( id ) => {
+    if ( id ) {
+      try {
+        const lastUpdate = await $fetch( `/api/updated/${id}` )
+        updated.value = format( lastUpdate, "yyyy-MM-dd" )
+      } catch ( error ) {
+        updated.value = "<error>"
+        if ( error instanceof FetchError ) {
+          const apiError = error as FetchError
+          if ( apiError.status === 404 ) {
+            updated.value = "<never>"
+          }
+        }
+      }
+    } else {
+      updated.value = "<unknown>"
+    }
+  }, { immediate: true } )
+
   // Optional: keep swimmerId in sync (e.g., if swimmers list changes and selected swimmer disappears)
-  watch( swimmer, s => {
+  watch( swimmer, async ( s ) => {
     if ( s?.id !== swimmerId.value ) {
       swimmerId.value = s?.id
     }
   } )
 
-  return { swimmer }
+  return { swimmer, updated }
 }

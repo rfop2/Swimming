@@ -17,7 +17,7 @@
     ]
   } )
 
-  const { swimmer } = useSwimmer()
+  const { swimmer, updated } = useSwimmer()
 
   type PerformanceApiResponse = InternalApi["/api/relative/:id"]["get"]
   interface TypeDetail {
@@ -327,6 +327,11 @@
         :show-label="false"
         :show-updated="true"
       />
+      <div class="min-w-24">
+        <p class="text-sm pt-1.5">
+          Swimmer performance data last updated: {{ updated }}
+        </p><p />
+      </div>
     </template>
     <template #key>
       Key &ndash; Best times recorded in current qualifying periods. Qualifying times that have been achieved are <span class="px-2 mr-1 qualified" /> highlighted.
