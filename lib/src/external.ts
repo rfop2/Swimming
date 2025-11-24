@@ -773,7 +773,7 @@ export const parseMeets = ( _pageInfo: PageInfo, $: CheerioAPI ) => {
         name: row.meet_name[0],
         country: row.country as string,
         region: row.region_level[0],
-        course,
+        course: course as CourseType,
         level: Number( row.region_level[2].match( /Level (\d+)/ )?.[1] ?? "" ),
         type: row.region_level[3],
       }
@@ -858,7 +858,7 @@ export const parseMeetsResults = ( _pageInfo: PageInfo, $: CheerioAPI, minMeetDa
           city: row.city,
           type: row.type,
           date: format( meetDate, "yyyy-MM-dd" ),
-          course: row.course.toLocaleLowerCase(),
+          course: row.course.toLocaleLowerCase() as CourseType,
           link: row.link,
           level: Number( row.level ),
         }
