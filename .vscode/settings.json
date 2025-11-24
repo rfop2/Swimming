@@ -1,0 +1,38 @@
+{
+    // Run ESLint fixes automatically on save
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "always"
+  },
+
+  // Disable VSCode's built-in formatter or Prettier from interfering
+  "editor.formatOnSave": false,
+
+  "cSpell.words": [
+    "chartjs",
+    "classnames",
+    "headlessui",
+    "heroicons",
+    "nitropack",
+    "Nuxt",
+    "ofetch",
+    "unref"
+  ],
+  // Use ESLint as the default formatter for Vue, TypeScript, and JavaScript files
+  "[vue]": {
+    "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+  },
+
+  // Optional: ensure ESLint handles JSON/YAML if desired
+  "[json]": {
+    "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+  },
+  "[yaml]": {
+    "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+  }
+}
