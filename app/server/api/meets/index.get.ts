@@ -1,3 +1,4 @@
+import { formatISO } from "date-fns"
 import { type Meet, getPool, prepareStatement } from "lib"
 
 export default defineEventHandler( async ( event ) => {
@@ -29,6 +30,24 @@ export default defineEventHandler( async ( event ) => {
         LEFT JOIN UserMeets ON UserMeets.meetId = MeetsView.id
         AND UserMeets.userId = :userId`
   )
-  const data = await selectRecords.all( { userId: event.context.user.id } )
-  return data
+  const meets = await selectRecords.all( { userId: event.context.user.id } )
+
+  // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
+  const selectLastUpdated = prepareStatement<void, { lastUpdated: string }>(
+    await getPool(),
+    `SELECT
+      GREATEST(
+        MAX(created), MAX(updated)
+      ) AS lastUpdated
+    FROM
+      Meets
+    ;`
+  )
+
+  const result = await selectLastUpdated.get()
+  if ( result && result.lastUpdated ) {
+    setHeader( event, "x-last-updated", formatISO( result.lastUpdated ) )
+  }
+
+  return meets
 } )

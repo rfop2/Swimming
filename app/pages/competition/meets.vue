@@ -40,8 +40,11 @@
     distance: number | null
   }
 
+  const { formatTemporal } = useTemporal()
+  const updated = ref( "<never>" )
+
   type MeetApiResponse = InternalApi["/api/meets"]["get"]
-  const { data: meets } = await useFetch(
+  const { data } = await useFetch(
     "/api/meets",
     {
       key: "meets",
@@ -71,10 +74,57 @@
           // 4. Sort by name (alphabetically)
           return a.name.localeCompare( b.name )
         } )
+
         return extData
       },
+      onResponse( { response } ) {
+        try {
+          const lastUpdated = response.headers.get( "x-last-updated" )
+          if ( lastUpdated ) {
+            const instant = Temporal.Instant.from( lastUpdated )
+            const datetime = instant.toZonedDateTimeISO( "Europe/London" )
+            updated.value = formatTemporal( datetime, { options: { dateStyle: "short", timeStyle: "short" } } )
+          } else {
+            updated.value = "<unknown>"
+          }
+        } catch ( err ) {
+          console.error( "onResponse failed:", err )
+          updated.value = "<error>"
+        }
+      }
     }
   )
+
+  const meets = computed( (): Array<ExtMeet> => {
+    console.log( "DDD", data )
+    const extData = ( data.value ?? [] ).map( row => {
+      return {
+        ...row,
+        ...{
+          distance: row.latitude && row.longitude ? haversineDistance( baseLocation, { latitude: row.latitude, longitude: row.longitude } ) : null,
+        }
+      }
+    } )
+    extData.sort( ( a, b ) => {
+      // 1. Sort by date
+      if ( a.date !== b.date ) return a.date.localeCompare( b.date )
+
+      // 2. Sort by duration
+      const durationDiff = a.duration - b.duration
+      if ( durationDiff !== 0 ) return durationDiff
+
+      // 3. Sort by distance (nulls last)
+      const distanceA = a.distance ?? Infinity
+      const distanceB = b.distance ?? Infinity
+      const distanceDiff = distanceA - distanceB
+      if ( distanceDiff !== 0 ) return distanceDiff
+
+      // 4. Sort by name (alphabetically)
+      return a.name.localeCompare( b.name )
+    } )
+
+    return extData
+  } )
 
   interface CalendarEvent extends CalendarEventExternal {
     duration: number
@@ -320,7 +370,7 @@
     title="Meets"
   >
     <template #description>
-      Forthcoming events and competitions
+      Forthcoming events and competitions. Meets last updated {{ updated }}.
     </template>
     <template #controls>
       <ClientOnly>
