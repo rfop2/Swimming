@@ -1,6 +1,7 @@
 <script setup lang="ts">
   import type { CalendarEventExternal } from "@schedule-x/calendar"
-  import { secondsToTime, ucFirst } from "lib"
+  import { convertTime, secondsToTime, ucFirst, type CourseType, type IndividualRow, type StrokeType } from "lib"
+  import type { MeetEventResults, MeetRaceResults } from "~/types/meet"
 
   const props = defineProps<{
     calendarEvent: CalendarEventExternal
@@ -9,13 +10,28 @@
 
   // const { formatTemporal } = useTemporal()
 
-  const meet: Ref<MeetResults> = ref( props.calendarEvent.meet )
-  console.log( "M", meet.value )
+  const meet: Ref<MeetEventResults> = ref( props.calendarEvent.meet )
+  const records: Ref<Map<string, Partial<IndividualRow>>> = ref( props.calendarEvent.records )
 
   const roundNames = {
     "H": "Heat",
     "S": "Semi-Final",
     "F": "Final",
+  }
+
+  const displayResult = ( course: CourseType, stroke: StrokeType, distance: number, result: MeetRaceResults ) => {
+    const roundName = roundNames[result.round as keyof typeof roundNames] ?? "Unknown Round"
+    const timeString = secondsToTime( result.time )
+    const recordKey = `${course}_${stroke}_${distance}m`
+    const record = records.value.get( recordKey )
+    let output = `${roundName}: ${timeString}`
+    if ( record ) {
+      const ctime = convertTime( record.course!, course, stroke, distance, result.time! )
+      const timeDiff = ctime - record.time!
+      const diffString = timeDiff > 0 ? `+${timeDiff.toFixed( 2 )}` : "PB"
+      output += ` (${diffString})`
+    }
+    return output
   }
 </script>
 
@@ -39,7 +55,7 @@
                 v-for="result in rounds"
                 :key="result.round"
               >
-                {{ roundNames[result.round as keyof typeof roundNames] ?? "Unknown Round" }}: {{ secondsToTime(result.time) }}
+                {{ displayResult( meet.course, stroke, distance, result ) }}
                 <span /></span></template>
             {{ distance }}
           </UI-Tooltip>

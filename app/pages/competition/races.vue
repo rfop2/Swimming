@@ -14,6 +14,8 @@
   import "@schedule-x/theme-default/dist/index.css"
   import StandardPage from "~/components/StandardPage.vue"
   import CalendarEvent from "~/components/CalendarEvent.vue"
+  import type { IndividualRow } from "lib"
+  import type { MeetDistanceResults, MeetEventResults, MeetRaceResults, MeetStrokeResults } from "~/types/meet"
 
   const ScheduleXCalendar = defineAsyncComponent( () =>
     import( "@schedule-x/vue" ).then( mod => mod.ScheduleXCalendar )
@@ -34,10 +36,11 @@
   const { swimmer } = useSwimmer()
   console.log( "S", swimmer )
 
-  type ApiResponse = InternalApi["/api/results/:id"]["get"]
+  type ResultsApiResponse = InternalApi["/api/results/:id"]["get"]
+  type RecordsApiResponse = InternalApi["/api/personal/:id"]["get"]
 
   // Better type narrowing guard
-  const hasSwimmer = ( s: typeof swimmer ): s is typeof swimmer & { value: NonNullable<typeof s.value> } => s.value != null
+  const hasSwimmer = ( s: typeof swimmer ): s is typeof swimmer & { value: NonNullable<typeof s.value> } => s.value != null && s.value !== undefined
 
   const roundOrder = {
     "": 0,
@@ -48,13 +51,30 @@
     "F": 5,
   }
 
-  const results: Ref<ApiResponse> = ref( [] )
+  const results: Ref<ResultsApiResponse> = ref( [] )
+  const records: Ref<RecordsApiResponse> = ref( [] )
 
   watchEffect( async () => {
     if ( hasSwimmer( swimmer ) ) {
-      results.value = await $fetch<ApiResponse>( `/api/results/${swimmer.value.id}` )
+      results.value = await $fetch( `/api/results/${swimmer.value.id}` )
+      records.value = await $fetch( `/api/personal/${swimmer.value.id}` )
     }
   } )
+
+  const recordsMap = computed( () => new Map<string, Partial<IndividualRow>>( ( records.value ?? [] )
+    .map( ( record: IndividualRow ) => {
+      const { course, stroke, distance, time, converted_time, date } = record
+      const key = `${course}_${stroke}_${distance}`
+      return [ key, {
+        course,
+        stroke,
+        distance,
+        time,
+        converted_time,
+        date,
+      } ]
+    } ) )
+  )
 
   const meetsMap = computed( () => results.value.reduce( ( meets, result ) => {
     const race: MeetRaceResults = {
@@ -70,7 +90,7 @@
       distances.set( distanceMetres, [ race ] )
       const strokes: MeetStrokeResults = new Map()
       strokes.set( result.stroke, distances )
-      const meetResult: MeetResults = {
+      const meetResult: MeetEventResults = {
         id: meets.size + 1,
         name: result.meet,
         venue: result.venue,
@@ -114,16 +134,15 @@
       }
     }
     return meets
-  }, new Map<string, MeetResults>() )
+  }, new Map<string, MeetEventResults>() )
   )
 
-  // const meets = ref<MeetResults[]>( [] )
   const meets = computed( () => Array.from( meetsMap.value.values() ) )
 
   interface CalendarEvent extends CalendarEventExternal {
     duration: number
     color?: string
-    meet: MeetResults
+    meet: MeetEventResults
   }
 
   const courses = [
@@ -185,6 +204,7 @@
       },
       // calendarId: distanceCalendar( meet.distance ),
       meet,
+      records: recordsMap,
     } ) )
     const filteredEvents = calendarEvents.filter( event => {
       if ( selections.course && selections.course !== event.meet.course )
