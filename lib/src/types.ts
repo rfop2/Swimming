@@ -158,7 +158,7 @@ export interface Meet {
   locationId: number | null
   latitude: number | null
   longitude: number | null
-  course: string
+  course: CourseType
   level: number
   type: string
   contact?: string
@@ -173,7 +173,7 @@ export interface MeetResults {
   city: string
   type: string
   date: string
-  course: string
+  course: CourseType
   link: string
   level: number
 }

@@ -1,3 +1,5 @@
+import type { CourseType } from "lib"
+
 interface MeetRaceResults {
   round: string
   time: number
@@ -6,15 +8,15 @@ interface MeetRaceResults {
 
 type MeetDistanceResults = Map<number, Array<MeetRaceResults>>
 
-type MeetStrokeResults = Map<string, MeetDistanceResults>
+type MeetStrokeResults = Map<StrokeType, MeetDistanceResults>
 
-interface MeetResults {
+interface MeetEventResults {
   id: number
   name: string
   venue: string
   level: number
   date: Temporal.PlainDate
   duration: number
-  course: string
+  course: CourseType
   results: MeetStrokeResults
 }
