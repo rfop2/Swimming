@@ -8,8 +8,6 @@
     hasStartDate: boolean
   }>()
 
-  // const { formatTemporal } = useTemporal()
-
   const meet: Ref<MeetEventResults> = ref( props.calendarEvent.meet )
   const records: Ref<Map<string, Partial<IndividualRow>>> = ref( props.calendarEvent.records )
 
