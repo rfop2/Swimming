@@ -110,8 +110,8 @@ const validatePoolAndDistance = ( pool: string, distance: number ) => {
   return turnsPer100
 }
 
-export const convertTime = ( fromPool: string, toPool: string, stroke: string, distance: string, time: string | number ) => {
-  const rawDistance = Number( distance.replace( /m$/, "" ) )
+export const convertTime = ( fromPool: string, toPool: string, stroke: string, distance: string | number, time: string | number ) => {
+  const rawDistance = typeof distance === "string" ? Number( distance.replace( /m$/, "" ) ) : distance
   const fromTurnsPer100 = validatePoolAndDistance( fromPool, rawDistance )
   const toTurnsPer100 = validatePoolAndDistance( toPool, rawDistance )
 
