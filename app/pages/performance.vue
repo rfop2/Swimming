@@ -325,7 +325,6 @@
       <SwimmerSelector
         v-model="swimmer"
         :show-label="false"
-        :show-updated="true"
       />
       <div class="min-w-24">
         <p class="text-sm pt-1.5">
