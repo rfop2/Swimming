@@ -1,13 +1,14 @@
-<script setup>
+<script setup lang="ts">
   import { ref, computed } from "vue"
   import { useRouter } from "vue-router"
+  import StandardPage from "~/components/StandardPage.vue"
+  import { addMonths, getYear } from "date-fns"
+  import { REGIONS, COUNTIES, NATIONALITIES } from "lib"
+
   import TableFemaleEventMale from "~/components/TableFemaleEventMale.vue"
   import TableMaleFemaleOpen from "~/components/TableMaleFemaleOpen.vue"
   import TableMaleOpen from "~/components/TableMaleOpen.vue"
   import TableXlsx from "~/components/TableXlsx.vue"
-  import StandardPage from "~/components/StandardPage.vue"
-  import { addMonths, getYear } from "date-fns"
-  import { REGIONS, COUNTIES, NATIONALITIES } from "lib"
   import TableFemaleMaleBothCourse from "~/components/TableFemaleMaleBothCourse.vue"
   import TableAcceptedConsidered from "~/components/TableAcceptedConsidered.vue"
   import TableFemaleMale from "~/components/TableFemaleMale.vue"
@@ -25,60 +26,63 @@
   } )
 
   const filterYear = getYear( addMonths( new Date(), 1 ) )
-  const years = Array.from( { length: 6 }, ( _, i ) => filterYear - 3 + i ).map( year => ( { value: year } ) )
+
+  // options SEM mudar, continuam { value, label }
+  const years = Array.from( { length: 6 }, ( _, i ) => filterYear - 3 + i ).map(
+    year => ( { value: year, label: String( year ) } )
+  )
+
   const scopes = [
-    {
-      value: "county",
-      label: "County",
-    },
-    {
-      value: "regional",
-      label: "Regional",
-    },
-    {
-      value: "national",
-      label: "National",
-    },
+    { value: "county", label: "County" },
+    { value: "regional", label: "Regional" },
+    { value: "national", label: "National" }
   ]
-  const areasFromScope = ( scope ) => {
-    if ( scope === "county" )
-      return Object.entries( COUNTIES ).map( ( [ k, v ] ) => ( { label: v, value: k } ) )
-    if ( scope === "regional" )
-      return Object.entries( REGIONS ).map( ( [ k, v ] ) => ( { label: v, value: k } ) )
-    if ( scope === "national" )
-      return Object.entries( NATIONALITIES ).map( ( [ k, v ] ) => ( { label: v, value: k } ) )
+
+  const areasFromScope = ( scope: string ) => {
+    if ( scope === "county" ) {
+      return Object.entries( COUNTIES ).map( ( [ k, v ] ) => ( { value: k, label: v } ) )
+    }
+    if ( scope === "regional" ) {
+      return Object.entries( REGIONS ).map( ( [ k, v ] ) => ( { value: k, label: v } ) )
+    }
+    if ( scope === "national" ) {
+      return Object.entries( NATIONALITIES ).map( ( [ k, v ] ) => ( { value: k, label: v } ) )
+    }
     return []
   }
+
   const courses = [
-    {
-      value: "lc",
-      label: "Long",
-    },
-    {
-      value: "sc",
-      label: "Short",
-    },
-    {
-      value: "both",
-      label: "Both",
-    },
+    { value: "lc", label: "Long" },
+    { value: "sc", label: "Short" },
+    { value: "both", label: "Both" }
   ]
-  const selections = ref( {
-    year: years[0],
-    scope: scopes[0],
-    area: { label: "", value: "" },
-    course: courses[0],
+
+  // agora selections guarda APENAS os values
+  type Selections = {
+    year: number
+    scope: string
+    area: string | null
+    course: string
+  }
+
+  const selections = ref<Selections>( {
+    year: years[0].value,
+    scope: scopes[0].value,
+    area: null,
+    course: courses[0].value
   } )
-  const areas = computed( () => areasFromScope( selections.value.scope.value ) )
+
+  // areas depende só do value de scope
+  const areas = computed( () => areasFromScope( selections.value.scope ) )
 
   const fileUploaded = ref( false )
   const router = useRouter()
-  const fileInput = ref( null )
-  const file = ref( null )
-  const fileType = ref( "" )
+  const fileInput = ref<HTMLInputElement | null>( null )
+  const file = ref<File | null>( null )
+  const fileType = ref<"pdf" | "xlsx" | "">( "" )
   const pdfText = ref( "" )
 
-  const selectedLayoutIndex = ref( null )
+  const selectedLayoutIndex = ref<number | null>( null )
   const currentLayoutIndex = ref( 0 )
 
   const layoutsPdf = [
@@ -97,29 +101,41 @@
     { component: TableWiltshire, id: "layout13" }
   ]
 
-  const layoutsXlsx = [
-    { component: TableXlsx, id: "xlsx" },
-  ]
+  const layoutsXlsx = [ { component: TableXlsx, id: "xlsx" } ]
 
-  const layouts = computed( () => fileType.value === "xlsx" ? layoutsXlsx : layoutsPdf )
+  const layouts = computed( () =>
+    fileType.value === "xlsx" ? layoutsXlsx : layoutsPdf
+  )
 
-  const currentLayoutComponent = computed( () => layouts.value[currentLayoutIndex.value].component )
+  const currentLayoutComponent = computed(
+    () => layouts.value[currentLayoutIndex.value].component
+  )
 
-  function selectLayout( index ) {
+  function selectLayout( index: number ) {
     selectedLayoutIndex.value = index
   }
 
   function nextLayout() {
-    if ( currentLayoutIndex.value < layouts.value.length - 1 ) currentLayoutIndex.value++
+    if ( currentLayoutIndex.value < layouts.value.length - 1 ) {
+      currentLayoutIndex.value++
+    }
   }
 
   function prevLayout() {
-    if ( currentLayoutIndex.value > 0 ) currentLayoutIndex.value--
+    if ( currentLayoutIndex.value > 0 ) {
+      currentLayoutIndex.value--
+    }
   }
 
   async function sendFile() {
-    if ( !file.value ) return alert( "Please select a file" )
-    if ( selectedLayoutIndex.value === null ) return alert( "Please select a layout" )
+    if ( !file.value ) {
+      alert( "Please select a file" )
+      return
+    }
+    if ( selectedLayoutIndex.value === null ) {
+      alert( "Please select a layout" )
+      return
+    }
 
     const formData = new FormData()
     formData.append( "pdf_file", file.value )
@@ -132,11 +148,11 @@
 
     const mergedData = {
       structured: res.structured,
+      // agora são apenas os values
       selections: selections.value
     }
 
     sessionStorage.setItem( "parsedData", JSON.stringify( mergedData ) )
-
     router.push( "/parsed" )
   }
 
@@ -166,13 +182,14 @@
     selectedLayoutIndex.value = null
     file.value = null
   }
-
 </script>
+
 <template>
   <StandardPage title="Import">
     <template #description>
       <div class="flex flex-col space-y-2">
         <div>Upload files for each event (PDF or XLSX)</div>
+
         <div v-if="file">
           <button
             class="px-4 py-2 bg-gray-300 text-black rounded mb-4 hover:bg-gray-400"
@@ -181,6 +198,7 @@
             Change file
           </button>
         </div>
+
         <div v-if="!file">
           <button
             class="px-6 py-3 bg-blue-600 text-white rounded hover:bg-blue-700"
@@ -195,6 +213,7 @@
             @change="handleFileUpload"
           >
         </div>
+
         <div
           v-else
           class="flex flex-col items-center justify-center"
@@ -203,10 +222,11 @@
             v-if="selectedLayoutIndex == null"
             class="text-3xl font-bold pb-10 mt-10"
           >
-            Please choose a layout similar to your {{ fileType.toUpperCase() }} file
+            Please choose a layout similar to your {{ fileType.toUpperCase() }}
+            file
           </h1>
           <h1
-            v-if="selectedLayoutIndex !== null"
+            v-else
             class="text-3xl font-bold pb-10 mt-10"
           >
             Please choose a year, scope, area and course
@@ -216,7 +236,8 @@
             v-if="file"
             class="mb-4 text-gray-700 font-medium"
           >
-            Selected file: <span class="font-semibold">{{ file.name }}</span>
+            Selected file:
+            <span class="font-semibold">{{ file.name }}</span>
           </div>
 
           <div class="flex flex-row space-x-4 mb-4">
@@ -232,6 +253,7 @@
                   placeholder="Choose Year"
                 />
               </div>
+
               <div class="min-w-32">
                 <UI-Listbox
                   v-model="selections.scope"
@@ -240,6 +262,7 @@
                   placeholder="Choose Scope"
                 />
               </div>
+
               <div class="min-w-48">
                 <UI-Listbox
                   v-model="selections.area"
@@ -248,6 +271,7 @@
                   placeholder="Choose Area"
                 />
               </div>
+
               <div class="min-w-28">
                 <UI-Listbox
                   v-model="selections.course"
@@ -264,6 +288,23 @@
               @click="selectLayout(currentLayoutIndex)"
             >
               Select this layout
+            </button>
+          </div>
+
+          <div
+            v-if="
+              selectedLayoutIndex !== null &&
+                selections.year &&
+                selections.scope &&
+                selections.area &&
+                selections.course
+            "
+          >
+            <button
+              class="mb-4 px-4 py-2 bg-blue-600 text-white rounded"
+              @click="sendFile"
+            >
+              Upload
             </button>
           </div>
 
@@ -285,17 +326,6 @@
               @click="nextLayout"
             >
               Next
-            </button>
-          </div>
-
-          <div
-            v-if="selectedLayoutIndex !== null && selections.year.value && selections.scope.value && selections.area.value"
-          >
-            <button
-              class="mb-4 px-4 py-2 bg-blue-600 text-white rounded"
-              @click="sendFile"
-            >
-              Upload
             </button>
           </div>
 

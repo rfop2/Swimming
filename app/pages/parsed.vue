@@ -1,27 +1,20 @@
 <script setup lang="ts">
   import { ref, computed, onMounted } from "vue"
-  import { timeToSeconds } from "lib"
+  import { timeToSeconds, COUNTIES, REGIONS, NATIONALITIES } from "lib"
 
   definePageMeta( {
     layout: "secure",
     middleware: [ "protected" ]
   } )
 
-  type Course = "lc" | "sc"
+  type Course = "lc" | "sc" | "both"
   type Gender = "Male" | "Female"
 
-  interface Labeled<T = string> {
-    value: T
-    label: string
-  }
-
-  type CourseSelection = Labeled<Course | "both"> | Course | "both"
-
   interface Selections {
-    year: Labeled<number | string>
-    scope: Labeled<string>
-    area: Labeled<string>
-    course: CourseSelection
+    year: number | string
+    scope: string // "county" | "regional" | "national"
+    area: string // ex: "DVNW"
+    course: Course // "lc" | "sc" | "both"
   }
 
   interface StructuredRow {
@@ -101,6 +94,40 @@
       console.warn( "No parsedData found in sessionStorage" )
     }
   } )
+  const scopeLabel = computed( () => {
+    if ( !selections.value ) return ""
+    const map: Record<string, string> = {
+      county: "County",
+      regional: "Regional",
+      national: "National"
+    }
+    return map[selections.value.scope] ?? selections.value.scope
+  } )
+
+  const areaLabel = computed( () => {
+    const sel = selections.value
+    if ( !sel ) return ""
+    const { scope, area } = sel
+
+    if ( scope === "county" ) {
+      return COUNTIES[area as keyof typeof COUNTIES] ?? area
+    }
+    if ( scope === "regional" ) {
+      return REGIONS[area as keyof typeof REGIONS] ?? area
+    }
+    if ( scope === "national" ) {
+      return NATIONALITIES[area as keyof typeof NATIONALITIES] ?? area
+    }
+    return area
+  } )
+
+  const courseLabelDisplay = computed( () => {
+    const c = selections.value?.course
+    if ( c === "lc" ) return "Long"
+    if ( c === "sc" ) return "Short"
+    if ( c === "both" ) return "Both"
+    return ""
+  } )
 
   const strokes = computed<string[]>( () => {
     const allStrokes = structuredData.value.map( item => item.stroke ).filter( Boolean )
@@ -112,7 +139,7 @@
       .filter( item => item.gender?.toLowerCase() === activeGender.value.toLowerCase() )
       .filter( item => activeStroke.value === "All" || item.stroke === activeStroke.value )
 
-    if ( selections.value?.course?.value === "both" || selections.value?.course === "both" ) {
+    if ( selections.value?.course === "both" ) {
       filtered = filtered.filter( item => item.course === activeCourse.value )
     }
 
@@ -140,28 +167,26 @@
   }
 
   function resolveCourseForRow( item: StructuredRow, sel: Selections | null ): Course | null {
-    const choose = ( v: unknown ): Course | null => {
-      if ( v === "lc" || v === "sc" ) return v
-      return null
-    }
-    const fromRow = choose( item?.course ?? null )
+    const choose = ( v: string | null | undefined ): Course | null =>
+      v === "lc" || v === "sc" ? v : null
+
+    const fromRow = choose( item.course ?? undefined )
     if ( fromRow ) return fromRow
 
-    const rawSel = sel?.course
-    if ( typeof rawSel === "string" ) return choose( rawSel )
-    if ( rawSel && "value" in ( rawSel as Labeled ) ) {
-      const v = ( rawSel as Labeled<Course | "both"> ).value
-      if ( v === "both" ) return item?.course === "sc" ? "sc" : "lc"
-      return choose( v )
+    if ( !sel ) return null
+
+    if ( sel.course === "both" ) {
+      return item.course === "sc" ? "sc" : "lc"
     }
-    return null
+
+    return choose( sel.course )
   }
 
   function mapToImportRows( structured: StructuredRow[], sel: Selections | null ): ImportRow[] {
     const created = new Date()
-    const year = sel?.year?.value ?? ""
-    const scope = sel?.scope?.value ?? ""
-    const area = sel?.area?.value ?? ""
+    const year = sel?.year ?? ""
+    const scope = sel?.scope ?? ""
+    const area = sel?.area ?? ""
 
     return structured.map( item => {
       const course = resolveCourseForRow( item, sel )
@@ -259,11 +284,14 @@
       </div>
 
       <div v-else>
-        <div class="text-gray-700 mb-4 flex gap-6">
-          <span>Year: <strong>{{ selections.year.value }}</strong></span>
-          <span>Scope: <strong>{{ selections.scope.label }}</strong></span>
-          <span>Area: <strong>{{ selections.area.label }}</strong></span>
-          <span>Course: <strong>{{ selections.course.label }}</strong></span>
+        <div
+          v-if="selections"
+          class="text-gray-700 mb-4 flex gap-6"
+        >
+          <span>Year: <strong>{{ selections.year }}</strong></span>
+          <span>Scope: <strong>{{ scopeLabel }}</strong></span>
+          <span>Area: <strong>{{ areaLabel }}</strong></span>
+          <span>Course: <strong>{{ courseLabelDisplay }}</strong></span>
         </div>
 
         <div class="flex space-x-4 mb-4">
@@ -288,7 +316,7 @@
           </button>
         </div>
         <div
-          v-if="selections.course.value === 'both'"
+          v-if="selections && selections.course === 'both'"
           class="flex space-x-4 mb-6"
         >
           <button
