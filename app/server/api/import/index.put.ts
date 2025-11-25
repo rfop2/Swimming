@@ -25,7 +25,8 @@ export default eventHandler( async ( event ) => {
             gender,
             age,
             timeString,
-            time
+            time,
+            type
           )
           VALUES (
             :created,
@@ -38,7 +39,8 @@ export default eventHandler( async ( event ) => {
             :gender,
             :age,
             :timeString,
-            :time
+            :time,
+            :type
           )
           ON DUPLICATE KEY UPDATE
             timeString = :timeString,

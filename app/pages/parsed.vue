@@ -9,12 +9,25 @@
 
   type Course = "lc" | "sc" | "both"
   type Gender = "Male" | "Female"
+  type QualifyingType = "general" | "summer" | "winter"
 
   interface Selections {
     year: number | string
     scope: string // "county" | "regional" | "national"
     area: string // ex: "DVNW"
     course: Course // "lc" | "sc" | "both"
+    type: QualifyingType
+    qualifyingStart?: string
+    qualifyingEnd?: string | null
+    eligibilityStart?: string | null
+    eligibilityEnd?: string | null
+  }
+
+  interface QualifyingPeriod {
+    qualifyingStart: string
+    qualifyingEnd: string | null
+    eligibilityStart: string | null
+    eligibilityEnd: string | null
   }
 
   interface StructuredRow {
@@ -39,6 +52,7 @@
     stroke: string
     timeString: string
     time: number
+    type: QualifyingType
   }
 
   const structuredData = ref<StructuredRow[]>( [] )
@@ -121,6 +135,31 @@
     return area
   } )
 
+  const typeLabel = computed( () => {
+    const t: QualifyingType = selections.value?.type ?? "general"
+    if ( t === "summer" ) return "Summer"
+    if ( t === "winter" ) return "Winter"
+    return "General"
+  } )
+
+  const period = computed<QualifyingPeriod>( () => {
+    const s = selections.value
+    if ( !s ) {
+      return {
+        qualifyingStart: "",
+        qualifyingEnd: null,
+        eligibilityStart: null,
+        eligibilityEnd: null,
+      }
+    }
+    return {
+      qualifyingStart: s.qualifyingStart || "",
+      qualifyingEnd: s.qualifyingEnd || null,
+      eligibilityStart: s.eligibilityStart || null,
+      eligibilityEnd: s.eligibilityEnd || null,
+    }
+  } )
+
   const courseLabelDisplay = computed( () => {
     const c = selections.value?.course
     if ( c === "lc" ) return "Long"
@@ -187,6 +226,7 @@
     const year = sel?.year ?? ""
     const scope = sel?.scope ?? ""
     const area = sel?.area ?? ""
+    const qtype: QualifyingType = sel?.type ?? "general"
 
     return structured.map( item => {
       const course = resolveCourseForRow( item, sel )
@@ -205,6 +245,7 @@
         stroke: normalizeStroke( item.stroke ),
         timeString,
         time,
+        type: qtype
       }
     } )
   }
@@ -261,8 +302,40 @@
       return
     }
 
+    if (
+      selections.value &&
+      ( selections.value.scope === "county" || selections.value.scope === "regional" ) &&
+      !period.value.qualifyingStart
+    ) {
+      errorText.value = "Please choose a qualifying start date in the import step."
+      errorVisible.value = true
+      return
+    }
+
     try {
       const rows = mapToImportRows( structuredData.value, selections.value )
+
+      if (
+        selections.value &&
+        ( selections.value.scope === "county" || selections.value.scope === "regional" )
+      ) {
+        const periodPayload = [ {
+          year: Number( selections.value.year ),
+          scope: selections.value.scope,
+          area: selections.value.area,
+          type: selections.value.type,
+          qualifyingStart: period.value.qualifyingStart || null,
+          qualifyingEnd: period.value.qualifyingEnd || null,
+          eligibilityStart: period.value.eligibilityStart || null,
+          eligibilityEnd: period.value.eligibilityEnd || null,
+        } ]
+
+        await $fetch( "/api/qualifying/dates", {
+          method: "PUT",
+          body: JSON.stringify( periodPayload ),
+        } )
+      }
+
       await $fetch( "/api/import", { method: "PUT", body: rows } )
       saveSuccess.value = true
       await refreshNuxtData( "import" )
@@ -271,6 +344,7 @@
       errorVisible.value = true
     }
   }
+
 </script>
 
 <template>
@@ -288,10 +362,31 @@
           v-if="selections"
           class="text-gray-700 mb-4 flex gap-6"
         >
+          <span>Type: <strong>{{ typeLabel }}</strong></span>
           <span>Year: <strong>{{ selections.year }}</strong></span>
           <span>Scope: <strong>{{ scopeLabel }}</strong></span>
           <span>Area: <strong>{{ areaLabel }}</strong></span>
           <span>Course: <strong>{{ courseLabelDisplay }}</strong></span>
+        </div>
+
+        <div
+          v-if="selections && (selections.scope === 'county' || selections.scope === 'regional')"
+          class="text-gray-700 mb-4 flex gap-6"
+        >
+          <span>
+            Qualifying:
+            <strong>{{ period.qualifyingStart || "—" }}</strong>
+            <template v-if="period.qualifyingEnd">
+              – <strong>{{ period.qualifyingEnd }}</strong>
+            </template>
+          </span>
+          <span>
+            Eligibility:
+            <strong>{{ period.eligibilityStart || "—" }}</strong>
+            <template v-if="period.eligibilityEnd">
+              – <strong>{{ period.eligibilityEnd }}</strong>
+            </template>
+          </span>
         </div>
 
         <div class="flex space-x-4 mb-4">

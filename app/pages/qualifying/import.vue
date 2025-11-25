@@ -57,23 +57,53 @@
     { value: "both", label: "Both" }
   ]
 
-  // agora selections guarda APENAS os values
+  type QualifyingType = "general" | "summer" | "winter"
+
+  const regionalTypes: Array<{ value: QualifyingType, label: string }> = [
+    { value: "summer", label: "Summer" },
+    { value: "winter", label: "Winter" }
+  ]
+
   type Selections = {
     year: number
     scope: string
     area: string | null
     course: string
+    type: QualifyingType
+    qualifyingStart: string
+    qualifyingEnd: string | null
+    eligibilityStart: string | null
+    eligibilityEnd: string | null
   }
 
   const selections = ref<Selections>( {
     year: years[0].value,
     scope: scopes[0].value,
     area: null,
-    course: courses[0].value
+    course: courses[0].value,
+    type: "general",
+    qualifyingStart: "",
+    qualifyingEnd: null,
+    eligibilityStart: null,
+    eligibilityEnd: null,
   } )
 
-  // areas depende só do value de scope
   const areas = computed( () => areasFromScope( selections.value.scope ) )
+
+  // When scope changes, keep type consistent
+  watch(
+    () => selections.value.scope,
+    scope => {
+      if ( scope === "regional" ) {
+        if ( selections.value.type === "general" ) {
+          selections.value.type = "summer"
+        }
+      } else {
+        selections.value.type = "general"
+      }
+      selections.value.area = null
+    }
+  )
 
   const fileUploaded = ref( false )
   const router = useRouter()
@@ -148,7 +178,6 @@
 
     const mergedData = {
       structured: res.structured,
-      // agora são apenas os values
       selections: selections.value
     }
 
@@ -240,10 +269,10 @@
             <span class="font-semibold">{{ file.name }}</span>
           </div>
 
-          <div class="flex flex-row space-x-4 mb-4">
+          <div class="mb-4">
             <div
               v-if="selectedLayoutIndex !== null"
-              class="flex space-x-4"
+              class="flex flex-row space-x-4 mb-4"
             >
               <div class="min-w-24">
                 <UI-Listbox
@@ -272,6 +301,18 @@
                 />
               </div>
 
+              <div
+                v-if="selections.scope === 'regional'"
+                class="min-w-32"
+              >
+                <UI-Listbox
+                  v-model="selections.type"
+                  :options="regionalTypes"
+                  label="Type"
+                  placeholder="Choose Type"
+                />
+              </div>
+
               <div class="min-w-28">
                 <UI-Listbox
                   v-model="selections.course"
@@ -282,9 +323,44 @@
               </div>
             </div>
 
+            <div
+              v-if="selectedLayoutIndex !== null && (selections.scope === 'county' || selections.scope === 'regional')"
+              class="flex flex-wrap gap-4"
+            >
+              <div class="min-w-36">
+                <UI-Input
+                  v-model="selections.qualifyingStart"
+                  label="Qualifying Start Date"
+                  type="date"
+                  required
+                />
+              </div>
+              <div class="min-w-36">
+                <UI-Input
+                  v-model="selections.qualifyingEnd"
+                  label="Qualifying End Date"
+                  type="date"
+                />
+              </div>
+              <div class="min-w-36">
+                <UI-Input
+                  v-model="selections.eligibilityStart"
+                  label="Eligibility Start Date"
+                  type="date"
+                />
+              </div>
+              <div class="min-w-36">
+                <UI-Input
+                  v-model="selections.eligibilityEnd"
+                  label="Eligibility End Date"
+                  type="date"
+                />
+              </div>
+            </div>
+
             <button
               v-if="selectedLayoutIndex === null"
-              class="px-4 py-2 bg-green-600 text-white rounded mb-4 hover:bg-green-700"
+              class="mt-4 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
               @click="selectLayout(currentLayoutIndex)"
             >
               Select this layout
@@ -297,7 +373,8 @@
                 selections.year &&
                 selections.scope &&
                 selections.area &&
-                selections.course
+                selections.course &&
+                (selections.scope === 'national' || selections.qualifyingStart)
             "
           >
             <button
