@@ -4,6 +4,7 @@
   import StandardPage from "~/components/StandardPage.vue"
   import { addMonths, getYear } from "date-fns"
   import { REGIONS, COUNTIES, NATIONALITIES } from "lib"
+  import type { QualifyingType } from "lib"
 
   import TableFemaleEventMale from "~/components/TableFemaleEventMale.vue"
   import TableMaleFemaleOpen from "~/components/TableMaleFemaleOpen.vue"
@@ -56,8 +57,6 @@
     { value: "sc", label: "Short" },
     { value: "both", label: "Both" }
   ]
-
-  type QualifyingType = "general" | "summer" | "winter"
 
   const regionalTypes: Array<{ value: QualifyingType, label: string }> = [
     { value: "summer", label: "Summer" },

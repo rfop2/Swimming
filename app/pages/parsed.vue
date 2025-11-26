@@ -1,6 +1,7 @@
 <script setup lang="ts">
   import { ref, computed, onMounted } from "vue"
   import { timeToSeconds, COUNTIES, REGIONS, NATIONALITIES } from "lib"
+  import type { QualifyingType } from "lib"
 
   definePageMeta( {
     layout: "secure",
@@ -9,7 +10,6 @@
 
   type Course = "lc" | "sc" | "both"
   type Gender = "Male" | "Female"
-  type QualifyingType = "general" | "summer" | "winter"
 
   interface Selections {
     year: number | string
@@ -137,9 +137,7 @@
 
   const typeLabel = computed( () => {
     const t: QualifyingType = selections.value?.type ?? "general"
-    if ( t === "summer" ) return "Summer"
-    if ( t === "winter" ) return "Winter"
-    return "General"
+    return t.charAt( 0 ).toUpperCase() + t.slice( 1 )
   } )
 
   const period = computed<QualifyingPeriod>( () => {
