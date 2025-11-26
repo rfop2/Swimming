@@ -1,5 +1,128 @@
 [
   {
+    "isoDate": "2025-11-26",
+    "niceDate": "26 November 2025",
+    "diff": "12.3.1..",
+    "href": "https://bitbucket.org/swimracing/swimming/compare/12.4.0..12.3.1",
+    "major": false,
+    "minor": false,
+    "tag": null,
+    "title": "12.4.0",
+    "date": "2025-11-26T16:43:05.980Z",
+    "summary": null,
+    "commits": [
+      {
+        "hash": "8418052935fd52b082daa0b777a537f65157f85e",
+        "shorthash": "8418052",
+        "author": "Philip Coombes",
+        "email": "phil@web2wire.com",
+        "date": "2025-11-26T14:12:11.000Z",
+        "niceDate": "26 November 2025",
+        "subject": "Updated eslint packages",
+        "message": "Updated eslint packages",
+        "fixes": null,
+        "href": "https://bitbucket.org/swimracing/swimming/commits/8418052935fd52b082daa0b777a537f65157f85e",
+        "breaking": false,
+        "files": 6,
+        "insertions": 257,
+        "deletions": 998,
+        "merge": null
+      },
+      {
+        "hash": "57d17b5620626497cfbb2a7ece9d5c01ffacf384",
+        "shorthash": "57d17b5",
+        "author": "rodrigo ferreira",
+        "email": "rf.oliveirapaula@gmail.com",
+        "date": "2025-11-24T15:50:21.000Z",
+        "niceDate": "24 November 2025",
+        "subject": "fixESLintRestoreUI-ListboxOriginal",
+        "message": "fixESLintRestoreUI-ListboxOriginal",
+        "fixes": null,
+        "href": "https://bitbucket.org/swimracing/swimming/commits/57d17b5620626497cfbb2a7ece9d5c01ffacf384",
+        "breaking": false,
+        "files": 5,
+        "insertions": 363,
+        "deletions": 412,
+        "merge": null
+      },
+      {
+        "hash": "56dba836c40d7f27df4df46eb8a28415090cb6d9",
+        "shorthash": "56dba83",
+        "author": "Philip Coombes",
+        "email": "phil@web2wire.com",
+        "date": "2025-11-26T14:12:11.000Z",
+        "niceDate": "26 November 2025",
+        "subject": "Updated packages (except eslint)",
+        "message": "Updated packages (except eslint)",
+        "fixes": null,
+        "href": "https://bitbucket.org/swimracing/swimming/commits/56dba836c40d7f27df4df46eb8a28415090cb6d9",
+        "breaking": false,
+        "files": 6,
+        "insertions": 194,
+        "deletions": 120,
+        "merge": null
+      },
+      {
+        "hash": "c129a744c327443fdc0a0001464edcba28282e33",
+        "shorthash": "c129a74",
+        "author": "rodrigo ferreira",
+        "email": "rf.oliveirapaula@gmail.com",
+        "date": "2025-11-26T13:14:36.000Z",
+        "niceDate": "26 November 2025",
+        "subject": "fixImportParsed",
+        "message": "fixImportParsed",
+        "fixes": null,
+        "href": "https://bitbucket.org/swimracing/swimming/commits/c129a744c327443fdc0a0001464edcba28282e33",
+        "breaking": false,
+        "files": 2,
+        "insertions": 3,
+        "deletions": 6,
+        "merge": null
+      }
+    ],
+    "merges": [
+      {
+        "id": "5",
+        "message": "KAN-77",
+        "href": "https://bitbucket.org/swimracing/swimming/pull-requests/5",
+        "author": "Rodrigo Ferreira",
+        "commit": {
+          "hash": "54f8dd6bb0091482cb42a68828378b47aa685e84",
+          "shorthash": "54f8dd6",
+          "author": "Rodrigo Ferreira",
+          "email": "rf.oliveirapaula@gmail.com",
+          "date": "2025-11-26T14:10:35.000Z",
+          "niceDate": "26 November 2025",
+          "subject": "Merged in KAN-77 (pull request #5)",
+          "message": "Merged in KAN-77 (pull request #5)\n\nKAN-77\n\nApproved-by: Philip Coombes",
+          "fixes": null,
+          "href": "https://bitbucket.org/swimracing/swimming/commits/54f8dd6bb0091482cb42a68828378b47aa685e84",
+          "breaking": false
+        }
+      },
+      {
+        "id": "4",
+        "message": "fixUIListboxEslintPdfParse",
+        "href": "https://bitbucket.org/swimracing/swimming/pull-requests/4",
+        "author": "Rodrigo Ferreira",
+        "commit": {
+          "hash": "4f868be48160c95ede9ea722a6ccaf97088bfec1",
+          "shorthash": "4f868be",
+          "author": "Rodrigo Ferreira",
+          "email": "rf.oliveirapaula@gmail.com",
+          "date": "2025-11-25T14:26:04.000Z",
+          "niceDate": "25 November 2025",
+          "subject": "Merged in fixUIListboxEslintPdfParse (pull request #4)",
+          "message": "Merged in fixUIListboxEslintPdfParse (pull request #4)\n\nfixUIListboxEslintPdfParse\n\nApproved-by: Philip Coombes",
+          "fixes": null,
+          "href": "https://bitbucket.org/swimracing/swimming/commits/4f868be48160c95ede9ea722a6ccaf97088bfec1",
+          "breaking": false
+        }
+      }
+    ],
+    "fixes": []
+  },
+  {
     "isoDate": "2025-11-24",
     "niceDate": "24 November 2025",
     "diff": "12.3.0..12.3.1",
