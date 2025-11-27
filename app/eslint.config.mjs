@@ -1,6 +1,6 @@
 // eslint.config.mjs
 // @ts-check
-import withNuxt from "./.nuxt/eslint.config.mjs"
+import withNuxt from ".nuxt/eslint.config.mjs"
 import stylistic from "@stylistic/eslint-plugin"
 import pluginVue from "eslint-plugin-vue"
 // @ts-ignore
