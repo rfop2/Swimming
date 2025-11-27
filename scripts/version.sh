@@ -8,8 +8,8 @@ action=$1
 
 gitDir=`git rev-parse --show-toplevel`
 cd $gitDir
-cd app || die "Can't cd to app directory"
-npm version $action || die "Can't update app version"
+cd web || die "Can't cd to web directory"
+npm version $action || die "Can't update web version"
 git add package*.json || die "Can't add package files to commit"
 
 VERSION=`node -p -e "require('./package.json').version"`

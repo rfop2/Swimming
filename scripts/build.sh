@@ -12,9 +12,9 @@ echo "Building cli"
 cd $REPO_ROOT/cli
 npm install && npm run build
 
-echo "Building app"
+echo "Building web"
 
-cd $REPO_ROOT/app
+cd $REPO_ROOT/web
 npm install && npm run build
 
 echo "Restarting docker"
