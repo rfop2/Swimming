@@ -1,10 +1,9 @@
 // eslint.config.mjs
 // @ts-check
-import withNuxt from ".nuxt/eslint.config.mjs"
+import withNuxt from "./.nuxt/eslint.config.mjs"
 import stylistic from "@stylistic/eslint-plugin"
 import pluginVue from "eslint-plugin-vue"
-// @ts-ignore
-import tsParser from "@typescript-eslint/parser"
+import vueParser from "vue-eslint-parser"
 
 export default withNuxt( [
   // Stylistic recommended rules
@@ -40,41 +39,43 @@ export default withNuxt( [
   {
     files: [ "**/*.ts", "server/api/**/*.ts" ],
     languageOptions: {
-      parser: tsParser,
+      parser: vueParser, // Vue parser handles both TS and Vue
       parserOptions: {
-        project: "./tsconfig.json",
+        parser: "@typescript-eslint/parser", // TS syntax handler only
+        ecmaVersion: 2022,
         sourceType: "module",
-      },
+        extraFileExtensions: [ ".vue" ],
+      }
     },
-  rules: {
-    // Stylistic rules applied to TS files
-    ...stylistic.configs.recommended.rules,
-    "@stylistic/indent": [ "error", 2 ],
-    "@typescript-eslint/no-unused-vars": [ "error", {
-      "args": "all",
-      "argsIgnorePattern": "^_",
-      "caughtErrors": "all",
-      "caughtErrorsIgnorePattern": "^_",
-      "destructuredArrayIgnorePattern": "^_",
-      "varsIgnorePattern": "^_",
-      "ignoreRestSiblings": true
-    } ],
-    "@typescript-eslint/explicit-function-return-type": "off",
-    "@typescript-eslint/consistent-type-imports": [ "error", { prefer: "type-imports" } ],
-    "@stylistic/comma-dangle": [ "error", "only-multiline" ],
-    "@stylistic/spaced-comment": [ "error", "always", { block: { exceptions: [ "-", "*" ] } } ],
-    "@stylistic/space-in-parens": [ "error", "always" ],
-    "@stylistic/space-infix-ops": "error",
-    "@stylistic/space-unary-ops": "error",
-    "@stylistic/space-before-blocks": [ "error", "always" ],
-    "@stylistic/space-before-function-paren": "off",
-    "@stylistic/array-bracket-spacing": [ "error", "always" ],
-    "@stylistic/quotes": [ "error", "double", { avoidEscape: true } ],
-    "@stylistic/quote-props": [ "error", "consistent" ],
-    "@stylistic/semi": [ "error", "never" ],
-    "@stylistic/brace-style": [ "error", "1tbs" ],
-    "@stylistic/operator-linebreak": [ "error", "after", { "overrides": { "?": "before", ":": "before", "||": "before" } } ],
-    "@stylistic/arrow-parens": "off",
-  },
+    rules: {
+      // Stylistic rules applied to TS files
+      ...stylistic.configs.recommended.rules,
+      "@stylistic/indent": [ "error", 2 ],
+      "@typescript-eslint/no-unused-vars": [ "error", {
+        "args": "all",
+        "argsIgnorePattern": "^_",
+        "caughtErrors": "all",
+        "caughtErrorsIgnorePattern": "^_",
+        "destructuredArrayIgnorePattern": "^_",
+        "varsIgnorePattern": "^_",
+        "ignoreRestSiblings": true
+      } ],
+      "@typescript-eslint/explicit-function-return-type": "off",
+      "@typescript-eslint/consistent-type-imports": [ "error", { prefer: "type-imports" } ],
+      "@stylistic/comma-dangle": [ "error", "only-multiline" ],
+      "@stylistic/spaced-comment": [ "error", "always", { block: { exceptions: [ "-", "*" ] } } ],
+      "@stylistic/space-in-parens": [ "error", "always" ],
+      "@stylistic/space-infix-ops": "error",
+      "@stylistic/space-unary-ops": "error",
+      "@stylistic/space-before-blocks": [ "error", "always" ],
+      "@stylistic/space-before-function-paren": "off",
+      "@stylistic/array-bracket-spacing": [ "error", "always" ],
+      "@stylistic/quotes": [ "error", "double", { avoidEscape: true } ],
+      "@stylistic/quote-props": [ "error", "consistent" ],
+      "@stylistic/semi": [ "error", "never" ],
+      "@stylistic/brace-style": [ "error", "1tbs" ],
+      "@stylistic/operator-linebreak": [ "error", "after", { "overrides": { "?": "before", ":": "before", "||": "before" } } ],
+      "@stylistic/arrow-parens": "off",
+    },
   },
 ] )
