@@ -1,4 +1,9 @@
 {
   // https://nuxt.com/docs/guide/concepts/typescript
-  "extends": "./.nuxt/tsconfig.json"
+  "extends": "./.nuxt/tsconfig.json",
+  "files": [
+    "types/temporal.d.ts",
+    "types/meet.d.ts",
+    "types/ui.d.ts",
+  ]
 }

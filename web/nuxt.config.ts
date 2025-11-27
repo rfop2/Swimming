@@ -7,7 +7,6 @@ import { visualizer } from "rollup-plugin-visualizer"
 const require = createRequire( import.meta.url )
 const builtinModules = require( "module" ).builtinModules
 
-
 export default defineNuxtConfig( {
   devtools: { enabled: true },
 
@@ -87,11 +86,5 @@ export default defineNuxtConfig( {
     "/": { redirect: "/performance" },
   },
 
-  typescript: {
-    tsConfig: {
-      include: [ "types/**/*.d.ts" ]
-    }
-  },
-
-  compatibilityDate: "2024-11-21"
+  compatibilityDate: "2025-11-21"
 } )
