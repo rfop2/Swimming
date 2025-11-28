@@ -15,7 +15,15 @@ export default withNuxt( [
       // -------------------------
       // Core stylistic rules
       // -------------------------
-      "indent": "off", // Handoff to vue/script-indent + TS config
+      "indent": [ "error", 2, {
+        SwitchCase: 1,
+        ignoredNodes: [
+          "TemplateLiteral *",
+          "TemplateLiteral > *",
+          "TemplateElement",
+          "TemplateLiteral",
+        ],
+      } ],
       "brace-style": [ "error", "1tbs" ],
       "comma-dangle": [ "error", "only-multiline" ],
       "quotes": [ "error", "double", { avoidEscape: true } ],
@@ -62,18 +70,14 @@ export default withNuxt( [
         },
       ],
       "@typescript-eslint/explicit-function-return-type": "off",
-      "@typescript-eslint/consistent-type-imports": [
-        "error",
-        { prefer: "type-imports" },
-      ],
     },
   },
 
   // TS-only overrides (applies indentation cleanly in TS files)
   {
-    files: [ "**/*.ts" ],
+    files: [ "**/*.vue" ],
     rules: {
-      indent: [ "error", 2 ],
+      indent: "off",
     },
   },
 ] )
