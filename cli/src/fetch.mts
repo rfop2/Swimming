@@ -900,10 +900,11 @@ const updateMeetsResults = async ( options: MeetsResultsOptions ) => {
 
   program.command( "queue" )
     .description( "Process and execute fetches according to task queue" )
-    .action( async () => {
-      const getTasks = prepareStatement<void,Task>(
+    .addOption( new Option( "-c, --count <tasks>", "only process a maximum of <count> queued tasks on this run" ).default( "100" ) )
+    .action( async ( options ) => {
+      const getTasks = prepareStatement<{ limit: number },Task>(
         await getPool(),
-        "SELECT * FROM Tasks WHERE taskStatus = 'pending'"
+        "SELECT * FROM Tasks WHERE taskStatus = 'pending' LIMIT :limit"
       )
       const taskStart = prepareStatement(
         await getPool(),
@@ -929,7 +930,7 @@ const updateMeetsResults = async ( options: MeetsResultsOptions ) => {
         await getPool(),
         "SELECT Swimmers.* FROM Swimmers INNER JOIN ClubSwimmers ON ( Swimmers.id = ClubSwimmers.swimmerIr ) WHERE ClubSwimmers.clubId = :id"
       )
-      const tasks = await getTasks.all()
+      const tasks = await getTasks.all({ limit: options.count })
       for ( const task of tasks ) {
         try {
           switch ( task.taskType ) {
