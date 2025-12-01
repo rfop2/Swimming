@@ -61,7 +61,7 @@
       value: "regional",
       label: "Regional",
     },
-  ]
+  ] as const
 
   const areasFromScope = ( scope: ScopeType ) => {
     if ( scope === "county" )
@@ -84,10 +84,10 @@
       value: "winter",
       label: "Winter",
     },
-  ]
+  ] as const
 
   const selections = ref( {
-    year: yearOptions[1].value,
+    year: yearOptions[1]!.value,
     scope: scopeOptions[0].value,
     area: "",
     type: [] as string[],
@@ -182,7 +182,7 @@
     {
       field: "area",
       filter: false,
-      valueFormatter: ( { value, data }: ValueFormatterParams ) => lookupArea( data.scope, value ),
+      valueFormatter: ( { value, data }: ValueFormatterParams ) => lookupArea( data.scope, value )!,
       // filterValueGetter: ( params: ValueGetterParams ) => lookupArea( params.data.scope, params.data.area ),
     },
     {

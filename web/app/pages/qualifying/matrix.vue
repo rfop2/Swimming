@@ -124,7 +124,7 @@
       value: "regional",
       label: "Regional",
     },
-  ]
+  ] as const
 
   const areasFromScope = ( scope: ScopeType ) => {
     if ( scope === "county" )
@@ -135,7 +135,7 @@
   }
 
   const selections = ref( {
-    year: yearOptions[1].value,
+    year: yearOptions[1]!.value,
     scope: scopeOptions[0].value,
     area: "",
   } )

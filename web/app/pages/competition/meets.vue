@@ -145,7 +145,7 @@
       value: "lc",
       label: "Long",
     },
-  ]
+  ] as const
   const levels = [
     {
       value: 1,
@@ -163,7 +163,7 @@
       value: 4,
       label: "Level 4",
     },
-  ]
+  ] as const
   const distances = [
     {
       value: 0,
@@ -185,7 +185,7 @@
       value: 100,
       label: "<100 Miles",
     },
-  ]
+  ] as const
   const taggings = [
     {
       value: 0,
@@ -195,7 +195,7 @@
       value: 1,
       label: "Tagged Only",
     },
-  ]
+  ] as const
 
   const { state: selections } = usePersisted( "meets-selection", {
     course: courses[0].value,
@@ -255,7 +255,7 @@
     const filteredEvents = calendarEvents.filter( event => {
       if ( selections.course && selections.course !== event.meet.course )
         return false
-      if ( selections.level.length === 0 || !selections.level.includes( event.meet.level ) )
+      if ( selections.level.length === 0 || !selections.level.includes( event.meet.level as ( typeof selections.level )[number] ) )
         return false
       if ( selections.distance && event.meet.distance && selections.distance < event.meet.distance )
         return false

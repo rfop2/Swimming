@@ -2,9 +2,9 @@ export const useDebounceAsync = <
   Args extends unknown[],
   R
 >(
-  func: ( ...args: Args ) => Promise<R>,
-  delay = 300
-) => {
+    func: ( ...args: Args ) => Promise<R>,
+    delay = 300
+  ) => {
   let timer: ReturnType<typeof setTimeout>
   let latestCallId = 0
 

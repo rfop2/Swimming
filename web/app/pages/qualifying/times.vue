@@ -78,7 +78,7 @@
       value: "regional",
       label: "Regional",
     },
-  ]
+  ] as const
 
   const areasFromScope = ( scope: ScopeType ) => {
     if ( scope === "county" )
@@ -101,7 +101,7 @@
       label: "Winter",
       value: "winter",
     },
-  ]
+  ] as const
 
   const genderOptions = [
     {
@@ -112,7 +112,7 @@
       value: "female",
       label: "Female",
     },
-  ]
+  ] as const
 
   const ageOptions = ref<Array<{ value: string }>>( user.value.admin ? AGES.map( age => ( { value: age } ) ) : [] )
 
@@ -125,15 +125,23 @@
       value: "sc",
       label: "Short",
     },
-  ]
+  ] as const
 
-  const selections = ref( {
-    year: yearOptions[0].value,
+  const selections = ref<{
+    year: number
+    scope: ScopeType
+    area: string
+    type: string
+    gender: GenderType
+    age: string
+    course: CourseType
+  }>( {
+    year: yearOptions[0]!.value,
     scope: scopeOptions[0].value,
     area: "",
     type: typeOptions[0].value,
-    gender: "",
-    age: ageOptions.value[0].value,
+    gender: genderOptions[0].value,
+    age: ageOptions.value[0]!.value,
     course: courseOptions[0].value,
   } )
 
@@ -201,10 +209,12 @@
         } else if ( a.course > b.course ) {
           return -1
         }
-        if ( strokeSort[a.stroke] < strokeSort[b.stroke] ) {
-          return -1
-        } else if ( strokeSort[a.stroke] > strokeSort[b.stroke] ) {
-          return 1
+        if ( strokeSort[a.stroke] && b.stroke && strokeSort[b.stroke] ) {
+          if ( strokeSort[a.stroke]! < strokeSort[b.stroke]! ) {
+            return -1
+          } else if ( strokeSort[a.stroke]! > strokeSort[b.stroke]! ) {
+            return 1
+          }
         }
         return a.distanceMetres - b.distanceMetres
       } )
@@ -215,7 +225,7 @@
   watch( effectiveQualifyingTimes, eq => {
     console.log( "EQT", eq )
     if ( effectiveQualifyingTimes.value.length > 0 ) {
-      selections.value.course = ( courseOptions.find( course => course.value === effectiveQualifyingTimes.value[0].course ) ?? courseOptions[0] ).value
+      selections.value.course = ( courseOptions.find( course => course.value === effectiveQualifyingTimes.value[0]?.course ) ?? courseOptions[0] ).value
     }
   }, { deep: true } )
 
@@ -376,7 +386,7 @@
     {
       field: "area",
       filter: false,
-      valueFormatter: ( { value, data }: ValueFormatterParams ) => lookupArea( data.scope, value ),
+      valueFormatter: ( { value, data }: ValueFormatterParams ) => lookupArea( data.scope, value )!,
       filterValueGetter: ( params: ValueGetterParams ) => lookupArea( params.data.scope, params.data.area ),
     },
     {
@@ -387,7 +397,7 @@
     {
       field: "distance",
       filter: false,
-      comparator: ( valueA: string, valueB: string, rowA: IRowNode, rowB: IRowNode ) => {
+      comparator: ( _valueA: string, _valueB: string, rowA: IRowNode, rowB: IRowNode ) => {
         return rowA.data.distanceMetres - rowB.data.distanceMetres
       }
     },
@@ -445,7 +455,7 @@
 
   const swimmerAreaSelection = ( swimmer: Swimmer, scope: ScopeType ) => {
     const swimmerArea = getSwimmerScopeArea( swimmer, scope )
-    return ( areas.value.find( area => area.value === swimmerArea ) ?? areas.value[0] ).value
+    return ( areas.value.find( area => area.value === swimmerArea ) ?? areas.value[0] )?.value
   }
 
   const updateFilters = ( swimmer: Swimmer ) => {
@@ -458,12 +468,12 @@
     }
 
     selections.value = {
-      year: ( yearOptions.find( year => year.value === filterYear ) ?? yearOptions[0] ).value,
+      year: ( yearOptions.find( year => year.value === filterYear ) ?? yearOptions[0] )!.value,
       scope: selections.value.scope,
-      area: ( swimmerAreaSelection( swimmer, selections.value.scope as ScopeType ) ),
+      area: swimmerAreaSelection( swimmer, selections.value.scope )!,
       type: selections.value.type,
       gender: ( genderOptions.find( gender => gender.value === swimmer.gender ) ?? genderOptions[0] ).value,
-      age: ( ageOptions.value.find( age => age.value === qualifyingAge ) ?? ageOptions.value[0] ).value,
+      age: ( ageOptions.value.find( age => age.value === qualifyingAge ) ?? ageOptions.value[0] )!.value,
       course: selections.value.course,
     }
   }
@@ -476,7 +486,7 @@
 
   watch( () => selections.value.scope, newScope => {
     if ( swimmer.value ) {
-      selections.value.area = swimmerAreaSelection( swimmer.value, newScope as ScopeType )
+      selections.value.area = swimmerAreaSelection( swimmer.value, newScope as ScopeType )!
     }
     if ( newScope === "county" ) {
       selections.value.type = typeOptions[0].value

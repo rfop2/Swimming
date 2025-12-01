@@ -2,9 +2,9 @@ export const useDebounceAsyncAbortable = <
   Args extends unknown[],
   R
 >(
-  func: ( ...args: [...Args, AbortSignal] ) => Promise<R>,
-  delay = 300
-) => {
+    func: ( ...args: [...Args, AbortSignal] ) => Promise<R>,
+    delay = 300
+  ) => {
   let timer: ReturnType<typeof setTimeout>
   let controller: AbortController | null = null
 
