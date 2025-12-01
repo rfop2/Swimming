@@ -7,7 +7,7 @@
   const defaultId = useId()
 
   const props = withDefaults( defineProps<{
-    options: Array<UISelection>
+    options: readonly UISelection[]
     id?: string
     label?: string
     required?: boolean
