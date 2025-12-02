@@ -11,7 +11,7 @@ services:
       IGNORE_IPS: ${IGNORE_IPS}
 
     volumes:
-      - ../app/.output/:/home/node/app
+      - ../web/.output/:/home/node/app
     ports:
       - "3080:3000"
     restart: unless-stopped
