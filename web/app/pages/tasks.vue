@@ -43,7 +43,7 @@
     owned: false,
   }, "reactive" )
 
-  const { tasks, updateTask, deleteTask } = useTasks()
+  const { tasks, fetchTasks, updateTask, deleteTask } = useTasks()
 
   const filteredTasks = computed( () => ( tasks.value || [] ).filter( task => {
     if ( selections.status.length > 0 && !selections.status.includes( task.taskStatus! ) )
@@ -196,7 +196,17 @@
               scope="col"
               class="whitespace-nowrap align-bottom pl-2 pr-4 py-3.5 text-left text-sm font-semibold text-gray-900"
             >
-              &nbsp;
+              <button
+                type="button"
+                class="inline-flex items-center gap-x-1.5 whitespace-nowrap font-medium text-blue-700 hover:text-blue-600"
+                @click="fetchTasks"
+              >
+                <span class="whitespace-nowrap">Reload</span>
+                <ArrowPathIcon
+                  class="-mr-0.5 h-4 w-4"
+                  aria-hidden="true"
+                />
+              </button>
             </th>
           </tr>
         </thead>
