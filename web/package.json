@@ -48,18 +48,18 @@
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
-    "@nuxt/eslint": "^1.10.0",
-    "@primevue/nuxt-module": "^4.4.1",
+    "@nuxt/eslint": "^1.11.0",
+    "@primevue/nuxt-module": "^4.5.0",
     "@stylistic/eslint-plugin": "^5.6.1",
     "@tailwindcss/forms": "^0.5.10",
-    "@typescript-eslint/eslint-plugin": "^8.48.0",
-    "@typescript-eslint/parser": "^8.48.0",
+    "@typescript-eslint/eslint-plugin": "^8.48.1",
+    "@typescript-eslint/parser": "^8.48.1",
     "auto-changelog": "^2.5.0",
     "eslint": "^9.39.1",
-    "eslint-plugin-vue": "^10.6.0",
+    "eslint-plugin-vue": "^10.6.2",
     "rollup-plugin-visualizer": "^6.0.5",
     "sass": "^1.94.2",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.48.0"
+    "typescript-eslint": "^8.48.1"
   }
 }
