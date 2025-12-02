@@ -42,14 +42,6 @@ export default defineNuxtConfig( {
   },
 
   vite: {
-    build: {
-      rollupOptions: {
-        plugins: [ visualizer( { open: true, gzipSize: true, brotliSize: true } ) ],
-        output: {
-          chunkFileNames: "chunks/[name]-[hash].js", // readable names
-        }
-      }
-    },
     plugins: [
       {
         name: "externalize-packages",
@@ -66,6 +58,12 @@ export default defineNuxtConfig( {
           }
         },
       },
+      visualizer( {
+        filename: "public/build-stats.html",
+        open: true,
+        gzipSize: true,
+        brotliSize: true,
+      } ),
     ],
     ssr: {
       external: []
