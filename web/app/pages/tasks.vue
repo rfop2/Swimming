@@ -109,7 +109,7 @@
     title="Tasks status"
   >
     <template #description>
-      View and manage pending, running and completed tasks from the last 24 hours.
+      View and manage pending, running and completed tasks from the last 72 hours.
     </template>
     <template #controls>
       <div class="min-w-48">
