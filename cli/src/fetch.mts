@@ -42,6 +42,7 @@ import {
   meetResultsBaseUrl,
   meetResultsParams,
   parseMeetResults,
+  setupNordFetch,
 } from "lib"
 
 import type {
@@ -930,8 +931,9 @@ const updateMeetsResults = async ( options: MeetsResultsOptions ) => {
         await getPool(),
         "SELECT Swimmers.* FROM Swimmers INNER JOIN ClubSwimmers ON ( Swimmers.id = ClubSwimmers.swimmerIr ) WHERE ClubSwimmers.clubId = :id"
       )
-      const tasks = await getTasks.all({ limit: options.count })
+      const tasks = await getTasks.all( { limit: options.count } )
       for ( const task of tasks ) {
+        console.log( `Processing task ${task.taskId}` )
         try {
           switch ( task.taskType ) {
             case "update" : {
@@ -1026,6 +1028,13 @@ const updateMeetsResults = async ( options: MeetsResultsOptions ) => {
     } )
 
   try {
+    if ( process.env.NORDVPN_SC_USERNAME && process.env.NORDVPN_SC_PASSWORD ) {
+      await setupNordFetch( {
+        server: "nl.socks.nordhold.net",
+        username: process.env.NORDVPN_SC_USERNAME!,
+        password: process.env.NORDVPN_SC_PASSWORD!
+      } )
+    }
     await program.parseAsync( process.argv )
   } catch ( error ) {
     console.error( "Error in script", error )

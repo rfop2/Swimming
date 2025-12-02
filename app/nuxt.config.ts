@@ -53,13 +53,14 @@ export default defineNuxtConfig( {
     },
     plugins: [
       {
-        name: "externalize-puppeteer",
+        name: "externalize-packages",
         enforce: "pre",
         resolveId( id ) {
           if (
             id.startsWith( "puppeteer" )
             || id.startsWith( "@puppeteer/" )
             || id.startsWith( "proxy-chain" )
+            || id.startsWith( "node-fetch" )
             || builtinModules.includes( id )
           ) {
             return { id, external: true }
