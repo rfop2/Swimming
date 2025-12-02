@@ -9,7 +9,7 @@
 
   const props = withDefaults( defineProps<{
     id?: string
-    options: Array<UISelection>
+    options: readonly UISelection[]
     label?: string
     multiple?: boolean
     multipleLabel?: string

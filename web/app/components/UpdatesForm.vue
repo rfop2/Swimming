@@ -59,7 +59,7 @@
 
   const updateSelected = async ( updateType: string, force: boolean ) => {
     try {
-      const updateTasks: Array<Partial<Task>> = swimmers.value.filter( ( s, i ) => selected.value[i] ).map( s => ( {
+      const updateTasks: Array<Partial<Task>> = swimmers.value.filter( ( _s, i ) => selected.value[i] ).map( s => ( {
         taskType: "update",
         taskOptions: JSON.stringify( { updateType, force } ),
         taskDescription: `${ucFirst( updateType )} update of swimmer '${s.fullName}'`,
@@ -76,6 +76,8 @@
 
   const updateSwimmer = async ( swimmerIndex: number, updateType: string, force: boolean ) => {
     const swimmer = swimmers.value[swimmerIndex]
+    if ( !swimmer )
+      throw createError( `No swimmer found at ${swimmerIndex} to update` )
     try {
       await createTask( {
         taskType: "update",
@@ -94,7 +96,14 @@
   const cancelFailed = ref( false )
   const cancelUpdate = async ( swimmerIndex: number ) => {
     const swimmer = swimmers.value[swimmerIndex]
-    const tasks = swimmerTasks.value[swimmer.id].filter( t => t.taskStatus === "pending" )
+    if ( !swimmer )
+      throw createError( `No swimmer found at ${swimmerIndex} to cancel` )
+    const tasks = swimmerTasks.value[swimmer.id]
+    if ( !tasks || !tasks.length )
+      throw createError( `No tasks found for swimmer ${swimmer.id}` )
+    const pendingTasks = tasks.filter( t => t.taskStatus === "pending" )
+    if ( !pendingTasks.length )
+      throw createError( `No cancelable tasks found for swimmer ${swimmer.id}` )
     try {
       for ( const task of tasks ) {
         await deleteTask( task.taskId )
@@ -267,7 +276,7 @@
                   </td>
                   <td class="px-1 py-2 text-sm whitespace-nowrap text-gray-500">
                     <span
-                      v-if="swimmerTasks[swimmer.id].find( t => t.taskStatus === 'pending' )"
+                      v-if="( swimmerTasks[swimmer.id] ?? []).find( t => t.taskStatus === 'pending' )"
                       title="Update pending"
                     >
                       <ClockIcon
@@ -275,7 +284,7 @@
                       />
                     </span>
                     <span
-                      v-else-if="swimmerTasks[swimmer.id].find( t => t.taskStatus === 'progress' )"
+                      v-else-if="( swimmerTasks[swimmer.id] ?? [] ).find( t => t.taskStatus === 'progress' )"
                       title="Update in progress"
                     >
                       <ArrowPathIcon
@@ -288,7 +297,7 @@
                   <td class="py-2 pr-2 pl-1 text-right text-sm font-medium whitespace-nowrap sm:pr-0">
                     <div class="flex gap-2 justify-end">
                       <button
-                        v-if="!swimmerTasks[swimmer.id].find( t => t.taskStatus === 'pending' || t.taskStatus === 'progress' )"
+                        v-if="!( swimmerTasks[swimmer.id] ?? [] ).find( t => t.taskStatus === 'pending' || t.taskStatus === 'progress' )"
                         type="button"
                         title="Update Swimmer"
                         class="inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
@@ -301,7 +310,7 @@
                         <span class="sr-only">Update, {{ swimmer.fullName }}</span>
                       </button>
                       <button
-                        v-if="swimmerTasks[swimmer.id].find( t => t.taskStatus === 'pending' || t.taskStatus === 'progress' )"
+                        v-if="( swimmerTasks[swimmer.id] ?? [] ).find( t => t.taskStatus === 'pending' || t.taskStatus === 'progress' )"
                         type="button"
                         title="Cancel Update"
                         class="inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"

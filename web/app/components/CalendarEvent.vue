@@ -1,7 +1,7 @@
 <script setup lang="ts">
   import type { CalendarEventExternal } from "@schedule-x/calendar"
   import { convertTime, secondsToTime, ucFirst, type CourseType, type IndividualRow, type StrokeType } from "lib"
-  import type { MeetEventResults, MeetRaceResults } from "~/types/meet"
+  import type { MeetEventResults, MeetRaceResults } from "~~/types/meet"
 
   const props = defineProps<{
     calendarEvent: CalendarEventExternal

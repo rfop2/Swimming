@@ -1,4 +1,4 @@
-import type { CourseType } from "lib"
+import type { CourseType, StrokeType } from "lib"
 
 interface MeetRaceResults {
   round: string

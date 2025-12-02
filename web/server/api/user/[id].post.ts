@@ -1,5 +1,4 @@
 import { getPool, runTransaction } from "lib"
-import { addUser } from "~/server/utils/database"
 
 export default defineEventHandler( async ( event ) => {
   if ( !event.context.session || !event.context.user ) {

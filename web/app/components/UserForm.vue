@@ -25,11 +25,15 @@
   const editingSelf = currentUser.value.id === props.user.id
 
   const { data: locations } = await useFetch<Array<{ lat: string, lon: string }>>(
-    `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent( props.user.location + ", UK" )}`
+    `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent( props.user.location + ", UK" )}`,
+    {
+      default: () => [],
+    }
   )
   const locationCoords = ref<{ lat?: number, lon?: number }>( {} )
-  if ( locations.value !== null && locations.value.length > 0 ) {
-    locationCoords.value = { lat: Number( locations.value[0].lat ), lon: Number( locations.value[0].lon ) }
+  const locationFound = locations.value.at( 0 )
+  if ( locationFound ) {
+    locationCoords.value = { lat: Number( locationFound.lat ), lon: Number( locationFound.lon ) }
   }
 
   const lookupLocation = async ( event: InputEvent ): Promise<string[]> => {
@@ -185,27 +189,32 @@
 
   const editSwimmer = async ( swimmerIndex: number ) => {
     editing.value = swimmerIndex
-    if ( squads.value.length ) {
-      selectedSquad.value = squads.value.find( s => s.value === userSwimmers.value[swimmerIndex].value.squad )
+    const userSwimmer = userSwimmers.value.at( swimmerIndex )
+    if ( userSwimmer ) {
+      if ( squads.value.length ) {
+        selectedSquad.value = squads.value.find( s => s.value === userSwimmer.value.squad )
+      }
+      selectedSwimmer.value = userSwimmer
+      editingSwimmer.value = true
+      if ( selectedSwimmer.value.value.clubId ) {
+        const club: Club | undefined = await $fetch( `/api/clubs/${selectedSwimmer.value.value.clubId}` )
+        swimmerClub.value = club ? { label: club.clubName, value: club.clubId } : undefined
+      }
+      swimmerData.value = JSON.stringify( userSwimmer.value )
     }
-    selectedSwimmer.value = userSwimmers.value[swimmerIndex]
-    editingSwimmer.value = true
-    if ( selectedSwimmer.value.value.clubId ) {
-      const club: Club | undefined = await $fetch( `/api/clubs/${selectedSwimmer.value.value.clubId}` )
-      swimmerClub.value = club ? { label: club.clubName, value: club.clubId } : undefined
-    }
-    swimmerData.value = JSON.stringify( userSwimmers.value[swimmerIndex].value )
   }
 
   const resetSwimmer = () => {
     if ( editing.value !== null ) {
-      // Bit of a hack
-      if ( ( userSwimmers.value[editing.value].value as ExtSwimmer & { added: boolean } ).added ) {
-        removeSwimmer( editing.value )
-      } else if ( swimmerData.value ) {
-        updateSwimmer( editing.value, JSON.parse( swimmerData.value ) )
-        swimmerData.value = null
-      }
+      const userSwimmer = userSwimmers.value.at( editing.value )
+      if ( userSwimmer )
+        // Bit of a hack
+        if ( ( userSwimmer.value as ExtSwimmer & { added: boolean } ).added ) {
+          removeSwimmer( editing.value )
+        } else if ( swimmerData.value ) {
+          updateSwimmer( editing.value, JSON.parse( swimmerData.value ) )
+          swimmerData.value = null
+        }
     }
     editing.value = null
   }
@@ -228,16 +237,20 @@
 
   watch( selectedSquad, ( v ) => {
     if ( editing.value !== null ) {
-      userSwimmers.value[editing.value].value.squad = v?.value ?? ""
+      const userSwimmer = userSwimmers.value.at( editing.value )
+      if ( userSwimmer ) {
+        userSwimmer.value.squad = v?.value ?? ""
+      }
     }
   } )
 
-  const userClubId = ref<string | undefined>( props.clubs.length ? props.clubs[0].clubId : undefined )
+  const firstClub = computed( () => props.clubs.at( 0 ) )
+  const userClubId = ref<string | undefined>( firstClub.value ? firstClub.value.clubId : undefined )
   const userClubName = ref<string | undefined>()
   watchEffect( () => {
     userClubName.value = props.clubs.find( c => c.clubId === userClubId.value )?.clubName
   } )
-  const clubOwner = ref<0 | 1>( props.clubs.length && props.clubs[0].clubOwner ? 1 : 0 )
+  const clubOwner = ref<0 | 1>( firstClub.value && firstClub.value.clubOwner ? 1 : 0 )
 
   watchEffect( () => {
     if ( userClubId.value ) {
@@ -789,7 +802,7 @@
   <UI-Confirm
     v-if="deleting !== null"
     title="Delete swimmer"
-    :text="`Are you sure you want to delete swimmer '${userSwimmers[deleting!].value.fullName}' from your account?`"
+    :text="`Are you sure you want to delete swimmer '${userSwimmers[deleting!]!.value.fullName}' from your account?`"
     confirm-label="Delete"
     :action="deleteSwimmer"
     :cancel-action="() => { deleting = null }"

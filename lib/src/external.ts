@@ -120,7 +120,7 @@ export const STROKE_DISTANCE = {
 
 export const strokeLookup = Object.fromEntries( Object.entries( STROKE_DISTANCE ).map( ( [ k,v ] ) => [ v,k ] ) )
 
-export const strokeSort: Record<string,number> = {
+export const strokeSort: Record<StrokeType,number> = {
   freestyle: 0,
   breaststroke: 1,
   butterfly: 2,
@@ -137,7 +137,7 @@ const strokeData = Object.entries( STROKE_DISTANCE ).reduce( ( strokes, [ stroke
   if ( !strokes[stroke] ) {
     strokes[stroke] = {
       label: stroke.replace( /_/g, " " ).replace( /\b\w/g, char => char.toUpperCase() ),
-      order: strokeSort[stroke],
+      order: strokeSort[stroke as StrokeType],
       distances: [ distance ],
       codes: [ code ],
     }

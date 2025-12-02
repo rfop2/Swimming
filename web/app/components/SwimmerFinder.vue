@@ -27,13 +27,17 @@
       return [ Object.fromEntries(
         rows.map( row => {
           const [ headerCell, valueCell ] = Array.from( row.cells )
-          const key = headerCell.textContent?.trim().toLocaleLowerCase().replace( /\s+/g, "_" ) ?? ""
+          const key = headerCell?.textContent?.trim().toLocaleLowerCase().replace( /\s+/g, "_" ) ?? ""
           const value = valueCell?.textContent?.trim() ?? ""
           return [ key, value ]
         } )
       ) ]
     }
-    const headers = Array.from( rows[0].cells ).map( cell => cell.textContent.trim().toLocaleLowerCase().replace( /\s+/g, "_" ) ?? "" )
+    const firstRow = rows.at( 0 )
+    if ( !firstRow ) {
+      return []
+    }
+    const headers = Array.from( firstRow.cells ).map( cell => cell.textContent.trim().toLocaleLowerCase().replace( /\s+/g, "_" ) ?? "" )
     return rows.slice( 1 ).map( row => {
       const cells = Array.from( row.cells )
       return Object.fromEntries(
@@ -49,37 +53,44 @@
     if ( doc ) {
       if ( swimmerSearch.value.match( /^\d+$/ ) ) {
         const tables = doc.querySelectorAll<HTMLTableElement>( "#outerWrapper > div:nth-child(2) > div.boxRepeat.rankingsContent > div > div:nth-child(1) > div > table" )
-        const personal = parseTable( tables[0], "vertical" )
-        console.log( "Personal", personal )
-        if ( personal.length ) {
-          if ( personal[0].name ) {
-            [ selectedSwimmer.value.firstName, selectedSwimmer.value.lastName ] = personal[0].name.split( /\s+/ )
-          }
-          if ( personal[0].eligibility_category ) {
-            const gender = personal[0].eligibility_category.toLocaleLowerCase()
-            selectedSwimmer.value.gender = gender === "female" ? gender : "male"
-          }
-          if ( personal[0].year_of_birth ) {
-            selectedSwimmer.value.birthday = `${personal[0].year_of_birth}-01-01`
+        if ( tables[0] ) {
+          const personal = parseTable( tables[0], "vertical" )
+          console.log( "Personal", personal )
+          const details = personal.at( 0 )
+          if ( details ) {
+            if ( details.name ) {
+              [ selectedSwimmer.value.firstName, selectedSwimmer.value.lastName ] = details.name.split( /\s+/ )
+            }
+            if ( details.eligibility_category ) {
+              const gender = details.eligibility_category.toLocaleLowerCase()
+              selectedSwimmer.value.gender = gender === "female" ? gender : "male"
+            }
+            if ( details.year_of_birth ) {
+              selectedSwimmer.value.birthday = `${details.year_of_birth}-01-01`
+            }
           }
         }
-        const membership = parseTable( tables[1], "vertical" )
-        console.log( "Membership", membership )
-        if ( membership.length ) {
-          if ( membership[0].member_number ) {
-            selectedSwimmer.value.id = membership[0].member_number
-          }
-          if ( membership[0].country_of_international_representation ) {
-            const country = membership[0].country_of_international_representation.toLocaleUpperCase()
-            selectedSwimmer.value.nationality = NATIONALITY[country]
-          }
-          if ( membership[0].ranked_club ) {
-            const clubName = membership[0].ranked_club
-            const clubs = await $fetch( `/api/clubs/search?search=${encodeURIComponent( clubName )}` )
-            if ( clubs.length === 1 ) {
-              selectedSwimmer.value.county = clubs[0].clubCounty
-              selectedSwimmer.value.region = clubs[0].clubRegion
-              selectedSwimmer.value.clubId = clubs[0].clubId
+        if ( tables[1] ) {
+          const membership = parseTable( tables[1], "vertical" )
+          console.log( "Membership", membership )
+          const details = membership.at( 0 )
+          if ( details ) {
+            if ( details.member_number ) {
+              selectedSwimmer.value.id = details.member_number
+            }
+            if ( details.country_of_international_representation ) {
+              const country = details.country_of_international_representation.toLocaleUpperCase()
+              selectedSwimmer.value.nationality = NATIONALITY[country]
+            }
+            if ( details.ranked_club ) {
+              const clubName = details.ranked_club
+              const clubs = await $fetch( `/api/clubs/search?search=${encodeURIComponent( clubName )}` )
+              const firstClub = clubs.at( 0 )
+              if ( firstClub ) {
+                selectedSwimmer.value.county = firstClub.clubCounty
+                selectedSwimmer.value.region = firstClub.clubRegion
+                selectedSwimmer.value.clubId = firstClub.clubId
+              }
             }
           }
         }
@@ -90,20 +101,23 @@
           const data = parseTable( table )
           const nameWords = swimmerSearch.value.toLocaleLowerCase().trim().split( /\s+/ )
           const filteredData = data.filter( s => {
-            if ( s.family_name.toLocaleLowerCase() !== nameWords[nameWords.length - 1] ) return false
-            if ( nameWords.length > 1 && ( s.given_name.toLocaleLowerCase() !== nameWords[0] && s.known_as.toLocaleLowerCase() !== nameWords[0] ) ) return false
-            return true
+            if ( s ) {
+              if ( !s.member ) return false
+              if ( s.family_name && s.family_name.toLocaleLowerCase() === nameWords[nameWords.length - 1] ) return true
+              if ( nameWords.length > 1 && ( ( s.given_name && s.given_name.toLocaleLowerCase() === nameWords[0] ) || ( s.known_as && s.known_as.toLocaleLowerCase() !== nameWords[0] ) ) ) return true
+            }
+            return false
           } )
           filteredData.sort( ( a, b ) => {
             const aInClub = props.clubs.find( club => club.clubName! === a.ranked_club || club.clubAlias! === a.ranked_club )
             const bInClub = props.clubs.find( club => club.clubName! === b.ranked_club || club.clubAlias! === b.ranked_club )
             if ( aInClub && !bInClub ) return -1
             if ( !aInClub && bInClub ) return 1
-            const familyCompare = a.family_name.localeCompare( b.family_name )
+            const familyCompare = a.family_name && b.family_name ? a.family_name.localeCompare( b.family_name ) : 0
             if ( familyCompare !== 0 ) return familyCompare
-            return a.given_name.localeCompare( b.given_name )
+            return a.given_name && b.given_name ? a.given_name.localeCompare( b.given_name ) : 0
           } )
-          swimmerOptions.value = filteredData.map( s => ( { label: `${s.given_name} ${s.family_name} - ${s.eligibility_category} ${s.yob ? "(" + s.yob + ")" : ""}`, value: s.member } ) )
+          swimmerOptions.value = filteredData.map( s => ( { label: `${s.given_name} ${s.family_name} - ${s.eligibility_category} ${s.yob ? "(" + s.yob + ")" : ""}`, value: s.member ?? "no-id" } ) )
         }
       }
     }
@@ -167,7 +181,7 @@
           placeholder="Choose swimmer..."
           @update:model-value="( value ) => {
             if ( value ) {
-              swimmerSearch = String( value );
+              swimmerSearch = String( value )
               lookupSwimmer()
             }
           }"
