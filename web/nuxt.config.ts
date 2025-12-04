@@ -9,7 +9,11 @@ const builtinModules = require( "module" ).builtinModules
 
 export default defineNuxtConfig( {
   devtools: { enabled: true },
-
+  nitro: {
+    externals: {
+      inline: ['xlsx', 'pdf-parse'],
+    },
+  },
   modules: [
     "@nuxtjs/tailwindcss",
     "@nuxt/eslint",
