@@ -23,6 +23,7 @@
         username: "",
         firstName: "",
         lastName: "",
+        phone: "",
         location: "",
         type: "",
         admin: false

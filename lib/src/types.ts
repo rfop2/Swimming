@@ -4,6 +4,7 @@ export interface DatabaseUser {
   password_hash: string
   firstName: string
   lastName: string
+  phone: string
   location: string
   type: string
   admin: boolean

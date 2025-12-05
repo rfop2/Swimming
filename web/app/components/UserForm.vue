@@ -53,6 +53,7 @@
       username: props.user.username,
       password: props.user.id !== "0" ? PASSWORD : "",
       confirmPassword: props.user.id !== "0" ? PASSWORD : "",
+      phone: props.user.phone,
       location: props.user.location,
       type: props.user.type,
       clubs: props.clubs.map( ( { clubId, clubOwner } ) => ( { clubId, clubOwner } ) ), // Filter out the other fields
@@ -89,7 +90,8 @@
               return value === password
             }
           ),
-        location: yup.string().label( "Town/city" ).required(),
+        phone: yup.string().label( "Phone / Mobile" ),
+        location: yup.string().label( "Town / City" ).required(),
         type: yup.string().label( "Type" ).when( [], ( /* _values, _schema */ ) => {
           return isAdmin
             ? yup.string().required()
@@ -119,6 +121,7 @@
   const [ username, usernameAttrs ] = defineField( "username" )
   const [ password, passwordAttrs ] = defineField( "password" )
   const [ confirmPassword, confirmPasswordAttrs ] = defineField( "confirmPassword" )
+  const [ phone, phoneAttrs ] = defineField( "phone" )
   const [ location, locationAttrs ] = defineField( "location" )
   const [ type, typeAttrs ] = defineField( "type" )
   const { replace: replaceUserClub } = useFieldArray<UserClub>( "clubs" )
@@ -126,7 +129,8 @@
 
   // Should come from DB
   const userTypes =
-    [ {
+    [
+      {
         label: "Parent",
         value: "parent"
       },
@@ -300,8 +304,7 @@
       {
         label: "Female",
         value: "female"
-      },
-    ]
+      } ]
   const nationalities = Object.entries( NATIONALITIES ).map( (
     [ value, label ] ) => ( {
     value,
@@ -400,6 +403,25 @@
                   class="block w-full rounded-md px-3 py-1.5 sm:text-sm/6"
                 >
                 <span>{{ errors.lastName }}</span>
+              </div>
+            </div>
+
+            <div class="sm:col-span-2">
+              <label
+                for="last-name"
+                class="block text-sm/6 font-medium text-gray-900"
+              >Phone / Mobile</label>
+              <div class="mt-2">
+                <input
+                  id="phone"
+                  v-model="phone"
+                  v-bind="phoneAttrs"
+                  type="text"
+                  autocomplete="tel"
+                  required
+                  class="block w-full rounded-md px-3 py-1.5 sm:text-sm/6"
+                >
+                <span>{{ errors.phone }}</span>
               </div>
             </div>
 

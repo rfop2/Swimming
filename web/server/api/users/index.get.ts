@@ -39,6 +39,7 @@ export default defineEventHandler( async ( event ) => {
       u.username,
       u.firstName,
       u.lastName,
+      u.phone,
       u.location,
       u.type,
       GROUP_CONCAT(
