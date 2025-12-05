@@ -1,4 +1,3 @@
-// eslint.config.mjs
 // @ts-check
 
 import withNuxt from "./.nuxt/eslint.config.mjs"
@@ -10,8 +9,8 @@ export default withNuxt( [
       // Vue rules
       // -------------------------
       "vue/script-indent": [ "error", 2, { baseIndent: 1, switchCase: 1 } ],
+      "vue/html-indent": [ "error", 2 ],
       "vue/multi-word-component-names": "off",
-
       // -------------------------
       // Core stylistic rules
       // -------------------------
@@ -76,8 +75,6 @@ export default withNuxt( [
   // TS-only overrides (applies indentation cleanly in TS files)
   {
     files: [ "**/*.vue" ],
-    rules: {
-      indent: "off",
-    },
+    rules: { indent: "off" },
   },
 ] )
