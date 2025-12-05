@@ -1,3 +1,78 @@
+import fetch from "node-fetch"
+import type { User } from "lucia"
+
+interface TokenResponse {
+  token_type: string
+  expires_in: number
+  ext_expires_in: number
+  access_token: string
+}
+
+export interface EmailAction {
+  label: string
+  url: string
+}
+
+export const sendEmail = async ( user: User, subject: string, body: string, action?: EmailAction ) => {
+  const tokenResponse = await fetch(
+    `https://login.microsoftonline.com/${process.env.AZURE_TENANT_ID}/oauth2/v2.0/token`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams( {
+        client_id: process.env.AZURE_CLIENT_ID!,
+        client_secret: process.env.AZURE_CLIENT_SECRET!,
+        scope: "https://graph.microsoft.com/.default",
+        grant_type: "client_credentials",
+      } ),
+    }
+  )
+
+  const response = ( await tokenResponse.json() ) as TokenResponse
+  const { access_token } = response
+
+  const { html, text: _text } = createEmailTemplate( {
+    title: subject,
+    body,
+    actionLabel: action?.label,
+    actionUrl: action?.url,
+  } )
+
+  // Then use in your Graph API payload:
+  const graphRes = await fetch( "https://graph.microsoft.com/v1.0/users/no-reply@swim.racing/sendMail", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${access_token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify( {
+      message: {
+        subject,
+        body: {
+          contentType: "HTML",
+          content: html,
+        },
+        toRecipients: [ {
+          emailAddress: {
+            name: `${user.firstName} ${user.lastName}`,
+            address: user.username,
+          }
+        } ],
+        bccRecipients: [ {
+          emailAddress: {
+            address: "phil@phroco.com"
+          }
+        } ],
+      },
+    } ),
+  } )
+
+  if ( !graphRes.ok ) {
+    throw new Error( `Email send failed: ${await graphRes.text()}` )
+  }
+  return true
+}
+
 export interface EmailTemplateOptions {
   title: string
   body: string
