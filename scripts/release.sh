@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+MAIN_BRANCH="main"
 RELEASE_BRANCH="release"
 
 # --- predeclare variables so rollback never fails ---
@@ -46,7 +47,6 @@ fi
 
 ACTION=$1
 
-
 # --------------------------------------------------------
 # Repository root + save state
 # --------------------------------------------------------
@@ -55,7 +55,6 @@ cd "$git_root"
 
 ORIG_HEAD=$(git rev-parse HEAD)
 
-
 # --------------------------------------------------------
 # Ensure clean working tree
 # --------------------------------------------------------
@@ -63,29 +62,27 @@ if [[ -n "$(git status --porcelain)" ]]; then
   die "Working tree not clean. Commit or stash first."
 fi
 
-
 # --------------------------------------------------------
 # Ensure main is synced
 # --------------------------------------------------------
-git checkout main >/dev/null 2>&1
-git fetch origin main >/dev/null 2>&1
+git checkout $MAIN_BRANCH >/dev/null 2>&1
+git fetch origin $MAIN_BRANCH >/dev/null 2>&1
 
-LOCAL=$(git rev-parse main)
-REMOTE=$(git rev-parse origin/main)
-BASE=$(git merge-base main origin/main)
+LOCAL=$(git rev-parse $MAIN_BRANCH)
+REMOTE=$(git rev-parse origin/$MAIN_BRANCH)
+BASE=$(git merge-base $MAIN_BRANCH origin/$MAIN_BRANCH)
 
 if [[ "$LOCAL" != "$REMOTE" ]]; then
   if [[ "$LOCAL" == "$BASE" ]]; then
-    die "'main' has unpulled commits. Run: git pull"
+    die "'$MAIN_BRANCH' has unpulled commits. Run: git pull"
   elif [[ "$REMOTE" == "$BASE" ]]; then
-    die "'main' has unpushed commits. Run: git push"
+    die "'$MAIN_BRANCH' has unpushed commits. Run: git push"
   else
-    die "'main' has diverged from origin. Resolve manually."
+    die "'$MAIN_BRANCH' has diverged from origin. Resolve manually."
   fi
 fi
 
-info "'main' is clean and fully pushed."
-
+info "'$MAIN_BRANCH' is clean and fully pushed."
 
 # --------------------------------------------------------
 # Version bump + changelog
@@ -112,33 +109,31 @@ git add "$CHANGELOG"
 
 git commit -m "${ACTION^} update to version $VERSION"
 
-cd "$git_root"
+git push
 
+cd "$git_root"
 
 # --------------------------------------------------------
 # Ensure release branch exists
 # --------------------------------------------------------
 if ! git show-ref --verify --quiet "refs/heads/$RELEASE_BRANCH"; then
   info "Creating $RELEASE_BRANCH branch"
-  git checkout -b "$RELEASE_BRANCH" main
+  git checkout -b "$RELEASE_BRANCH" $MAIN_BRANCH
   git push -u origin "$RELEASE_BRANCH"
 else
   git checkout "$RELEASE_BRANCH"
   git pull origin "$RELEASE_BRANCH" --ff-only
 fi
 
-
 # --------------------------------------------------------
 # Merge main → release
 # --------------------------------------------------------
-git merge main --no-ff -m "Merge main into release for version $VERSION"
-
+git merge $MAIN_BRANCH --no-ff -m "Merge $MAIN_BRANCH into release for version $VERSION"
 
 # --------------------------------------------------------
 # Tag release
 # --------------------------------------------------------
 git tag "$VERSION"
-
 
 # --------------------------------------------------------
 # Push results
@@ -147,4 +142,10 @@ git push origin "$RELEASE_BRANCH"
 git push origin "$VERSION"
 
 info "Release $VERSION completed successfully."
+
+# --------------------------------------------------------
+# Checkout main again to ensure commits don't go onto release
+# --------------------------------------------------------
+git checkout $MAIN_BRANCH >/dev/null 2>&1
+
 exit 0
