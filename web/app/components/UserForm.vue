@@ -15,7 +15,7 @@
     clubs: UserClub[]
     swimmers: ExtSwimmer[]
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    saveFn: ( values: any ) => void
+    saveFn: ( values: any ) => Promise<void>
   }>()
 
   const clubLookups: Array<UserClub | Club> = props.clubs
