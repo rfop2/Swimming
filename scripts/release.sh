@@ -1,14 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# --------------------------------------------------------
-# Configuration
-# --------------------------------------------------------
 RELEASE_BRANCH="release"
 
-# --------------------------------------------------------
-# Helpers
-# --------------------------------------------------------
+# --- predeclare variables so rollback never fails ---
+VERSION=""
+ORIG_HEAD=""
+
 die() {
   echo "ERROR: $1" >&2
   exit 1
@@ -20,19 +18,21 @@ info() {
 
 rollback() {
   echo "!!! Rolling back due to failure !!!"
-  
-  # If we created a tag, delete it
-  if git rev-parse "$VERSION" >/dev/null 2>&1; then
-    git tag -d "$VERSION" || true
+
+  # delete tag if created
+  if [[ -n "$VERSION" ]] && git rev-parse "$VERSION" >/dev/null 2>&1; then
+    git tag -d "$VERSION" >/dev/null 2>&1 || true
   fi
 
-  # Reset any partial commit(s)
-  git reset --hard "$ORIG_HEAD"
+  # reset to original commit
+  if [[ -n "$ORIG_HEAD" ]]; then
+    git reset --hard "$ORIG_HEAD" >/dev/null 2>&1 || true
+  fi
 
-  # Abort merge if in-progress
+  # merge abort if necessary
   git merge --abort >/dev/null 2>&1 || true
 
-  die "Rollback complete. Nothing was deployed."
+  die "Rollback complete. Nothing was released."
 }
 
 trap rollback ERR
@@ -41,39 +41,33 @@ trap rollback ERR
 # Parse arguments
 # --------------------------------------------------------
 if [[ $# -lt 1 ]]; then
-  die "Usage: $0 <patch|minor|major> [preview]"
+  die "Usage: $0 <patch|minor|major>"
 fi
 
 ACTION=$1
-PREVIEW=${2:-""}
-IS_PREVIEW=false
 
-if [[ "$PREVIEW" == "preview" ]]; then
-  IS_PREVIEW=true
-  info "Running in PREVIEW (dry-run) mode — no changes will be made."
-fi
 
 # --------------------------------------------------------
-# Start
+# Repository root + save state
 # --------------------------------------------------------
 git_root=$(git rev-parse --show-toplevel)
 cd "$git_root"
 
-# Save state for rollback
 ORIG_HEAD=$(git rev-parse HEAD)
+
 
 # --------------------------------------------------------
 # Ensure clean working tree
 # --------------------------------------------------------
 if [[ -n "$(git status --porcelain)" ]]; then
-  die "Working tree is not clean. Commit or stash first."
+  die "Working tree not clean. Commit or stash first."
 fi
 
-# --------------------------------------------------------
-# Check main status
-# --------------------------------------------------------
-git checkout main >/dev/null 2>&1 || die "Cannot checkout main"
 
+# --------------------------------------------------------
+# Ensure main is synced
+# --------------------------------------------------------
+git checkout main >/dev/null 2>&1
 git fetch origin main >/dev/null 2>&1
 
 LOCAL=$(git rev-parse main)
@@ -90,42 +84,17 @@ if [[ "$LOCAL" != "$REMOTE" ]]; then
   fi
 fi
 
-info "'main' is fully pushed and clean."
+info "'main' is clean and fully pushed."
+
 
 # --------------------------------------------------------
-# Calculate version (preview safe)
+# Version bump + changelog
 # --------------------------------------------------------
 cd web
 
-CURRENT_VERSION=$(node -p "require('./package.json').version")
+npm version "$ACTION" >/dev/null 2>&1
+VERSION=$(node -p "require('./package.json').version")
 
-if $IS_PREVIEW; then
-  NEXT_VERSION=$(npm version "$ACTION" --no-git-tag-version | sed 's/v//')
-  info "Current version: $CURRENT_VERSION"
-  info "Would bump to:   $NEXT_VERSION"
-  cd "$git_root"
-else
-  npm version "$ACTION" >/dev/null 2>&1
-  NEXT_VERSION=$(node -p "require('./package.json').version")
-fi
-
-VERSION="$NEXT_VERSION"
-
-if $IS_PREVIEW; then
-  echo
-  echo "=== PREVIEW SUMMARY ==="
-  echo "Version bump:          $CURRENT_VERSION → $VERSION"
-  echo "Merge main → release:  yes"
-  echo "Tag to create:         $VERSION"
-  echo "Changelog file:        web/public/changelog.json"
-  echo
-  echo "No changes made (dry-run)."
-  exit 0
-fi
-
-# --------------------------------------------------------
-# Commit version changes
-# --------------------------------------------------------
 git add package*.json
 
 CHANGELOG=public/changelog.json
@@ -145,11 +114,12 @@ git commit -m "${ACTION^} update to version $VERSION"
 
 cd "$git_root"
 
+
 # --------------------------------------------------------
 # Ensure release branch exists
 # --------------------------------------------------------
-if ! git show-ref --verify --quiet refs/heads/$RELEASE_BRANCH; then
-  info "Creating $RELEASE_BRANCH branch."
+if ! git show-ref --verify --quiet "refs/heads/$RELEASE_BRANCH"; then
+  info "Creating $RELEASE_BRANCH branch"
   git checkout -b "$RELEASE_BRANCH" main
   git push -u origin "$RELEASE_BRANCH"
 else
@@ -157,18 +127,21 @@ else
   git pull origin "$RELEASE_BRANCH" --ff-only
 fi
 
+
 # --------------------------------------------------------
 # Merge main → release
 # --------------------------------------------------------
 git merge main --no-ff -m "Merge main into release for version $VERSION"
 
+
 # --------------------------------------------------------
-# Tag the release
+# Tag release
 # --------------------------------------------------------
 git tag "$VERSION"
 
+
 # --------------------------------------------------------
-# Push final changes
+# Push results
 # --------------------------------------------------------
 git push origin "$RELEASE_BRANCH"
 git push origin "$VERSION"
