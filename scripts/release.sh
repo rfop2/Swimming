@@ -112,6 +112,8 @@ git add "$CHANGELOG"
 
 git commit -m "${ACTION^} update to version $VERSION"
 
+git push
+
 cd "$git_root"
 
 
