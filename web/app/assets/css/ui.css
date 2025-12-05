@@ -1,0 +1,13 @@
+.form-disabled {
+  @apply opacity-60 cursor-pointer;
+
+  /* Headless UI disabled state */
+  @apply data-[headlessui-state~="disabled"]:bg-gray-100;
+  @apply data-[headlessui-state~="disabled"]:text-gray-400;
+  @apply data-[headlessui-state~="disabled"]:outline-gray-200;
+
+  /* Native disabled state */
+  @apply disabled:bg-gray-100;
+  @apply disabled:text-gray-400;
+  @apply disabled:outline-gray-200;
+}
