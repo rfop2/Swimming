@@ -418,7 +418,6 @@
                   v-bind="phoneAttrs"
                   type="text"
                   autocomplete="tel"
-                  required
                   class="block w-full rounded-md px-3 py-1.5 sm:text-sm/6"
                 >
                 <span>{{ errors.phone }}</span>
