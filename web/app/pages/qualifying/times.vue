@@ -141,7 +141,7 @@
     area: "",
     type: typeOptions[0].value,
     gender: genderOptions[0].value,
-    age: ageOptions.value[0]!.value,
+    age: ageOptions.value[0]?.value ?? "",
     course: courseOptions[0].value,
   } )
 
