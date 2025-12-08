@@ -2,15 +2,64 @@
   {
     "isoDate": "2025-12-08",
     "niceDate": "8 December 2025",
-    "diff": "13.1.2..",
-    "href": "https://bitbucket.org/swimracing/swimming/compare/13.2.0..13.1.2",
+    "diff": "13.2.0..",
+    "href": "https://bitbucket.org/swimracing/swimming/compare/13.2.1..13.2.0",
     "major": false,
     "minor": false,
     "tag": null,
-    "title": "13.2.0",
-    "date": "2025-12-08T09:31:05.874Z",
+    "title": "13.2.1",
+    "date": "2025-12-08T13:56:50.639Z",
     "summary": null,
-    "commits": [],
+    "commits": [
+      {
+        "hash": "0f075f27c94c383020223a0dbd2d1aface2ce100",
+        "shorthash": "0f075f2",
+        "author": "Philip Coombes",
+        "email": "phil@web2wire.com",
+        "date": "2025-12-08T13:56:27.000Z",
+        "niceDate": "8 December 2025",
+        "subject": "Ensure that merges are display as well as regular commits.",
+        "message": "Ensure that merges are display as well as regular commits.",
+        "fixes": null,
+        "href": "https://bitbucket.org/swimracing/swimming/commits/0f075f27c94c383020223a0dbd2d1aface2ce100",
+        "breaking": false,
+        "files": 1,
+        "insertions": 1,
+        "deletions": 1,
+        "merge": null
+      }
+    ],
+    "merges": [],
+    "fixes": []
+  },
+  {
+    "isoDate": "2025-12-08",
+    "niceDate": "8 December 2025",
+    "diff": "13.1.2..13.2.0",
+    "href": "https://bitbucket.org/swimracing/swimming/compare/13.2.0..13.1.2",
+    "major": false,
+    "minor": true,
+    "tag": "13.2.0",
+    "date": "2025-12-08",
+    "title": "13.2.0",
+    "version": "13.2.0",
+    "summary": null,
+    "commits": [
+      {
+        "hash": "15439c9c45d9616eaab7ab36d3d16362e8b15432",
+        "shorthash": "15439c9",
+        "author": "Philip Coombes",
+        "email": "phil@web2wire.com",
+        "date": "2025-12-08T09:31:13.000Z",
+        "niceDate": "8 December 2025",
+        "subject": "Merge main into release for version 13.2.0",
+        "message": "Merge main into release for version 13.2.0",
+        "fixes": null,
+        "href": "https://bitbucket.org/swimracing/swimming/commits/15439c9c45d9616eaab7ab36d3d16362e8b15432",
+        "breaking": false,
+        "merge": null
+      }
+    ],
     "merges": [
       {
         "id": "8",
