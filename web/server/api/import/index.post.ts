@@ -24,6 +24,24 @@ const isPdfParseResultObject = ( value: unknown ): value is PdfParseResultObject
   return typeof value === "object" && value !== null && "text" in value
 }
 
+type WorkerModuleShape = {
+  CanvasFactory?: unknown
+  getData?: () => unknown
+}
+
+type PDFParseInstance = {
+  getText: () => Promise<unknown>
+}
+
+type PDFParseConstructor = {
+  new ( options: { data: ArrayBuffer | Buffer, CanvasFactory?: unknown } ): PDFParseInstance
+  setWorker?: ( worker: unknown ) => void
+}
+
+type PdfParseModuleShape = {
+  PDFParse?: PDFParseConstructor
+}
+
 export default defineEventHandler( async ( event ) => {
   const parts = await readMultipartFormData( event )
   if ( !parts ) {
@@ -45,14 +63,23 @@ export default defineEventHandler( async ( event ) => {
   let structured
 
   if ( fileField.type === "application/pdf" ) {
+    const workerMod = await import( "pdf-parse/worker" )
     const pdfParseMod = await import( "pdf-parse" )
-    const PDFParse = pdfParseMod.PDFParse
+
+    const { CanvasFactory, getData } = workerMod as unknown as WorkerModuleShape
+    const { PDFParse } = pdfParseMod as unknown as PdfParseModuleShape
+
     if ( typeof PDFParse !== "function" ) {
       throw createError( { statusCode: 500, statusMessage: "PDF parser not available" } )
     }
 
-    const parser = new PDFParse( { data: buffer } )
+    if ( typeof PDFParse.setWorker === "function" && typeof getData === "function" ) {
+      PDFParse.setWorker( getData() )
+    }
+
+    const parser = new PDFParse( { data: buffer, CanvasFactory } )
     const result = await parser.getText()
+
     let text = ""
     if ( typeof result === "string" ) {
       text = result
