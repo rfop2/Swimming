@@ -1,16 +1,66 @@
 [
   {
-    "isoDate": "2025-12-05",
-    "niceDate": "5 December 2025",
-    "diff": "13.1.1..",
-    "href": "https://bitbucket.org/swimracing/swimming/compare/13.1.2..13.1.1",
+    "isoDate": "2025-12-08",
+    "niceDate": "8 December 2025",
+    "diff": "13.1.2..",
+    "href": "https://bitbucket.org/swimracing/swimming/compare/13.2.0..13.1.2",
     "major": false,
     "minor": false,
     "tag": null,
+    "title": "13.2.0",
+    "date": "2025-12-08T09:31:05.874Z",
+    "summary": null,
+    "commits": [],
+    "merges": [
+      {
+        "id": "8",
+        "message": "fixPdfParseInitialization",
+        "href": "https://bitbucket.org/swimracing/swimming/pull-requests/8",
+        "author": "Rodrigo Ferreira",
+        "commit": {
+          "hash": "a95012d5dec51920aa7e308dd330299b4ce12b80",
+          "shorthash": "a95012d",
+          "author": "Rodrigo Ferreira",
+          "email": "rf.oliveirapaula@gmail.com",
+          "date": "2025-12-08T09:30:08.000Z",
+          "niceDate": "8 December 2025",
+          "subject": "Merged in fixPdfParseInitialization (pull request #8)",
+          "message": "Merged in fixPdfParseInitialization (pull request #8)\n\nfixPdfParseInitialization\n\nApproved-by: Philip Coombes",
+          "fixes": null,
+          "href": "https://bitbucket.org/swimracing/swimming/commits/a95012d5dec51920aa7e308dd330299b4ce12b80",
+          "breaking": false
+        }
+      }
+    ],
+    "fixes": []
+  },
+  {
+    "isoDate": "2025-12-05",
+    "niceDate": "5 December 2025",
+    "diff": "13.1.1..13.1.2",
+    "href": "https://bitbucket.org/swimracing/swimming/compare/13.1.2..13.1.1",
+    "major": false,
+    "minor": false,
+    "tag": "13.1.2",
+    "date": "2025-12-05",
     "title": "13.1.2",
-    "date": "2025-12-05T16:25:53.201Z",
+    "version": "13.1.2",
     "summary": null,
     "commits": [
+      {
+        "hash": "5bbf9da54d17270751da1ee692c9f0915965358d",
+        "shorthash": "5bbf9da",
+        "author": "Philip Coombes",
+        "email": "phil@web2wire.com",
+        "date": "2025-12-05T16:26:00.000Z",
+        "niceDate": "5 December 2025",
+        "subject": "Merge main into release for version 13.1.2",
+        "message": "Merge main into release for version 13.1.2",
+        "fixes": null,
+        "href": "https://bitbucket.org/swimracing/swimming/commits/5bbf9da54d17270751da1ee692c9f0915965358d",
+        "breaking": false,
+        "merge": null
+      },
       {
         "hash": "832f7ba0e0857894352efd30d344301751338462",
         "shorthash": "832f7ba",
