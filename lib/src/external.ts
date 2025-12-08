@@ -185,7 +185,7 @@ export const rankBaseUrl = "/12months/last12.php"
 
 export const globalRankParams = ( swimmer: Swimmer, page = 1 ) => ( {
   Sex: swimmer.gender.substring( 0, 1 ).toUpperCase(),
-  AgeGroup: getSwimmerAgeGroup( swimmer ),
+  AgeGroup: getSwimmerAgeGroup( swimmer ).padStart( 2, "0" ) ,
   date: new Date( new Date().getFullYear(), 11, 31 ).toLocaleDateString( "en-GB" ),
   StartNumber: String( ( ( page - 1 ) * 100 ) + 1 ),
   RecordsToView: "100",

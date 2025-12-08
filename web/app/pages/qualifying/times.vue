@@ -209,12 +209,10 @@
         } else if ( a.course > b.course ) {
           return -1
         }
-        if ( strokeSort[a.stroke] && b.stroke && strokeSort[b.stroke] ) {
-          if ( strokeSort[a.stroke]! < strokeSort[b.stroke]! ) {
-            return -1
-          } else if ( strokeSort[a.stroke]! > strokeSort[b.stroke]! ) {
-            return 1
-          }
+        if ( strokeSort[a.stroke] < strokeSort[b.stroke] ) {
+          return -1
+        } else if ( strokeSort[a.stroke] > strokeSort[b.stroke] ) {
+          return 1
         }
         return a.distanceMetres - b.distanceMetres
       } )
