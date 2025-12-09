@@ -136,6 +136,12 @@
                 scope="col"
                 class="px-1 py-3.5 text-left text-sm font-semibold text-gray-900"
               >
+                Phone
+              </th>
+              <th
+                scope="col"
+                class="px-1 py-3.5 text-left text-sm font-semibold text-gray-900"
+              >
                 Location
               </th>
               <th
@@ -194,6 +200,9 @@
               </td>
               <td class="px-1 py-2 text-sm whitespace-nowrap text-gray-500">
                 {{ !!Number( user.admin ) ? "*" : "" }}{{ user.username }}
+              </td>
+              <td class="px-1 py-2 text-sm whitespace-nowrap text-gray-500">
+                {{ user.phone }}
               </td>
               <td class="px-1 py-2 text-sm whitespace-nowrap text-gray-500">
                 {{ user.location }}

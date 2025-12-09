@@ -16,10 +16,11 @@ import { generateId } from "lucia"
   const password = args[1]
   const firstName = args[2]
   const lastName = args[3]
-  const type = args[4]
-  const townCity = args[5]
-  const clubId = args[6]
-  const clubOwner = args[7]
+  const phone = args[4]
+  const type = args[5]
+  const townCity = args[6]
+  const clubId = args[7]
+  const clubOwner = args[8]
 
   if (
     username.length < 3 ||
@@ -50,7 +51,7 @@ import { generateId } from "lucia"
       }
       const addUser = prepareStatement(
         conn,
-        "INSERT INTO User ( id, username, password_hash, firstName, lastName, type, location, locationId ) VALUES( :userId, :username, :passwordHash, :firstName, :lastName, :type, :location, :locationId )"
+        "INSERT INTO User ( id, username, password_hash, firstName, lastName, phone, type, location, locationId ) VALUES( :userId, :username, :passwordHash, :firstName, :lastName, :phone, :type, :location, :locationId )"
       )
 
       await addUser.run( {
@@ -59,6 +60,7 @@ import { generateId } from "lucia"
         passwordHash,
         firstName,
         lastName,
+        phone,
         type,
         location: location ? location.locationName : townCity,
         locationId: location ? location.locationId : null,

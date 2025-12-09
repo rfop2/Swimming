@@ -9,6 +9,7 @@ export interface UserData {
   username: string
   firstName: string
   lastName: string
+  phone: string
   location: string
   password: string
   confirmPassword: string
@@ -155,7 +156,7 @@ export const updateUserClubs = async ( conn: Pool | PoolConnection, userId: User
   }
 }
 
-const insertUserSql = "INSERT INTO User ( id, username, password_hash, firstName, lastName, type, location ) VALUES( :userId, :username, :passwordHash, :firstName, :lastName, :type, :location )"
+const insertUserSql = "INSERT INTO User ( id, username, password_hash, firstName, lastName, phone, type, location ) VALUES( :userId, :username, :passwordHash, :firstName, :lastName, :phone, :type, :location )"
 
 export const addUser = async ( conn: Pool | PoolConnection, userData: UserData ) => {
   if (
@@ -239,7 +240,7 @@ export const addUser = async ( conn: Pool | PoolConnection, userData: UserData )
 }
 
 const updateUserPasswordSql = "UPDATE User SET password_hash = :passwordHash WHERE id = :userId"
-const updateUserSql = "UPDATE User SET username = :username, firstName = :firstName, lastName = :lastName, location = :location, type = :type WHERE id = :userId"
+const updateUserSql = "UPDATE User SET username = :username, firstName = :firstName, lastName = :lastName, phone = :phone, location = :location, type = :type WHERE id = :userId"
 
 export const updateUser = async ( conn: Pool | PoolConnection, userId: string, userData: UserData ) => {
   if ( userData.password && userData.confirmPassword ) {
