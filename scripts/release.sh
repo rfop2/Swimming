@@ -102,7 +102,7 @@ npx auto-changelog \
   --starting-version 3.0.0 \
   --commit-limit false \
   --hide-empty-releases \
-  --ignore-commit-pattern "update to version" \
+  --ignore-commit-pattern "update to version|Merge main into release" \
   -o "$CHANGELOG" -t json
 
 git add "$CHANGELOG"
