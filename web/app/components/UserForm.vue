@@ -46,19 +46,32 @@
 
   const PASSWORD = "************"
 
-  const { values, errors, meta, defineField, resetForm, handleSubmit } = useForm( {
-    initialValues: {
-      firstName: props.user.firstName,
-      lastName: props.user.lastName,
-      username: props.user.username,
-      password: props.user.id !== "0" ? PASSWORD : "",
-      confirmPassword: props.user.id !== "0" ? PASSWORD : "",
-      phone: props.user.phone,
-      location: props.user.location,
-      type: props.user.type,
-      clubs: props.clubs.map( ( { clubId, clubOwner } ) => ( { clubId, clubOwner } ) ), // Filter out the other fields
-      swimmers: props.swimmers,
+  const initialValues = computed( () => ( {
+    firstName: props.user.firstName,
+    lastName: props.user.lastName,
+    username: props.user.username,
+    password: props.user.id !== "0" ? PASSWORD : "",
+    confirmPassword: props.user.id !== "0" ? PASSWORD : "",
+    phone: props.user.phone,
+    location: props.user.location,
+    type: props.user.type,
+    clubs: props.clubs.map( ( { clubId, clubOwner } ) => ( { clubId, clubOwner } ) ), // Filter out the other fields
+    swimmers: props.swimmers,
+  } ) )
+
+  // If the parent sends new values… reset the form
+  watch(
+    () => initialValues.value,
+    ( newValues ) => {
+      resetForm( {
+        values: newValues,
+      } )
     },
+    { deep: true }
+  )
+
+  const { values, errors, meta, defineField, resetForm, handleSubmit } = useForm( {
+    initialValues: initialValues.value,
     validationSchema: toTypedSchema(
       yup.object( {
         firstName: yup.string().label( "First name" ).required(),
