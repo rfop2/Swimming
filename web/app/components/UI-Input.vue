@@ -32,7 +32,7 @@
     :for="props.id ?? defaultId"
     class="block text-sm/6 font-medium text-gray-900"
   >{{ props.label }}{{ !!required ? "*" : "" }}</label>
-  <div :class="classNames({ 'mt-2': props.label })">
+  <div :class="{ 'mt-2': props.label }">
     <span
       v-if="props.type === 'checkbox' || props.type === 'radio'"
     >
@@ -67,7 +67,6 @@
         </svg>
         <span v-if="error" class="text-sm text-red-600">{{ error }}</span>
       </div>
-
     </span>
     <span v-else>
       <div class="relative w-full">
