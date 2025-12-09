@@ -219,6 +219,7 @@
         }
         for ( const scope of Object.keys( qualifyingRecord.qualifying ) ) {
           const performanceRecord = performanceRecordsMap.get( `${key}_${scope}` )
+          console.log( "pr", performanceRecord, scope )
           if ( performanceRecord ) {
             qualifyingRecord.qualifying[scope as ScopeType] = { ...performanceRecord, ...qualifyingRecord.qualifying[scope as ScopeType] }
             if ( !qualifyingRecord.qtime || ( performanceRecord.time && performanceRecord.time <= qualifyingRecord.qtime ) ) {
@@ -235,16 +236,26 @@
               const aqp = activeQualifyingPeriods.value[scope as ScopeType][type as QualifyingType]
               if ( aqp ) {
                 const qualifyRaw = qualifyingEntry ? convertTime( qualifyingEntry.course, course, stroke, distance, qualifyingEntry.time ) : undefined
-                const qualified = !!performanceRecord?.time && ( performanceRecord.time <= ( qualifyRaw ?? 0 ) )
-                const qualifyDiff = !!performanceRecord?.time && qualifyRaw ? performanceRecord.time - qualifyRaw : undefined
-                console.log( qualified, qualifyRaw, performanceRecord?.time )
+                let qualified = undefined
+                let qualifyDiff = undefined
+                if ( performanceRecord ) {
+                  const swimDate = Temporal.PlainDate.from( String( performanceRecord.best_date ) )
+                  const tooEarly = aqp.period?.qualifyingStart && Temporal.PlainDate.compare( swimDate, Temporal.PlainDate.from( aqp.period.qualifyingStart ) ) < 0
+                  const tooLate = aqp.period?.qualifyingEnd && Temporal.PlainDate.compare( swimDate, Temporal.PlainDate.from( aqp.period.qualifyingEnd ) ) > 0
+                  console.log( aqp, tooEarly, tooLate )
+                  if ( !tooEarly && !tooLate ) {
+                    qualified = performanceRecord.time && ( performanceRecord.time <= ( qualifyRaw ?? 0 ) )
+                    qualifyDiff = performanceRecord.time && qualifyRaw ? performanceRecord.time - qualifyRaw : undefined
+                  }
+                }
+                console.log( qualified, qualifyRaw, performanceRecord?.time, aqp )
                 const qr = qualifyingRecord.qualifying[scope as ScopeType].types[type as QualifyingType]
                 if ( qr ) {
                   const qualifyTime = qualifyRaw ? secondsToTime( qualifyRaw ) : undefined
                   qr.qualifyTime = qualifyTime
                   qr.qualifyDiff = qualifyDiff && qualifyDiff > 0 ? secondsToTime( qualifyDiff ) : ""
                   qr.qualifyProx = qualifyRaw && qualifyDiff ? 100 * ( qualifyDiff / qualifyRaw ) : undefined
-                  qr.qualified = qualified
+                  qr.qualified = !!qualified
                 }
                 if ( qualified ) {
                   qualifyingRecord.qualified[scope as ScopeType].add( type as QualifyingType )
