@@ -26,6 +26,7 @@
     clearable?: boolean
     placeholder?: string
     debounceMs?: number
+    error?: string
   }>(), {
     id: undefined,
     options: () => [],
@@ -37,6 +38,7 @@
     clearable: true,
     placeholder: "Select Option or Add New",
     debounceMs: 300,
+    error: "",
   } )
 
   // const empty = computed( () => Array.isArray( model.value ) ? model.value.length === 0 : !model.value )
@@ -183,5 +185,6 @@
         </ComboboxOptions>
       </transition>
     </div>
+    <span v-if="error" class="text-sm text-red-600">{{ error }}</span>
   </Combobox>
 </template>

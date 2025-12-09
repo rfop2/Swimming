@@ -13,6 +13,7 @@
     required?: boolean
     clearable?: boolean
     placeholder?: string
+    error?: string
   }>(), {
     id: undefined,
     label: undefined,
@@ -20,6 +21,7 @@
     required: false,
     clearable: false,
     placeholder: "",
+    error: "",
   } )
 
 </script>
@@ -63,6 +65,7 @@
             stroke-linejoin="round"
           />
         </svg>
+        <span v-if="error" class="text-sm text-red-600">{{ error }}</span>
       </div>
 
     </span>
@@ -88,6 +91,7 @@
             class="block h-6 w-6"
           />
         </button>
+        <span v-if="error" class="text-sm text-red-600">{{ error }}</span>
       </div>
     </span>
   </div>
