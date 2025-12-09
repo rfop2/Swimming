@@ -555,6 +555,7 @@ CREATE TABLE `User` (
   `password_hash` text NOT NULL,
   `firstName` varchar(32) NOT NULL,
   `lastName` varchar(32) NOT NULL,
+  `phone` varchar(32) NOT NULL DEFAULT '',
   `location` varchar(32) NOT NULL,
   `locationId` int(10) unsigned DEFAULT NULL,
   `type` varchar(16) NOT NULL,
