@@ -1,6 +1,5 @@
 <script setup lang="ts">
   import { XMarkIcon } from "@heroicons/vue/24/outline"
-  import classNames from "classnames"
 
   const model = defineModel<string | number | boolean>()
 
