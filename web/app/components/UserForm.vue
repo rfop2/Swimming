@@ -559,6 +559,18 @@
                 :false-value="0"
               />
             </div>
+            <div
+              v-if="isNewUser && !isAdmin"
+              class="sm:col-span-1"
+            >
+              <ClientOnly>
+                <p>{{ $config.public.turnstile.siteKey }}</p>
+                <TurnstileWidget
+                  v-model="captcha"
+                  :site-key="$config.public.turnstile.siteKey"
+                />
+              </ClientOnly>
+            </div>
           </div>
         </div>
       </div>
