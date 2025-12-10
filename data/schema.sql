@@ -560,6 +560,7 @@ CREATE TABLE `User` (
   `locationId` int(10) unsigned DEFAULT NULL,
   `type` varchar(16) NOT NULL,
   `admin` tinyint(4) NOT NULL DEFAULT 0,
+  `status` enum('pending','active','inactive','disabled') DEFAULT 'active',
   `created` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
   PRIMARY KEY (`id`),
