@@ -556,7 +556,7 @@ CREATE TABLE `User` (
   `firstName` varchar(32) NOT NULL,
   `lastName` varchar(32) NOT NULL,
   `phone` varchar(32) NOT NULL DEFAULT '',
-  `location` varchar(32) NOT NULL,
+  `location` varchar(128) NOT NULL,
   `locationId` int(10) unsigned DEFAULT NULL,
   `type` varchar(16) NOT NULL,
   `admin` tinyint(4) NOT NULL DEFAULT 0,
