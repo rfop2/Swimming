@@ -75,14 +75,13 @@ export default defineNuxtConfig( {
     public: {
       appVersion: pkg.version,
       disableRegistration: process.env.DISABLE_REGISTRATION === "true",
+      turnstile: {
+        siteKey: process.env.TURNSTILE_SITE_KEY,
+      },
     },
     turnstile: {
       secretKey: process.env.TURNSTILE_SECRET_KEY,
     },
-  },
-
-  turnstile: {
-    siteKey: process.env.TURNSTILE_SITE_KEY,
   },
 
   css: [

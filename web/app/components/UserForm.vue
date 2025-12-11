@@ -37,6 +37,8 @@
     },
   ]
 
+  const config = useRuntimeConfig()
+
   const clubLookups: Array<UserClub | Club> = props.clubs
 
   const currentUser = useUser()
@@ -556,7 +558,7 @@
               class="sm:col-span-1"
             >
               <ClientOnly>
-                <NuxtTurnstile ref="turnstile" v-model="captcha" @update:model-value="onCaptchaSolved" />
+                <NuxtTurnstile ref="turnstile" v-model="captcha" :site-key="config.public.turnstileSiteKey" @update:model-value="onCaptchaSolved" />
               </ClientOnly>
             </div>
           </div>

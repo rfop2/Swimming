@@ -2,13 +2,47 @@
   {
     "isoDate": "2025-12-11",
     "niceDate": "11 December 2025",
-    "diff": "13.3.0..",
-    "href": "https://bitbucket.org/swimracing/swimming/compare/13.4.0..13.3.0",
+    "diff": "13.4.0..",
+    "href": "https://bitbucket.org/swimracing/swimming/compare/13.4.1..13.4.0",
     "major": false,
     "minor": false,
     "tag": null,
+    "title": "13.4.1",
+    "date": "2025-12-11T15:07:22.455Z",
+    "summary": null,
+    "commits": [
+      {
+        "hash": "2cce6b3b4b5d26480cb239f41eabbd51119a4dd3",
+        "shorthash": "2cce6b3",
+        "author": "Philip Coombes",
+        "email": "phil@web2wire.com",
+        "date": "2025-12-11T15:04:41.000Z",
+        "niceDate": "11 December 2025",
+        "subject": "Attempts to fix environment issues.",
+        "message": "Attempts to fix environment issues.",
+        "fixes": null,
+        "href": "https://bitbucket.org/swimracing/swimming/commits/2cce6b3b4b5d26480cb239f41eabbd51119a4dd3",
+        "breaking": false,
+        "files": 3,
+        "insertions": 9,
+        "deletions": 6,
+        "merge": null
+      }
+    ],
+    "merges": [],
+    "fixes": []
+  },
+  {
+    "isoDate": "2025-12-11",
+    "niceDate": "11 December 2025",
+    "diff": "13.3.0..13.4.0",
+    "href": "https://bitbucket.org/swimracing/swimming/compare/13.4.0..13.3.0",
+    "major": false,
+    "minor": true,
+    "tag": "13.4.0",
+    "date": "2025-12-11",
     "title": "13.4.0",
-    "date": "2025-12-11T14:05:35.018Z",
+    "version": "13.4.0",
     "summary": null,
     "commits": [
       {
