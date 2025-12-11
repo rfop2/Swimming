@@ -303,6 +303,8 @@
     clubLookups.push( ...res )
     return foundClubs
   }
+
+  const turnstile = ref()
   const saveSuccess = ref( false )
   const save = handleSubmit( async () => {
     try {
@@ -313,6 +315,7 @@
     } catch ( error ) {
       console.error( "Error", error )
       submitErrors[0] = ( error as FetchError ).message ?? null
+      turnstile.value?.reset()
     }
   } )
 
@@ -541,7 +544,7 @@
               class="sm:col-span-1"
             >
               <ClientOnly>
-                <NuxtTurnstile v-model="captcha" />
+                <NuxtTurnstile ref="turnstile" v-model="captcha" />
               </ClientOnly>
             </div>
           </div>
