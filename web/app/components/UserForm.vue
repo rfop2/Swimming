@@ -17,6 +17,26 @@
     saveFn: ( values: any ) => Promise<void>
   }>()
 
+  // Should come from DB
+  const userTypes = [
+    {
+      label: "Parent",
+      value: "parent"
+    },
+    {
+      label: "Trainer",
+      value: "trainer"
+    },
+    {
+      label: "Club",
+      value: "club"
+    },
+    {
+      label: "Other",
+      value: "other"
+    },
+  ]
+
   const clubLookups: Array<UserClub | Club> = props.clubs
 
   const currentUser = useUser()
@@ -149,26 +169,64 @@
   const { replace: replaceUserClub } = useFieldArray<UserClub>( "clubs" )
   const { remove: removeSwimmer, push: pushSwimmer, update: updateSwimmer, fields: userSwimmers } = useFieldArray<ExtSwimmer>( "swimmers" )
 
-  // Should come from DB
-  const userTypes =
-    [
-      {
-        label: "Parent",
-        value: "parent"
-      },
-      {
-        label: "Trainer",
-        value: "trainer"
-      },
-      {
-        label: "Club",
-        value: "club"
-      },
-      {
-        label: "Other",
-        value: "other"
-      },
-    ]
+  const clubOptions = ref( props.clubs.map( c => ( { label: c.clubName, value: c.clubId } ) ) )
+
+  const firstClub = computed( () => props.clubs.at( 0 ) )
+  const clubOwner = computed<0 | 1>( () => firstClub.value && firstClub.value.clubOwner ? 1 : 0 )
+
+  const userClubId = ref<string | undefined>( firstClub.value ? firstClub.value.clubId : undefined )
+  const userClubName = computed<string | undefined>( () => props.clubs.find( c => c.clubId === userClubId.value )?.clubName )
+  watch( firstClub, ( fc ) => {
+    userClubId.value = fc ? fc.clubId : undefined
+  }, { deep: true } )
+
+  watchEffect( () => {
+    if ( userClubId.value ) {
+      replaceUserClub( [ {
+        clubId: String( userClubId.value ),
+        clubOwner: clubOwner.value,
+      } ] )
+    } else {
+      replaceUserClub( [] )
+    }
+  } )
+
+  const searchClubs = async ( query: string ) => {
+    if ( !query ) return []
+    const res = await $fetch( `/api/clubs/search?search=${encodeURIComponent( query )}` )
+    const foundClubs = res.map( ( u: Club ) => ( {
+      label: u.clubName,
+      value: u.clubId,
+    } ) )
+    clubLookups.push( ...res )
+    return foundClubs
+  }
+
+  const locationOptions = ref<UISelection[]>( props.user.locationId ? [ {
+    label: props.user.location,
+    value: props.user.locationId,
+  } ] : [] )
+
+  const turnstile = ref()
+  const saveSuccess = ref( false )
+  const save = handleSubmit( async () => {
+    try {
+      submitErrors.length = 0
+      await props.saveFn( values )
+      resetForm( { values } )
+      saveSuccess.value = true
+    } catch ( error ) {
+      console.error( "Error", error )
+      submitErrors[0] = ( error as FetchError ).message ?? null
+      turnstile.value?.reset()
+    }
+  } )
+
+  useUnsavedWarning( () => meta.value.dirty )
+
+  watch( errors, ( newErrors ) => {
+    console.log( "ERR", newErrors )
+  } )
 
   const swimmerErrors = ( index: number ) => {
     const prefix = `swimmers[${index}].`
@@ -270,70 +328,16 @@
     }
   } )
 
-  const firstClub = computed( () => props.clubs.at( 0 ) )
-  const userClubId = ref<string | undefined>( firstClub.value ? firstClub.value.clubId : undefined )
-  watch( firstClub, ( fc ) => {
-    userClubId.value = fc ? fc.clubId : undefined
-  }, { deep: true } )
-  const userClubName = computed<string | undefined>( () => props.clubs.find( c => c.clubId === userClubId.value )?.clubName )
-  const clubOwner = computed<0 | 1>( () => firstClub.value && firstClub.value.clubOwner ? 1 : 0 )
-
-  watchEffect( () => {
-    console.log( props.clubs, firstClub.value, userClubId.value, userClubName.value, clubOwner.value )
-  } )
-
-  watchEffect( () => {
-    if ( userClubId.value ) {
-      replaceUserClub( [ {
-        clubId: String( userClubId.value ),
-        clubOwner: clubOwner.value,
-      } ] )
-    } else {
-      replaceUserClub( [] )
+  const genders = [
+    {
+      label: "Open/Male",
+      value: "male"
+    },
+    {
+      label: "Female",
+      value: "female"
     }
-  } )
-
-  const searchClubs = async ( query: string ) => {
-    if ( !query ) return []
-    const res = await $fetch( `/api/clubs/search?search=${encodeURIComponent( query )}` )
-    const foundClubs = res.map( ( u: Club ) => ( {
-      label: u.clubName,
-      value: u.clubId,
-    } ) )
-    clubLookups.push( ...res )
-    return foundClubs
-  }
-
-  const turnstile = ref()
-  const saveSuccess = ref( false )
-  const save = handleSubmit( async () => {
-    try {
-      submitErrors.length = 0
-      await props.saveFn( values )
-      resetForm( { values } )
-      saveSuccess.value = true
-    } catch ( error ) {
-      console.error( "Error", error )
-      submitErrors[0] = ( error as FetchError ).message ?? null
-      turnstile.value?.reset()
-    }
-  } )
-
-  useUnsavedWarning( () => meta.value.dirty )
-
-  watch( errors, ( newErrors ) => {
-    console.log( "ERR", newErrors )
-  } )
-
-  const genders =
-    [ {
-        label: "Open/Male",
-        value: "male"
-      },
-      {
-        label: "Female",
-        value: "female"
-      } ]
+  ]
   const nationalities = Object.entries( NATIONALITIES ).map( (
     [ value, label ] ) => ( {
     value,
@@ -488,6 +492,7 @@
                 autocomplete="address-level2"
                 placeholder="Enter your town or city"
                 required
+                :options="locationOptions"
                 :fetch-options="searchLocation"
                 :error="errors.locationId"
                 @update:model-value="( id ) => {
@@ -515,14 +520,12 @@
             <div
               class="sm:col-span-2"
             >
-              {{ userClubId }}
-              {{ props.clubs.map( c => ({ label: c.clubName, value: c.clubId })) }}
               <UI-Combobox
                 id="club"
                 v-model="userClubId"
                 label="Club"
                 placeholder="Select or type club name"
-                :options="props.clubs.map( c => ({ label: c.clubName, value: c.clubId }))"
+                :options="clubOptions"
                 :fetch-options="searchClubs"
               />
             </div>
