@@ -74,6 +74,7 @@ export default defineNuxtConfig( {
   runtimeConfig: {
     public: {
       appVersion: pkg.version,
+      disableRegistration: process.env.DISABLE_REGISTRATION === "true",
     },
     turnstile: {
       secretKey: process.env.TURNSTILE_SECRET_KEY,
