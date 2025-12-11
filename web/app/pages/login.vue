@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-  import { XCircleIcon } from "@heroicons/vue/24/outline"
+  import { CheckCircleIcon, XCircleIcon } from "@heroicons/vue/24/outline"
   import type { FetchError } from "ofetch"
 
   useHead( {
@@ -27,10 +27,13 @@
       errString.value = ( error as FetchError ).message ?? null
     }
   }
+
+  const route = useRoute()
+  const registered = route.query.registerSuccess !== undefined
 </script>
 
 <template>
-  <div class="sm:mx-auto sm:w-full sm:max-w-sm">
+  <div class="sm:mx-auto sm:w-full sm:max-w-md">
     <div>
       <div class="flex flex-shrink-0 justify-center">
         <img
@@ -39,6 +42,29 @@
           class="w-48"
         >
       </div>
+      <div
+        v-if="registered"
+        class="bg-green-50 px-2 py-4 mt-6"
+      >
+        <div class="flex">
+          <div class="shrink-0">
+            <CheckCircleIcon
+              class="size-6 text-green-400"
+              aria-hidden="true"
+            />
+          </div>
+          <div class="ml-3">
+            <h2 class="text-lg font-medium">
+              Registration success
+            </h2>
+            <div class="mt-2 text-sm">
+              <p>Thank you for registering with Swim.Racing. Your account has now been set up and you can sign in below.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
       <h2 class="mt-6 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900">
         Sign in to your account
       </h2>

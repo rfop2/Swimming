@@ -2,12 +2,11 @@
   import { useForm, useFieldArray, type FieldEntry } from "vee-validate"
   import * as yup from "yup"
   import { toTypedSchema } from "@vee-validate/yup"
-  import { CheckIcon, ExclamationTriangleIcon, PencilSquareIcon, TrashIcon, UserGroupIcon, UserPlusIcon, XCircleIcon } from "@heroicons/vue/24/outline"
+  import { PencilSquareIcon, TrashIcon, UserGroupIcon, UserPlusIcon, XCircleIcon } from "@heroicons/vue/24/outline"
 
   import type { FetchError } from "ofetch"
   import { COUNTIES, NATIONALITIES, REGIONS } from "lib"
   import type { Club, ExtSwimmer, Task, UserClub } from "lib"
-  import { useDebounceAsync } from "~/composables/useDebounceAsync"
   import type { User } from "lucia"
 
   const props = defineProps<{
@@ -20,40 +19,41 @@
 
   const clubLookups: Array<UserClub | Club> = props.clubs
 
-  const currentUser = useAuthenticatedUser()
-  const isAdmin = !!Number( currentUser.value.admin )
-  const editingSelf = currentUser.value.id === props.user.id
+  const currentUser = useUser()
+  const isAdmin = !!Number( currentUser.value?.admin )
+  const editingSelf = computed( () => !currentUser.value || ( currentUser.value.id === props.user.id ) )
 
-  const { data: locations } = await useFetch<Array<{ lat: string, lon: string }>>(
-    `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent( props.user.location + ", UK" )}`,
-    {
-      default: () => [],
-    }
-  )
-  const locationCoords = ref<{ lat?: number, lon?: number }>( {} )
-  const locationFound = locations.value.at( 0 )
-  if ( locationFound ) {
-    locationCoords.value = { lat: Number( locationFound.lat ), lon: Number( locationFound.lon ) }
+  const locations = ref<{ place_id: number, name: string, display_name: string }[]>( [] )
+  const searchLocation = async ( location: string  ): Promise<UISelection[]> => {
+    if ( !location )
+      return Promise.resolve( [] )
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/search?format=json&city=${encodeURIComponent( location )}&countrycodes=gb&layer=address&addressdetails=1`
+    )
+
+    locations.value = await res.json()
+    const locationOptions = locations.value.map( l => ( {
+      label: l.display_name,
+      value: l.place_id,
+    } ) )
+    return locationOptions
   }
-
-  const lookupLocation = async ( event: InputEvent ): Promise<string[]> => {
-    const location = ( event.target as HTMLInputElement )?.value
-    const res = await fetch( `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent( location + ", UK" )}` )
-    return await res.json()
-  }
-
-  const checkLocation = useDebounceAsync( lookupLocation, 500 )
 
   const PASSWORD = "************"
+
+  const isNewUser = computed( () => props.user.id === "0" )
+  const isRegistering = isNewUser.value && editingSelf.value
 
   const initialValues = computed( () => ( {
     firstName: props.user.firstName,
     lastName: props.user.lastName,
     username: props.user.username,
-    password: props.user.id !== "0" ? PASSWORD : "",
-    confirmPassword: props.user.id !== "0" ? PASSWORD : "",
+    password: isNewUser.value ? "" : PASSWORD,
+    confirmPassword: isNewUser.value ? "" : PASSWORD,
+    captcha: undefined,
     phone: props.user.phone,
     location: props.user.location,
+    locationId: props.user.locationId,
     type: props.user.type,
     clubs: props.clubs.map( ( { clubId, clubOwner } ) => ( { clubId, clubOwner } ) ), // Filter out the other fields
     swimmers: props.swimmers,
@@ -63,6 +63,7 @@
   watch(
     () => initialValues.value,
     ( newValues ) => {
+      console.log( "Resetting", initialValues.value )
       resetForm( {
         values: newValues,
       } )
@@ -70,7 +71,7 @@
     { deep: true }
   )
 
-  const { values, errors, meta, defineField, resetForm, handleSubmit } = useForm( {
+  const { values, errors, meta, defineField, setFieldValue, resetForm, handleSubmit } = useForm( {
     initialValues: initialValues.value,
     validationSchema: toTypedSchema(
       yup.object( {
@@ -82,6 +83,7 @@
             "skip-placeholder-validation",
             "Password must be 8-32 chars, include upper/lowercase, digit & symbol",
             value => {
+              if ( isNewUser.value && !value ) return false
               if ( !value || value === PASSWORD ) return true
               // Your strict password validation
               const length = value.length >= 8 && value.length <= 32
@@ -98,13 +100,18 @@
             "Passwords must match",
             function( value ) {
               const { password } = this.parent
+              if ( isNewUser.value && !value ) return false
               if ( ( !value || value === PASSWORD ) && ( password === PASSWORD || !password ) ) return true
               // Confirm password only if password field is not the placeholder
               return value === password
             }
           ),
+        captcha: isNewUser.value
+          ? yup.string().required( "Captcha is required" )
+          : yup.string().optional(),
         phone: yup.string().label( "Phone / Mobile" ),
-        location: yup.string().label( "Town / City" ).required(),
+        location: yup.string().label( "Town / City" ).optional(),
+        locationId: yup.number().label( "Town / City" ).required(),
         type: yup.string().label( "Type" ).when( [], ( /* _values, _schema */ ) => {
           return isAdmin
             ? yup.string().required()
@@ -134,8 +141,10 @@
   const [ username, usernameAttrs ] = defineField( "username" )
   const [ password, passwordAttrs ] = defineField( "password" )
   const [ confirmPassword, confirmPasswordAttrs ] = defineField( "confirmPassword" )
+  const [ captcha ] = defineField( "captcha" )
   const [ phone, phoneAttrs ] = defineField( "phone" )
-  const [ location, locationAttrs ] = defineField( "location" )
+  // const [ location ] = defineField( "location" )
+  const [ locationId, locationIdAttrs ] = defineField( "locationId" )
   const [ type, typeAttrs ] = defineField( "type" )
   const { replace: replaceUserClub } = useFieldArray<UserClub>( "clubs" )
   const { remove: removeSwimmer, push: pushSwimmer, update: updateSwimmer, fields: userSwimmers } = useFieldArray<ExtSwimmer>( "swimmers" )
@@ -263,11 +272,15 @@
 
   const firstClub = computed( () => props.clubs.at( 0 ) )
   const userClubId = ref<string | undefined>( firstClub.value ? firstClub.value.clubId : undefined )
-  const userClubName = ref<string | undefined>()
+  watch( firstClub, ( fc ) => {
+    userClubId.value = fc ? fc.clubId : undefined
+  }, { deep: true } )
+  const userClubName = computed<string | undefined>( () => props.clubs.find( c => c.clubId === userClubId.value )?.clubName )
+  const clubOwner = computed<0 | 1>( () => firstClub.value && firstClub.value.clubOwner ? 1 : 0 )
+
   watchEffect( () => {
-    userClubName.value = props.clubs.find( c => c.clubId === userClubId.value )?.clubName
+    console.log( props.clubs, firstClub.value, userClubId.value, userClubName.value, clubOwner.value )
   } )
-  const clubOwner = ref<0 | 1>( firstClub.value && firstClub.value.clubOwner ? 1 : 0 )
 
   watchEffect( () => {
     if ( userClubId.value ) {
@@ -362,6 +375,10 @@
       }
     }
   }, { deep: true } )
+
+  watch( () => meta.value, ( newMeta ) => {
+    console.log( "NM", newMeta, values )
+  }, { deep: true } )
 </script>
 
 <template>
@@ -376,151 +393,109 @@
           <h2 class="text-base/7 font-semibold text-gray-900">
             Personal Information
           </h2>
-          <p class="mt-1 text-sm/6 text-gray-600">
-            Update {{ editingSelf ? "your personal" : "user" }} details and the swimmers {{ editingSelf ? "you wish" : "for the user" }} to follow.
+          <p v-if="isRegistering" class="mt-1 text-sm/6 text-gray-600">
+            Complete your personal details below and click on 'Register'. You will be able to add swimmers to your account once you are registered and logged in.
+          </p>
+          <p v-else class="mt-1 text-sm/6 text-gray-600">
+            {{ isNewUser ? "Complete" : "Update "}} {{ editingSelf ? "your personal" : "user" }} details and the swimmers {{ editingSelf ? "you wish" : "for the user" }} to follow.
           </p>
 
           <div class="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
             <div class="sm:col-span-2">
-              <label
-                for="first-name"
-                class="block text-sm/6 font-medium text-gray-900"
-              >First name</label>
-              <div class="mt-2">
-                <input
-                  id="first-name"
-                  v-model="firstName"
-                  v-bind="firstNameAttrs"
-                  type="text"
-                  autocomplete="given-name"
-                  required
-                  class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
-                >
-                <span>{{ errors.firstName }}</span>
-              </div>
+              <UI-Input
+                id="first-name"
+                v-model="firstName"
+                label="First Name"
+                v-bind="firstNameAttrs"
+                type="text"
+                autocomplete="given-name"
+                required
+                :error="errors.firstName"
+              />
             </div>
 
             <div class="sm:col-span-2">
-              <label
-                for="last-name"
-                class="block text-sm/6 font-medium text-gray-900"
-              >Last name</label>
-              <div class="mt-2">
-                <input
-                  id="last-name"
-                  v-model="lastName"
-                  v-bind="lastNameAttrs"
-                  type="text"
-                  autocomplete="family-name"
-                  required
-                  class="block w-full rounded-md px-3 py-1.5 sm:text-sm/6"
-                >
-                <span>{{ errors.lastName }}</span>
-              </div>
+              <UI-Input
+                id="last-name"
+                v-model="lastName"
+                label="Last Name"
+                v-bind="lastNameAttrs"
+                type="text"
+                autocomplete="family-name"
+                required
+                :error="errors.lastName"
+              />
             </div>
 
             <div class="sm:col-span-2">
-              <label
-                for="last-name"
-                class="block text-sm/6 font-medium text-gray-900"
-              >Phone / Mobile</label>
-              <div class="mt-2">
-                <input
-                  id="phone"
-                  v-model="phone"
-                  v-bind="phoneAttrs"
-                  type="text"
-                  autocomplete="tel"
-                  class="block w-full rounded-md px-3 py-1.5 sm:text-sm/6"
-                >
-                <span>{{ errors.phone }}</span>
-              </div>
+              <UI-Input
+                id="phone"
+                v-model="phone"
+                label="Phone / Mobile"
+                v-bind="phoneAttrs"
+                type="text"
+                autocomplete="tel"
+                :error="errors.phone"
+              />
             </div>
 
             <div class="sm:col-span-2 sm:col-start-1">
-              <label
-                for="email"
-                class="block text-sm/6 font-medium text-gray-900"
-              >Email address</label>
-              <div class="mt-2">
-                <input
-                  id="email"
-                  v-model="username"
-                  v-bind="usernameAttrs"
-                  type="email"
-                  autocomplete="email"
-                  required
-                  class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
-                >
-                <span>{{ errors.username }}</span>
-              </div>
+              <UI-Input
+                id="email"
+                v-model="username"
+                label="Email address"
+                v-bind="usernameAttrs"
+                type="text"
+                autocomplete="email"
+                required
+                :error="errors.username"
+              />
             </div>
 
             <div class="sm:col-span-2">
-              <label
-                for="password"
-                class="block text-sm/6 font-medium text-gray-900"
-              >Password</label>
-              <div class="mt-2">
-                <input
-                  id="password"
-                  v-model="password"
-                  v-bind="passwordAttrs"
-                  type="password"
-                  class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
-                >
-                <span>{{ errors.password }}</span>
-              </div>
+              <UI-Input
+                id="password"
+                v-model="password"
+                label="Password"
+                v-bind="passwordAttrs"
+                type="password"
+                required
+                :error="errors.password"
+              />
             </div>
 
             <div class="sm:col-span-2">
-              <label
-                for="confirm-password"
-                class="block text-sm/6 font-medium text-gray-900"
-              >Confirm Password</label>
-              <div class="mt-2">
-                <input
-                  id="confirm-password"
-                  v-model="confirmPassword"
-                  v-bind="confirmPasswordAttrs"
-                  type="password"
-                  class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
-                >
-                <span>{{ errors.confirmPassword }}</span>
-              </div>
+              <UI-Input
+                id="confirm-assword"
+                v-model="confirmPassword"
+                label="Confirm Password"
+                v-bind="confirmPasswordAttrs"
+                type="password"
+                required
+                :error="errors.confirmPassword"
+              />
             </div>
 
             <div class="sm:col-span-2 sm:col-start-1">
-              <label
-                for="city"
-                class="block text-sm/6 font-medium text-gray-900"
-              >Town / City (for distance calculations)</label>
-              <div class="mt-2">
-                <div class="relative">
-                  <input
-                    id="city"
-                    v-model="location"
-                    v-bind="locationAttrs"
-                    type="text"
-                    autocomplete="address-level2"
-                    class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
-                    @input="checkLocation"
-                  >
-                  <button
-                    type="button"
-                    class="absolute top-1/2 right-2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
-                  >
-                    <CheckIcon
-                      v-if="locationCoords.lat && locationCoords.lon"
-                      class="text-green-400 block h-6 w-6"
-                    />
-                    <ExclamationTriangleIcon
-                      v-if="!locationCoords.lat || !locationCoords.lon"
-                      class="text-red-400 block h-6 w-6"
-                    />
-                  </button>
-                </div>
-              </div>
+              <UI-Combobox
+                id="location-id"
+                v-model="locationId"
+                label="Town / City (for distance calculations)"
+                v-bind="locationIdAttrs"
+                autocomplete="address-level2"
+                placeholder="Enter your town or city"
+                required
+                :fetch-options="searchLocation"
+                :error="errors.locationId"
+                @update:model-value="( id ) => {
+                  if ( id ) {
+                    const option = locations.find( v => v.place_id === Number( id ) )
+                    if ( option )
+                      setFieldValue( 'location', option.display_name )
+                  }
+                }"
+
+              />
             </div>
             <div
               v-if="isAdmin"
@@ -537,6 +512,8 @@
             <div
               class="sm:col-span-2"
             >
+              {{ userClubId }}
+              {{ props.clubs.map( c => ({ label: c.clubName, value: c.clubId })) }}
               <UI-Combobox
                 id="club"
                 v-model="userClubId"
@@ -564,11 +541,7 @@
               class="sm:col-span-1"
             >
               <ClientOnly>
-                <p>{{ $config.public.turnstile.siteKey }}</p>
-                <TurnstileWidget
-                  v-model="captcha"
-                  :site-key="$config.public.turnstile.siteKey"
-                />
+                <NuxtTurnstile v-model="captcha" />
               </ClientOnly>
             </div>
           </div>
@@ -576,7 +549,7 @@
       </div>
     </div>
 
-    <div class="border-b border-gray-900/10 pt-8 pb-12">
+    <div v-if="!isNewUser" class="border-b border-gray-900/10 pt-8 pb-12">
       <div class="px-4 sm:px-6 lg:px-8">
         <div class="sm:flex sm:items-center">
           <div class="sm:flex-auto">
@@ -584,7 +557,12 @@
               Swimmers
             </h1>
             <p class="mt-2 text-sm text-gray-700">
-              A list of the swimmers to track on {{ editingSelf ? "your" : "the user's" }} account. Please ensure all birthdays are filled in order that the appropriate qualifying and competition times are used.
+              A list of the swimmers to track on {{ editingSelf ? "your" : "the user's" }} account.
+            </p>
+            <p class="mt-2 text-sm text-gray-700">
+              Please ensure all birthdays are filled in order that the appropriate qualifying and competition times are used.
+              Note that swimmer details are queued to be fetched when first added to your account but it may take a short while before their data is fully populated.
+              You can monitor progess on the <nuxt-link href="/updates" class="underline">updates</nuxt-link> and <nuxt-link href="tasks" class="underline">tasks</nuxt-link> pages.
             </p>
           </div>
           <div class="mt-4 sm:mt-0 sm:ml-8 sm:flex-none">
@@ -819,10 +797,10 @@
       </button>
       <button
         type="submit"
-        :disabled="editing !== null || deleting !== null || !meta.dirty || !!Object.entries(errors).length"
+        :disabled="editing !== null || deleting !== null || !meta.touched || !meta.dirty || !!Object.entries(errors).length"
         class="rounded-md bg-indigo-600 disabled:bg-gray-300 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
       >
-        Save
+        {{ isNewUser ? "Register" : "Save" }}
       </button>
     </div>
 
@@ -837,10 +815,10 @@
       </button>
       <button
         type="submit"
-        :disabled="editing !== null || deleting !== null || !meta.dirty || !!Object.entries(errors).length"
+        :disabled="editing !== null || deleting !== null || !meta.touched || !meta.dirty || !!Object.entries(errors).length"
         class="rounded-md bg-indigo-600 disabled:bg-gray-300 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
       >
-        Save
+        {{ isNewUser ? "Register" : "Save" }}
       </button>
     </div>
   </form>
