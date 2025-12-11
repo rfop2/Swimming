@@ -8,7 +8,6 @@
     ComboboxOption,
     ComboboxOptions,
   } from "@headlessui/vue"
-  import classNames from "classnames"
   import { XMarkIcon } from "@heroicons/vue/24/outline"
 
   const model = defineModel<UISelection["value"] | Array<UISelection["value"]>>()
@@ -26,6 +25,7 @@
     clearable?: boolean
     placeholder?: string
     debounceMs?: number
+    error?: string
   }>(), {
     id: undefined,
     options: () => [],
@@ -37,6 +37,7 @@
     clearable: true,
     placeholder: "Select Option or Add New",
     debounceMs: 300,
+    error: "",
   } )
 
   // const empty = computed( () => Array.isArray( model.value ) ? model.value.length === 0 : !model.value )
@@ -95,7 +96,7 @@
     >
       {{ props.label }}{{ !!required ? "*" : "" }}
     </ComboboxLabel>
-    <div :class="classNames( 'relative', { 'mt-2': props.label } )">
+    <div class="relative" :class="{ 'mt-2': props.label }">
       <ComboboxInput
         class="form-disabled block w-full rounded-md bg-white py-1.5 pl-3 pr-12 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
         :display-value="(value) => {
@@ -183,5 +184,6 @@
         </ComboboxOptions>
       </transition>
     </div>
+    <span v-if="error" class="text-sm text-red-600">{{ error }}</span>
   </Combobox>
 </template>

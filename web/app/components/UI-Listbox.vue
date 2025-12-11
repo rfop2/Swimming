@@ -15,6 +15,7 @@
     multipleLabel?: string
     required?: boolean
     placeholder?: string
+    error?: string
   }>(), {
     id: undefined,
     label: undefined,
@@ -22,6 +23,7 @@
     multipleLabel: undefined,
     required: false,
     placeholder: "Select Option",
+    error: "",
   } )
 
   const empty = computed( () => Array.isArray( model.value ) ? model.value.length === 0 : ( model.value === null || model.value === undefined ) )
@@ -84,5 +86,6 @@
         </ListboxOptions>
       </transition>
     </div>
+    <span v-if="error" class="text-sm text-red-600">{{ error }}</span>
   </Listbox>
 </template>

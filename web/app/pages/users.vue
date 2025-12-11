@@ -1,4 +1,5 @@
 <script setup lang="ts">
+  import type { InternalApi } from "nitropack"
   import { ArrowRightEndOnRectangleIcon, PencilSquareIcon, TrashIcon, UserPlusIcon } from "@heroicons/vue/24/outline"
   import { format } from "date-fns"
   import type { User } from "lucia"
@@ -18,8 +19,24 @@
 
   const currentUser = useAuthenticatedUser()
 
+  type UsersApiResponse = InternalApi["/api/users"]["get"]
+
   const { data: users, refresh: refreshUsers } = await useFetch(
-    "/api/users"
+    "/api/users",
+    {
+      transform( data: UsersApiResponse ): UsersApiResponse {
+        data.sort( ( a, b ) => {
+          const typeDiff = a.type.localeCompare( b.type )
+          if ( typeDiff ) return typeDiff
+          const lastNameDiff = a.lastName.localeCompare( b.lastName )
+          if ( lastNameDiff ) return lastNameDiff
+          const firstNameDiff = a.firstName.localeCompare( b.firstName )
+          if ( firstNameDiff ) return firstNameDiff
+          return 0
+        } )
+        return data
+      }
+    }
   )
 
   const userTypes = computed( () => ( users.value ?? [] ).reduce( ( types, user ) => {
@@ -53,22 +70,26 @@
     if ( !users.value )
       return
     const user = filteredUsers.value[userIndex]
-    console.log( "Impersonate", user )
-    if ( user.id !== currentUser.value.id ) {
-      await impersonate( user.id )
+    if ( user ) {
+      console.log( "Impersonate", user )
+      if ( user.id !== currentUser.value.id ) {
+        await impersonate( user.id )
+      }
+      navigateTo( "/account" )
     }
-    navigateTo( "/account" )
   }
 
   const editUser = ( userIndex: number ) => {
     if ( !users.value )
       return
     const user = filteredUsers.value[userIndex]
-    console.log( "Edit", user )
-    if ( user.id === currentUser.value.id ) {
-      navigateTo( "/account" )
-    } else {
-      navigateTo( `/user/${user.id}` )
+    if ( user ) {
+      console.log( "Edit", user )
+      if ( user.id === currentUser.value.id ) {
+        navigateTo( "/account" )
+      } else {
+        navigateTo( `/user/${user.id}` )
+      }
     }
   }
 
@@ -79,16 +100,18 @@
       return
     if ( deleting.value !== null ) {
       const userToDelete = filteredUsers.value[deleting.value]
-      console.log( "Delete", userToDelete )
-      await $fetch(
-        `/api/user/${userToDelete.id}`,
-        {
-          method: "DELETE"
-        }
-      )
-      await refreshUsers()
+      if ( userToDelete ) {
+        console.log( "Delete", userToDelete )
+        await $fetch(
+          `/api/user/${userToDelete.id}`,
+          {
+            method: "DELETE"
+          }
+        )
+        await refreshUsers()
+      }
+      deleting.value = null
     }
-    deleting.value = null
   }
 </script>
 
@@ -166,6 +189,12 @@
                 scope="col"
                 class="px-1 py-3.5 text-left text-sm font-semibold text-gray-900"
               >
+                Created
+              </th>
+              <th
+                scope="col"
+                class="px-1 py-3.5 text-left text-sm font-semibold text-gray-900"
+              >
                 Last Login
               </th>
               <th
@@ -217,6 +246,9 @@
                 {{ user.swimmerCount }}
               </td>
               <td class="px-1 py-2 text-sm whitespace-nowrap text-gray-500">
+                {{ user.created ? format( user.created as string, "dd/MM/yyyy" ) : "" }}
+              </td>
+              <td class="px-1 py-2 text-sm whitespace-nowrap text-gray-500">
                 {{ user.lastLogin ? `${format( user.lastLogin as string, "dd/MM/yyyy" )} (${user.loginCount})` : "" }}
               </td>
               <td class="py-2 pr-2 pl-1 text-right text-sm font-medium whitespace-nowrap sm:pr-0">
@@ -266,7 +298,7 @@
     <UI-Confirm
       v-if="deleting !== null"
       title="Delete user"
-      :text="`Are you sure you want to delete user '${(filteredUsers as User[])[deleting].username}' from the site?`"
+      :text="`Are you sure you want to delete user '${(filteredUsers as User[])[deleting]?.username}' from the site?`"
       confirm-label="Delete"
       :action="deleteUser"
     />

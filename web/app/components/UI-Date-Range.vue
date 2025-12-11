@@ -59,9 +59,6 @@
     { label: "By Year", value: "year" },
   ]
 
-  const range = ref( dateRanges.find( r => r.value === model.value.range ) ?? ( !model.value.startDate && !model.value.endDate ? dateRanges[0] : dateRanges[dateRanges.length - 1] ) )
-  const group = ref( dateGroups.find( g => g.value === model.value.group ) )
-
   const getDatesFromRange = ( range: string ) => {
     const tz = "Europe/London"
 
@@ -79,25 +76,22 @@
     return { start, end }
   }
 
-  watch( range, ( newRange ) => {
-    model.value.range = newRange.value
-    const dates = getDatesFromRange( newRange.value )
-    if ( dates ) {
-      if ( dates.start ) {
-        model.value.startDate = dates.start.toPlainDate().toString()
-      } else {
-        model.value.startDate = undefined
-      }
-      if ( dates.end ) {
-        model.value.endDate = dates.end.toPlainDate().toString()
-      } else {
-        model.value.endDate = undefined
+  watch( () => model.value.range, ( newRange ) => {
+    if ( newRange ) {
+      const dates = getDatesFromRange( newRange )
+      if ( dates ) {
+        if ( dates.start ) {
+          model.value.startDate = dates.start.toPlainDate().toString()
+        } else {
+          model.value.startDate = undefined
+        }
+        if ( dates.end ) {
+          model.value.endDate = dates.end.toPlainDate().toString()
+        } else {
+          model.value.endDate = undefined
+        }
       }
     }
-  }, { deep: true } )
-
-  watch( group, ( newGroup ) => {
-    model.value.group = newGroup?.value
   }, { deep: true } )
 </script>
 
@@ -108,7 +102,7 @@
   >
     <div class="sm:col-span-1">
       <UI-Listbox
-        v-model="range"
+        v-model="model.range"
         clearable
         :label="labelled ? 'Period' : undefined"
         placeholder="Date Range"
@@ -122,7 +116,7 @@
         placeholder="Start Date"
         :label="labelled ? 'Start Date' : undefined"
         :max="model.endDate"
-        @change="range = filteredRanges[filteredRanges.length-1]"
+        @change="model.range = 'custom'"
       />
     </div>
     <div class="sm:col-span-1">
@@ -132,13 +126,13 @@
         placeholder="End Date"
         :label="labelled ? 'End Date' : undefined"
         :min="model.startDate"
-        @change="range = filteredRanges[filteredRanges.length-1]"
+        @change="model.range = 'custom'"
       />
     </div>
     <div class="sm:col-span-1">
       <UI-Listbox
         v-if="grouped"
-        v-model="group"
+        v-model="model.group"
         :label="labelled ? 'Group' : undefined"
         placeholder="Date Group"
         :options="dateGroups"

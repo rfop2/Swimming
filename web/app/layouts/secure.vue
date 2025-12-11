@@ -1,24 +1,4 @@
 <script setup lang="ts">
-  useHead( {
-    title: "Swim.Racing",
-    meta: [
-      { name: "description", content: "Swimming stats." }
-    ],
-    link: [
-      {
-        rel: "stylesheet",
-        href: "https://rsms.me/inter/inter.css",
-      // crossorigin: ''
-      },
-    ],
-    htmlAttrs: {
-      class: "h-full"
-    },
-    bodyAttrs: {
-      class: "h-full"
-    },
-  } )
-
   useTasksCheck()
 </script>
 

@@ -1,6 +1,7 @@
 import type { Task } from "lib"
 
 export function useTasks() {
+  const user = useUser()
   // Global shared state (persists across all composable calls)
   const tasks = useState<Task[]>( "tasks", () => [] )
   const loaded = useState( "tasksLoaded", () => false )
@@ -20,7 +21,7 @@ export function useTasks() {
   }
 
   // Auto-fetch if not loaded yet
-  if ( import.meta.client && !loaded.value && !loading.value ) {
+  if ( import.meta.client && user.value && !loaded.value && !loading.value ) {
     // Runs only on client side to avoid duplicate SSR calls
     fetchTasks()
   }

@@ -1,36 +1,87 @@
 <script lang="ts" setup>
+  import type { User } from "lucia"
+
+  useHead( {
+    title: "Register",
+    meta: [
+      { name: "description", content: "Register for an account" }
+    ]
+  } )
+
+  const config = useRuntimeConfig()
+
   onMounted( () => {
-    if ( import.meta.client ) {
+    if ( import.meta.client && config.public.disableRegistration ) {
       const script = document.createElement( "script" )
       script.src = "https://form.jotform.com/jsform/252743309376361"
       script.async = true
       document.getElementById( "jotform-container" )?.appendChild( script )
     }
   } )
+
+  const user = useUser()
+  if ( user.value ) {
+    await navigateTo( "/account" )
+  }
+
+  const newUser = ref( {
+    id: "0",
+    username: "",
+    firstName: "",
+    lastName: "",
+    phone: "",
+    location: "",
+    type: "parent",
+    admin: false
+  } as User )
+
+  const saveUser = async ( values: User ) => {
+    await $fetch( "/api/user/0", {
+      method: "POST",
+      body: JSON.stringify( values ),
+    } )
+    setTimeout( () => {
+      navigateTo( "/login?registerSuccess" )
+    }, 3_000 )
+  }
 </script>
 
 <template>
-  <div class="isolate bg-white px-6 py-6 sm:py-8 lg:px-8">
-    <div
-      class="absolute inset-x-0 -top-40 -z-10 transform-gpu overflow-hidden blur-3xl sm:-top-80"
-      aria-hidden="true"
-    >
-      <div
-        class="relative left-1/2 -z-10 aspect-1155/678 w-144.5 max-w-none -translate-x-1/2 rotate-30 bg-linear-to-tr from-[#ff80b5] to-[#9089fc] opacity-30 sm:left-[calc(50%-40rem)] sm:w-288.75"
-        style="clip-path: polygon(74.1% 44.1%, 100% 61.6%, 97.5% 26.9%, 85.5% 0.1%, 80.7% 2%, 72.5% 32.5%, 60.2% 62.4%, 52.4% 68.1%, 47.5% 58.3%, 45.2% 34.5%, 27.5% 76.7%, 0.1% 64.9%, 17.9% 100%, 27.6% 76.8%, 76.1% 97.7%, 74.1% 44.1%)"
-      />
-    </div>
-    <div class="mx-auto mb-8 max-w-2xl text-center">
-      <h2 class="text-2xl font-semibold tracking-tight text-balance text-gray-900 sm:text-3xl">
+  <div class="sm:mx-auto sm:w-full sm:max-w-5xl">
+    <div>
+      <div class="flex flex-shrink-0 justify-center">
+        <img
+          src="/images/SwimRacing.svg"
+          title="Swim.Racing"
+          class="w-48"
+        >
+      </div>
+      <h2 class="mt-6 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900">
         Register for an Account
       </h2>
-      <p class="mt-2 text-lg/8 text-gray-600">
+    </div>
+    <div v-if="config.public.disableRegistration">
+      <p class="mt-2 text-lg/8 text-gray-600 text-center">
         Please complete the form below and we will be in touch with your account details.
       </p>
+      <div
+        id="jotform-container"
+        class="mx-auto max-w-2xl text-center"
+      />
     </div>
-    <div
-      id="jotform-container"
-      class="mx-auto max-w-2xl text-center"
-    />
+    <div v-else>
+      <UserForm
+        :user="newUser"
+        :clubs="[]"
+        :swimmers="[]"
+        :save-fn="saveUser"
+      />
+    </div>
+    <p class="mt-10 text-center text-sm text-gray-500">
+      Already registered? <nuxt-link
+        href="/login"
+        class="font-semibold leading-6 text-indigo-600 hover:text-indigo-500"
+      >Login</nuxt-link> to your account.
+    </p>
   </div>
 </template>

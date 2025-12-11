@@ -6,6 +6,7 @@ export interface DatabaseUser {
   lastName: string
   phone: string
   location: string
+  locationId?: number
   type: string
   admin: boolean
   created?: string
