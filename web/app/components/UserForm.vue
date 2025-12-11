@@ -207,6 +207,15 @@
     value: props.user.locationId,
   } ] : [] )
 
+  const onCaptchaSolved = ( token: string ) => {
+    resetForm( {
+      values: {
+        ...values,
+        captcha: token
+      },
+    } )
+  }
+
   const turnstile = ref()
   const saveSuccess = ref( false )
   const save = handleSubmit( async () => {
@@ -547,7 +556,7 @@
               class="sm:col-span-1"
             >
               <ClientOnly>
-                <NuxtTurnstile ref="turnstile" v-model="captcha" />
+                <NuxtTurnstile ref="turnstile" v-model="captcha" @update:model-value="onCaptchaSolved" />
               </ClientOnly>
             </div>
           </div>
