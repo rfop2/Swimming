@@ -1,10 +1,5 @@
 import { getPool, runTransaction } from "lib"
 
-interface TurnstileVerifyResponse {
-  success: boolean;
-  "error-codes"?: string[];
-}
-
 export default defineEventHandler( async ( event ) => {
   try {
     const userData = await readBody( event )
@@ -23,25 +18,8 @@ export default defineEventHandler( async ( event ) => {
         } )
       }
     } else if ( userData.captcha ) {
-      // Verify with Cloudflare
-      console.log( "T", JSON.stringify( process.env.TURNSTILE_SITE_KEY ), JSON.stringify( process.env.TURNSTILE_SECRET_KEY ), userData.captcha, getRequestIP( event ) ?? "" )
-      const params = new URLSearchParams( {
-        secret: process.env.TURNSTILE_SECRET_KEY!,
-        response: userData.captcha,
-        // remoteip: getRequestIP(event) ?? ""
-      } )
+      const verify = await verifyTurnstileToken( userData.captcha )
 
-      const response = await fetch( "https://challenges.cloudflare.com/turnstile/v0/siteverify", {
-        method: "POST",
-        body: params,
-        /* body: new URLSearchParams( {
-          secret: process.env.TURNSTILE_SECRET_KEY!,
-          response: userData.captcha,
-          remoteip: getRequestIP( event ) ?? "", // optional, helps with fraud scoring
-        } ), */
-      } )
-      console.log( "r", response )
-      const verify: TurnstileVerifyResponse = await response.json()
       console.log( "v", verify )
 
       if ( !verify.success ) {
