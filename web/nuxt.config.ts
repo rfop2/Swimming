@@ -21,7 +21,7 @@ export default defineNuxtConfig( {
       },
     ],
     "@nuxtjs/seo",
-    "nuxt-turnstile",
+    "@nuxtjs/turnstile",
   ],
 
   app: {
@@ -68,20 +68,20 @@ export default defineNuxtConfig( {
     ],
     ssr: {
       external: []
-    }
+    },
   },
 
   runtimeConfig: {
     public: {
       appVersion: pkg.version,
-      turnstile: {
-        siteKey: process.env.TURNSTILE_SITE_KEY,
-        addScript: true, // automatically includes Turnstile script
-      },
     },
     turnstile: {
       secretKey: process.env.TURNSTILE_SECRET_KEY,
     },
+  },
+
+  turnstile: {
+    siteKey: process.env.TURNSTILE_SITE_KEY,
   },
 
   css: [
