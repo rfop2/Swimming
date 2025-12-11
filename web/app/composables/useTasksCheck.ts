@@ -1,10 +1,16 @@
 import type { Task } from "lib"
 
 export const useTasksCheck = () => {
+  const user = useUser()
   const { tasks, fetchTasks } = useTasks()
   const lastTasks = ref<Task[]>( [] )
+  let checkTimer: NodeJS.Timeout | null = null
 
   async function checkTasks() {
+    if ( !user && checkTimer ) {
+      clearInterval( checkTimer )
+      return
+    }
     try {
       await fetchTasks()
       for ( const lastTask of lastTasks.value ) {
@@ -43,7 +49,15 @@ export const useTasksCheck = () => {
   if ( import.meta.client ) {
     onMounted( () => {
       checkTasks()
-      setInterval( checkTasks, checkInterval * 1_000 ) // periodic checks
+      checkTimer = setInterval( checkTasks, checkInterval * 1_000 ) // periodic checks
+    } )
+    watch( user, ( val ) => {
+      if ( !val && checkTimer )
+        clearInterval( checkTimer )
+    } )
+    onUnmounted( () => {
+      if ( checkTimer )
+        clearInterval( checkTimer )
     } )
   }
 

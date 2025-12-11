@@ -1,6 +1,5 @@
 <script setup lang="ts">
   import { XMarkIcon } from "@heroicons/vue/24/outline"
-  import classNames from "classnames"
 
   const model = defineModel<string | number | boolean>()
 
@@ -13,6 +12,7 @@
     required?: boolean
     clearable?: boolean
     placeholder?: string
+    error?: string
   }>(), {
     id: undefined,
     label: undefined,
@@ -20,6 +20,7 @@
     required: false,
     clearable: false,
     placeholder: "",
+    error: "",
   } )
 
 </script>
@@ -30,7 +31,7 @@
     :for="props.id ?? defaultId"
     class="block text-sm/6 font-medium text-gray-900"
   >{{ props.label }}{{ !!required ? "*" : "" }}</label>
-  <div :class="classNames({ 'mt-2': props.label })">
+  <div :class="{ 'mt-2': props.label }">
     <span
       v-if="props.type === 'checkbox' || props.type === 'radio'"
     >
@@ -63,8 +64,8 @@
             stroke-linejoin="round"
           />
         </svg>
+        <span v-if="error" class="text-sm text-red-600">{{ error }}</span>
       </div>
-
     </span>
     <span v-else>
       <div class="relative w-full">
@@ -88,6 +89,7 @@
             class="block h-6 w-6"
           />
         </button>
+        <span v-if="error" class="text-sm text-red-600">{{ error }}</span>
       </div>
     </span>
   </div>

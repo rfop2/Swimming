@@ -12,11 +12,13 @@
     label?: string
     required?: boolean
     placeholder?: string
+    error?: string
   }>(), {
     id: undefined,
     label: undefined,
     required: false,
     placeholder: undefined,
+    error: "",
   } )
 
 </script>
@@ -51,5 +53,6 @@
         {{ option.label ?? option.value }}
       </option>
     </select>
+    <span v-if="error" class="text-sm text-red-600">{{ error }}</span>
   </div>
 </template>

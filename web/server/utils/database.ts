@@ -11,6 +11,7 @@ export interface UserData {
   lastName: string
   phone: string
   location: string
+  locationId: number
   password: string
   confirmPassword: string
   clubs: Array<UserClub>
@@ -156,7 +157,7 @@ export const updateUserClubs = async ( conn: Pool | PoolConnection, userId: User
   }
 }
 
-const insertUserSql = "INSERT INTO User ( id, username, password_hash, firstName, lastName, phone, type, location ) VALUES( :userId, :username, :passwordHash, :firstName, :lastName, :phone, :type, :location )"
+const insertUserSql = "INSERT INTO User ( id, username, password_hash, firstName, lastName, phone, type, location, locationId ) VALUES( :userId, :username, :passwordHash, :firstName, :lastName, :phone, :type, :location, :locationId )"
 
 export const addUser = async ( conn: Pool | PoolConnection, userData: UserData ) => {
   if (
