@@ -9,7 +9,9 @@ services:
       MARIADB_USER: ${MARIADB_USER}
       MARIADB_PASSWORD: ${MARIADB_PASSWORD}
       IGNORE_IPS: ${IGNORE_IPS}
-
+      TURNSTILE_SITE_KEY: ${TURNSTILE_SITE_KEY}
+      TURNSTILE_SECRET_KEY: ${TURNSTILE_SECRET_KEY}
+      DISABLE_REGISTRATION: ${DISABLE_REGISTRATION}
     volumes:
       - ../web/.output/:/home/node/app
     ports:
