@@ -29,7 +29,7 @@ export default defineEventHandler( async ( event ) => {
   const base = getRequestURL( event ).origin
   const link = `${base}/reset-password?token=${token}`
 
-  sendEmail(
+  await sendEmail(
     user,
     `${config.public.siteName}: Reset your password`,
     `<p>Click <a href="${link}">here</a> to reset your password (expires in 15 min).</p>`,
