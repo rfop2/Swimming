@@ -2,6 +2,8 @@
   import { CheckCircleIcon, XCircleIcon } from "@heroicons/vue/24/outline"
   import type { FetchError } from "ofetch"
 
+  const config = useRuntimeConfig()
+
   useHead( {
     title: "Login",
     meta: [
@@ -58,13 +60,11 @@
               Registration success
             </h2>
             <div class="mt-2 text-sm">
-              <p>Thank you for registering with Swim.Racing. Your account has now been set up and you can sign in below.</p>
+              <p>Thank you for registering with {{ config.public.siteName }}. Your account has now been set up and you can sign in below.</p>
             </div>
           </div>
         </div>
       </div>
-
-
       <h2 class="mt-6 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900">
         Sign in to your account
       </h2>

@@ -1,6 +1,7 @@
 <script setup lang="ts">
+  const config = useRuntimeConfig()
   useHead( {
-    title: "Swim.Racing",
+    title: config.public.siteName,
     meta: [
       { name: "description", content: "Swimmer and swim club management and performance tracking" }
     ],

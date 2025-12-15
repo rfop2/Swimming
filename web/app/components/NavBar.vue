@@ -182,7 +182,7 @@
           <div class="flex flex-shrink-0 items-center">
             <img
               src="/images/SwimRacingLogo.svg"
-              title="Swim.Racing"
+              :title="config.public.siteName"
               class="w-20"
             >
           </div>
