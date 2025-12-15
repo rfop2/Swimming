@@ -37,13 +37,7 @@
 <template>
   <div class="sm:mx-auto sm:w-full sm:max-w-md">
     <div>
-      <div class="flex flex-shrink-0 justify-center">
-        <img
-          src="/images/SwimRacing.svg"
-          title="Swim.Racing"
-          class="w-48"
-        >
-      </div>
+      <SiteBanner/>
       <div
         v-if="registered"
         class="bg-green-50 px-2 py-4 mt-6"

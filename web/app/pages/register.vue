@@ -48,18 +48,9 @@
 
 <template>
   <div class="sm:mx-auto sm:w-full sm:max-w-5xl">
-    <div>
-      <div class="flex flex-shrink-0 justify-center">
-        <img
-          src="/images/SwimRacing.svg"
-          title="Swim.Racing"
-          class="w-48"
-        >
-      </div>
-      <h2 class="mt-6 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900">
-        Register for an Account
-      </h2>
-    </div>
+    <SiteBanner>
+      Register for an Account
+    </SiteBanner>
     <div v-if="config.public.disableRegistration">
       <p class="mt-2 text-lg/8 text-gray-600 text-center">
         Please complete the form below and we will be in touch with your account details.
