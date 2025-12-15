@@ -75,7 +75,7 @@
           <label
             for="email"
             class="block text-sm font-medium leading-6 text-gray-900"
-          >Email address</label>
+          >Email address*</label>
           <div class="mt-2">
             <input
               id="email"
@@ -93,7 +93,7 @@
             <label
               for="password"
               class="block text-sm font-medium leading-6 text-gray-900"
-            >Password</label>
+            >Password*</label>
             <div class="text-sm">
               <nuxt-link
                 href="/forgot-password"
