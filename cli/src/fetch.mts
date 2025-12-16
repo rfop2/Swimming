@@ -903,32 +903,33 @@ const updateMeetsResults = async ( options: MeetsResultsOptions ) => {
     .description( "Process and execute fetches according to task queue" )
     .addOption( new Option( "-c, --count <tasks>", "only process a maximum of <count> queued tasks on this run" ).default( "100" ) )
     .action( async ( options ) => {
+      const pool = await getPool()
       const getTasks = prepareStatement<{ limit: number },Task>(
-        await getPool(),
+        pool,
         "SELECT * FROM Tasks WHERE taskStatus = 'pending' LIMIT :limit"
       )
       const taskStart = prepareStatement(
-        await getPool(),
+        pool,
         "UPDATE Tasks SET startTime = NOW(), taskStatus = 'progress', taskResult = '' WHERE taskId = :taskId",
       )
       const taskComplete = prepareStatement(
-        await getPool(),
+        pool,
         "UPDATE Tasks SET endTime = NOW(), taskStatus = 'complete' WHERE taskId = :taskId",
       )
       const taskUpdateError = prepareStatement(
-        await getPool(),
+        pool,
         "UPDATE Tasks SET endTime = NOW(), taskStatus = 'error', taskResult = :taskResult WHERE taskId = :taskId",
       )
       const getSwimmer = prepareStatement<{ id: string },Swimmer>(
-        await getPool(),
+        pool,
         "SELECT * FROM Swimmers WHERE id = :id"
       )
       const getClub = prepareStatement<{ id: string },Club>(
-        await getPool(),
+        pool,
         "SELECT * FROM Clubs WHERE clubId = :id"
       )
       const getClubSwimmers = prepareStatement<{ id: string },Swimmer>(
-        await getPool(),
+        pool,
         "SELECT Swimmers.* FROM Swimmers INNER JOIN ClubSwimmers ON ( Swimmers.id = ClubSwimmers.swimmerIr ) WHERE ClubSwimmers.clubId = :id"
       )
       const tasks = await getTasks.all( { limit: options.count } )

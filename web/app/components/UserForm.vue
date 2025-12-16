@@ -558,7 +558,7 @@
               class="sm:col-span-1"
             >
               <ClientOnly>
-                <NuxtTurnstile ref="turnstile" v-model="captcha" :site-key="config.public.turnstileSiteKey" @update:model-value="onCaptchaSolved" />
+                <NuxtTurnstile ref="turnstile" v-model="captcha" :site-key="config.public.turnstileSiteKey as string" @update:model-value="onCaptchaSolved" />
               </ClientOnly>
             </div>
           </div>

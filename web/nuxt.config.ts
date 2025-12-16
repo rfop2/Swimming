@@ -7,6 +7,13 @@ import { visualizer } from "rollup-plugin-visualizer"
 const require = createRequire( import.meta.url )
 const builtinModules = require( "module" ).builtinModules
 
+const siteUrl =
+  process.env.SITE_URL ??
+  ( process.env.NUXT_HOST && process.env.NUXT_PORT
+    ? `http://${process.env.NUXT_HOST}:${process.env.NUXT_PORT}`
+    : "http://localhost:3000" )
+const siteName = process.env.SITE_NAME ?? "Swim.Racing"
+
 export default defineNuxtConfig( {
   devtools: { enabled: true },
 
@@ -35,8 +42,8 @@ export default defineNuxtConfig( {
   },
 
   site: {
-    url: "https://swim.racing",
-    name: "Swim.Racing",
+    url: siteUrl,
+    name: siteName,
     description: "Swimmer and swim club management and performance tracking",
     defaultLocale: "en", // not needed if you have @nuxtjs/i18n installed
     indexable: process.env.NODE_ENV === "production",
@@ -73,6 +80,8 @@ export default defineNuxtConfig( {
 
   runtimeConfig: {
     public: {
+      siteUrl,
+      siteName,
       appVersion: pkg.version,
       disableRegistration: process.env.DISABLE_REGISTRATION === "true",
       turnstile: {
@@ -82,6 +91,7 @@ export default defineNuxtConfig( {
     turnstile: {
       secretKey: process.env.TURNSTILE_SECRET_KEY,
     },
+    adminEmail: process.env.ADMIN_EMAIL_ADDRESS,
   },
 
   css: [

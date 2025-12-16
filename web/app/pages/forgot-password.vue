@@ -35,18 +35,9 @@
 
 <template>
   <div class="sm:mx-auto sm:w-full sm:max-w-sm">
-    <div>
-      <div class="flex flex-shrink-0 justify-center">
-        <img
-          src="/images/SwimRacing.svg"
-          title="Swim.Racing"
-          class="w-48"
-        >
-      </div>
-      <h2 class="mt-6 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900">
-        Forgot your password?
-      </h2>
-    </div>
+    <SiteBanner>
+      Forgot your password?
+    </SiteBanner>
 
     <div class="mt-6">
       <form

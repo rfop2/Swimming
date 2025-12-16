@@ -1,6 +1,9 @@
 import { getPool, runTransaction } from "lib"
+import type { User } from "lucia"
+import { sendEmail } from "~~/server/utils/email"
 
 export default defineEventHandler( async ( event ) => {
+  const config = useRuntimeConfig()
   try {
     const userData = await readBody( event )
 
@@ -40,6 +43,37 @@ export default defineEventHandler( async ( event ) => {
       } )
     }
     await runTransaction( await getPool(), addUser, userData )
+    try {
+      await sendEmail(
+        userData,
+      `${config.public.siteName}: Thank you for registering`,
+      `<p>Welcome to ${config.public.siteName}. You can now log in and add swimmers to your account.</p>`,
+      {
+        label: `Login to ${config.public.siteName}`,
+        url: `${config.public.siteUrl}/login`,
+      }
+      )
+    } catch ( e ) {
+      console.log( "Unable to send user confirmation email", e )
+    }
+    try {
+      await sendEmail(
+      {
+        username: config.adminEmail,
+        firstName: "System",
+        lastName: "Admin"
+      } as User,
+      `${config.public.siteName}: New Registration`,
+      `<p>A new registration has been made on the ${config.public.siteName} website.</p>
+      <p>User ${userData.firstName} ${userData.lastName} (${userData.username}) has just registered on the site.</p>`,
+      {
+        label: "View Users",
+        url: `${config.public.siteUrl}/users`,
+      }
+      )
+    } catch ( e ) {
+      console.log( "Unable to send admin notification email", e )
+    }
   } catch ( error ) {
     console.error( error )
     throw error

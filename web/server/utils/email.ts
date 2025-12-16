@@ -92,12 +92,12 @@ export function createEmailTemplate( {
   actionLabel = "Open",
   actionUrl,
   accentColor = "#2563eb",
-  siteName = "",
-  siteUrl = "",
 }: EmailTemplateOptions ) {
+  const config = useRuntimeConfig()
+
   const footerBrand =
-    siteName && siteUrl
-      ? `© ${new Date().getFullYear()} ${siteName} — <a href="${siteUrl}" style="color:#6b7280; text-decoration:none;">${siteUrl.replace( /^https?:\/\//, "" )}</a>`
+    config.public.siteName && config.public.siteUrl
+      ? `© ${new Date().getFullYear()} ${config.public.siteName} — <a href="${config.public.siteUrl}" style="color:#6b7280; text-decoration:none;">${config.public.siteUrl.replace( /^https?:\/\//, "" )}</a>`
       : "This email was sent automatically. Please do not reply."
 
   const html = `
@@ -152,7 +152,7 @@ ${title}
 
 ${body}
 
-${actionUrl ? `→ ${actionLabel}: ${actionUrl}\n\n` : ""}${siteName && siteUrl ? `© ${new Date().getFullYear()} ${siteName} — ${siteUrl}` : "This email was sent automatically. Please do not reply."}
+${actionUrl ? `→ ${actionLabel}: ${actionUrl}\n\n` : ""}${config.public.siteName && config.public.siteUrl ? `© ${new Date().getFullYear()} ${config.public.siteName} — ${config.public.siteUrl}` : "This email was sent automatically. Please do not reply."}
 `
 
   return { html, text }

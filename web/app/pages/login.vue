@@ -2,6 +2,8 @@
   import { CheckCircleIcon, XCircleIcon } from "@heroicons/vue/24/outline"
   import type { FetchError } from "ofetch"
 
+  const config = useRuntimeConfig()
+
   useHead( {
     title: "Login",
     meta: [
@@ -35,13 +37,7 @@
 <template>
   <div class="sm:mx-auto sm:w-full sm:max-w-md">
     <div>
-      <div class="flex flex-shrink-0 justify-center">
-        <img
-          src="/images/SwimRacing.svg"
-          title="Swim.Racing"
-          class="w-48"
-        >
-      </div>
+      <SiteBanner/>
       <div
         v-if="registered"
         class="bg-green-50 px-2 py-4 mt-6"
@@ -58,13 +54,11 @@
               Registration success
             </h2>
             <div class="mt-2 text-sm">
-              <p>Thank you for registering with Swim.Racing. Your account has now been set up and you can sign in below.</p>
+              <p>Thank you for registering with {{ config.public.siteName }}. Your account has now been set up and you can sign in below.</p>
             </div>
           </div>
         </div>
       </div>
-
-
       <h2 class="mt-6 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900">
         Sign in to your account
       </h2>
@@ -81,7 +75,7 @@
           <label
             for="email"
             class="block text-sm font-medium leading-6 text-gray-900"
-          >Email address</label>
+          >Email address*</label>
           <div class="mt-2">
             <input
               id="email"
@@ -99,7 +93,7 @@
             <label
               for="password"
               class="block text-sm font-medium leading-6 text-gray-900"
-            >Password</label>
+            >Password*</label>
             <div class="text-sm">
               <nuxt-link
                 href="/forgot-password"

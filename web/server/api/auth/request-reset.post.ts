@@ -5,6 +5,8 @@ import { sendEmail } from "~~/server/utils/email"
 import type { User } from "lucia"
 
 export default defineEventHandler( async ( event ) => {
+  const config = useRuntimeConfig()
+
   const { email } = await readBody<{ email: string }>( event )
   if ( !email ) throw createError( { statusCode: 400, message: "Email required" } )
 
@@ -27,9 +29,9 @@ export default defineEventHandler( async ( event ) => {
   const base = getRequestURL( event ).origin
   const link = `${base}/reset-password?token=${token}`
 
-  sendEmail(
+  await sendEmail(
     user,
-    "Swim.Racing: Reset your password",
+    `${config.public.siteName}: Reset your password`,
     `<p>Click <a href="${link}">here</a> to reset your password (expires in 15 min).</p>`,
     {
       label: "Reset password",
