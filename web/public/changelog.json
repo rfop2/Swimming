@@ -1,14 +1,48 @@
 [
   {
-    "isoDate": "2025-12-16",
-    "niceDate": "16 December 2025",
-    "diff": "13.4.1..",
-    "href": "https://bitbucket.org/swimracing/swimming/compare/13.5.0..13.4.1",
+    "isoDate": "2025-12-17",
+    "niceDate": "17 December 2025",
+    "diff": "13.5.0..",
+    "href": "https://bitbucket.org/swimracing/swimming/compare/13.5.1..13.5.0",
     "major": false,
     "minor": false,
     "tag": null,
+    "title": "13.5.1",
+    "date": "2025-12-17T13:16:12.864Z",
+    "summary": null,
+    "commits": [
+      {
+        "hash": "db122289651827e3794516abf6724b126049d256",
+        "shorthash": "db12228",
+        "author": "Philip Coombes",
+        "email": "phil@web2wire.com",
+        "date": "2025-12-17T13:15:04.000Z",
+        "niceDate": "17 December 2025",
+        "subject": "Fix wrong date in period comparison",
+        "message": "Fix wrong date in period comparison",
+        "fixes": null,
+        "href": "https://bitbucket.org/swimracing/swimming/commits/db122289651827e3794516abf6724b126049d256",
+        "breaking": false,
+        "files": 1,
+        "insertions": 1,
+        "deletions": 1,
+        "merge": null
+      }
+    ],
+    "merges": [],
+    "fixes": []
+  },
+  {
+    "isoDate": "2025-12-16",
+    "niceDate": "16 December 2025",
+    "diff": "13.4.1..13.5.0",
+    "href": "https://bitbucket.org/swimracing/swimming/compare/13.5.0..13.4.1",
+    "major": false,
+    "minor": true,
+    "tag": "13.5.0",
+    "date": "2025-12-16",
     "title": "13.5.0",
-    "date": "2025-12-16T11:20:48.482Z",
+    "version": "13.5.0",
     "summary": null,
     "commits": [
       {
