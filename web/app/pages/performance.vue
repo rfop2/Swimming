@@ -239,7 +239,7 @@
                 let qualified = undefined
                 let qualifyDiff = undefined
                 if ( performanceRecord ) {
-                  const swimDate = Temporal.PlainDate.from( String( performanceRecord.best_date ) )
+                  const swimDate = Temporal.PlainDate.from( String( performanceRecord.time_date ) )
                   const tooEarly = aqp.period?.qualifyingStart && Temporal.PlainDate.compare( swimDate, Temporal.PlainDate.from( aqp.period.qualifyingStart ) ) < 0
                   const tooLate = aqp.period?.qualifyingEnd && Temporal.PlainDate.compare( swimDate, Temporal.PlainDate.from( aqp.period.qualifyingEnd ) ) > 0
                   console.log( aqp, tooEarly, tooLate )
