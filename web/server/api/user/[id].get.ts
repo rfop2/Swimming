@@ -17,7 +17,7 @@ export default defineEventHandler( async ( event ) => {
 
   const selectUser = prepareStatement<{ userId: string }, User>(
     await getPool(),
-    "SELECT id, username, firstName, lastName, phone, location, type, admin, created, updated FROM User WHERE id = :userId"
+    "SELECT id, username, firstName, lastName, phone, location, locationId, type, admin, created, updated FROM User WHERE id = :userId"
   )
   const data = await selectUser.get( { userId } )
   return data
