@@ -64,7 +64,7 @@
   const PASSWORD = "************"
 
   const isNewUser = computed( () => props.user.id === "0" )
-  const isRegistering = isNewUser.value && editingSelf.value
+  const isRegistering = computed( () => isNewUser.value && editingSelf.value )
 
   const initialValues = computed( () => ( {
     firstName: props.user.firstName,
@@ -128,7 +128,7 @@
               return value === password
             }
           ),
-        captcha: isNewUser.value
+        captcha: isRegistering.value
           ? yup.string().required( "Captcha is required" )
           : yup.string().optional(),
         phone: yup.string().label( "Phone / Mobile" ),
