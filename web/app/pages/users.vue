@@ -233,13 +233,13 @@
               <td class="px-1 py-2 text-sm whitespace-nowrap text-gray-500">
                 {{ user.phone }}
               </td>
-              <td class="px-1 py-2 text-sm whitespace-nowrap text-gray-500">
+              <td class="px-1 py-2 text-sm whitespace-nowrap max-w-36 overflow-hidden text-ellipsis text-gray-500" :title="user.location">
                 {{ user.location }}
               </td>
               <td class="px-1 py-2 text-sm whitespace-nowrap text-gray-500">
                 {{ ucFirst( user.type ) }}
               </td>
-              <td class="px-1 py-2 text-sm whitespace-nowrap text-gray-500">
+              <td class="px-1 py-2 text-sm whitespace-nowrap max-w-36 overflow-hidden text-ellipsis text-gray-500" :title="user.clubs">
                 {{ user.clubs }}
               </td>
               <td class="px-1 py-2 text-sm text-right whitespace-nowrap text-gray-500">
