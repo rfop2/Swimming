@@ -95,7 +95,7 @@ export const addClubSwimmers = async ( user: User, clubOrCode: string | Club, co
     const countryLookup = Object.fromEntries( Object.entries( NATIONALITIES ).map( ( [ k, v ] ) => [ v, k ] ) )
     countryCode = countryLookup[country]
     if ( !countryCode ) {
-      throw new Error ( `Can't find region '${country}'` )
+      throw new Error ( `Can't find country '${country}'` )
     }
   }
   if ( !countryCode ) {

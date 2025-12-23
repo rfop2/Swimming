@@ -241,7 +241,7 @@ export const addUser = async ( conn: Pool | PoolConnection, userData: UserData )
 }
 
 const updateUserPasswordSql = "UPDATE User SET password_hash = :passwordHash WHERE id = :userId"
-const updateUserSql = "UPDATE User SET username = :username, firstName = :firstName, lastName = :lastName, phone = :phone, location = :location, type = :type WHERE id = :userId"
+const updateUserSql = "UPDATE User SET username = :username, firstName = :firstName, lastName = :lastName, phone = :phone, location = :location, locationId = :locationId, type = :type WHERE id = :userId"
 
 export const updateUser = async ( conn: Pool | PoolConnection, userId: string, userData: UserData ) => {
   if ( userData.password && userData.confirmPassword ) {
