@@ -2,7 +2,7 @@
   import type { InternalApi } from "nitropack"
   import { LinkIcon, ChartBarIcon } from "@heroicons/vue/24/outline"
   import { COUNTIES, type IndividualStats, REGIONS, type Swimmer, convertTime, getSwimmerAge, getSwimmerScopeArea, secondsToTime, strokeSort, type ScopeType, type QualifyingType, type QualifyingPeriodRow, generateRankingUrl } from "lib"
-  import { differenceInCalendarMonths, getYear, format, parseISO } from "date-fns"
+  import { differenceInCalendarMonths, format, parseISO } from "date-fns"
   import { FetchError } from "ofetch"
 
   definePageMeta( {
@@ -40,12 +40,14 @@
   const personalRecords = ref<PersonalApiResponse>( [] )
 
   // type QualifyingApiResponse = InternalApi["/api/qualifying"]["get"]
-  const { data: qualifyingTimes } = await useFetch(
-    "/api/qualifying/times",
+  const { data: qualifyingTimes } = await useAsyncData(
+    "qualifying-times",
+    () => $fetch( "/api/qualifying/times" )
   )
 
-  const { data: qualifyingPeriods } = await useFetch(
-    "/api/qualifying/dates",
+  const { data: qualifyingPeriods } = await useAsyncData(
+    "qualifying-periods",
+    () => $fetch( "/api/qualifying/dates" )
   )
 
   const today = Temporal.Now.plainDateISO()
@@ -163,12 +165,7 @@
       if ( !swimmer.value )
         return []
 
-      const currentYear = getYear( new Date() )
-
       const performanceRecordsMap = new Map<string, AreaDetail>( ( performanceRecords.value ?? [] )
-        .filter( record => (
-          Number( format( parseISO( record.time_date ), "yyyy" ) ) >= currentYear
-        ) )
         .filter( record => record.scope === "county" || record.scope === "regional" )
         .map( record => {
           const { course, stroke, distance, scope, position, rank, time, time_date, best, best_date, difference } = record

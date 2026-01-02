@@ -24,6 +24,7 @@
   const { data: users, refresh: refreshUsers } = await useFetch(
     "/api/users",
     {
+      key: "user-data",
       transform( data: UsersApiResponse ): UsersApiResponse {
         data.sort( ( a, b ) => {
           const typeDiff = a.type.localeCompare( b.type )

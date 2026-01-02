@@ -45,9 +45,14 @@
 
   const query = ref( "" )
   const loading = ref( false )
-  const internalOptions = ref<UISelection[]>( props.options )
+  const baseOptions = ref<UISelection[]>( [] )
+  const internalOptions = ref<UISelection[]>( [ ...props.options ] )
 
-  // Debounced search
+  watch( () => props.options, ( opts ) => {
+    baseOptions.value = [ ...opts ]
+    internalOptions.value = [ ...opts ]
+  } )
+
   const runSearch = useDebounceAsync( async ( q: string ) => {
     if ( !props.fetchOptions ) return
     loading.value = true
