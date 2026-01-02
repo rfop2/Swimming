@@ -93,7 +93,7 @@
     { deep: true }
   )
 
-  const { values, errors, meta, defineField, setFieldValue, resetForm, handleSubmit } = useForm( {
+  const { values, errors, meta, defineField, setFieldValue, setTouched, resetForm, handleSubmit } = useForm( {
     initialValues: initialValues.value,
     validationSchema: toTypedSchema(
       yup.object( {
@@ -191,6 +191,7 @@
     } else {
       replaceUserClub( [] )
     }
+    setTouched( true )
   } )
 
   const searchClubs = async ( query: string ) => {
