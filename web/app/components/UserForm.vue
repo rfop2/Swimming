@@ -169,24 +169,29 @@
   const { replace: replaceUserClub } = useFieldArray<UserClub>( "clubs" )
   const { remove: removeSwimmer, push: pushSwimmer, update: updateSwimmer, fields: userSwimmers } = useFieldArray<ExtSwimmer>( "swimmers" )
 
-  const clubOptions = ref( props.clubs.map( c => ( { label: c.clubName, value: c.clubId } ) ) )
+  const clubOptions = computed( () => props.clubs.map( c => ( { label: c.clubName, value: c.clubId } ) ) )
 
-  const firstClub = computed( () => props.clubs.at( 0 ) )
-  const clubOwner = computed<0 | 1>( () => firstClub.value && firstClub.value.clubOwner ? 1 : 0 )
+  const userClubId = ref<string | undefined>( undefined )
+  const userClubName = ref<string | undefined>( undefined )
+  const userClubOwner = ref<0 | 1>( 0 )
 
-  const userClubId = ref<string | undefined>( firstClub.value ? firstClub.value.clubId : undefined )
-  const userClubName = computed<string | undefined>( () => props.clubs.find( c => c.clubId === userClubId.value )?.clubName )
-  watch( firstClub, ( fc ) => {
-    userClubId.value = fc ? fc.clubId : undefined
-  }, { deep: true } )
+  watch( () => props.clubs, () => {
+    const firstClub = props.clubs.at( 0 )
+    if ( firstClub ) {
+      userClubId.value = firstClub.clubId
+      userClubName.value = firstClub.clubName
+      userClubOwner.value = firstClub.clubOwner ? 1 : 0
+    }
+  }, { immediate: true, deep: true } )
 
-  watchEffect( () => {
-    if ( userClubId.value ) {
+  watch( [ userClubId, userClubOwner ], ( [ clubId, clubOwner ] ) => {
+    if ( clubId ) {
       replaceUserClub( [ {
-        clubId: String( userClubId.value ),
-        clubOwner: clubOwner.value,
+        clubId: String( clubId ),
+        clubOwner,
       } ] )
     } else {
+      userClubOwner.value = 0
       replaceUserClub( [] )
     }
     setTouched( true )
@@ -290,7 +295,7 @@
       selectedSwimmer.value = userSwimmer
       editingSwimmer.value = true
       if ( selectedSwimmer.value.value.clubId ) {
-        const club: Club | undefined = await $fetch( `/api/clubs/${selectedSwimmer.value.value.clubId}` )
+        const club: Club | undefined = await $fetch<Club>( `/api/clubs/${selectedSwimmer.value.value.clubId}` )
         swimmerClub.value = club ? { label: club.clubName, value: club.clubId } : undefined
       }
       swimmerData.value = JSON.stringify( userSwimmer.value )
@@ -543,7 +548,7 @@
               class="sm:col-span-1"
             >
               <UI-input
-                v-model="clubOwner"
+                v-model="userClubOwner"
                 type="checkbox"
                 label="Club Admin"
                 :disabled="!userClubId"
@@ -577,12 +582,12 @@
             <p class="mt-2 text-sm text-gray-700">
               Please ensure all birthdays are filled in order that the appropriate qualifying and competition times are used.
               Note that swimmer details are queued to be fetched when first added to your account but it may take a short while before their data is fully populated.
-              You can monitor progess on the <nuxt-link href="/updates" class="underline">updates</nuxt-link> and <nuxt-link href="tasks" class="underline">tasks</nuxt-link> pages.
+              You can monitor progess on the <nuxt-link href="/updates" class="underline">updates</nuxt-link> and <nuxt-link href="/tasks" class="underline">tasks</nuxt-link> pages.
             </p>
           </div>
           <div class="mt-4 sm:mt-0 sm:ml-8 sm:flex-none">
             <button
-              v-if="userClubId && clubOwner"
+              v-if="userClubId && userClubOwner"
               type="button"
               class="inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
               @click="addClubSwimmers"
@@ -973,7 +978,7 @@
           <div class="sm:col-span-3">
             <UI-Combobox
               v-model="selectedSwimmer.value.squad"
-              :disabled="!clubOwner"
+              :disabled="!userClubOwner"
               label="Squad"
               :strict="false"
               :options="squads"
