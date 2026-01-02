@@ -40,12 +40,13 @@
   const personalRecords = ref<PersonalApiResponse>( [] )
 
   // type QualifyingApiResponse = InternalApi["/api/qualifying"]["get"]
-  const { data: qualifyingTimes } = await useFetch(
-    "/api/qualifying/times",
+  const { data: qualifyingTimes } = await useAsyncData(
+    "qualifying-times",
+    () => $fetch( "/api/qualifying/times" )
   )
-
-  const { data: qualifyingPeriods } = await useFetch(
-    "/api/qualifying/dates",
+  const { data: qualifyingPeriods } = await useAsyncData(
+    "qualifying-periods",
+    () => $fetch( "/api/qualifying/dates" )
   )
 
   const today = Temporal.Now.plainDateISO()
