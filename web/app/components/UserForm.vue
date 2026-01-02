@@ -39,8 +39,6 @@
 
   const config = useRuntimeConfig()
 
-  const clubLookups: Array<UserClub | Club> = props.clubs
-
   const currentUser = useUser()
   const isAdmin = !!Number( currentUser.value?.admin )
   const editingSelf = computed( () => !currentUser.value || ( currentUser.value.id === props.user.id ) )
@@ -201,7 +199,6 @@
       label: u.clubName,
       value: u.clubId,
     } ) )
-    clubLookups.push( ...res )
     return foundClubs
   }
 
