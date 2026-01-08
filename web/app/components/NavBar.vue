@@ -112,7 +112,8 @@
     ] },
     { name: "Training", children: [
       { name: "Times", href: "/times" },
-      { name: "Training", href: "/training" },
+      // { name: "Training", href: "/training/targets" },
+      { name: "Speedcharts", href: "/training/speedchart" },
     ] },
     { name: "Competition", children: [
       { name: "Meets", href: "/competition/meets" },
