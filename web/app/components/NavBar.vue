@@ -109,6 +109,7 @@
     { name: "Performance", children: [
       { name: "Personal Bests", href: "/performance" },
       { name: "Results", href: "/results" },
+      { name: "Compare", href: "/compare" },
     ] },
     { name: "Training", children: [
       { name: "Times", href: "/times" },
