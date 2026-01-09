@@ -111,7 +111,7 @@
       { name: "Results", href: "/results" },
     ] },
     { name: "Training", children: [
-      { name: "Times", href: "/times" },
+      { name: "Times", href: "/training/times" },
       // { name: "Training", href: "/training/targets" },
       { name: "Speedcharts", href: "/training/speedchart" },
     ] },
