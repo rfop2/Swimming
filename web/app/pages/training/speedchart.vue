@@ -200,8 +200,8 @@
         />
       </div>-->
     </template>
-    <div class="inline-block min-w-full py-2 align-left sm:px-6 lg:px-8">
-      <table v-if="speedChart && speedChart.length" class="min-w-full sm:min-w-0 sm:w-3/4 divide-y divide-gray-300">
+    <div class="inline-block min-w-full py-2 sm:px-0">
+      <table v-if="speedChart && speedChart.length" class="min-w-full sm:min-w-0 sm:w-3/4 mx-auto divide-y divide-gray-300">
         <thead>
           <tr class="divide-x divide-gray-200">
             <th
