@@ -480,7 +480,7 @@ DROP TABLE IF EXISTS `SpeedChart-backstroke-100m-female-lc`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `SpeedChart-backstroke-100m-female-lc` (
-  `100m Time/Sec` double DEFAULT NULL,
+  `100m Time` double DEFAULT NULL,
   `0-15m` double DEFAULT NULL,
   `0-20m` double DEFAULT NULL,
   `0-25m` double DEFAULT NULL,
@@ -497,7 +497,7 @@ CREATE TABLE `SpeedChart-backstroke-100m-female-lc` (
   `0-85m` double DEFAULT NULL,
   `0-90m` double DEFAULT NULL,
   `0-95m` double DEFAULT NULL,
-  `95-100m finish` double DEFAULT NULL,
+  `95-100m` double DEFAULT NULL,
   `Turn` double DEFAULT NULL,
   `1st 50m` double DEFAULT NULL,
   `2nd 50m` double DEFAULT NULL
@@ -512,7 +512,7 @@ DROP TABLE IF EXISTS `SpeedChart-backstroke-100m-male-lc`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `SpeedChart-backstroke-100m-male-lc` (
-  `100m Time/Sec` double DEFAULT NULL,
+  `100m Time` double DEFAULT NULL,
   `0-15m` double DEFAULT NULL,
   `0-20m` double DEFAULT NULL,
   `0-25m` double DEFAULT NULL,
@@ -529,7 +529,7 @@ CREATE TABLE `SpeedChart-backstroke-100m-male-lc` (
   `0-85m` double DEFAULT NULL,
   `0-90m` double DEFAULT NULL,
   `0-95m` double DEFAULT NULL,
-  `95-100m finish` double DEFAULT NULL,
+  `95-100m` double DEFAULT NULL,
   `Turn` double DEFAULT NULL,
   `1st 50m` double DEFAULT NULL,
   `2nd 50m` double DEFAULT NULL
@@ -544,7 +544,7 @@ DROP TABLE IF EXISTS `SpeedChart-backstroke-200m-female-lc`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `SpeedChart-backstroke-200m-female-lc` (
-  `200m Time/Sec` double DEFAULT NULL,
+  `200m Time` double DEFAULT NULL,
   `0-15m` double DEFAULT NULL,
   `0-25m` double DEFAULT NULL,
   `0-50m` double DEFAULT NULL,
@@ -572,7 +572,7 @@ DROP TABLE IF EXISTS `SpeedChart-backstroke-200m-male-lc`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `SpeedChart-backstroke-200m-male-lc` (
-  `200m Time/Sec` double DEFAULT NULL,
+  `200m Time` double DEFAULT NULL,
   `0-15m` double DEFAULT NULL,
   `0-25m` double DEFAULT NULL,
   `0-50m` double DEFAULT NULL,
@@ -600,7 +600,7 @@ DROP TABLE IF EXISTS `SpeedChart-backstroke-50m-female-lc`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `SpeedChart-backstroke-50m-female-lc` (
-  `50m Time/Sec` double DEFAULT NULL,
+  `50m Time` double DEFAULT NULL,
   `0-15m` double DEFAULT NULL,
   `0-20m` double DEFAULT NULL,
   `0-25m` double DEFAULT NULL,
@@ -608,7 +608,7 @@ CREATE TABLE `SpeedChart-backstroke-50m-female-lc` (
   `0-35m` double DEFAULT NULL,
   `0-40m` double DEFAULT NULL,
   `0-45m` double DEFAULT NULL,
-  `45-50m Finish` double DEFAULT NULL,
+  `45-50m` double DEFAULT NULL,
   `1st 25m` double DEFAULT NULL,
   `2nd 25m` double DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
@@ -622,7 +622,7 @@ DROP TABLE IF EXISTS `SpeedChart-backstroke-50m-male-lc`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `SpeedChart-backstroke-50m-male-lc` (
-  `50m Time/Sec` double DEFAULT NULL,
+  `50m Time` double DEFAULT NULL,
   `0-15m` double DEFAULT NULL,
   `0-20m` double DEFAULT NULL,
   `0-25m` double DEFAULT NULL,
@@ -630,7 +630,7 @@ CREATE TABLE `SpeedChart-backstroke-50m-male-lc` (
   `0-35m` double DEFAULT NULL,
   `0-40m` double DEFAULT NULL,
   `0-45m` double DEFAULT NULL,
-  `45-50m Finish` double DEFAULT NULL,
+  `45-50m` double DEFAULT NULL,
   `1st 25m` double DEFAULT NULL,
   `2nd 25m` double DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
@@ -644,7 +644,7 @@ DROP TABLE IF EXISTS `SpeedChart-breaststroke-100m-female-lc`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `SpeedChart-breaststroke-100m-female-lc` (
-  `100m Time/Sec` double DEFAULT NULL,
+  `100m Time` double DEFAULT NULL,
   `0-15m` double DEFAULT NULL,
   `0-20m` double DEFAULT NULL,
   `0-25m` double DEFAULT NULL,
@@ -661,7 +661,7 @@ CREATE TABLE `SpeedChart-breaststroke-100m-female-lc` (
   `0-85m` double DEFAULT NULL,
   `0-90m` double DEFAULT NULL,
   `0-95m` double DEFAULT NULL,
-  `95-100m finish` double DEFAULT NULL,
+  `95-100m` double DEFAULT NULL,
   `Turn` double DEFAULT NULL,
   `1st 50m` double DEFAULT NULL,
   `2nd 50m` double DEFAULT NULL
@@ -676,7 +676,7 @@ DROP TABLE IF EXISTS `SpeedChart-breaststroke-100m-male-lc`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `SpeedChart-breaststroke-100m-male-lc` (
-  `100m Time/Sec` double DEFAULT NULL,
+  `100m Time` double DEFAULT NULL,
   `0-15m` double DEFAULT NULL,
   `0-20m` double DEFAULT NULL,
   `0-25m` double DEFAULT NULL,
@@ -693,7 +693,7 @@ CREATE TABLE `SpeedChart-breaststroke-100m-male-lc` (
   `0-85m` double DEFAULT NULL,
   `0-90m` double DEFAULT NULL,
   `0-95m` double DEFAULT NULL,
-  `95-100m finish` double DEFAULT NULL,
+  `95-100m` double DEFAULT NULL,
   `Turn` double DEFAULT NULL,
   `1st 50m` double DEFAULT NULL,
   `2nd 50m` double DEFAULT NULL
@@ -708,7 +708,7 @@ DROP TABLE IF EXISTS `SpeedChart-breaststroke-200m-female-lc`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `SpeedChart-breaststroke-200m-female-lc` (
-  `200m Time/Sec` double DEFAULT NULL,
+  `200m Time` double DEFAULT NULL,
   `0-15m` double DEFAULT NULL,
   `0-25m` double DEFAULT NULL,
   `0-50m` double DEFAULT NULL,
@@ -736,7 +736,7 @@ DROP TABLE IF EXISTS `SpeedChart-breaststroke-200m-male-lc`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `SpeedChart-breaststroke-200m-male-lc` (
-  `200m Time/Sec` double DEFAULT NULL,
+  `200m Time` double DEFAULT NULL,
   `0-15m` double DEFAULT NULL,
   `0-25m` double DEFAULT NULL,
   `0-50m` double DEFAULT NULL,
@@ -764,7 +764,7 @@ DROP TABLE IF EXISTS `SpeedChart-breaststroke-50m-female-lc`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `SpeedChart-breaststroke-50m-female-lc` (
-  `50m Time/Sec` double DEFAULT NULL,
+  `50m Time` double DEFAULT NULL,
   `0-15m` double DEFAULT NULL,
   `0-20m` double DEFAULT NULL,
   `0-25m` double DEFAULT NULL,
@@ -772,7 +772,7 @@ CREATE TABLE `SpeedChart-breaststroke-50m-female-lc` (
   `0-35m` double DEFAULT NULL,
   `0-40m` double DEFAULT NULL,
   `0-45m` double DEFAULT NULL,
-  `45-50m Finish` double DEFAULT NULL,
+  `45-50m` double DEFAULT NULL,
   `1st 25m` double DEFAULT NULL,
   `2nd 25m` double DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
@@ -786,7 +786,7 @@ DROP TABLE IF EXISTS `SpeedChart-breaststroke-50m-male-lc`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `SpeedChart-breaststroke-50m-male-lc` (
-  `50m Time/Sec` double DEFAULT NULL,
+  `50m Time` double DEFAULT NULL,
   `0-15m` double DEFAULT NULL,
   `0-20m` double DEFAULT NULL,
   `0-25m` double DEFAULT NULL,
@@ -794,7 +794,7 @@ CREATE TABLE `SpeedChart-breaststroke-50m-male-lc` (
   `0-35m` double DEFAULT NULL,
   `0-40m` double DEFAULT NULL,
   `0-45m` double DEFAULT NULL,
-  `45-50m Finish` double DEFAULT NULL,
+  `45-50m` double DEFAULT NULL,
   `1st 25m` double DEFAULT NULL,
   `2nd 25m` double DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
@@ -808,7 +808,7 @@ DROP TABLE IF EXISTS `SpeedChart-butterfly-100m-female-lc`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `SpeedChart-butterfly-100m-female-lc` (
-  `100m Time/Sec` double DEFAULT NULL,
+  `100m Time` double DEFAULT NULL,
   `0-15m` double DEFAULT NULL,
   `0-20m` double DEFAULT NULL,
   `0-25m` double DEFAULT NULL,
@@ -825,7 +825,7 @@ CREATE TABLE `SpeedChart-butterfly-100m-female-lc` (
   `0-85m` double DEFAULT NULL,
   `0-90m` double DEFAULT NULL,
   `0-95m` double DEFAULT NULL,
-  `95-100m finish` double DEFAULT NULL,
+  `95-100m` double DEFAULT NULL,
   `Turn` double DEFAULT NULL,
   `1st 50m` double DEFAULT NULL,
   `2nd 50m` double DEFAULT NULL
@@ -840,7 +840,7 @@ DROP TABLE IF EXISTS `SpeedChart-butterfly-100m-male-lc`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `SpeedChart-butterfly-100m-male-lc` (
-  `100m Time/Sec` double DEFAULT NULL,
+  `100m Time` double DEFAULT NULL,
   `0-15m` double DEFAULT NULL,
   `0-20m` double DEFAULT NULL,
   `0-25m` double DEFAULT NULL,
@@ -857,7 +857,7 @@ CREATE TABLE `SpeedChart-butterfly-100m-male-lc` (
   `0-85m` double DEFAULT NULL,
   `0-90m` double DEFAULT NULL,
   `0-95m` double DEFAULT NULL,
-  `95-100m finish` double DEFAULT NULL,
+  `95-100m` double DEFAULT NULL,
   `Turn` double DEFAULT NULL,
   `1st 50m` double DEFAULT NULL,
   `2nd 50m` double DEFAULT NULL
@@ -872,7 +872,7 @@ DROP TABLE IF EXISTS `SpeedChart-butterfly-200m-female-lc`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `SpeedChart-butterfly-200m-female-lc` (
-  `200m Time/Sec` double DEFAULT NULL,
+  `200m Time` double DEFAULT NULL,
   `0-15m` double DEFAULT NULL,
   `0-25m` double DEFAULT NULL,
   `0-50m` double DEFAULT NULL,
@@ -900,7 +900,7 @@ DROP TABLE IF EXISTS `SpeedChart-butterfly-200m-male-lc`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `SpeedChart-butterfly-200m-male-lc` (
-  `200m Time/Sec` double DEFAULT NULL,
+  `200m Time` double DEFAULT NULL,
   `0-15m` double DEFAULT NULL,
   `0-25m` double DEFAULT NULL,
   `0-50m` double DEFAULT NULL,
@@ -928,7 +928,7 @@ DROP TABLE IF EXISTS `SpeedChart-butterfly-50m-female-lc`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `SpeedChart-butterfly-50m-female-lc` (
-  `50m Time/Sec` double DEFAULT NULL,
+  `50m Time` double DEFAULT NULL,
   `0-15m` double DEFAULT NULL,
   `0-20m` double DEFAULT NULL,
   `0-25m` double DEFAULT NULL,
@@ -936,7 +936,7 @@ CREATE TABLE `SpeedChart-butterfly-50m-female-lc` (
   `0-35m` double DEFAULT NULL,
   `0-40m` double DEFAULT NULL,
   `0-45m` double DEFAULT NULL,
-  `45-50m Finish` double DEFAULT NULL,
+  `45-50m` double DEFAULT NULL,
   `1st 25m` double DEFAULT NULL,
   `2nd 25m` double DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
@@ -950,7 +950,7 @@ DROP TABLE IF EXISTS `SpeedChart-butterfly-50m-male-lc`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `SpeedChart-butterfly-50m-male-lc` (
-  `50m Time/Sec` double DEFAULT NULL,
+  `50m Time` double DEFAULT NULL,
   `0-15m` double DEFAULT NULL,
   `0-20m` double DEFAULT NULL,
   `0-25m` double DEFAULT NULL,
@@ -958,7 +958,7 @@ CREATE TABLE `SpeedChart-butterfly-50m-male-lc` (
   `0-35m` double DEFAULT NULL,
   `0-40m` double DEFAULT NULL,
   `0-45m` double DEFAULT NULL,
-  `45-50m Finish` double DEFAULT NULL,
+  `45-50m` double DEFAULT NULL,
   `1st 25m` double DEFAULT NULL,
   `2nd 25m` double DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
@@ -972,7 +972,7 @@ DROP TABLE IF EXISTS `SpeedChart-freestyle-100m-female-lc`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `SpeedChart-freestyle-100m-female-lc` (
-  `100m Time/Sec` double DEFAULT NULL,
+  `100m Time` double DEFAULT NULL,
   `0-15m` double DEFAULT NULL,
   `0-20m` double DEFAULT NULL,
   `0-25m` double DEFAULT NULL,
@@ -989,7 +989,7 @@ CREATE TABLE `SpeedChart-freestyle-100m-female-lc` (
   `0-85m` double DEFAULT NULL,
   `0-90m` double DEFAULT NULL,
   `0-95m` double DEFAULT NULL,
-  `95-100m finish` double DEFAULT NULL,
+  `95-100m` double DEFAULT NULL,
   `Turn` double DEFAULT NULL,
   `1st 50m` double DEFAULT NULL,
   `2nd 50m` double DEFAULT NULL
@@ -1004,7 +1004,7 @@ DROP TABLE IF EXISTS `SpeedChart-freestyle-100m-male-lc`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `SpeedChart-freestyle-100m-male-lc` (
-  `100m Time/Sec` double DEFAULT NULL,
+  `100m Time` double DEFAULT NULL,
   `0-15m` double DEFAULT NULL,
   `0-20m` double DEFAULT NULL,
   `0-25m` double DEFAULT NULL,
@@ -1021,7 +1021,7 @@ CREATE TABLE `SpeedChart-freestyle-100m-male-lc` (
   `0-85m` double DEFAULT NULL,
   `0-90m` double DEFAULT NULL,
   `0-95m` double DEFAULT NULL,
-  `95-100m finish` double DEFAULT NULL,
+  `95-100m` double DEFAULT NULL,
   `Turn` double DEFAULT NULL,
   `1st 50m` double DEFAULT NULL,
   `2nd 50m` double DEFAULT NULL
@@ -1036,7 +1036,7 @@ DROP TABLE IF EXISTS `SpeedChart-freestyle-200m-female-lc`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `SpeedChart-freestyle-200m-female-lc` (
-  `200m Time/Sec` double DEFAULT NULL,
+  `200m Time` double DEFAULT NULL,
   `0-15m` double DEFAULT NULL,
   `0-25m` double DEFAULT NULL,
   `0-50m` double DEFAULT NULL,
@@ -1064,7 +1064,7 @@ DROP TABLE IF EXISTS `SpeedChart-freestyle-200m-male-lc`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `SpeedChart-freestyle-200m-male-lc` (
-  `200m Time/Sec` double DEFAULT NULL,
+  `200m Time` double DEFAULT NULL,
   `0-15m` double DEFAULT NULL,
   `0-25m` double DEFAULT NULL,
   `0-50m` double DEFAULT NULL,
@@ -1092,7 +1092,7 @@ DROP TABLE IF EXISTS `SpeedChart-freestyle-50m-female-lc`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `SpeedChart-freestyle-50m-female-lc` (
-  `50m Time/Sec` double DEFAULT NULL,
+  `50m Time` double DEFAULT NULL,
   `0-15m` double DEFAULT NULL,
   `0-20m` double DEFAULT NULL,
   `0-25m` double DEFAULT NULL,
@@ -1100,7 +1100,7 @@ CREATE TABLE `SpeedChart-freestyle-50m-female-lc` (
   `0-35m` double DEFAULT NULL,
   `0-40m` double DEFAULT NULL,
   `0-45m` double DEFAULT NULL,
-  `45-50m Finish` double DEFAULT NULL,
+  `45-50m` double DEFAULT NULL,
   `1st 25m` double DEFAULT NULL,
   `2nd 25m` double DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
@@ -1114,7 +1114,7 @@ DROP TABLE IF EXISTS `SpeedChart-freestyle-50m-male-lc`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `SpeedChart-freestyle-50m-male-lc` (
-  `50m Time/Sec` double DEFAULT NULL,
+  `50m Time` double DEFAULT NULL,
   `0-15m` double DEFAULT NULL,
   `0-20m` double DEFAULT NULL,
   `0-25m` double DEFAULT NULL,
@@ -1122,7 +1122,7 @@ CREATE TABLE `SpeedChart-freestyle-50m-male-lc` (
   `0-35m` double DEFAULT NULL,
   `0-40m` double DEFAULT NULL,
   `0-45m` double DEFAULT NULL,
-  `45-50m Finish` double DEFAULT NULL,
+  `45-50m` double DEFAULT NULL,
   `1st 25m` double DEFAULT NULL,
   `2nd 25m` double DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
@@ -1136,7 +1136,7 @@ DROP TABLE IF EXISTS `SpeedChart-individual_medley-200m-female-lc`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `SpeedChart-individual_medley-200m-female-lc` (
-  `200m Time/Sec` double DEFAULT NULL,
+  `200m Time` double DEFAULT NULL,
   `0-15m` double DEFAULT NULL,
   `0-25m` double DEFAULT NULL,
   `0-50m` double DEFAULT NULL,
@@ -1164,7 +1164,7 @@ DROP TABLE IF EXISTS `SpeedChart-individual_medley-200m-male-lc`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `SpeedChart-individual_medley-200m-male-lc` (
-  `200m Time/Sec` double DEFAULT NULL,
+  `200m Time` double DEFAULT NULL,
   `0-15m` double DEFAULT NULL,
   `0-25m` double DEFAULT NULL,
   `0-50m` double DEFAULT NULL,
