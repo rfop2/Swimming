@@ -56,10 +56,10 @@
     },
   ]
 
-  const { state: selections } = usePersisted( "training-selection", {
+  const { state: selections } = usePersisted( "speedchart-selection", {
     stroke: ( strokeOptions.find( option => option.value === slug[0] ) ?? strokeOptions[0] )?.value as string,
     course: ( courseOptions.find( option => option.value === slug[1] ) ?? courseOptions[1] )?.value,
-    distance: distanceOptions.find( option => String( option.value ) === slug[2] )?.value ?? "100m",
+    distance: distanceOptions.find( option => String( option.value ) === slug[2] )?.value ?? "50",
     gender: ( genderOptions.find( option => option.value === slug[3] ) ?? genderOptions[0] ).value,
     // effort: ( effortOptions.find( option => option.label === slug[4] ) ?? effortOptions[3] ).value,
   }, "reactive" )
@@ -68,15 +68,15 @@
   watch( () => selections.stroke, ( stroke ) => {
     if ( strokes[stroke] ) {
       distanceOptions.length = 0
-      distanceOptions.push( ...( strokes[stroke].distances.map( d => ( { value: Number( d.replace( /m$/, "" ) ), label: d } ) ) ) )
+      distanceOptions.push( ...( strokeDistances.value!.map( d => ( { value: Number( d.replace( /m$/, "" ) ), label: d } ) ) ) )
       if ( !distanceOptions.find( o => o.value === selections.distance ) ) {
         selections.distance = distanceOptions[0]?.value as string
       }
     }
   }, { immediate: true } )
 
-  const { data: speedChart, pending: loading } = await useAsyncData<Array<Record<string,string>>>(
-    "speedchart",
+  const { data: speedChart } = await useAsyncData<Array<Record<string,string>>>(
+    `speedchart-${selections.stroke}-${selections.distance}-${selections.course}-${selections.gender}`,
     () =>
       $fetch(
         `/api/speedcharts/${selections.stroke}/${selections.distance}/${selections.course}/${selections.gender}`
@@ -90,10 +90,6 @@
       ],
     }
   )
-
-  watchEffect( () => {
-    console.log( "SC", speedChart )
-  } )
 
   const distanceHeaders = {
     "50": [
@@ -207,7 +203,7 @@
             </th>
           </tr>
         </thead>
-        <tbody v-if="!loading" class="divide-y divide-gray-200 bg-white">
+        <tbody class="divide-y divide-gray-200 bg-white">
           <tr
             v-for="row in speedChart"
             :key="Object.values(row)[0]"
@@ -218,7 +214,7 @@
               :key="header"
               class="whitespace-nowrap px-2 py-2 text-right text-sm text-gray-900"
             >
-              {{ secondsToTime( Number( row[header]! ) ) }}
+              {{ row[header] ? secondsToTime( Number( row[header] ) ) : "" }}
             </td>
           </tr>
         </tbody>
