@@ -228,7 +228,8 @@
               {{ task.creatorName }}
             </td>
             <td
-              class="whitespace-wrap sm:whitespace-nowrap px-2 py-2 text-left text-sm text-gray-900"
+              class="whitespace-wrap sm:whitespace-nowrap px-2 py-2 text-left text-sm text-gray-900 max-w-64 overflow-hidden text-ellipsis"
+              :title="task.taskDescription"
             >
               {{ task.taskDescription }}
             </td>

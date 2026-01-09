@@ -49,6 +49,10 @@ export default defineNuxtConfig( {
     indexable: process.env.NODE_ENV === "production",
   },
 
+  sitemap: {
+    zeroRuntime: true
+  },
+
   vite: {
     plugins: [
       {
