@@ -1,3 +1,4 @@
+import { Temporal } from "@js-temporal/polyfill"
 import { getPool, prepareStatement, type QualifyingPeriodRow } from "lib"
 
 export default defineEventHandler( async ( event ) => {
