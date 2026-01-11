@@ -78,7 +78,7 @@
   const { data: speedChart } = await useAsyncData<Array<Record<string,string>>>(
     `speedchart-${selections.stroke}-${selections.distance}-${selections.course}-${selections.gender}`,
     () =>
-      $fetch(
+      $fetch<Array<Record<string,string>>>(
         `/api/speedcharts/${selections.stroke}/${selections.distance}/${selections.course}/${selections.gender}`
       ),
     {
