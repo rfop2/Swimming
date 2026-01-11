@@ -1,6 +1,6 @@
 import { Temporal } from "@js-temporal/polyfill"
 import { getPool, getSwimmerAge, prepareStatement } from "lib"
-import type { Swimmer, QualifyingRow, QualifyingPeriodRow } from "lib"
+import type { Swimmer, QualifyingRow, QualifyingPeriodRow, ExtQualifyingPeriod } from "lib"
 
 export default defineEventHandler( async ( event ) => {
   if ( !event.context.session || !event.context.user ) {
@@ -81,15 +81,6 @@ export default defineEventHandler( async ( event ) => {
     const age = getSwimmerAge( swimmer )
     const yearAge = age + ( year - today.year )
     return yearAge > 18 ? "Open" : String( yearAge )
-  }
-
-  interface ExtQualifyingPeriod extends QualifyingPeriodRow {
-    qualifyingStarted: boolean
-    qualifyingEnded: boolean
-    qualifyingActive: boolean
-    eligibilityStarted: boolean
-    eligibilityEnded: boolean
-    eligibilityActive: boolean
   }
 
   const result: { period: ExtQualifyingPeriod, times: QualifyingRow[] }[] = periods
