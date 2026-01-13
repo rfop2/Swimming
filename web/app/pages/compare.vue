@@ -64,7 +64,7 @@
     strokes[Object.keys( strokes )[0]].distances.map( ( d ) => ( { value: d, label: d } ) )
   )
 
-  const selections = reactive( {
+  const { state: selections } = usePersisted( "compare-selection", {
     course: courseOptions[0].value,
     stroke: strokeOptions[0].value,
     distance: distanceOptions[0].value,
@@ -73,7 +73,7 @@
       endDate: undefined as string | undefined,
       range: undefined as unknown,
     },
-  } )
+  }, "reactive" )
 
   watch(
     () => selections.stroke,
@@ -131,7 +131,7 @@
 
   type SwimmerPick = { id: string; fullName: string; gender?: string; birthday?: string }
 
-  const selected = ref<ExtSwimmer[]>( [] )
+  const { state: selected } = usePersisted<ExtSwimmer[]>( "multi-swimmer", [], "state" )
   const selectedLimited = computed( () => {
     const list = Array.isArray( selected.value ) ? selected.value : ( selected.value ? [ selected.value ] : [] )
     const uniq = new Map<string, SwimmerPick>()
