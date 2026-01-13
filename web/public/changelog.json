@@ -1,14 +1,48 @@
 [
   {
-    "isoDate": "2026-01-11",
-    "niceDate": "11 January 2026",
-    "diff": "14.0.0..",
-    "href": "https://bitbucket.org/swimracing/swimming/compare/14.1.0..14.0.0",
+    "isoDate": "2026-01-13",
+    "niceDate": "13 January 2026",
+    "diff": "14.1.0..",
+    "href": "https://bitbucket.org/swimracing/swimming/compare/14.1.1..14.1.0",
     "major": false,
     "minor": false,
     "tag": null,
+    "title": "14.1.1",
+    "date": "2026-01-13T09:44:21.761Z",
+    "summary": null,
+    "commits": [
+      {
+        "hash": "97e747e2232515b97dd58dceed5a77340b152d6e",
+        "shorthash": "97e747e",
+        "author": "Philip Coombes",
+        "email": "phil@web2wire.com",
+        "date": "2026-01-13T09:43:49.000Z",
+        "niceDate": "13 January 2026",
+        "subject": "Persist selections on the comparison page.",
+        "message": "Persist selections on the comparison page.",
+        "fixes": null,
+        "href": "https://bitbucket.org/swimracing/swimming/commits/97e747e2232515b97dd58dceed5a77340b152d6e",
+        "breaking": false,
+        "files": 1,
+        "insertions": 3,
+        "deletions": 3,
+        "merge": null
+      }
+    ],
+    "merges": [],
+    "fixes": []
+  },
+  {
+    "isoDate": "2026-01-11",
+    "niceDate": "11 January 2026",
+    "diff": "14.0.0..14.1.0",
+    "href": "https://bitbucket.org/swimracing/swimming/compare/14.1.0..14.0.0",
+    "major": false,
+    "minor": true,
+    "tag": "14.1.0",
+    "date": "2026-01-11",
     "title": "14.1.0",
-    "date": "2026-01-11T17:58:20.576Z",
+    "version": "14.1.0",
     "summary": null,
     "commits": [
       {
