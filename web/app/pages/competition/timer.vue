@@ -41,6 +41,8 @@
 
     surfacings: number[]
     splits: number[]
+
+    notes: string
   }
 
   /* -----------------------------
@@ -61,6 +63,7 @@
     distance: distanceOptions[0]!.value,
   }, "reactive" )
 
+  const notes = ref( "" )
 
   const mode = ref<Mode>( "setup" )
   const session = ref<TimingSession | null>( null )
@@ -101,6 +104,7 @@
     stroke: StrokeType,
     distance: DistanceType,
     course: CourseType,
+    notes: string,
   ) => {
     initAudio()
     tap()
@@ -114,6 +118,7 @@
       startedAt: performance.now(),
       surfacings: [],
       splits: [],
+      notes,
     }
     lastSurface.value = null
     lastSplit.value = null
@@ -227,6 +232,7 @@
     if ( !session.value ) return
 
     try {
+      session.value.notes = notes.value
       await $fetch( "/api/timings", {
         method: "POST",
         body: session.value,
@@ -261,9 +267,9 @@
       v-if="mode === 'setup'"
       class="flex-1 flex flex-col justify-center items-center px-6 pb-24"
     >
-      <div class="mb-16 gap-x-3 sm:flex sm:items-center sm:justify-between">
+      <div class="gap-x-3 pt-2 sm:pt-0 sm:flex sm:items-center sm:justify-between">
         <SwimmerSelector v-model="swimmer" />
-        <div class="min-w-24 mt-4">
+        <div class="min-w-24 mt-2 sm:mt-0">
           <UI-Listbox
             v-model="selections.course"
             :options="courseOptions"
@@ -271,7 +277,7 @@
             placeholder="Choose Course"
           />
         </div>
-        <div class="min-w-40 mt-4">
+        <div class="min-w-40 mt-2 sm:mt-0">
           <UI-Listbox
             v-model="selections.stroke"
             :options="strokeOptions"
@@ -279,12 +285,22 @@
             placeholder="Choose Stroke"
           />
         </div>
-        <div class="min-w-16 mt-4">
+        <div class="min-w-16 mt-2 sm:mt-0">
           <UI-Listbox
             v-model="selections.distance"
             :options="distanceOptions"
             label="Distance"
             placeholder="Choose Distance"
+          />
+        </div>
+      </div>
+      <div class="mb-12 sm:flex sm:items-center sm:justify-between">
+        <div class="min-w-64 sm:min-w-72 mt-4 sm:mt-4">
+          <UI-Input
+            v-model="notes"
+            type="textarea"
+            placeholder="Notes"
+            class="text-sm"
           />
         </div>
       </div>
@@ -296,7 +312,7 @@
            active:scale-95 transition-transform
            disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed"
         :disabled="!selections.stroke || !selections.distance || !selections.course"
-        @click="startSession(swimmer?.id ?? '0', selections.stroke, selections.distance, selections.course)"
+        @click="startSession(swimmer?.id ?? '0', selections.stroke, selections.distance, selections.course, notes )"
       >
         GO
       </button>
@@ -379,6 +395,11 @@
             </td>
           </tr>
         </table>
+        <UI-Input
+          v-model="notes"
+          type="textarea"
+          class="mt-4 min-h-24 text-sm"
+        />
       </div>
 
       <div class="flex gap-4 pt-4">
