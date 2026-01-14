@@ -1,16 +1,29 @@
 <script setup lang="ts">
+  const { navVisible } = useLayoutUi()
+
   useTasksCheck()
 </script>
 
 <template>
-  <div class="min-h-full">
-    <NavBar />
-    <div class="py-4">
-      <main>
-        <div class="mx-auto max-w-7xl px-4 py-2 sm:px-6 lg:px-8">
+  <div class="h-full flex flex-col">
+    <NavBar v-if="navVisible" />
+    <main class="flex-1 min-h-0">
+      <!-- Normal pages -->
+      <div
+        v-if="!$route.meta.fullBleed"
+        class="h-full overflow-auto px-4 py-4 sm:px-6 lg:px-8"
+      >
+        <div class="mx-auto max-w-7xl">
           <slot />
         </div>
-      </main>
-    </div>
+      </div>
+      <!-- Full-bleed pages -->
+      <div
+        v-else
+        class="h-full"
+      >
+        <slot />
+      </div>
+    </main>
   </div>
 </template>

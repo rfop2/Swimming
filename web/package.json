@@ -36,6 +36,7 @@
     "classnames": "^2.5.1",
     "date-fns": "^4.1.0",
     "lib": "file:../lib",
+    "localforage": "^1.10.0",
     "lucia": "^3.2.2",
     "mysql2": "^3.16.0",
     "node-fetch": "^3.3.2",
