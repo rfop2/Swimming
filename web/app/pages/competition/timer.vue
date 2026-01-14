@@ -212,14 +212,16 @@
 
   localforage.config( {
     name: "swim-timing",
-    storeName: "pending_sessions",
+    storeName: "pending-sessions",
   } )
 
-  const saveOffline = async ( data: TimingSession ) =>
+  const saveOffline = async ( data: TimingSession ) => {
+    const plainData = structuredClone( toRaw( data ) )
     localforage.setItem( `session-${Date.now()}`, {
-      ...data,
+      ...plainData,
       savedAt: Date.now(),
     } )
+  }
 
   const saveSession = async () => {
     if ( !session.value ) return
