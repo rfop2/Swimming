@@ -101,7 +101,7 @@
     >
       {{ props.label }}{{ !!required ? "*" : "" }}
     </ComboboxLabel>
-    <div class="relative" :class="{ 'mt-2': props.label }">
+    <div class="relative" :class="{ 'mt-1 sm:mt-2': props.label }">
       <ComboboxInput
         class="form-disabled block w-full rounded-md bg-white py-1.5 pl-3 pr-12 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
         :display-value="(value) => {
