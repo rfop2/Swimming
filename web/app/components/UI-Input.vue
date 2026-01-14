@@ -32,7 +32,7 @@
     class="block text-sm/6 font-medium text-gray-900"
   >{{ props.label }}{{ !!required ? "*" : "" }}</label>
   <div :class="{ 'mt-1 sm:mt-2': props.label }">
-    <span
+    <template
       v-if="props.type === 'checkbox' || props.type === 'radio'"
     >
       <div class="group grid size-4 grid-cols-1">
@@ -66,8 +66,23 @@
         </svg>
         <span v-if="error" class="text-sm text-red-600">{{ error }}</span>
       </div>
-    </span>
-    <span v-else>
+    </template>
+    <template
+      v-else-if="props.type === 'textarea'"
+    >
+      <div class="relative w-full">
+        <textarea
+          :id="props.id ?? defaultId"
+          v-model="model as string"
+          class="form-disabled block w-full rounded-md text-gray-900 border-gray-300 py-1.5 sm:text-sm sm:leading-6"
+          :placeholder="props.placeholder"
+          :required="props.required"
+          v-bind="$attrs"
+        />
+        <span v-if="error" class="text-sm text-red-600">{{ error }}</span>
+      </div>
+    </template>
+    <template v-else>
       <div class="relative w-full">
         <input
           :id="props.id ?? defaultId"
@@ -91,6 +106,6 @@
         </button>
         <span v-if="error" class="text-sm text-red-600">{{ error }}</span>
       </div>
-    </span>
+    </template>
   </div>
 </template>
