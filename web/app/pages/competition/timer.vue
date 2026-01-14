@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import type { CourseType, DistanceType, StrokeType, Swimmer } from "lib"
+  import { COURSES, strokes, ucFirst, type CourseType, type DistanceType, type StrokeType, type Swimmer } from "lib"
   import localforage from "localforage"
 
   definePageMeta( {
@@ -46,6 +46,21 @@
   /* -----------------------------
    * Reactive State
    * ----------------------------- */
+
+  const { swimmer } = useSwimmer()
+
+  const strokeOptions = Object.entries( strokes ).map( ( [ k, v ] ) => ( { value: k as StrokeType, label: v.label } ) )
+  const courseOptions = Object.entries( COURSES ).map( ( [ k, v ] ) => ( { value: k as CourseType, label: v } ) )
+  const initialStroke = Object.keys( strokes )[0]!
+  const distanceOptions = reactive<{ value: DistanceType, label: string }[]>( strokes[initialStroke]!.distances.map( d => ( { value: d as DistanceType, label: d } ) ) )
+
+  // const selections = reactive( {
+  const { state: selections } = usePersisted( "timer-selection", {
+    course: courseOptions[0]!.value,
+    stroke: strokeOptions[0]!.value,
+    distance: distanceOptions[0]!.value,
+  }, "reactive" )
+
 
   const mode = ref<Mode>( "setup" )
   const session = ref<TimingSession | null>( null )
@@ -242,16 +257,44 @@
     <!-- SETUP -->
     <div
       v-if="mode === 'setup'"
-      class="flex-1 flex flex-col justify-center items-center px-6"
+      class="flex-1 flex flex-col justify-center items-center px-6 pb-24"
     >
-      <!-- Your dropdowns go above if needed -->
+      <div class="mb-16 gap-x-3 sm:flex sm:items-center sm:justify-between">
+        <SwimmerSelector v-model="swimmer" />
+        <div class="min-w-24 mt-4">
+          <UI-Listbox
+            v-model="selections.course"
+            :options="courseOptions"
+            label="Course"
+            placeholder="Choose Course"
+          />
+        </div>
+        <div class="min-w-40 mt-4">
+          <UI-Listbox
+            v-model="selections.stroke"
+            :options="strokeOptions"
+            label="Stroke"
+            placeholder="Choose Stroke"
+          />
+        </div>
+        <div class="min-w-16 mt-4">
+          <UI-Listbox
+            v-model="selections.distance"
+            :options="distanceOptions"
+            label="Distance"
+            placeholder="Choose Distance"
+          />
+        </div>
+      </div>
 
       <button
         class="w-48 aspect-square rounded-full bg-green-600
            text-white text-3xl font-semibold
            flex items-center justify-center
-           active:scale-95 transition-transform"
-        @click="startSession('swimmer1', 'freestyle', '50m', 'sc')"
+           active:scale-95 transition-transform
+           disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed"
+        :disabled="!selections.stroke || !selections.distance || !selections.course"
+        @click="startSession(swimmer?.id ?? '0', selections.stroke, selections.distance, selections.course)"
       >
         GO
       </button>
@@ -289,7 +332,7 @@
       <!-- Action Buttons (middle third) -->
       <div class="flex-1 flex items-center justify-around">
         <button
-          class="w-32 h-32 rounded-full bg-orange-500 text-white text-3xl
+          class="w-36 h-36 rounded-full bg-orange-500 text-white text-3xl
              transition-transform duration-75"
           :class="surfaceActive ? 'scale-90 brightness-125' : ''"
           @click="recordSurface"
@@ -298,7 +341,7 @@
         </button>
 
         <button
-          class="w-32 h-32 rounded-full bg-orange-500 text-white text-3xl
+          class="w-36 h-36 rounded-full bg-orange-500 text-white text-3xl
              transition-transform duration-75"
           :class="splitActive ? 'scale-90 brightness-125' : ''"
           @click="recordSplit"
@@ -324,6 +367,8 @@
       class="flex-1 flex flex-col px-4 py-4"
     >
       <div class="flex-1 overflow-auto">
+        <p class="text-lg text-bold pb-2">{{ swimmer ? swimmer.fullName : "Unknown Swimmer" }}</p>
+        <p class="text-lg pb-2 mb-2 border-b border-gray-400">{{ selections.distance }} {{ selections.stroke.split( "_" ).map( ( word: string ) => ucFirst( word ) ).join( " " ) }} ({{ COURSES[selections.course] }})</p>
         <table class="w-full text-left">
           <tr v-for="e in events" :key="`${e.type}-${e.index}`">
             <td>{{ e.type }} {{ e.index }}</td>
