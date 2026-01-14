@@ -17,6 +17,7 @@
 
   const { hideNav, showNav } = useLayoutUi()
   const { enable, disable } = useControlSurface()
+  const { initAudio, tap, strong } = useFeedback()
 
   onBeforeUnmount( () => {
     disable()
@@ -86,6 +87,8 @@
     distance: DistanceType,
     course: CourseType,
   ) => {
+    initAudio()
+    tap()
     hideNav()
     enable()
     session.value = {
@@ -112,6 +115,8 @@
   }
 
   const recordSurface = () => {
+    tap()
+
     if ( !session.value ) return
 
     const t = elapsed()
@@ -123,6 +128,8 @@
   }
 
   const recordSplit = () => {
+    tap()
+
     if ( !session.value ) return
 
     const t = elapsed()
@@ -134,6 +141,8 @@
   }
 
   const stopSession = () => {
+    strong()
+
     if ( !session.value ) return
 
     session.value.stoppedAt = performance.now()

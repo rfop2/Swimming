@@ -10,15 +10,25 @@ export const useControlSurface = () => {
     } )
   } )
 
+  type OrientationLock =
+  | "portrait-primary"
+  | "portrait-secondary"
+  | "landscape-primary"
+  | "landscape-secondary"
+  | "any"
+
   const lockOrientation = async () => {
-    if ( !( "orientation" in screen ) ) return
+    const orientation = screen.orientation as ScreenOrientation & {
+    lock?: ( type: OrientationLock ) => Promise<void>
+  }
+
+    const lock = orientation.lock
+    if ( !lock ) return
 
     try {
-      // portrait-primary is the safest choice for phones
-      await screen.orientation.lock( "portrait-primary" )
-      orientationLocked = true
+      await lock( "portrait-primary" )
     } catch {
-      // Ignore — unsupported or denied
+    // denied / unsupported
     }
   }
 
