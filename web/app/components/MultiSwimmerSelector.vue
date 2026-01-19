@@ -1,7 +1,7 @@
 <script setup lang="ts">
   import type { ExtSwimmer } from "lib"
 
-  const model = defineModel<ExtSwimmer[]>( { required: true } )
+  const model = defineModel<string[]>( { required: true } )
 
   const props = withDefaults(
     defineProps<{
@@ -22,9 +22,10 @@
   const open = ref( false )
   const inputRef = ref<HTMLInputElement | null>( null )
 
-  const selectedSafe = computed<ExtSwimmer[]>( () => ( Array.isArray( model.value ) ? model.value : [] ) )
+  const selectedSafe = computed<string[]>( () => ( Array.isArray( model.value ) ? model.value.map( ( v ) => String( v ) ) : [] ) )
+  const selectedIds = computed( () => new Set( selectedSafe.value ) )
 
-  const selectedIds = computed( () => new Set( selectedSafe.value.map( s => String( s.id ) ) ) )
+  const swimmerMap = computed( () => new Map<string, ExtSwimmer>( ( swimmers.value ?? [] ).map( ( s ) => [ String( s.id ), s ] ) ) )
 
   const remaining = computed( () => Math.max( 0, props.max - selectedSafe.value.length ) )
   const isFull = computed( () => selectedSafe.value.length >= props.max )
@@ -33,12 +34,11 @@
     const q = query.value.trim().toLowerCase()
     const list = swimmers.value ?? []
 
-    const base = list.filter( s => !selectedIds.value.has( String( s.id ) ) )
-
+    const base = list.filter( ( s ) => !selectedIds.value.has( String( s.id ) ) )
     if ( !q ) return base.slice( 0, 20 )
 
     return base
-      .filter( s => {
+      .filter( ( s ) => {
         const name = ( s.fullName ?? "" ).toLowerCase()
         const first = ( s.firstName ?? "" ).toLowerCase()
         const last = ( s.lastName ?? "" ).toLowerCase()
@@ -49,16 +49,18 @@
 
   const add = ( s: ExtSwimmer ) => {
     if ( isFull.value ) return
-    if ( selectedIds.value.has( String( s.id ) ) ) return
+    const id = String( s.id )
+    if ( selectedIds.value.has( id ) ) return
 
-    model.value = [ ...selectedSafe.value, s ]
+    model.value = [ ...selectedSafe.value, id ].slice( 0, props.max )
     query.value = ""
     open.value = true
     nextTick( () => inputRef.value?.focus() )
   }
 
   const remove = ( id: string ) => {
-    model.value = selectedSafe.value.filter( s => String( s.id ) !== String( id ) )
+    const sid = String( id )
+    model.value = selectedSafe.value.filter( ( v ) => v !== sid )
     nextTick( () => inputRef.value?.focus() )
   }
 
@@ -73,7 +75,7 @@
       return
     }
     if ( e.key === "Backspace" && !query.value && selectedSafe.value.length ) {
-      remove( String( selectedSafe.value[selectedSafe.value.length - 1].id ) )
+      remove( selectedSafe.value[selectedSafe.value.length - 1] )
     }
   }
 
@@ -110,16 +112,18 @@
     <div class="mt-2 rounded-md border border-gray-300 bg-white p-2">
       <div class="flex flex-wrap gap-2">
         <span
-          v-for="s in selectedSafe"
-          :key="String(s.id)"
+          v-for="id in selectedSafe"
+          :key="id"
           class="inline-flex items-center gap-2 rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-800"
         >
-          <span class="truncate max-w-[220px]">{{ s.fullName }}</span>
+          <span class="truncate max-w-[220px]">
+            {{ swimmerMap.get(id)?.fullName ?? id }}
+          </span>
           <button
             type="button"
             class="rounded-full px-1 text-gray-500 hover:text-gray-900"
             aria-label="Remove swimmer"
-            @click="remove(String(s.id))"
+            @click="remove(id)"
           >
             ×
           </button>

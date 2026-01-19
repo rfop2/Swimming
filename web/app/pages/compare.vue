@@ -129,15 +129,21 @@
     return row as unknown as ExtQualifyingRow | undefined
   }
 
-  type SwimmerPick = { id: string; fullName: string; gender?: string; birthday?: string }
-
-  const { state: selected } = usePersisted<ExtSwimmer[]>( "multi-swimmer", [], "state" )
-  const selectedLimited = computed( () => {
-    const list = Array.isArray( selected.value ) ? selected.value : ( selected.value ? [ selected.value ] : [] )
-    const uniq = new Map<string, SwimmerPick>()
-    for ( const s of list ) if ( s?.id ) uniq.set( s.id, s )
-    return Array.from( uniq.values() ).slice( 0, 5 )
+  const { state: selectedIds } = usePersisted<string[]>( "multi-swimmer", [], "state" )
+  const { swimmers } = useSwimmers()
+  const selectedLimitedIds = computed( () => {
+    const list = Array.isArray( selectedIds.value ) ? selectedIds.value.map( ( v ) => String( v ) ) : []
+    return Array.from( new Set( list ) ).slice( 0, 5 )
   } )
+
+  const swimmerMap = computed( () => new Map( ( swimmers.value ?? [] ).map( ( s ) => [ String( s.id ), s ] ) ) )
+
+  const selectedSwimmers = computed<ExtSwimmer[]>( () => {
+    return selectedLimitedIds.value
+      .map( ( id ) => swimmerMap.value.get( id ) )
+      .filter( ( s ): s is ExtSwimmer => Boolean( s ) )
+  } )
+
 
   const recordsBySwimmer = ref<Record<string, ResultsApiResponse>>( {} )
   const qualifyingBySwimmer = ref<Record<string, QualifyingApiResponse>>( {} )
@@ -175,25 +181,23 @@
 
 
   watchEffect( async () => {
-    const swimmers = selectedLimited.value
-    if ( !swimmers.length ) return
+    if ( import.meta.server ) return
+
+    const ids = selectedLimitedIds.value
+    if ( !ids.length ) return
 
     const query = buildQuery()
 
     await Promise.all(
-      swimmers.map( async ( s ) => {
-        const rec = await $fetch<ResultsApiResponse>( `/api/results/${s.id}`, { query } )
-        recordsBySwimmer.value[s.id] = sortRecords( rec )
+      ids.map( async ( id ) => {
+        const rec = await $fetch<ResultsApiResponse>( `/api/results/${id}`, { query } )
+        recordsBySwimmer.value[id] = sortRecords( rec )
 
         try {
-          const q = await $fetch<QualifyingApiResponse>( `/api/qualifying/swimmer/${s.id}` )
-          qualifyingBySwimmer.value[s.id] = q
+          qualifyingBySwimmer.value[id] = await $fetch<QualifyingApiResponse>( `/api/qualifying/swimmer/${id}` )
         } catch ( error ) {
-          if ( error instanceof FetchError && error.status === 404 ) {
-            qualifyingBySwimmer.value[s.id] = []
-          } else {
-            throw error
-          }
+          if ( error instanceof FetchError && error.status === 404 ) qualifyingBySwimmer.value[id] = []
+          else throw error
         }
       } )
     )
@@ -202,34 +206,32 @@
   const palette = [ "#60a5fa", "#f97316", "#22c55e", "#a855f7", "#ef4444" ]
 
   const datasets = computed<ChartDataset<"line", Point[]>[]>( () => {
-    return selectedLimited.value.map( ( s, i ) => {
-      const recs = recordsBySwimmer.value[s.id] ?? []
+    return selectedLimitedIds.value.map( ( id, i ) => {
+      const recs = recordsBySwimmer.value[id] ?? []
+      const swimmer = swimmerMap.value.get( id )
+
       const points: Point[] = recs
         .filter( ( r: ResultRow ) => r.time != null )
         .map( ( r: ResultRow ) => ( { x: String( r.date ), y: Number( r.time ) } ) )
 
       return {
-        label: s.fullName,
+        label: swimmer?.fullName ?? id,
         data: points,
         borderColor: palette[i % palette.length],
         borderWidth: 1.5,
         pointRadius: ( ctx: ScriptableContext<"line"> ) => {
           const parsedY = ctx.parsed?.y
           if ( typeof parsedY !== "number" ) return 0
-
           const data = ( ctx.dataset.data ?? [] ) as Point[]
           if ( !data.length ) return 2
-
           const minVal = Math.min( ...data.map( ( p ) => p.y ) )
           return parsedY === minVal ? 4 : 2
         },
         pointStyle: ( ctx: ScriptableContext<"line"> ): PointStyle => {
           const parsedY = ctx.parsed?.y
           if ( typeof parsedY !== "number" ) return "circle"
-
           const data = ( ctx.dataset.data ?? [] ) as Point[]
           if ( !data.length ) return "circle"
-
           const minVal = Math.min( ...data.map( ( p ) => p.y ) )
           return parsedY === minVal ? "rectRot" : "circle"
         },
@@ -246,6 +248,7 @@
   } )
 
 
+
   const chartData = computed( (): ChartData<"line", Point[]> => ( {
     datasets: datasets.value,
   } ) )
@@ -253,7 +256,7 @@
  
 
   const sharedQualifyingTimes = computed<ExtQualifyingRow[]>( () => {
-    const swimmers = selectedLimited.value
+    const swimmers = selectedSwimmers.value
     if ( !swimmers.length ) return []
 
     const zones: Array<{ scope: string; type?: string }> = [
@@ -265,7 +268,8 @@
     const out: ExtQualifyingRow[] = []
 
     for ( const z of zones ) {
-      const rows = swimmers.map( ( s ) => extractQual( qualifyingBySwimmer.value[s.id], z.scope, z.type ) )
+      const rows = swimmers.map( ( s ) => extractQual( qualifyingBySwimmer.value[String( s.id )], z.scope, z.type ) )
+
       if ( rows.some( ( r ) => !r ) ) continue
 
       const first = rows[0]!
@@ -372,7 +376,18 @@
         callbacks: {
           label: ( context: TooltipItem<"line"> ) => {
             const label = context.dataset.label || ""
-            return `${label}: ${secondsToTime( context.raw as number )}`
+
+            const raw = context.raw
+            const seconds =
+              typeof raw === "number"
+                ? raw
+                : typeof raw === "object" && raw && "y" in raw
+                  ? Number( ( raw as { y: unknown } ).y )
+                  : Number( context.parsed?.y )
+
+            if ( !Number.isFinite( seconds ) ) return `${label}: —`
+
+            return `${label}: ${secondsToTime( seconds )}`
           },
         },
       },
@@ -381,13 +396,13 @@
   } ) )
 
 
-  const { swimmers } = useSwimmers()
+ 
 
   onMounted( () => {
     watch(
       swimmers,
       ( list ) => {
-        if ( !selected.value.length && ( list?.length ?? 0 ) > 0 ) selected.value = [ list[0] ]
+        if ( !selectedIds.value.length && ( list?.length ?? 0 ) > 0 ) selectedIds.value = [ String( list[0].id ) ]
       },
       { immediate: true }
     )
@@ -402,19 +417,19 @@
   }
 
   const rankingRows = computed<RankingRow[]>( () => {
-    const rows = selectedLimited.value.map( ( s ) => {
-      const recs = ( recordsBySwimmer.value[s.id] ?? [] ).filter( ( r ) => r.time != null )
+    const rows = selectedLimitedIds.value.map( ( id ) => {
+      const swimmer = swimmerMap.value.get( id )
+      const recs = ( recordsBySwimmer.value[id] ?? [] ).filter( ( r ) => r.time != null )
 
-      if ( !recs.length ) return { id: s.id, fullName: s.fullName }
+      if ( !recs.length ) return { id, fullName: swimmer?.fullName ?? id }
 
       let pb = recs[0]
       for ( const r of recs ) if ( Number( r.time ) < Number( pb.time ) ) pb = r
-
       const last = recs[recs.length - 1]
 
       return {
-        id: s.id,
-        fullName: s.fullName,
+        id,
+        fullName: swimmer?.fullName ?? id,
         pbTime: Number( pb.time ),
         pbDate: String( pb.date ),
         lastTime: Number( last.time ),
@@ -424,6 +439,7 @@
 
     return rows.sort( ( a, b ) => ( a.pbTime ?? Number.POSITIVE_INFINITY ) - ( b.pbTime ?? Number.POSITIVE_INFINITY ) )
   } )
+
 
 </script>
 
@@ -437,7 +453,7 @@
 
     <template #controls>
       <div class="min-w-[420px]">
-        <MultiSwimmerSelector  v-model="selected" :max="5" />
+        <MultiSwimmerSelector v-model="selectedIds" :max="5" />
       </div>
 
       <div class="min-w-24">
@@ -456,20 +472,23 @@
         <UI-Year-Range v-model="selections.period" />
       </div>
     </template>
-
-    <div v-if="datasets.length && hasChartData">
-      <div class="overflow-x-auto">
-        <div id="chart-container" class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
-          <Line height="300" :data="chartData" :options="options" />
+    <ClientOnly>
+      <div v-if="datasets.length && hasChartData">
+        <div class="overflow-x-auto">
+          <div id="chart-container" class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
+            <Line height="300" :data="chartData" :options="options" />
+          </div>
         </div>
       </div>
-    </div>
+      <div v-else>
+        <p class="p-6 mx-4 text-md text-center border-2 border-solid border-gray-200 rounded-md">
+          There are no results to display for the selected swimmers and event.
+        </p>
+      </div>
+    </ClientOnly>
+    
 
-    <div v-else>
-      <p class="p-6 mx-4 text-md text-center border-2 border-solid border-gray-200 rounded-md">
-        There are no results to display for the selected swimmers and event.
-      </p>
-    </div>
+    
     <div class="mt-4 sm:px-6 lg:px-8">
       <div class="text-sm font-semibold text-gray-900">Summary</div>
 
