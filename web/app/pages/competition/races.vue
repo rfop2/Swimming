@@ -1,6 +1,5 @@
 <script setup lang="ts">
   import type { InternalApi } from "nitropack"
-  import { Temporal } from "@js-temporal/polyfill"
   import {
     createCalendar,
     createViewDay,
@@ -15,7 +14,7 @@
   import StandardPage from "~/components/StandardPage.vue"
   import CalendarEvent from "~/components/CalendarEvent.vue"
   import type { IndividualRow } from "lib"
-  import type { MeetDistanceResults, MeetEventResults, MeetRaceResults, MeetStrokeResults } from "~/types/meet"
+  import type { MeetDistanceResults, MeetEventResults, MeetRaceResults, MeetStrokeResults } from "~~/types/meet"
 
   const ScheduleXCalendar = defineAsyncComponent( () =>
     import( "@schedule-x/vue" ).then( mod => mod.ScheduleXCalendar )
@@ -158,7 +157,7 @@
       value: "lc",
       label: "Long",
     },
-  ]
+  ] as const
   const levels = [
     {
       value: 1,
@@ -176,7 +175,7 @@
       value: 4,
       label: "Level 4",
     },
-  ]
+  ] as const
 
   const { state: selections } = usePersisted( "races-selection", {
     course: courses[0].value,
@@ -209,7 +208,7 @@
     const filteredEvents = calendarEvents.filter( event => {
       if ( selections.course && selections.course !== event.meet.course )
         return false
-      if ( selections.level.length === 0 || !selections.level.includes( event.meet.level ) )
+      if ( selections.level.length === 0 || !selections.level.includes( event.meet.level as typeof levels[number]["value"] ) )
         return false
       return true
     } )
@@ -261,10 +260,10 @@
 
 <template>
   <StandardPage
-    title="Meets"
+    title="Races"
   >
     <template #description>
-      Forthcoming events and competitions
+      Past events, races and results
     </template>
     <template #controls>
       <SwimmerSelector v-model="swimmer" />
