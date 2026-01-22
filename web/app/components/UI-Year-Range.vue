@@ -36,8 +36,8 @@
   const getDatesFromRange = ( range: string ) => {
     const tz = "Europe/London"
 
-    let start: Temporal.ZonedDateTime | null = null
-    let end: Temporal.ZonedDateTime | null = null
+    let start: TemporalType.ZonedDateTime | null = null
+    let end: TemporalType.ZonedDateTime | null = null
     if ( range === "" ) {
       start = null
       end = null
