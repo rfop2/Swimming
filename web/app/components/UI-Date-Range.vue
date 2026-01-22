@@ -1,4 +1,5 @@
 <script setup lang="ts">
+  import type { Temporal as TemporalType } from "temporal-polyfill"
   import { getPeriodBounds, type Period, type PeriodWhen } from "lib"
 
   export interface DateDefn {
@@ -61,8 +62,8 @@
   const getDatesFromRange = ( range: string ) => {
     const tz = "Europe/London"
 
-    let start: Temporal.ZonedDateTime | null = null
-    let end: Temporal.ZonedDateTime | null = null
+    let start: TemporalType.ZonedDateTime | null = null
+    let end: TemporalType.ZonedDateTime | null = null
     if ( range === "" ) {
       start = null
       end = null

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+  import type { Temporal as TemporalType } from "temporal-polyfill"
   import { getYear } from "date-fns"
 
   export interface DateDefn {
