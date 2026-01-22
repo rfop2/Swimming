@@ -96,7 +96,6 @@
   )
 
   const meets = computed( (): Array<ExtMeet> => {
-    console.log( "DDD", data )
     const extData = ( data.value ?? [] ).map( row => {
       return {
         ...row,

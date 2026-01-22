@@ -1,6 +1,6 @@
 <script setup lang="ts">
+  import type { Temporal as TemporalType } from "temporal-polyfill"
   import { getYear } from "date-fns"
-  import { Temporal } from "@js-temporal/polyfill"
 
   export interface DateDefn {
     range: string | undefined
@@ -36,8 +36,8 @@
   const getDatesFromRange = ( range: string ) => {
     const tz = "Europe/London"
 
-    let start: Temporal.ZonedDateTime | null = null
-    let end: Temporal.ZonedDateTime | null = null
+    let start: TemporalType.ZonedDateTime | null = null
+    let end: TemporalType.ZonedDateTime | null = null
     if ( range === "" ) {
       start = null
       end = null

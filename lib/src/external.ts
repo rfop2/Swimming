@@ -139,11 +139,11 @@ const strokeData = Object.entries( STROKE_DISTANCE ).reduce( ( strokes, [ stroke
     strokes[stroke] = {
       label: stroke.replace( /_/g, " " ).replace( /\b\w/g, char => char.toUpperCase() ),
       order: strokeSort[stroke as StrokeType],
-      distances: [ distance ],
+      distances: [ distance as DistanceType ],
       codes: [ code ],
     }
   } else {
-    strokes[stroke].distances.push( distance )
+    strokes[stroke].distances.push( distance as DistanceType )
     strokes[stroke].codes.push( code )
   }
   return strokes
