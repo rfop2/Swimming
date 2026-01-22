@@ -1,4 +1,3 @@
-import { Temporal } from "@js-temporal/polyfill"
 import { getPool, getSwimmerAge, prepareStatement } from "lib"
 import type { Swimmer, QualifyingRow, QualifyingPeriodRow, ExtQualifyingPeriod } from "lib"
 
