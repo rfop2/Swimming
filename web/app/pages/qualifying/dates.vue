@@ -226,6 +226,42 @@
         dirty.value = true
       },
     },
+    {
+      field: "eligibilityStart",
+      editable: () => !!user.value.admin,
+      headerName: "Eligibility Start",
+      cellEditor: "agDateStringCellEditor",
+      cellEditorParams: {
+        includeTime: false,
+      },
+      filter: false,
+      valueFormatter: ( { value }: ValueFormatterParams ) => value ? format( value, "do MMM, yyyy" ) : "",
+      valueSetter: ( params: ValueSetterParams ): boolean => {
+        params.data.eligibilityStart = params.newValue
+        return true
+      },
+      onCellValueChanged: ( _event: NewValueParams ) => {
+        dirty.value = true
+      },
+    },
+    {
+      field: "eligibilityEnd",
+      editable: () => !!user.value.admin,
+      headerName: "Eligibility End",
+      cellEditor: "agDateStringCellEditor",
+      cellEditorParams: {
+        includeTime: false,
+      },
+      filter: false,
+      valueFormatter: ( { value }: ValueFormatterParams ) => value ? format( value, "do MMM, yyyy" ) : "",
+      valueSetter: ( params: ValueSetterParams ): boolean => {
+        params.data.eligibilityEnd = params.newValue
+        return true
+      },
+      onCellValueChanged: ( _event: NewValueParams ) => {
+        dirty.value = true
+      },
+    },
   ] )
 
   const autoSizeStrategy: SizeColumnsToFitGridStrategy = {
