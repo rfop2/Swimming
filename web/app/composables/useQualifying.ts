@@ -57,15 +57,7 @@ export const useQualifying = () => {
   }
 
   const filterCurrentQualifyingPeriods = <T extends ExtQualifyingPeriod>( qualifyingPeriods: T[] ): T[] => {
-    const filteredQualifyingPeriods = qualifyingPeriods.filter( qp => {
-      if ( !qp.qualifyingStart )
-        return false
-      // Remove periods that have already ended
-      if ( qp.qualifyingEnd && Temporal.PlainDate.compare( today, Temporal.PlainDate.from( qp.qualifyingEnd ) ) > 0 )
-        return false
-      // Remove not started periods
-      return ( Temporal.PlainDate.compare( today, Temporal.PlainDate.from( qp.qualifyingStart ) ) >= 0 )
-    } )
+    const filteredQualifyingPeriods = qualifyingPeriods.filter( qp => qp.qualifyingActive )
     // Sort by start date
     filteredQualifyingPeriods.sort( ( a, b ) => a.qualifyingStart.localeCompare( b.qualifyingStart ) )
     console.log( "cqp", filteredQualifyingPeriods )
@@ -73,15 +65,7 @@ export const useQualifying = () => {
   }
 
   const filterEligibleQualifyingPeriods = <T extends ExtQualifyingPeriod>( qualifyingPeriods: T[] ): T[] => {
-    const filteredQualifyingPeriods = qualifyingPeriods.filter( qp => {
-      if ( !qp.eligibilityStart )
-        return false
-      // Remove periods that have already ended
-      if ( qp.eligibilityEnd && Temporal.PlainDate.compare( today, Temporal.PlainDate.from( qp.eligibilityEnd ) ) > 0 )
-        return false
-      // Remove not started periods
-      return ( Temporal.PlainDate.compare( today, Temporal.PlainDate.from( qp.eligibilityStart ) ) >= 0 )
-    } )
+    const filteredQualifyingPeriods = qualifyingPeriods.filter( qp => qp.eligibilityActive )
     // Sort by start date
     filteredQualifyingPeriods.sort( ( a, b ) => a.eligibilityStart.localeCompare( b.eligibilityStart ) )
     console.log( "eqp", filteredQualifyingPeriods )
