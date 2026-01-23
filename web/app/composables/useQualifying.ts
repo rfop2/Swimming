@@ -1,7 +1,7 @@
-import { type Swimmer, getSwimmerAge, type ExtQualifyingPeriod, type QualifyingRow } from "lib"
+import { type Swimmer, getSwimmerAge, type ExtQualifyingPeriod, type QualifyingRow, type IndividualStats } from "lib"
 // import { FetchError } from "ofetch"
 
-interface QualifyingInfo extends ExtQualifyingPeriod {
+export interface QualifyingInfo extends ExtQualifyingPeriod {
   times: QualifyingRow[]
 }
 
@@ -73,6 +73,8 @@ export const useQualifying = () => {
   }
 
   const filterSwimmerQualifyingPeriods = <T extends ExtQualifyingPeriod>( qualifyingPeriods: T[], swimmer: Swimmer ): T[] => {
+    if ( !swimmer )
+      return []
     const filteredQualifyingPeriods = qualifyingPeriods.filter( qp => {
       // Limit qualifying periods to swimmer's areas
       if ( ( qp.scope === "regional" && qp.area !== swimmer.region ) || ( qp.scope === "county" && qp.area !== swimmer.county ) )
@@ -84,17 +86,25 @@ export const useQualifying = () => {
   }
 
   const filterSwimmerQualifyingTimes = ( qualifyingTimes: QualifyingRow[], swimmer: Swimmer ) => {
+    if ( !swimmer )
+      return []
     const swimmerAge = getSwimmerAge( swimmer )
+    const startYear = today.year - ( swimmerAge - 10 )
     const filteredQualifyingTimes = qualifyingTimes.filter( qt => {
       if ( ( qt.gender !== swimmer.gender ) )
         return false
       if ( ( qt.scope === "regional" && qt.area !== swimmer.region ) || ( qt.scope === "county" && qt.area !== swimmer.county ) )
         return false
-      const yearAge = swimmerAge + ( qt.year - today.year )
-      const periodAge = yearAge > 18 ? "Open" : String( yearAge )
-      if ( ( qt.age !== periodAge ) )
-        return false
-      return true
+      let year = startYear
+      do {
+        const yearAge = swimmerAge + ( year - today.year )
+        const qualAge = yearAge > 18 ? "Open" : String( yearAge )
+        if ( ( qt.age === qualAge ) && ( qt.year === year ) ) {
+          // console.log( "QQ", year, qt.year, yearAge, qualAge, qt.age )
+          return true
+        }
+      } while ( ++year <= today.year )
+      return false
     } )
     console.log( "sqt", filteredQualifyingTimes )
     return filteredQualifyingTimes
@@ -124,6 +134,37 @@ export const useQualifying = () => {
     return filteredQualifyingInfo
   }
 
+  const filterQualifyingInfoType = ( qualifyingInfo: QualifyingInfo[], scope: string, type: string ) => {
+    if ( !qualifyingInfo || !qualifyingInfo.length )
+      return []
+    return qualifyingInfo.filter( qi => qi.scope === scope && qi.type === type )
+  }
+
+  const validateQualifyingSwimDate = ( qualifyingInfo: QualifyingInfo,  swimRecord: IndividualStats ) => {
+    const swimDate = Temporal.PlainDate.from( String( swimRecord.date ) )
+    if ( Temporal.PlainDate.compare( swimDate, Temporal.PlainDate.from( qualifyingInfo.qualifyingStart ) ) < 0 )
+      return false
+    if ( qualifyingInfo.qualifyingEnd && Temporal.PlainDate.compare( swimDate, Temporal.PlainDate.from( qualifyingInfo.qualifyingEnd ) ) > 0 )
+      return false
+    return true
+  }
+
+  const findSwimQualifyingEntry = ( qualifyingTimes: QualifyingRow[],  swimRecord: IndividualStats ) => {
+    const courseQualifyingEntry = qualifyingTimes.find( entry => (
+      entry.course === swimRecord.course &&
+        entry.stroke === swimRecord.stroke &&
+        entry.distance === swimRecord.distance
+    ) )
+    console.log( "cqe", courseQualifyingEntry )
+    if ( courseQualifyingEntry )
+      return courseQualifyingEntry
+    const qualifyingEntry = qualifyingTimes.find( entry => (
+      entry.stroke === swimRecord.stroke &&
+        entry.distance === swimRecord.distance
+    ) )
+    return qualifyingEntry
+  }
+
   return {
     qualifyingTimes,
     qualifyingPeriods,
@@ -136,5 +177,8 @@ export const useQualifying = () => {
     filterSwimmerQualifyingTimes,
     filterSwimmerCurrentQualifyingInfo,
     filterSwimmerEligibleQualifyingInfo,
+    filterQualifyingInfoType,
+    validateQualifyingSwimDate,
+    findSwimQualifyingEntry,
   } as const
 }
