@@ -1,7 +1,7 @@
 <script setup lang="ts">
   import type { InternalApi } from "nitropack"
   import { LinkIcon, ChartBarIcon } from "@heroicons/vue/24/outline"
-  import { COUNTIES, type IndividualStats, REGIONS, type Swimmer, convertTime, getSwimmerAge, secondsToTime, strokeSort, type ScopeType, type QualifyingType, generateRankingUrl } from "lib"
+  import { COUNTIES, type IndividualStats, REGIONS, type Swimmer, convertTime, secondsToTime, strokeSort, type ScopeType, type QualifyingType, generateRankingUrl } from "lib"
   import { differenceInCalendarMonths, format, parseISO } from "date-fns"
   import { FetchError } from "ofetch"
 
@@ -20,15 +20,9 @@
   const { swimmer, updated } = useSwimmer()
 
   const {
-    qualifyingPeriods,
-    qualifyingTimes,
-    filterCurrentQualifyingPeriods,
-    filterEligibleQualifyingPeriods,
-    filterSwimmerQualifyingPeriods,
-    filterSwimmerQualifyingTimes,
-    buildQualifyingInfo,
     findSwimQualifyingEntry,
     validateQualifyingSwimDate,
+    calcActiveQualifyingPeriods,
   } = useQualifying()
 
   type RelativeApiResponse = InternalApi["/api/relative/:id"]["get"]
@@ -51,16 +45,6 @@
   type PersonalApiResponse = InternalApi["/api/personal/:id"]["get"]
 
   const personalRecords = ref<PersonalApiResponse>( [] )
-
-  const today = Temporal.Now.plainDateISO()
-
-  const getQualifyingAge = ( year: number ) => {
-    if ( !swimmer.value )
-      return ""
-    const age = getSwimmerAge( swimmer.value as Swimmer )
-    const yearAge = age + ( year - today.year )
-    return yearAge > 18 ? "Open" : String( yearAge )
-  }
 
   watchEffect( async () => {
     if ( swimmer.value ) {
@@ -93,60 +77,9 @@
     }
   } )
 
-  const currentQualifyingPeriods = computed( () => filterCurrentQualifyingPeriods( qualifyingPeriods.value ) )
-  const eligibleQualifyingPeriods = computed( () => filterEligibleQualifyingPeriods( qualifyingPeriods.value ) )
-
-  const swimmerCurrentQualifyingPeriods = computed( () => swimmer.value ? filterSwimmerQualifyingPeriods( currentQualifyingPeriods.value, swimmer.value ) : [] )
-  const swimmerEligibleQualifyingPeriods = computed( () => swimmer.value ? filterSwimmerQualifyingPeriods( eligibleQualifyingPeriods.value, swimmer.value ) : [] )
-
-  const swimmerQualifyingTimes = computed( () => swimmer.value ? filterSwimmerQualifyingTimes( qualifyingTimes.value, swimmer.value ) : [] )
-  const swimmerCurrentQualifyingInfo = computed( () => buildQualifyingInfo( swimmerCurrentQualifyingPeriods.value, swimmerQualifyingTimes.value ) )
-  const swimmerEligibleQualifyingInfo = computed( () => buildQualifyingInfo( swimmerEligibleQualifyingPeriods.value, swimmerQualifyingTimes.value ) )
-
-  const activeQualifyingPeriods = computed( () => {
-    const activeQualifyingPeriods: Record<ScopeType, Partial<Record<QualifyingType, { age: string, year: number, period?: QualifyingInfo } | undefined>>> = {
-      county: {
-        // general: { age: defaultAge, year: today.year },
-      },
-      regional: {
-        // winter: { age: defaultAge, year: today.year },
-        // summer: { age: defaultAge, year: today.year },
-      },
-    }
-    if ( swimmerEligibleQualifyingInfo.value ) {
-      for ( const qp of swimmerEligibleQualifyingInfo.value ) {
-        if ( qp.times.length ) {
-          activeQualifyingPeriods[qp.scope][qp.type] = {
-            age: getQualifyingAge( qp.year ),
-            year: qp.year,
-            period: qp
-          }
-        }
-      }
-    }
-    if ( swimmerCurrentQualifyingInfo.value ) {
-      for ( const qp of swimmerCurrentQualifyingInfo.value ) {
-        if ( qp.times.length ) {
-          activeQualifyingPeriods[qp.scope][qp.type] = {
-            age: getQualifyingAge( qp.year ),
-            year: qp.year,
-            period: qp
-          }
-        }
-      }
-    }
-    console.log( "aqp", activeQualifyingPeriods )
-    return activeQualifyingPeriods
-  } )
+  const activeQualifyingPeriods = computed( () => calcActiveQualifyingPeriods( swimmer.value ) )
 
   watchEffect( () => {
-    console.log( "cQP", currentQualifyingPeriods.value )
-    console.log( "eQP", eligibleQualifyingPeriods.value )
-    console.log( "sQT", swimmerQualifyingTimes.value )
-    console.log( "scQP", swimmerCurrentQualifyingPeriods.value )
-    console.log( "scQI", swimmerCurrentQualifyingInfo.value )
-    console.log( "seQP", swimmerEligibleQualifyingPeriods.value )
-    console.log( "seQI", swimmerEligibleQualifyingInfo.value )
     console.log( "aQP", activeQualifyingPeriods.value )
   } )
 
@@ -338,9 +271,9 @@
       </div>
     </template>
     <template #key>
-      Key &ndash; Best times recorded in current qualifying periods. Qualifying times that have been achieved are <span class="px-2 mr-1 qualified" /> highlighted.
+      Key &ndash; Personal best times and how they apply to current or previous qualifying periods. Qualifying times that have been achieved are <span class="px-2 mr-1 qualified" /> highlighted.
       Swim times that are close to the qualifying time have time differences shown <span class="px-2 mr-1 qualify-prox-5" /> if within 5%, and <span class="px-2 mr-1 qualify-prox-10" /> if within 10%.
-      Event ranking is in the <span class="px-2 mr-1 rank-10" /> top 10, <span class="px-2 mr-1 rank-20" /> top 20, <span class="px-2 mr-1 rank-50" /> top 50. Times in <span class="time-pb">purple</span> are personal bests.
+      Event ranking is in the <span class="px-2 mr-1 rank-10" /> top 10, <span class="px-2 mr-1 rank-20" /> top 20, <span class="px-2 mr-1 rank-50" /> top 50. Swim times in <span class="time-pb">purple</span> are personal bests. Qualification times in <span class="italic">italics</span> mean qualification is closed.
     </template>
     <div>
       <div

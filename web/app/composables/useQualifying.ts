@@ -1,4 +1,4 @@
-import { type Swimmer, getSwimmerAge, type ExtQualifyingPeriod, type QualifyingRow, type IndividualStats } from "lib"
+import { type Swimmer, getSwimmerAge, type ExtQualifyingPeriod, type QualifyingRow, type IndividualStats, type ScopeType, type QualifyingType } from "lib"
 // import { FetchError } from "ofetch"
 
 export interface QualifyingInfo extends ExtQualifyingPeriod {
@@ -165,6 +165,63 @@ export const useQualifying = () => {
     return qualifyingEntry
   }
 
+  const swimmerQualifyingAge = ( swimmer: Swimmer, year: number ) => {
+    if ( !swimmer )
+      return ""
+    const age = getSwimmerAge( swimmer )
+    const yearAge = age + ( year - today.year )
+    return yearAge > 18 ? "Open" : String( yearAge )
+  }
+
+  const calcActiveQualifyingPeriods = ( swimmer?: Swimmer ) => {
+    const currentQualifyingPeriods = computed( () => filterCurrentQualifyingPeriods( qualifyingPeriods.value ) )
+    const eligibleQualifyingPeriods = computed( () => filterEligibleQualifyingPeriods( qualifyingPeriods.value ) )
+
+    const swimmerCurrentQualifyingPeriods = computed( () => swimmer ? filterSwimmerQualifyingPeriods( currentQualifyingPeriods.value, swimmer ) : [] )
+    const swimmerEligibleQualifyingPeriods = computed( () => swimmer ? filterSwimmerQualifyingPeriods( eligibleQualifyingPeriods.value, swimmer ) : [] )
+
+    const activeQualifyingPeriods: Record<ScopeType, Partial<Record<QualifyingType, { age: string, year: number, period?: QualifyingInfo } | undefined>>> = {
+      county: {
+        // general: { age: defaultAge, year: today.year },
+      },
+      regional: {
+        // winter: { age: defaultAge, year: today.year },
+        // summer: { age: defaultAge, year: today.year },
+      },
+    }
+
+    if ( swimmer ) {
+      const swimmerQualifyingTimes = computed( () => swimmer ? filterSwimmerQualifyingTimes( qualifyingTimes.value, swimmer ) : [] )
+      const swimmerCurrentQualifyingInfo = computed( () => buildQualifyingInfo( swimmerCurrentQualifyingPeriods.value, swimmerQualifyingTimes.value ) )
+      const swimmerEligibleQualifyingInfo = computed( () => buildQualifyingInfo( swimmerEligibleQualifyingPeriods.value, swimmerQualifyingTimes.value ) )
+
+      if ( swimmerEligibleQualifyingInfo.value ) {
+        for ( const qp of swimmerEligibleQualifyingInfo.value ) {
+          if ( qp.times.length ) {
+            activeQualifyingPeriods[qp.scope as ScopeType][qp.type as QualifyingType] = {
+              age: swimmerQualifyingAge( swimmer, qp.year ),
+              year: qp.year,
+              period: qp
+            }
+          }
+        }
+      }
+      if ( swimmerCurrentQualifyingInfo.value ) {
+        for ( const qp of swimmerCurrentQualifyingInfo.value ) {
+          if ( qp.times.length ) {
+            activeQualifyingPeriods[qp.scope][qp.type] = {
+              age: swimmerQualifyingAge( swimmer, qp.year ),
+              year: qp.year,
+              period: qp
+            }
+          }
+        }
+      }
+    }
+    console.log( "aqp", activeQualifyingPeriods )
+    return activeQualifyingPeriods
+  }
+
   return {
     qualifyingTimes,
     qualifyingPeriods,
@@ -180,5 +237,6 @@ export const useQualifying = () => {
     filterQualifyingInfoType,
     validateQualifyingSwimDate,
     findSwimQualifyingEntry,
+    calcActiveQualifyingPeriods,
   } as const
 }
