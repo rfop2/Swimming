@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { convertTime, COURSES, secondsToTime, strokes, ucFirst, type ExtQualifyingPeriod, type QualifyingPeriodRow, type QualifyingRow } from "lib"
+  import { convertTime, COURSES, secondsToTime, strokes, ucFirst } from "lib"
   import { Line } from "vue-chartjs"
   import { Chart as ChartJS, CategoryScale, LinearScale, TimeScale, PointElement, LineElement, Title, Tooltip, Legend, type ChartData, type ChartOptions, type TooltipItem } from "chart.js"
   import "chartjs-adapter-date-fns"
@@ -63,10 +63,6 @@
   type ResultsApiResponse = InternalApi["/api/results/:id"]["get"]
   type ResultType = ResultsApiResponse[number]
 
-  interface ExtQualifyingRow extends QualifyingRow {
-    courseTime: number
-  }
-
   const records = ref<ResultsApiResponse>( [] )
 
   // Better type narrowing guard
@@ -110,9 +106,24 @@
     }
   } )
 
-  const getQualifyingTime = ( qp: QualifyingInfo ) => {
+  const getQualifyingTime = ( qp?: QualifyingInfo ) => {
     if ( !qp )
       return []
+    // If there are qualification times speifically for this course length then return those
+    const courseTimes = qp.times
+      .filter( q => {
+        if ( q.course !== selections.course )
+          return false
+        if ( q.stroke !== selections.stroke )
+          return false
+        if ( q.distance !== selections.distance )
+          return false
+        return true
+      } )
+      .map( q => ( { ...q, active: qp.qualifyingActive, courseTime: q.time } ) )
+    if ( courseTimes.length )
+      return courseTimes
+    // Otherwise convert from whtever there are
     return qp.times
       .filter( q => {
         if ( q.stroke !== selections.stroke )
