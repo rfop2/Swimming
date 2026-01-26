@@ -170,7 +170,7 @@
     console.log( "DE", eq )
   }, { deep: true } )
 
-  watchEffect( async () => {
+  const fetchQualifying = async () => {
     const query = {
       year: selections.value.year ?? null,
       scope: selections.value.scope ?? null,
@@ -185,10 +185,13 @@
       {
         method: "GET",
         query,
-        // key: "qualifying",
       }
     ).then( data => transformQualifying( data ) )
     console.log( qualifying.value )
+  }
+
+  watchEffect( async () => {
+    await fetchQualifying()
   } )
 
   const effectiveQualifyingTimes = computed(
@@ -315,7 +318,7 @@
 
   const reset = async ( _e: Event ) => {
     added.value = []
-    await refreshNuxtData( "qualifying" )
+    await fetchQualifying()
     deleted.value = []
     added.value = []
     clipboard.value = []
@@ -340,7 +343,7 @@
         } )
       }
       saveSuccess.value = true
-      await refreshNuxtData( "qualifying" )
+      await fetchQualifying()
       added.value = []
       dirty.value = false
     } catch ( error ) {
@@ -718,6 +721,7 @@
             v-model="period.qualifyingStart"
             label="Qualifying Start Date"
             type="date"
+            @update:model-value="dirty = true"
           />
         </div>
         <div class="min-w-36">
@@ -725,6 +729,7 @@
             v-model="period.qualifyingEnd"
             label="Qualifying End Date"
             type="date"
+            @update:model-value="dirty = true"
           />
         </div>
         <div class="min-w-36">
@@ -732,6 +737,7 @@
             v-model="period.eligibilityStart"
             label="Eligibility Start Date"
             type="date"
+            @update:model-value="dirty = true"
           />
         </div>
         <div class="min-w-36">
@@ -739,6 +745,7 @@
             v-model="period.eligibilityEnd"
             label="Eligibility End Date"
             type="date"
+            @update:model-value="dirty = true"
           />
         </div>
       </div>

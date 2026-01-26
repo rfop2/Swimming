@@ -92,7 +92,7 @@
         placeholder="Start Date"
         :label="labelled ? 'Start Date' : undefined"
         :max="model.endDate"
-        @change="range = dateRanges[dateRanges.length-1].value"
+        @change="range = dateRanges[dateRanges.length-1]!.value"
       />
     </div>
   </div>
