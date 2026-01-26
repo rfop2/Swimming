@@ -1,4 +1,5 @@
-import { type Swimmer, getSwimmerAge, type ExtQualifyingPeriod, type QualifyingRow, type IndividualStats, type ScopeType, type QualifyingType } from "lib"
+import type { Swimmer, ExtQualifyingPeriod, QualifyingRow, IndividualStats, ScopeType, QualifyingType } from "lib"
+import { getSwimmerAge } from "lib"
 // import { FetchError } from "ofetch"
 
 export interface QualifyingInfo extends ExtQualifyingPeriod {
@@ -18,7 +19,7 @@ export const useQualifying = () => {
     loadingTimes.value = true
 
     try {
-      qualifyingTimes.value = await $fetch( "/api/qualifying/times" )
+      qualifyingTimes.value = await $fetch<QualifyingRow[]>( "/api/qualifying/times" )
       loadedTimes.value = true
     } finally {
       loadingTimes.value = false
@@ -36,7 +37,7 @@ export const useQualifying = () => {
     loadingPeriods.value = true
 
     try {
-      qualifyingPeriods.value = await $fetch( "/api/qualifying/dates" )
+      qualifyingPeriods.value = await $fetch<ExtQualifyingPeriod[]>( "/api/qualifying/dates" )
       loadedPeriods.value = true
     } finally {
       loadingPeriods.value = false
