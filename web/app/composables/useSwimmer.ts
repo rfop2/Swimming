@@ -3,46 +3,76 @@ import { format } from "date-fns"
 import type { Swimmer } from "lib"
 
 export const useSwimmer = () => {
-  const { state: swimmerId } = usePersisted<Swimmer["id"] | undefined>( "swimmerId", undefined )
+  const swimmerId = useState<Swimmer["id"] | undefined>(
+    "swimmerId",
+    () => undefined
+  )
+
+  usePersisted<Swimmer["id"] | undefined>( "swimmerId", swimmerId )
 
   const { swimmers } = useSwimmers()
   const updated = useLastUpdate()
 
-  // Display swimmer: do NOT implicitly change swimmerId here.
+  /**
+   * Ensure persisted swimmerId is valid whenever swimmers change.
+   * This mutates persisted state ONLY if missing/invalid.
+   */
+  const ensureValidSwimmerId = () => {
+    const list = swimmers.value
+    if ( !list.length ) return
+
+    const id = swimmerId.value
+
+    if ( !id || !list.some( s => s.id === id ) ) {
+      swimmerId.value = list[0]!.id
+    }
+  }
+
+  watch(
+    swimmers,
+    () => {
+      ensureValidSwimmerId()
+    },
+    { immediate: true, flush: "post" }
+  )
+
+  if ( import.meta.client ) {
+    onMounted( () => {
+      ensureValidSwimmerId()
+    } )
+  }
+
+  /**
+   * Canonical swimmer from persisted id
+   */
   const swimmer = computed<Swimmer | undefined>( () => {
     if ( !swimmers.value.length ) return undefined
-    if ( !swimmerId.value ) return swimmers.value[0]
-    return swimmers.value.find( s => s.id === swimmerId.value ) ?? // no fallback here
-      swimmers.value[0] // purely for display, not persisted
+    if ( !swimmerId.value ) return undefined
+    return swimmers.value.find( s => s.id === swimmerId.value )
   } )
 
-  // v-model target: explicit setter writes swimmerId
+  /**
+   * v-model for selector
+   *
+   * CRITICAL DETAIL:
+   * - Getter NEVER returns undefined once swimmers exist
+   * - Falls back to first swimmer for display only
+   * - Setter is the ONLY place that mutates swimmerId from UI
+   */
   const swimmerModel = computed<Swimmer | undefined>( {
-    get: () => swimmer.value,
+    get: () => {
+      const list = swimmers.value
+      if ( !list.length ) return undefined
+      return swimmer.value ?? list[0]
+    },
     set: ( newSwimmer ) => {
       swimmerId.value = newSwimmer?.id
     },
   } )
 
-  // Only “repair” persisted state once swimmers are available
-  watch(
-    [ swimmers, swimmerId ],
-    ( [ list, id ] ) => {
-      if ( !list.length ) return
-
-      // If no persisted id, initialise once
-      if ( !id ) {
-        swimmerId.value = list[0]!.id
-        return
-      }
-
-      // If persisted id is not in the list (e.g. deleted), repair
-      const exists = list.some( s => s.id === id )
-      if ( !exists ) swimmerId.value = list[0]!.id
-    },
-    { immediate: true }
-  )
-
+  /**
+   * Fetch last update whenever swimmerId changes
+   */
   watch(
     swimmerId,
     async ( id ) => {
@@ -55,13 +85,14 @@ export const useSwimmer = () => {
         const lastUpdate = await $fetch( `/api/updated/${id}` )
         updated.value = format( lastUpdate, "yyyy-MM-dd" )
       } catch ( error ) {
-        updated.value = "<error>"
         if ( error instanceof FetchError && error.status === 404 ) {
           updated.value = "<never>"
+        } else {
+          updated.value = "<error>"
         }
       }
     },
-    { immediate: true }
+    { immediate: true, flush: "post" }
   )
 
   return { swimmer: swimmerModel, updated }

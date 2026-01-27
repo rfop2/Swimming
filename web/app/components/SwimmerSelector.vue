@@ -13,43 +13,53 @@
 
   const { swimmers } = useSwimmers()
   const { swimmer, updated } = useSwimmer()
-  const swimmersMap = new Map<Swimmer["id"], Swimmer>( swimmers.value.map( s => ( [ s.id, s ] ) ) )
 
-  const swimmerOptions = computed( () => swimmers.value.map( s => ( { label: s.fullName, value: s.id } ) ) )
-  const selectedSwimmer = ref( ( swimmerOptions.value.find( so => so.value === swimmer.value?.id ) ?? swimmerOptions.value[0] )?.value ?? undefined )
-
-  watch(
-    selectedSwimmer,
-    async ( newSwimmer ) => {
-      if ( newSwimmer ) {
-        model.value = swimmersMap.get( String( newSwimmer ) )
-      }
-    },
-    { immediate: true }
+  /**
+   * Listbox options
+   */
+  const swimmerOptions = computed( () =>
+    swimmers.value.map( s => ( {
+      label: s.fullName,
+      value: s.id,
+    } ) )
   )
+
+  /**
+   * v-model adapter:
+   * - UI-Listbox works with swimmer IDs
+   * - useSwimmer works with Swimmer objects
+   */
+  const selectedSwimmerId = computed<Swimmer["id"] | undefined>( {
+    get: () => swimmer.value?.id,
+    set: ( id ) => {
+      model.value = swimmers.value.find( s => s.id === id )
+    },
+  } )
 </script>
 
 <template>
-  <div>
-    <div class="min-w-64">
-      <UI-Listbox
-        v-if="swimmers && swimmers.length"
-        v-model="selectedSwimmer"
-        :options="swimmerOptions"
-        :label="props.showLabel ? 'Swimmer' : undefined"
-        placeholder="Choose Swimmer"
-        v-bind="$attrs"
-      />
-      <span
-        v-else
-        class="text-red-500"
-      >No Swimmers On Account</span>
-      <p
-        v-if="props.showUpdated"
-        class="text-right pr-1 mt-2 text-xs text-gray-700"
-      >
-        <ClientOnly>Updated: {{ updated }}</ClientOnly>
-      </p>
-    </div>
+  <div class="min-w-64">
+    <UI-Listbox
+      v-if="swimmers.length"
+      v-model="selectedSwimmerId"
+      :options="swimmerOptions"
+      :label="props.showLabel ? 'Swimmer' : undefined"
+      placeholder="Choose Swimmer"
+      v-bind="$attrs"
+    />
+
+    <span
+      v-else
+      class="text-red-500"
+    >
+      No Swimmers On Account
+    </span>
+
+    <p
+      v-if="props.showUpdated"
+      class="text-right pr-1 mt-2 text-xs text-gray-700"
+    >
+      <ClientOnly>Updated: {{ updated }}</ClientOnly>
+    </p>
   </div>
 </template>
