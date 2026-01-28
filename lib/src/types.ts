@@ -249,4 +249,16 @@ export interface Task {
 export type SwimmerUpdateType = "individual" | "results" | "rankings"
 export type SwimmerUpdateMode = "force" | "smart" | "lazy"
 
+export type NotificationType = "info" | "success" | "warn" | "error"
+
+export interface Notification {
+  notificationId: number
+  notificationCreatorId: string
+  notificationTargetId: string
+  notificationType: NotificationType
+  notificationText: string
+  created?: string
+  updated?: string
+}
+
 export const typedKeys = <T extends object>( obj: T ): Array<keyof T> => Object.keys( obj ) as Array<keyof T>

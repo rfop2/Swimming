@@ -259,6 +259,47 @@ SET character_set_client = utf8mb4;
 SET character_set_client = @saved_cs_client;
 
 --
+-- Table structure for table `NotificationViews`
+--
+
+DROP TABLE IF EXISTS `NotificationViews`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `NotificationViews` (
+  `notificationId` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `notificationUserId` varchar(16) NOT NULL,
+  `notificationViewed` tinyint(1) unsigned NOT NULL DEFAULT 1,
+  `created` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
+  PRIMARY KEY (`notificationId`,`notificationUserId`) USING BTREE,
+  KEY `NotificationViews_ibfk_1` (`notificationUserId`),
+  CONSTRAINT `NotificationViews_ibfk_1` FOREIGN KEY (`notificationUserId`) REFERENCES `User` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `NotificationViews_ibfk_2` FOREIGN KEY (`notificationId`) REFERENCES `Notifications` (`notificationId`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `Notifications`
+--
+
+DROP TABLE IF EXISTS `Notifications`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `Notifications` (
+  `notificationId` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `notificationCreatorId` varchar(16) NOT NULL,
+  `notificationTargetId` varchar(16) DEFAULT NULL,
+  `notificationType` enum('info','success','warning','error') NOT NULL,
+  `notificationText` varchar(255) NOT NULL,
+  `created` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
+  PRIMARY KEY (`notificationId`) USING BTREE,
+  KEY `idx_userId` (`notificationCreatorId`) USING BTREE,
+  CONSTRAINT `Notifications_ibfk_1` FOREIGN KEY (`notificationCreatorId`) REFERENCES `User` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
 -- Table structure for table `PasswordResetTokens`
 --
 

@@ -166,6 +166,16 @@
 
   const activeUserNavigation = computed( () => filterNav( userNavigation.value ) )
 
+  const showNotifications = ref( false )
+  const lastNotificationId = ref<number|null>( null )
+  const { notifications } = useNotificationsCheck()
+  if ( notifications.value.length > 0 ) {
+    const lastNotification = notifications.value.at( notifications.value.length - 1 )
+    if ( !lastNotificationId.value || ( lastNotification && lastNotification.notificationId > lastNotificationId.value ) ) {
+      showNotifications.value = true
+    }
+  }
+
 </script>
 
 <template>
@@ -177,6 +187,7 @@
   >
     <AlertBanner />
     <UpdateNotifier />
+    <NotificationsDrawer v-model="showNotifications"/>
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
       <div class="flex h-16 justify-between">
         <!-- Left: Logo + main menu -->
@@ -272,6 +283,7 @@
           <button
             type="button"
             class="relative rounded-full bg-white p-1 text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+            @click="showNotifications = true"
           >
             <span class="absolute -inset-1.5" />
             <span class="sr-only">View notifications</span>
