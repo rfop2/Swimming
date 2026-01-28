@@ -1,9 +1,9 @@
-import type { Notification } from "lib"
+import type { Notification, UserNotification } from "lib"
 
 export function useNotifications() {
   const user = useUser()
   // Global shared state (persists across all composable calls)
-  const notifications = useState<Notification[]>( "notifications", () => [] )
+  const notifications = useState<UserNotification[]>( "notifications", () => [] )
   const loaded = useState( "notificationsLoaded", () => false )
   const loading = useState( "notificationsLoading", () => false )
 
@@ -53,6 +53,14 @@ export function useNotifications() {
     await fetchNotifications() // reload list after update
   }
 
+  // Mark a notification as read
+  const readNotification = async ( notification: Notification ) => {
+    await $fetch( `/api/notifications/${notification.notificationId}`, {
+      method: "PATCH",
+    } )
+    await fetchNotifications() // reload list after update
+  }
+
   // Delete a notification
   const deleteNotification = async ( notificationId: number ) => {
     await $fetch( `/api/notifications/${notificationId}`, { method: "DELETE" } )
@@ -65,6 +73,7 @@ export function useNotifications() {
     createNotification,
     createNotifications,
     updateNotification,
+    readNotification,
     deleteNotification,
   }
 }

@@ -1,6 +1,7 @@
 <script setup lang="ts">
   import { Menu, MenuButton, MenuItems, MenuItem, Disclosure, DisclosureButton, DisclosurePanel } from "@headlessui/vue"
   import { Bars3Icon, BellIcon, ChevronDownIcon, ChevronRightIcon, UserIcon, XMarkIcon } from "@heroicons/vue/24/outline"
+  import { notificationTypes, type NotificationType, type Notification } from "lib"
 
   const user = useAuthenticatedUser()
 
@@ -166,16 +167,34 @@
 
   const activeUserNavigation = computed( () => filterNav( userNavigation.value ) )
 
-  const showNotifications = ref( false )
-  const lastNotificationId = ref<number|null>( null )
+  const lastNotificationId = ref<number>( 0 )
   const { notifications } = useNotificationsCheck()
-  if ( notifications.value.length > 0 ) {
-    const lastNotification = notifications.value.at( notifications.value.length - 1 )
-    if ( !lastNotificationId.value || ( lastNotification && lastNotification.notificationId > lastNotificationId.value ) ) {
-      showNotifications.value = true
-    }
-  }
+  const { readNotification } = useNotifications()
+  const newNotifications = computed<Notification[]>( () => notifications.value.filter( n => !lastNotificationId.value || ( n.notificationId > lastNotificationId.value ) ) )
+  const maxNotificationSeverity = ref<NotificationType>( "info" )
 
+  watchEffect( () => {
+    if ( newNotifications.value.length > 0 ) {
+      const maxIndex = newNotifications.value.reduce( ( index, notification ) => {
+        const typeIndex = notificationTypes.findIndex( t => notification.notificationType === t )
+        return typeIndex > index ? typeIndex : index
+      }, -1 )
+      maxNotificationSeverity.value = notificationTypes[maxIndex]!
+    }
+  } )
+
+  const notificationClass = computed( () => {
+    if ( !newNotifications.value.length ) return ""
+    return `notification-${maxNotificationSeverity.value}`
+  } )
+
+  const showNotifications = ref( false )
+
+  const clearNotifications = () => {
+    console.log( "Clear", notifications.value[notifications.value.length - 1]?.notificationId )
+    const lastNotification = notifications.value.at( notifications.value.length - 1 )
+    lastNotificationId.value = lastNotification ? lastNotification.notificationId : 0
+  }
 </script>
 
 <template>
@@ -187,7 +206,7 @@
   >
     <AlertBanner />
     <UpdateNotifier />
-    <NotificationsDrawer v-model="showNotifications"/>
+    <NotificationsDrawer v-model="showNotifications" :notifications="notifications" :mark-as-read="readNotification" :clear-all="clearNotifications" />
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
       <div class="flex h-16 justify-between">
         <!-- Left: Logo + main menu -->
@@ -283,6 +302,7 @@
           <button
             type="button"
             class="relative rounded-full bg-white p-1 text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+            :class="notificationClass"
             @click="showNotifications = true"
           >
             <span class="absolute -inset-1.5" />
@@ -446,3 +466,51 @@
     </div>
   </Disclosure>
 </template>
+
+<style lang="scss" scoped>
+  @keyframes notification-pulse {
+    0% {
+      box-shadow: 0 0 0 0 var(--pulse-color);
+    }
+    70% {
+      box-shadow: 0 0 0 6px transparent;
+    }
+    100% {
+      box-shadow: 0 0 0 0 transparent;
+    }
+  }
+
+  .notification-info {
+    --pulse-color: rgb(59 130 246 / 0.5); /* blue-500 */
+    color: rgb(59 130 246);
+    animation: notification-pulse 2.5s infinite;
+  }
+
+  .notification-success {
+    --pulse-color: rgb(34 197 94 / 0.5); /* green-500 */
+    color: rgb(34 197 94);
+    animation: notification-pulse 2.0s infinite;
+  }
+
+  .notification-warning {
+    --pulse-color: rgb(234 179 8 / 0.5); /* yellow-500 */
+    color: rgb(234 179 8);
+    animation: notification-pulse 1.5s infinite;
+  }
+
+  .notification-error {
+    --pulse-color: rgb(239 68 68 / 0.5); /* red-500 */
+    color: rgb(239 68 68);
+    animation: notification-pulse 1.2s infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .notification-info,
+    .notification-success,
+    .notification-warning,
+    .notification-error {
+      animation: none;
+      box-shadow: 0 0 0 2px var(--pulse-color);
+    }
+  }
+</style>

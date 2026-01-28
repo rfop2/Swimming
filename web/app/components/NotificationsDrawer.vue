@@ -1,8 +1,30 @@
 <script setup lang="ts">
   import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from "@headlessui/vue"
+  import { CheckCircleIcon, ExclamationTriangleIcon, InformationCircleIcon, XCircleIcon } from "@heroicons/vue/20/solid"
   import { XMarkIcon } from "@heroicons/vue/24/outline"
+  import type { NotificationType, UserNotification } from "lib"
 
   const open = defineModel<boolean>()
+
+  const props = defineProps<{
+    notifications: UserNotification[]
+    markAsRead: ( notification: UserNotification ) => Promise<void>
+    clearAll: () => void
+  }>()
+
+  const severityClassMap: Record<NotificationType,string> = {
+    info: "text-blue-500",
+    success: "text-green-500",
+    warn: "text-amber-500",
+    error: "text-red-500",
+  } as const
+
+  const severityIconMap: Record<NotificationType,unknown> = {
+    info: InformationCircleIcon,
+    success: CheckCircleIcon,
+    warn: ExclamationTriangleIcon,
+    error: XCircleIcon,
+  } as const
 </script>
 
 <template>
@@ -29,12 +51,51 @@
                       </div>
                     </div>
                     <div class="relative mt-6 flex-1 px-4 sm:px-6">
-                      <!-- Your content -->
+                      <ul class="flex-1 divide-y overflow-y-auto">
+                        <li
+                          v-for="n in props.notifications"
+                          :key="n.notificationId"
+                          class="flex items-start gap-3 px-4 py-3 cursor-pointer"
+                          :class="{
+                            'bg-gray-50': !n.notificationViewed,
+                          }"
+                          @click="markAsRead( n )"
+                        >
+                          <!-- Severity icon -->
+                          <component
+                            :is="severityIconMap[n.notificationType]"
+                            class="mt-0.5 h-5 w-5"
+                            :class="severityClassMap[n.notificationType]"
+                          />
+
+                          <!-- Text -->
+                          <p
+                            class="flex-1 text-sm"
+                            :class="n.notificationViewed ? 'text-gray-600' : 'font-medium text-gray-900'"
+                          >
+                            {{ n.notificationText }}
+                          </p>
+
+                          <!-- New dot -->
+                          <span
+                            v-if="!n.notificationViewed"
+                            class="mt-1 h-2 w-2 rounded-full bg-blue-500"
+                          />
+                        </li>
+                      </ul>
+
+                      <!-- Empty state -->
+                      <div
+                        v-if="notifications.length === 0"
+                        class="px-4 py-6 text-center text-sm text-gray-500"
+                      >
+                        No notifications
+                      </div>
                     </div>
                   </div>
                   <div class="flex shrink-0 justify-end px-4 py-4">
                     <button type="button" class="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:ring-gray-400" @click="open = false">Close</button>
-                    <button type="submit" class="ml-4 inline-flex justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">Clear All</button>
+                    <button type="submit" class="ml-4 inline-flex justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600" @click="clearAll()">Clear All</button>
                   </div>
                 </div>
               </DialogPanel>
