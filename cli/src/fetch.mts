@@ -43,6 +43,7 @@ import {
   meetResultsParams,
   parseMeetResults,
   setupNordFetch,
+  addNotification,
 } from "lib"
 
 import type {
@@ -892,10 +893,18 @@ const updateMeetsResults = async ( options: MeetsResultsOptions ) => {
     .description( "Fetch data for new or updated meets" )
     .addOption( new Option( "-m, --mode <mode>", "fetching strategy versus caching" ).choices( [ "force", "lazy" ] ).default( "lazy" ) )
     .action( async ( options ) => {
+      const pool = await getPool()
+      const getSystemUser = prepareStatement<void>( pool, "SELECT * FROM User WHERE type = 'system'" )
+      const systemUser = await getSystemUser.get()
+      if ( !systemUser ) {
+        throw new Error( "Can't find system user in database" )
+      }
       try {
         await updateMeets( options.mode === "force" )
+        await addNotification( pool, systemUser.id, "admin", "success", "Meets listings have been updated" )
       } catch ( e ) {
         console.error( "Unable to update meets", e )
+        await addNotification( pool, systemUser.id, "admin", "error", "Meets listings were not able to be updated" )
       }
     } )
 
@@ -904,6 +913,11 @@ const updateMeetsResults = async ( options: MeetsResultsOptions ) => {
     .addOption( new Option( "-c, --count <tasks>", "only process a maximum of <count> queued tasks on this run" ).default( "100" ) )
     .action( async ( options ) => {
       const pool = await getPool()
+      const getSystemUser = prepareStatement<void>( pool, "SELECT * FROM User WHERE type = 'system'" )
+      const systemUser = await getSystemUser.get()
+      if ( !systemUser ) {
+        throw new Error( "Can't find system user in database" )
+      }
       const getTasks = prepareStatement<{ limit: number },Task>(
         pool,
         "SELECT * FROM Tasks WHERE taskStatus = 'pending' LIMIT :limit"
@@ -953,6 +967,7 @@ const updateMeetsResults = async ( options: MeetsResultsOptions ) => {
                   }
                   await taskStart.run( task )
                   await updateSwimmerData( swimmer, taskOptions.updateType, taskOptions.force ?? false )
+                  await addNotification( pool, systemUser.id, task.creatorId ?? "", "success", `Task: ${task.taskDescription} has completed` )
                   await taskComplete.run( task )
                   break
                 }
@@ -976,10 +991,12 @@ const updateMeetsResults = async ( options: MeetsResultsOptions ) => {
                   for ( const swimmer of clubSwimmers ) {
                     await updateSwimmerData( swimmer, taskOptions.updateType, taskOptions.force ?? false )
                   }
+                  await addNotification( pool, systemUser.id, task.creatorId ?? "", "success", `Task: ${task.taskDescription} has completed` )
                   await taskComplete.run( task )
                   break
                 }
                 default : {
+                  await addNotification( pool, systemUser.id, task.creatorId ?? "", "error", `Task: ${task.taskDescription} has unexpected target '${task.targetType}'` )
                   throw new Error( `Unexpected target type ${task.targetType} for task ${task.taskId}` )
                 }
               }
@@ -1011,17 +1028,20 @@ const updateMeetsResults = async ( options: MeetsResultsOptions ) => {
                   break
                 }
                 default : {
+                  await addNotification( pool, systemUser.id, task.creatorId ?? "", "error", `Task: ${task.taskDescription} has unexpected target '${task.targetType}'` )
                   throw new Error( `Unexpected target type ${task.targetType} for task ${task.taskId}` )
                 }
               }
               break
             }
             default : {
+              await addNotification( pool, systemUser.id, task.creatorId ?? "", "error", `Task: ${task.taskDescription} has unexpected type '${task.taskType}'` )
               throw new Error( `Unexpected task type ${task.taskType} for task ${task.taskId}` )
             }
           }
         } catch ( e ) {
           console.error( "Unable to execute task", e )
+          await addNotification( pool, systemUser.id, task.creatorId ?? "", "error", `Task: ${task.taskDescription} was not able to be run` )
           task.taskResult = JSON.stringify( e )
           await taskUpdateError.run( task )
         }

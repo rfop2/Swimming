@@ -21,6 +21,11 @@ export const shuffle = <T>( array: T[] ) => {
   return array
 }
 
+export function chance( percent: number ): boolean {
+  const p = Math.max( 0, Math.min( 100, percent ) )
+  return Math.random() < p / 100
+}
+
 export const timeToSeconds = ( time: string ): number => {
   // Split the input time string by colons
   const timeParts = time.split( ":" )
