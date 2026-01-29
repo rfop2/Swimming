@@ -8,8 +8,9 @@
 
   const props = defineProps<{
     notifications: UserNotification[]
-    markAsRead: ( notification: UserNotification ) => Promise<void>
-    clearAll: () => void
+    markRead: ( notification: UserNotification ) => Promise<void>
+    markAllRead: () => void
+    deleteAll: () => void
   }>()
 
   const severityClassMap: Record<NotificationType,string> = {
@@ -59,7 +60,7 @@
                           :class="{
                             'bg-gray-50': !n.notificationViewed,
                           }"
-                          @click="markAsRead( n )"
+                          @click="markRead( n )"
                         >
                           <!-- Severity icon -->
                           <component
@@ -94,8 +95,26 @@
                     </div>
                   </div>
                   <div class="flex shrink-0 justify-end px-4 py-4">
-                    <button type="button" class="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:ring-gray-400" @click="open = false">Close</button>
-                    <button type="submit" class="ml-4 inline-flex justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600" @click="clearAll()">Clear All</button>
+                    <button
+                      type="button"
+                      class="form-disabled ml-4 inline-flex justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                      :disabled="!notifications.length"
+                      @click="markAllRead(); open = false">
+                      Mark all read
+                    </button>
+                    <button
+                      type="button"
+                      class="form-disabled ml-4 inline-flex justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                      :disabled="!notifications.length"
+                      @click="deleteAll(); open = false">
+                      Delete all
+                    </button>
+                    <button
+                      type="button"
+                      class="ml-4 rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:ring-gray-400"
+                      @click="open = false">
+                      Close
+                    </button>
                   </div>
                 </div>
               </DialogPanel>

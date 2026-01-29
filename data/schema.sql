@@ -266,9 +266,10 @@ DROP TABLE IF EXISTS `NotificationViews`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `NotificationViews` (
-  `notificationId` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `notificationId` int(10) unsigned NOT NULL,
   `notificationUserId` varchar(16) NOT NULL,
-  `notificationViewed` tinyint(1) unsigned NOT NULL DEFAULT 1,
+  `notificationViewed` tinyint(1) unsigned NOT NULL DEFAULT 0,
+  `notificationDeleted` tinyint(1) unsigned NOT NULL DEFAULT 0,
   `created` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
   PRIMARY KEY (`notificationId`,`notificationUserId`) USING BTREE,

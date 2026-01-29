@@ -61,9 +61,27 @@ export function useNotifications() {
     await fetchNotifications() // reload list after update
   }
 
+  // Mark all notifications as read
+  const readNotifications = async () => {
+    await $fetch( "/api/notifications/0", {
+      method: "PATCH",
+    } )
+    await fetchNotifications() // reload list after update
+  }
+
   // Delete a notification
   const deleteNotification = async ( notificationId: number ) => {
-    await $fetch( `/api/notifications/${notificationId}`, { method: "DELETE" } )
+    await $fetch( `/api/notifications/${notificationId}`, {
+      method: "DELETE"
+    } )
+    await fetchNotifications() // reload list after delete
+  }
+
+  // Delete all notifications
+  const deleteNotifications = async () => {
+    await $fetch( "/api/notifications/0", {
+      method: "DELETE"
+    } )
     await fetchNotifications() // reload list after delete
   }
 
@@ -74,6 +92,8 @@ export function useNotifications() {
     createNotifications,
     updateNotification,
     readNotification,
+    readNotifications,
     deleteNotification,
+    deleteNotifications,
   }
 }

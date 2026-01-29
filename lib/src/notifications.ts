@@ -49,7 +49,7 @@ export const getUserNotifications = async( conn: Pool | PoolConnection, user: Da
     WHERE
       (notificationTargetId = :userId OR (notificationTargetId = 'admin' AND :isAdmin) OR notificationTargetId = '')
       AND (notificationType = :type OR ISNULL(:type))
-      AND (ISNULL(notificationViewed) OR notificationViewed != 1)
+      AND (ISNULL(notificationDeleted) OR notificationDeleted != 1)
     ORDER BY Notifications.notificationId ASC
     `,
   )

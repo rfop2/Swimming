@@ -169,7 +169,7 @@
 
   const lastNotificationId = ref<number>( 0 )
   const { notifications } = useNotificationsCheck()
-  const { readNotification } = useNotifications()
+  const { readNotification, readNotifications, deleteNotifications } = useNotifications()
   const newNotifications = computed<Notification[]>( () => notifications.value.filter( n => !lastNotificationId.value || ( n.notificationId > lastNotificationId.value ) ) )
   const maxNotificationSeverity = ref<NotificationType>( "info" )
 
@@ -206,7 +206,13 @@
   >
     <AlertBanner />
     <UpdateNotifier />
-    <NotificationsDrawer v-model="showNotifications" :notifications="notifications" :mark-as-read="readNotification" :clear-all="clearNotifications" />
+    <NotificationsDrawer
+      v-model="showNotifications"
+      :notifications="notifications"
+      :mark--read="readNotification"
+      :mark-all-read="readNotifications"
+      :delete-all="deleteNotifications"
+    />
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
       <div class="flex h-16 justify-between">
         <!-- Left: Logo + main menu -->
