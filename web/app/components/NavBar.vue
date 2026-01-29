@@ -195,6 +195,12 @@
     const lastNotification = notifications.value.at( notifications.value.length - 1 )
     lastNotificationId.value = lastNotification ? lastNotification.notificationId : 0
   }
+
+  watch( showNotifications, ( show ) => {
+    if ( !show ) {
+      clearNotifications()
+    }
+  } )
 </script>
 
 <template>
