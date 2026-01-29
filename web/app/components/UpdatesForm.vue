@@ -12,6 +12,7 @@
   const { swimmers, refresh: refreshSwimmers } = useSwimmers( props.user.id )
 
   const { tasks, createTask, createTasks, deleteTask } = useTasks()
+  const { createNotification } = useNotifications()
 
   watch( tasks, async () => {
     await refreshSwimmers()
@@ -111,7 +112,11 @@
     } catch ( error ) {
       console.error( "Error", error )
       cancelFailed.value = true
-      showAlert( `Unable to cancel task: ${( error as FetchError ).message}`, "error" )
+      // showAlert( `Unable to cancel task: ${( error as FetchError ).message}`, "error" )
+      await createNotification( {
+        notificationType: "error",
+        notificationText: `Unable to cancel task: ${( error as FetchError ).message}`
+      } )
       throw createError( error as FetchError )
     }
   }
