@@ -63,7 +63,7 @@ export const getUserNotifications = async( conn: Pool | PoolConnection, user: Da
 export const purgeNotifications = async( conn: Pool | PoolConnection ) => {
   const deleteOldNotifications = prepareStatement(
     conn,
-    "DELETE * FROM Notifications WHERE created < NOW() - INTERVAL 14 DAY"
+    "DELETE FROM Notifications WHERE created < NOW() - INTERVAL 14 DAY"
   )
   await deleteOldNotifications.run()
 }
