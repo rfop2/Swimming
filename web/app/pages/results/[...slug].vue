@@ -91,9 +91,9 @@
       }
       records.value = await $fetch<ResultsApiResponse>( `/api/results/${swimmer.value.id}`, { query } )
       records.value.sort( ( a, b ) => {
-        if ( a.date < b.date ) {
+        if ( a.date > b.date ) {
           return -1
-        } else if ( a.date > b.date ) {
+        } else if ( a.date < b.date ) {
           return 1
         }
         if ( a.round < b.round ) {
