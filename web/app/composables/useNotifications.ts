@@ -13,7 +13,7 @@ export function useNotifications() {
     loading.value = true
 
     try {
-      notifications.value = await $fetch( "/api/notifications" )
+      notifications.value = await $fetch<UserNotification[]>( "/api/notifications" )
       loaded.value = true
     } finally {
       loading.value = false
