@@ -218,7 +218,7 @@
     <NotificationsDrawer
       v-model="showNotifications"
       :notifications="notifications"
-      :mark--read="readNotification"
+      :mark-read="readNotification"
       :mark-all-read="readNotifications"
       :delete-all="deleteNotifications"
     />
