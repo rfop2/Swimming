@@ -45,13 +45,13 @@ export function useNotifications() {
   }
 
   // Update a notification
-  const updateNotification = async ( notification: Notification ) => {
+  /* const updateNotification = async ( notification: Notification ) => {
     await $fetch( `/api/notifications/${notification.notificationId}`, {
       method: "PUT",
       body: notification,
     } )
     await fetchNotifications() // reload list after update
-  }
+  } */
 
   // Mark a notification as read
   const readNotification = async ( notification: Notification ) => {
@@ -90,7 +90,7 @@ export function useNotifications() {
     fetchNotifications,
     createNotification,
     createNotifications,
-    updateNotification,
+    // updateNotification,
     readNotification,
     readNotifications,
     deleteNotification,
