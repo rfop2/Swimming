@@ -7,6 +7,6 @@ export default defineEventHandler( async ( event ) => {
     } )
   }
 
-  const notifications = getUserNotifications( await getPool(), event.context.user as DatabaseUser )
+  const notifications = await getUserNotifications( await getPool(), event.context.user as DatabaseUser )
   return notifications
 } )
