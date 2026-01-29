@@ -171,21 +171,24 @@
   const { notifications } = useNotificationsCheck()
   const { readNotification, readNotifications, deleteNotifications } = useNotifications()
   const newNotifications = computed<Notification[]>( () => notifications.value.filter( n => !lastNotificationId.value || ( n.notificationId > lastNotificationId.value ) ) )
-  const maxNotificationSeverity = ref<NotificationType>( "info" )
-
-  watchEffect( () => {
-    if ( newNotifications.value.length > 0 ) {
-      const maxIndex = newNotifications.value.reduce( ( index, notification ) => {
+  const maxNotificationSeverity = computed<NotificationType>( () => {
+    if ( notifications.value.length > 0 ) {
+      const maxIndex = notifications.value.reduce( ( index, notification ) => {
         const typeIndex = notificationTypes.findIndex( t => notification.notificationType === t )
         return typeIndex > index ? typeIndex : index
       }, -1 )
-      maxNotificationSeverity.value = notificationTypes[maxIndex]!
+      return notificationTypes[maxIndex]!
     }
+    return "info"
   } )
 
   const notificationClass = computed( () => {
-    if ( !newNotifications.value.length ) return ""
-    return `notification-${maxNotificationSeverity.value}`
+    const classes = []
+    if ( !notifications.value.length ) return []
+    classes.push( `notification-${maxNotificationSeverity.value}`  )
+    if ( newNotifications.value.length )
+      classes.push( "new" )
+    return classes
   } )
 
   const showNotifications = ref( false )
@@ -493,27 +496,36 @@
   }
 
   .notification-info {
-    --pulse-color: rgb(59 130 246 / 0.5); /* blue-500 */
     color: rgb(59 130 246);
     animation: notification-pulse 2.5s infinite;
+    &.new {
+      --pulse-color: rgb(59 130 246 / 0.5); /* blue-500 */
+    }
   }
 
   .notification-success {
-    --pulse-color: rgb(34 197 94 / 0.5); /* green-500 */
     color: rgb(34 197 94);
     animation: notification-pulse 2.0s infinite;
+    &.new {
+      --pulse-color: rgb(34 197 94 / 0.5); /* green-500 */
+    }
   }
 
   .notification-warning {
     --pulse-color: rgb(234 179 8 / 0.5); /* yellow-500 */
     color: rgb(234 179 8);
     animation: notification-pulse 1.5s infinite;
+    &.new {
+      --pulse-color: rgb(234 179 8 / 0.5); /* yellow-500 */
+    }
   }
 
   .notification-error {
-    --pulse-color: rgb(239 68 68 / 0.5); /* red-500 */
     color: rgb(239 68 68);
     animation: notification-pulse 1.2s infinite;
+    &.new {
+      --pulse-color: rgb(239 68 68 / 0.5); /* red-500 */
+    }
   }
 
   @media (prefers-reduced-motion: reduce) {
