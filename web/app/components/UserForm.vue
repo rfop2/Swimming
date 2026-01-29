@@ -39,6 +39,8 @@
 
   const config = useRuntimeConfig()
 
+  const { createNotification } = useNotifications()
+
   const currentUser = useUser()
   const isAdmin = !!Number( currentUser.value?.admin )
   const editingSelf = computed( () => !currentUser.value || ( currentUser.value.id === props.user.id ) )
@@ -380,10 +382,18 @@
           targetId: props.user.id,
         }
         await createTask( task )
-        showAlert( "Swimmers are being added to account, please check back shortly", "info" )
+        // showAlert( "Swimmers are being added to account, please check back shortly", "info" )
+        await createNotification( {
+          notificationType: "info",
+          notificationText: "Swimmers are being added to account, please check back shortly",
+        } )
       } catch ( error ) {
         console.error( "Error", error )
-        showAlert( `Unable to add swimmers to account '${( error as FetchError ).message}'`, "error" )
+        // showAlert( `Unable to add swimmers to account '${( error as FetchError ).message}'`, "error" )
+        await createNotification( {
+          notificationType: "error",
+          notificationText: `Unable to add swimmers to account '${( error as FetchError ).message}'`
+        } )
         throw createError( error as FetchError )
       }
     }

@@ -3,6 +3,7 @@ import type { Task } from "lib"
 export const useTasksCheck = () => {
   const user = useUser()
   const { tasks, fetchTasks } = useTasks()
+  const { createNotification } = useNotifications()
   const lastTasks = ref<Task[]>( [] )
   let checkTimer: NodeJS.Timeout | null = null
 
@@ -22,11 +23,23 @@ export const useTasksCheck = () => {
                 switch ( task.targetType ) {
                   case "swimmer" : {
                     if ( task.taskStatus === "error" ) {
-                      showAlert( `Task "${task.taskDescription}" failed`, "error" )
+                      // showAlert( `Task "${task.taskDescription}" failed`, "error" )
+                      await createNotification( {
+                        notificationType: "error",
+                        notificationText: `Task "${task.taskDescription}" failed`,
+                      } )
                     } else if ( task.taskStatus === "complete" ) {
-                      showAlert( `Task "${task.taskDescription}" is complete`, "success" )
+                      // showAlert( `Task "${task.taskDescription}" is complete`, "success" )
+                      await createNotification( {
+                        notificationType: "success",
+                        notificationText: `Task "${task.taskDescription}" is complete`,
+                      } )
                     } else if ( lastTask.taskStatus === "pending" && task.taskStatus === "progress" ) {
-                      showAlert( `Task "${task.taskDescription}" has started`, "info" )
+                      // showAlert( `Task "${task.taskDescription}" has started`, "info" )
+                      await createNotification( {
+                        notificationType: "info",
+                        notificationText: `Task "${task.taskDescription}" has started`,
+                      } )
                     }
                     break
                   }

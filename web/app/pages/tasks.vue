@@ -18,6 +18,7 @@
   const user = useAuthenticatedUser()
 
   const { formatTemporal } = useTemporal()
+  const { createNotification } = useNotifications()
 
   const statusOptions = [
     {
@@ -96,7 +97,11 @@
     } catch ( error ) {
       console.error( "Error", error )
       cancelFailed.value = true
-      showAlert( `Unable to cancel task: ${( error as FetchError ).message}`, "error" )
+      // showAlert( `Unable to cancel task: ${( error as FetchError ).message}`, "error" )
+      await createNotification( {
+        notificationType: "error",
+        notificationText: `Unable to cancel task: ${( error as FetchError ).message}`
+      } )
       throw createError( error as FetchError )
     } finally {
       taskToCancel.value = null
