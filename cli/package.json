@@ -19,7 +19,6 @@
     "dotenv": "^17.2.3",
     "lib": "file:../lib",
     "lucia": "^3.2.2",
-    "mysql2": "^3.16.2",
     "node-fetch": "^3.3.2"
   },
   "devDependencies": {
