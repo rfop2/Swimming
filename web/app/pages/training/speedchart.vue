@@ -1,4 +1,6 @@
 <script setup lang="ts">
+  import type { InternalApi } from "nitropack"
+  import { FetchError } from "ofetch"
   import { COURSES, strokes, secondsToTime } from "lib"
 
   definePageMeta( {
@@ -16,6 +18,8 @@
   const route = useRoute()
   const slug = Array.isArray( route.params.slug ) ? route.params.slug : []
 
+  const { swimmer } = useSwimmer()
+
   const strokeOptions = Object.entries( strokes ).map( ( [ k, v ] ) => ( { value: k, label: v.label } ) )
   const courseOptions = Object.entries( COURSES ).map( ( [ k, v ] ) => ( { value: k, label: v } ) )
   const distanceOptions: UISelection[] = []
@@ -29,7 +33,7 @@
       label: "Female",
     },
   ] as const
-  const _effortOptions = [
+  const effortOptions = [
     {
       label: "85%",
       value: 0.85,
@@ -60,8 +64,8 @@
     stroke: ( strokeOptions.find( option => option.value === slug[0] ) ?? strokeOptions[0] )?.value as string,
     course: ( courseOptions.find( option => option.value === slug[1] ) ?? courseOptions[1] )?.value,
     distance: distanceOptions.find( option => String( option.value ) === slug[2] )?.value ?? "50",
-    gender: ( genderOptions.find( option => option.value === slug[3] ) ?? genderOptions[0] ).value,
-    // effort: ( effortOptions.find( option => option.label === slug[4] ) ?? effortOptions[3] ).value,
+    gender: ( genderOptions.find( option => option.value === swimmer.value?.gender ) ?? genderOptions[0] ).value,
+    effort: ( effortOptions.find( option => option.label === slug[4] ) ?? effortOptions[3] )?.value,
   }, "reactive" )
 
   const strokeDistances = computed( () => strokes[selections.stroke]?.distances )
@@ -74,6 +78,43 @@
       }
     }
   }, { immediate: true } )
+
+  type PersonalApiResponse = InternalApi["/api/personal/:id"]["get"]
+  const personalRecords = ref<PersonalApiResponse>( [] )
+  watchEffect( async () => {
+    if ( swimmer.value ) {
+      selections.gender = swimmer.value.gender as typeof genderOptions[number]["value"]
+      try {
+        personalRecords.value = await $fetch<PersonalApiResponse>( `/api/personal/${swimmer.value.id}` )
+      } catch ( error ) {
+        if ( error instanceof FetchError ) {
+          const apiError = error as FetchError
+          if ( apiError.status === 404 ) {
+            personalRecords.value = []
+          } else {
+            throw error
+          }
+        }
+      }
+    } else {
+      selections.gender = genderOptions[0].value
+      personalRecords.value = []
+    }
+  } )
+
+  const eventRecord = computed( () => {
+    const lcRecord = personalRecords.value.find( r => r.course === "lc" && r.stroke === selections.stroke && r.distance === `${selections.distance}m` )
+    if ( lcRecord )
+      return { course: "lc", time: lcRecord.time, record: lcRecord }
+    const scRecord = personalRecords.value.find( r => r.course === "sc" && r.stroke === selections.stroke && r.distance === `${selections.distance}m` )
+    if ( scRecord )
+      return { course: "sc", time: scRecord.converted_time, record: scRecord }
+    return undefined
+  } )
+
+  watchEffect( () => {
+    console.log( "ER", eventRecord.value )
+  } )
 
   const { data: speedChart } = await useAsyncData<Array<Record<string,string>>>(
     `speedchart-${selections.stroke}-${selections.distance}-${selections.course}-${selections.gender}`,
@@ -90,6 +131,25 @@
       ],
     }
   )
+
+  const checkTime = computed( () => eventRecord.value?.time ? eventRecord.value.time / ( selections.effort ?? 1.0 ) : undefined )
+
+  const LINES = 1
+  const displayLines = computed( () => {
+    if ( !checkTime.value || !eventRecord.value || !speedChart.value || !speedChart.value.length )
+      return []
+    console.log( "I1", checkTime.value, eventRecord.value.time, speedChart.value.length, speedChart.value[58] )
+    const prevIndex = speedChart.value.findLastIndex( r => Number( Object.values( r )[0] ) < Number( checkTime.value ) )
+    const nextIndex = speedChart.value.findIndex( r => Number( Object.values( r )[0] ) >= Number( checkTime.value ) )
+    console.log( "I2", prevIndex, nextIndex )
+    if ( !speedChart.value || !prevIndex || !nextIndex )
+      return []
+    return speedChart.value.slice( prevIndex, Math.min( speedChart.value.length, nextIndex + LINES ) )
+  } )
+
+  watchEffect( () => {
+    console.log( "DL", displayLines.value )
+  } )
 
   const distanceHeaders = {
     "50": [
@@ -158,6 +218,7 @@
       Target times for swim intermediate stages depending on finishing times.
     </template>
     <template #controls>
+      <SwimmerSelector v-model="swimmer" />
       <div class="min-w-48">
         <UI-Listbox
           v-model="selections.stroke"
@@ -179,7 +240,7 @@
         <UI-Listbox
           v-model="selections.distance"
           :options="distanceOptions"
-          label="Base Distance"
+          label="Distance"
           placeholder="Choose Distance"
         />
       </div>
@@ -189,19 +250,20 @@
           :options="genderOptions"
           label="Gender"
           placeholder="Choose Gender"
+          :disabled="!!swimmer"
         />
       </div>
-      <!--<div class="min-w-24">
+      <div class="min-w-24">
         <UI-Listbox
           v-model="selections.effort"
           :options="effortOptions"
           label="Effort"
           placeholder="Choose Effort"
         />
-      </div>-->
+      </div>
     </template>
     <div class="inline-block min-w-full py-2 sm:px-0">
-      <table v-if="speedChart && speedChart.length" class="min-w-full sm:min-w-0 sm:w-3/4 mx-auto divide-y divide-gray-300">
+      <table v-if="displayLines.length" class="min-w-full sm:min-w-0 sm:w-3/4 mx-auto divide-y divide-gray-300">
         <thead>
           <tr class="divide-x divide-gray-200">
             <th
@@ -215,21 +277,51 @@
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-200 bg-white">
-          <tr
-            v-for="row in speedChart"
+          <template
+            v-for="row in displayLines"
             :key="Object.values(row)[0]"
-            class="divide-x divide-gray-200"
           >
-            <td
-              v-for="header in headers"
-              :key="header"
-              class="whitespace-nowrap px-2 py-2 text-right text-sm text-gray-900"
+            <tr class="divide-x divide-gray-200">
+              <td
+                v-for="header in headers"
+                :key="header"
+                class="whitespace-nowrap px-2 py-2 text-right text-sm text-gray-900"
+              >
+                {{ row[header] ? secondsToTime( Number( row[header] ) ) : "" }}
+              </td>
+            </tr>
+            <tr
+              v-if="checkTime && checkTime > Number( Object.values( row )[0] )"
+              class="divide-x divide-gray-200"
             >
-              {{ row[header] ? secondsToTime( Number( row[header] ) ) : "" }}
-            </td>
-          </tr>
+              <td
+                class="whitespace-nowrap px-2 py-2 text-right text-sm text-gray-900"
+              >
+                {{ secondsToTime( Number( checkTime ) ) }}
+              </td>
+              <td
+                :colSpan="headers.length-1"
+                class="whitespace-nowrap px-2 py-2 text-left text-sm text-gray-900"
+              >
+                <span v-if="selections.effort!=1">Adjusted from {{  secondsToTime( Number( eventRecord!.record.time ) ) }} @ </span>
+                {{ `${eventRecord!.record.meet} (${eventRecord!.record.course === "lc" ? "Long" : "Short"} Course) - ${eventRecord!.record.date}` }}
+                <span v-if="eventRecord!.record.course === 'sc'">{{ `(SC time: ${secondsToTime( Number( eventRecord!.record.time ) )})`  }}</span>
+              </td>
+            </tr>
+          </template>
         </tbody>
       </table>
+      <div v-else-if="!eventRecord">
+        <p class="p-6 mx-4 text-md text-center border-2 border-solid border-gray-200 rounded-md">
+          There is no recorded time for this stroke and distance.
+        </p>
+      </div>
+      <div v-else-if="speedChart?.length && eventRecord?.record">
+        <p class="p-6 mx-4 text-md text-center border-2 border-solid border-gray-200 rounded-md">
+          The {{ selections.effort === 1.0 ? "recorded" : "adjusted" }} time ({{ secondsToTime( Number( checkTime ) ) }}) is out of range of the available comparison times
+          ({{ secondsToTime( Number( Object.values( speedChart[0]! )[0] ) ) }}-{{ secondsToTime( Number( Object.values( speedChart[speedChart.length-1]! )[0] ) ) }}).
+        </p>
+      </div>
       <div v-else>
         <p class="p-6 mx-4 text-md text-center border-2 border-solid border-gray-200 rounded-md">
           There are no times to display for the selected event.

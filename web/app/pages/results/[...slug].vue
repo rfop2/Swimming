@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { COURSES, convertTime, secondsToTime, strokes, ucFirst, type QualifyingRow } from "lib"
+  import { convertTime, COURSES, secondsToTime, strokes, ucFirst } from "lib"
   import { Line } from "vue-chartjs"
   import { Chart as ChartJS, CategoryScale, LinearScale, TimeScale, PointElement, LineElement, Title, Tooltip, Legend, type ChartData, type ChartOptions, type TooltipItem } from "chart.js"
   import "chartjs-adapter-date-fns"
@@ -7,7 +7,6 @@
 
   import type { InternalApi } from "nitropack"
   import { format } from "date-fns"
-  import { FetchError } from "ofetch"
 
   definePageMeta( {
     layout: "secure",
@@ -23,6 +22,10 @@
 
   const route = useRoute()
   const slug = Array.isArray( route.params.slug ) ? route.params.slug : []
+
+  const {
+    calcActiveQualifyingPeriods,
+  } = useQualifying()
 
   const courseOptions = Object.entries( COURSES ).map( ( [ k, v ] ) => ( { value: k, label: v } ) )
   const strokeOptions = Object.entries( strokes ).map( ( [ k, v ] ) => ( { value: k, label: v.label } ) )
@@ -60,21 +63,12 @@
   type ResultsApiResponse = InternalApi["/api/results/:id"]["get"]
   type ResultType = ResultsApiResponse[number]
 
-  type QualifyingApiResponse = InternalApi["/api/qualifying/swimmer/:id"]["get"]
-
-  interface ExtQualifyingRow extends QualifyingRow {
-    courseTime: number
-  }
-
   const records = ref<ResultsApiResponse>( [] )
-  const qualifying = ref<QualifyingApiResponse>( [] )
-  const qualifyingTimes = ref<ExtQualifyingRow[]>( [] )
-  const countyQualifying = ref<ExtQualifyingRow | undefined>( undefined )
-  const summerQualifying = ref<ExtQualifyingRow | undefined>( undefined )
-  const winterQualifying = ref<ExtQualifyingRow | undefined>( undefined )
 
   // Better type narrowing guard
   const hasSwimmer = ( s: typeof swimmer ): s is typeof swimmer & { value: NonNullable<typeof s.value> } => s.value != null && s.value !== undefined
+
+  const activeQualifyingPeriods = computed( () => calcActiveQualifyingPeriods( swimmer.value ) )
 
   watchEffect( async () => {
     if ( hasSwimmer( swimmer ) ) {
@@ -97,9 +91,9 @@
       }
       records.value = await $fetch<ResultsApiResponse>( `/api/results/${swimmer.value.id}`, { query } )
       records.value.sort( ( a, b ) => {
-        if ( a.date < b.date ) {
+        if ( a.date > b.date ) {
           return -1
-        } else if ( a.date > b.date ) {
+        } else if ( a.date < b.date ) {
           return 1
         }
         if ( a.round < b.round ) {
@@ -109,64 +103,49 @@
         }
         return 0
       } )
-
-      try {
-        qualifying.value = await $fetch<QualifyingApiResponse>( `/api/qualifying/swimmer/${swimmer.value.id}` )
-      } catch ( error ) {
-        if ( error instanceof FetchError ) {
-          const apiError = error as FetchError
-          if ( apiError.status === 404 ) {
-            qualifying.value = []
-          } else {
-            throw error
-          }
-        }
-      }
-
-      const qualifyingPeriods = ( qualifying.value ?? [] ).filter( v => ( v.period.qualifyingActive ) )
-      console.log( "qp", qualifyingPeriods )
-      const eligibilityPeriods = ( qualifying.value ?? [] ).filter( v => ( v.period.eligibilityActive ) )
-      console.log( "ep", eligibilityPeriods )
-
-      countyQualifying.value = ( qualifyingPeriods.find( v => v.period.scope === "county" )?.times ?? [] )
-        .map( q => ( {
-          ...q,
-          courseTime: convertTime( q.course, selections.course, selections.stroke, selections.distance, q.time )
-        } ) )
-        .find( t => {
-          if ( t.stroke !== selections.stroke )
-            return false
-          if ( t.distance !== selections.distance )
-            return false
-          return true
-        } )
-      summerQualifying.value = ( qualifyingPeriods.find( v => v.period.scope === "regional" && v.period.type === "summer" )?.times ?? [] )
-        .map( q => ( {
-          ...q,
-          courseTime: convertTime( q.course, selections.course, selections.stroke, selections.distance, q.time )
-        } ) )
-        .find( t => {
-          if ( t.stroke !== selections.stroke )
-            return false
-          if ( t.distance !== selections.distance )
-            return false
-          return true
-        } )
-      winterQualifying.value = ( qualifyingPeriods.find( v => v.period.scope === "regional" && v.period.type === "winter" )?.times ?? [] )
-        .map( q => ( {
-          ...q,
-          courseTime: convertTime( q.course, selections.course, selections.stroke, selections.distance, q.time )
-        } ) )
-        .find( t => {
-          if ( t.stroke !== selections.stroke )
-            return false
-          if ( t.distance !== selections.distance )
-            return false
-          return true
-        } )
-      qualifyingTimes.value = [ countyQualifying.value, summerQualifying.value, winterQualifying.value ].filter( q => !!q ).sort( ( a, b ) => a.courseTime - b.courseTime )
-      console.log( "Q", countyQualifying.value, summerQualifying.value, winterQualifying, qualifyingTimes.value )
     }
+  } )
+
+  const getQualifyingTime = ( qp?: QualifyingInfo ) => {
+    if ( !qp )
+      return []
+    // If there are qualification times speifically for this course length then return those
+    const courseTimes = qp.times
+      .filter( q => {
+        if ( q.course !== selections.course )
+          return false
+        if ( q.stroke !== selections.stroke )
+          return false
+        if ( q.distance !== selections.distance )
+          return false
+        return true
+      } )
+      .map( q => ( { ...q, active: qp.qualifyingActive, courseTime: q.time } ) )
+    if ( courseTimes.length )
+      return courseTimes
+    // Otherwise convert from whtever there are
+    return qp.times
+      .filter( q => {
+        if ( q.stroke !== selections.stroke )
+          return false
+        if ( q.distance !== selections.distance )
+          return false
+        return true
+      } )
+      .map( q => ( { ...q, active: qp.qualifyingActive, courseTime: convertTime( q.course, selections.course, selections.stroke, selections.distance, q.time )} ) )
+  }
+
+  const qualifyingTimes = computed( () => {
+    const countyQualifying = activeQualifyingPeriods.value["county"]["general"]?.period
+    const summerQualifying = activeQualifyingPeriods.value["regional"]["summer"]?.period
+    const winterQualifying = activeQualifyingPeriods.value["regional"]["winter"]?.period
+
+    return [
+      ...getQualifyingTime( countyQualifying ),
+      ...getQualifyingTime( summerQualifying ),
+      ...getQualifyingTime( winterQualifying ),
+    ].sort( ( a, b ) => a.courseTime - b.courseTime )
+    console.log( "Q", countyQualifying, summerQualifying, winterQualifying, qualifyingTimes.value )
   } )
 
   const { updateSort, getSortIcon, sortRecords } = useMultiSort<ResultType>()
@@ -272,6 +251,7 @@
       font: {
         size: 12,
         weight: "normal",
+        style: time.active ? "normal" : "italic",
       },
       padding: {
         top: 4,

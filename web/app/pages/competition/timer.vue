@@ -267,6 +267,12 @@
       v-if="mode === 'setup'"
       class="flex-1 flex flex-col justify-center items-center px-6 pb-24"
     >
+      <div class="hidden sm:block pb-6">
+        <p>
+          Select a swimmer and event and then press "Go" to begin.
+          This page is optimised for mobile use.
+        </p>
+      </div>
       <div class="gap-x-3 pt-2 sm:pt-0 sm:flex sm:items-center sm:justify-between">
         <SwimmerSelector v-model="swimmer" />
         <div class="min-w-24 mt-2 sm:mt-0">
