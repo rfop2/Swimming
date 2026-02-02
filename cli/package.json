@@ -9,7 +9,7 @@
     "fetch": "node ./build/fetch.mjs",
     "add": "node ./build/addUser.mjs",
     "import": "node ./build/clubImport.mjs",
-    "migrate": "tsx server/db/migrate.ts"
+    "migrate": "node ./build/migrate.js"
   },
   "dependencies": {
     "@node-rs/argon2": "^2.0.2",
@@ -19,6 +19,7 @@
     "dotenv": "^17.2.3",
     "lib": "file:../lib",
     "lucia": "^3.2.2",
+    "mysql2": "^3.16.2",
     "node-fetch": "^3.3.2"
   },
   "devDependencies": {
