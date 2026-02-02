@@ -18,7 +18,7 @@ services:
       #- "3080:3000"
     restart: unless-stopped
     networks:
-      app:
+      bridge:
         ipv4_address: ${NETWORK_NODE_IP}
     tty: true
 
@@ -38,7 +38,7 @@ services:
       MARIADB_PASSWORD: ${MARIADB_PASSWORD}
     restart: unless-stopped
     networks:
-      app:
+      bridge:
         ipv4_address: ${NETWORK_DB_IP}
 
   adminer:
@@ -54,7 +54,7 @@ services:
     depends_on:
       - db
     networks:
-      app:
+      bridge:
         ipv4_address: ${NETWORK_ADMINER_IP}
     profiles:
       - live
