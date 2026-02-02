@@ -10,7 +10,8 @@
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
-    "test": "vitest"
+    "test": "vitest",
+    "migrate": "tsx server/db/migrate.ts"
   },
   "dependencies": {
     "@headlessui/vue": "^1.7.23",
