@@ -85,7 +85,7 @@ export default defineEventHandler( async ( event ) => {
         .then( () => {
           if ( ended ) return
           ended = true
-          resolve( { id, playbackUrl: `/uploads/${storedName}` } )
+          resolve( { id, playbackUrl: `/api/uploads/${storedName}` } )
         } )
         .catch( () => fail( 500, "Write error" ) )
     } )
