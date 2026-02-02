@@ -19,7 +19,7 @@ services:
     restart: unless-stopped
     networks:
       app:
-        ipv4_address: 192.168.45.3
+        ipv4_address: ${NETWORK_NODE_IP}
     tty: true
 
   db:
@@ -39,7 +39,7 @@ services:
     restart: unless-stopped
     networks:
       app:
-        ipv4_address: 192.168.45.2
+        ipv4_address: ${NETWORK_DB_IP}
 
   adminer:
     image: adminer
@@ -55,7 +55,7 @@ services:
       - db
     networks:
       app:
-        ipv4_address: 192.168.45.4
+        ipv4_address: ${NETWORK_ADMINER_IP}
 
 volumes:
   db-data:
@@ -68,5 +68,5 @@ networks:
     ipam:
       driver: default
       config:
-        - subnet: 192.168.45.0/24
-          gateway: 192.168.45.1
+        - subnet: ${NETWORK_SUBNET}
+          gateway: ${NETWORK_GATEWAY_IP}
