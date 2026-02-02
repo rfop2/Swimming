@@ -11,15 +11,15 @@ services:
       IGNORE_IPS: ${IGNORE_IPS}
       TURNSTILE_SITE_KEY: ${TURNSTILE_SITE_KEY}
       TURNSTILE_SECRET_KEY: ${TURNSTILE_SECRET_KEY}
-      DISABLE_REGISTRATION: ${DISABLE_REGISTRATION}
+      DISABLE_REGISTRATION: ${DISABLE_REGISTRATION:-false}
     volumes:
       - ../web/.output/:/home/node/app
-    ports:
-      - "3080:3000"
+    #ports:
+      #- "3080:3000"
     restart: unless-stopped
     networks:
-      app:
-        ipv4_address: 192.168.45.3
+      bridge:
+        ipv4_address: ${NETWORK_NODE_IP}
     tty: true
 
   db:
@@ -38,8 +38,8 @@ services:
       MARIADB_PASSWORD: ${MARIADB_PASSWORD}
     restart: unless-stopped
     networks:
-      app:
-        ipv4_address: 192.168.45.2
+      bridge:
+        ipv4_address: ${NETWORK_DB_IP}
 
   adminer:
     image: adminer
@@ -54,19 +54,21 @@ services:
     depends_on:
       - db
     networks:
-      app:
-        ipv4_address: 192.168.45.4
+      bridge:
+        ipv4_address: ${NETWORK_ADMINER_IP}
+    profiles:
+      - live
 
 volumes:
   db-data:
     driver: local
 
 networks:
-  app:
+  bridge:
     driver: bridge
     enable_ipv6: false
     ipam:
       driver: default
       config:
-        - subnet: 192.168.45.0/24
-          gateway: 192.168.45.1
+        - subnet: ${NETWORK_SUBNET}
+          gateway: ${NETWORK_GATEWAY_IP}
