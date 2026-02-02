@@ -29,12 +29,12 @@
 
   const courseOptions = Object.entries( COURSES ).map( ( [ k, v ] ) => ( { value: k, label: v } ) )
   const strokeOptions = Object.entries( strokes ).map( ( [ k, v ] ) => ( { value: k, label: v.label } ) )
-  const distanceOptions = reactive<{ value: string, label: string }[]>( strokes[slug[1] ?? Object.keys( strokes )[0]].distances.map( d => ( { value: d, label: d } ) ) )
+  const distanceOptions = reactive<{ value: string, label: string }[]>( strokes[slug[1] ?? Object.keys( strokes )[0]!]!.distances.map( d => ( { value: d, label: d } ) ) )
 
   const selections = reactive( {
-    course: ( courseOptions.find( option => option.value === slug[0] ) ?? courseOptions[0] ).value,
-    stroke: ( strokeOptions.find( option => option.value === slug[1] ) ?? strokeOptions[0] ).value,
-    distance: ( distanceOptions.find( option => option.value === slug[2] ) ?? distanceOptions[0] ).value,
+    course: ( courseOptions.find( option => option.value === slug[0] ) ?? courseOptions[0] )!.value,
+    stroke: ( strokeOptions.find( option => option.value === slug[1] ) ?? strokeOptions[0] )!.value,
+    distance: ( distanceOptions.find( option => option.value === slug[2] ) ?? distanceOptions[0] )!.value,
     period: {
       range: undefined,
       startDate: undefined,
@@ -44,9 +44,9 @@
 
   watch( () => selections.stroke, ( newStroke ) => {
     distanceOptions.length = 0
-    distanceOptions.push( ...strokes[newStroke].distances.map( d => ( { value: d, label: d } ) ) )
+    distanceOptions.push( ...strokes[newStroke]!.distances.map( d => ( { value: d, label: d } ) ) )
     if ( selections.distance && !distanceOptions.find( o => o.value === selections.distance ) )
-      selections.distance = distanceOptions[0].value
+      selections.distance = distanceOptions[0]!.value
   } )
 
   const rewritten = ref( false )
@@ -184,12 +184,12 @@
           }
         },
         pointStyle: ctx => {
-          const data = ctx.chart.data.datasets[0].data as number[]
+          const data = ctx.chart.data.datasets[0]!.data as number[]
           const minVal = Math.min( ...data )
           return ctx.parsed.y === minVal ? "rectRot" : "circle"
         },
         pointRadius: ctx => {
-          const data = ctx.chart.data.datasets[0].data as number[]
+          const data = ctx.chart.data.datasets[0]!.data as number[]
           const minVal = Math.min( ...data )
           return ctx.parsed.y === minVal ? 4 : 2 // make diamond slightly larger
         },
