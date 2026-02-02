@@ -14,8 +14,8 @@ services:
       DISABLE_REGISTRATION: ${DISABLE_REGISTRATION:-0}
     volumes:
       - ../web/.output/:/home/node/app
-    ports:
-      - "3080:3000"
+    #ports:
+      #- "3080:3000"
     restart: unless-stopped
     networks:
       app:
