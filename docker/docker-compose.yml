@@ -64,7 +64,7 @@ volumes:
     driver: local
 
 networks:
-  app:
+  bridge:
     driver: bridge
     enable_ipv6: false
     ipam:
