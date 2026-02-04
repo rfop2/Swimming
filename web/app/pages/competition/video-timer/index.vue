@@ -16,6 +16,8 @@
 
   const { showNav } = useLayoutUi()
 
+  const meetId = ref<string | null>( null )
+
   const previewIsPortrait = ref( false )
 
   const onPreviewLoadedMetadata = ( e: Event ) => {
@@ -124,12 +126,17 @@
     return [
       { value: null, label: "No meet (optional)" },
       ...list.map( ( m ) => ( {
-        value: m.id,
+        value: String( m.id ),
         label: m.name,
       } ) ),
     ]
   } )
-
+  watch(
+    () => selections.course,
+    () => {
+      meetId.value = null
+    }
+  )
   watch(
     () => selections.stroke,
     ( newStroke: StrokeType ) => {
