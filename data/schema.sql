@@ -542,7 +542,8 @@ CREATE TABLE `SpeedChart-backstroke-100m-female-lc` (
   `95-100m` double DEFAULT NULL,
   `Turn` double DEFAULT NULL,
   `1st 50m` double DEFAULT NULL,
-  `2nd 50m` double DEFAULT NULL
+  `2nd 50m` double DEFAULT NULL,
+  `generated` tinyint(1) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -574,7 +575,8 @@ CREATE TABLE `SpeedChart-backstroke-100m-male-lc` (
   `95-100m` double DEFAULT NULL,
   `Turn` double DEFAULT NULL,
   `1st 50m` double DEFAULT NULL,
-  `2nd 50m` double DEFAULT NULL
+  `2nd 50m` double DEFAULT NULL,
+  `generated` tinyint(1) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -602,7 +604,8 @@ CREATE TABLE `SpeedChart-backstroke-200m-female-lc` (
   `4th 50m` double DEFAULT NULL,
   `FES 100m` double DEFAULT NULL,
   `Mid 100m` double DEFAULT NULL,
-  `BES 100m` double DEFAULT NULL
+  `BES 100m` double DEFAULT NULL,
+  `generated` tinyint(1) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -630,7 +633,8 @@ CREATE TABLE `SpeedChart-backstroke-200m-male-lc` (
   `4th 50m` double DEFAULT NULL,
   `FES 100m` double DEFAULT NULL,
   `Mid 100m` double DEFAULT NULL,
-  `BES 100m` double DEFAULT NULL
+  `BES 100m` double DEFAULT NULL,
+  `generated` tinyint(1) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -652,7 +656,8 @@ CREATE TABLE `SpeedChart-backstroke-50m-female-lc` (
   `0-45m` double DEFAULT NULL,
   `45-50m` double DEFAULT NULL,
   `1st 25m` double DEFAULT NULL,
-  `2nd 25m` double DEFAULT NULL
+  `2nd 25m` double DEFAULT NULL,
+  `generated` tinyint(1) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -674,7 +679,8 @@ CREATE TABLE `SpeedChart-backstroke-50m-male-lc` (
   `0-45m` double DEFAULT NULL,
   `45-50m` double DEFAULT NULL,
   `1st 25m` double DEFAULT NULL,
-  `2nd 25m` double DEFAULT NULL
+  `2nd 25m` double DEFAULT NULL,
+  `generated` tinyint(1) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -706,7 +712,8 @@ CREATE TABLE `SpeedChart-breaststroke-100m-female-lc` (
   `95-100m` double DEFAULT NULL,
   `Turn` double DEFAULT NULL,
   `1st 50m` double DEFAULT NULL,
-  `2nd 50m` double DEFAULT NULL
+  `2nd 50m` double DEFAULT NULL,
+  `generated` tinyint(1) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -738,7 +745,8 @@ CREATE TABLE `SpeedChart-breaststroke-100m-male-lc` (
   `95-100m` double DEFAULT NULL,
   `Turn` double DEFAULT NULL,
   `1st 50m` double DEFAULT NULL,
-  `2nd 50m` double DEFAULT NULL
+  `2nd 50m` double DEFAULT NULL,
+  `generated` tinyint(1) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -766,7 +774,8 @@ CREATE TABLE `SpeedChart-breaststroke-200m-female-lc` (
   `4th 50m` double DEFAULT NULL,
   `FES 100m` double DEFAULT NULL,
   `Mid 100m` double DEFAULT NULL,
-  `BES 100m` double DEFAULT NULL
+  `BES 100m` double DEFAULT NULL,
+  `generated` tinyint(1) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -794,7 +803,8 @@ CREATE TABLE `SpeedChart-breaststroke-200m-male-lc` (
   `4th 50m` double DEFAULT NULL,
   `FES 100m` double DEFAULT NULL,
   `Mid 100m` double DEFAULT NULL,
-  `BES 100m` double DEFAULT NULL
+  `BES 100m` double DEFAULT NULL,
+  `generated` tinyint(1) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -816,7 +826,8 @@ CREATE TABLE `SpeedChart-breaststroke-50m-female-lc` (
   `0-45m` double DEFAULT NULL,
   `45-50m` double DEFAULT NULL,
   `1st 25m` double DEFAULT NULL,
-  `2nd 25m` double DEFAULT NULL
+  `2nd 25m` double DEFAULT NULL,
+  `generated` tinyint(1) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -838,7 +849,8 @@ CREATE TABLE `SpeedChart-breaststroke-50m-male-lc` (
   `0-45m` double DEFAULT NULL,
   `45-50m` double DEFAULT NULL,
   `1st 25m` double DEFAULT NULL,
-  `2nd 25m` double DEFAULT NULL
+  `2nd 25m` double DEFAULT NULL,
+  `generated` tinyint(1) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -870,7 +882,8 @@ CREATE TABLE `SpeedChart-butterfly-100m-female-lc` (
   `95-100m` double DEFAULT NULL,
   `Turn` double DEFAULT NULL,
   `1st 50m` double DEFAULT NULL,
-  `2nd 50m` double DEFAULT NULL
+  `2nd 50m` double DEFAULT NULL,
+  `generated` tinyint(1) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -902,7 +915,8 @@ CREATE TABLE `SpeedChart-butterfly-100m-male-lc` (
   `95-100m` double DEFAULT NULL,
   `Turn` double DEFAULT NULL,
   `1st 50m` double DEFAULT NULL,
-  `2nd 50m` double DEFAULT NULL
+  `2nd 50m` double DEFAULT NULL,
+  `generated` tinyint(1) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -930,7 +944,8 @@ CREATE TABLE `SpeedChart-butterfly-200m-female-lc` (
   `4th 50m` double DEFAULT NULL,
   `FES 100m` double DEFAULT NULL,
   `Mid 100m` double DEFAULT NULL,
-  `BES 100m` double DEFAULT NULL
+  `BES 100m` double DEFAULT NULL,
+  `generated` tinyint(1) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -958,7 +973,8 @@ CREATE TABLE `SpeedChart-butterfly-200m-male-lc` (
   `4th 50m` double DEFAULT NULL,
   `FES 100m` double DEFAULT NULL,
   `Mid 100m` double DEFAULT NULL,
-  `BES 100m` double DEFAULT NULL
+  `BES 100m` double DEFAULT NULL,
+  `generated` tinyint(1) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -980,7 +996,8 @@ CREATE TABLE `SpeedChart-butterfly-50m-female-lc` (
   `0-45m` double DEFAULT NULL,
   `45-50m` double DEFAULT NULL,
   `1st 25m` double DEFAULT NULL,
-  `2nd 25m` double DEFAULT NULL
+  `2nd 25m` double DEFAULT NULL,
+  `generated` tinyint(1) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -1002,7 +1019,8 @@ CREATE TABLE `SpeedChart-butterfly-50m-male-lc` (
   `0-45m` double DEFAULT NULL,
   `45-50m` double DEFAULT NULL,
   `1st 25m` double DEFAULT NULL,
-  `2nd 25m` double DEFAULT NULL
+  `2nd 25m` double DEFAULT NULL,
+  `generated` tinyint(1) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -1034,7 +1052,8 @@ CREATE TABLE `SpeedChart-freestyle-100m-female-lc` (
   `95-100m` double DEFAULT NULL,
   `Turn` double DEFAULT NULL,
   `1st 50m` double DEFAULT NULL,
-  `2nd 50m` double DEFAULT NULL
+  `2nd 50m` double DEFAULT NULL,
+  `generated` tinyint(1) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -1066,7 +1085,8 @@ CREATE TABLE `SpeedChart-freestyle-100m-male-lc` (
   `95-100m` double DEFAULT NULL,
   `Turn` double DEFAULT NULL,
   `1st 50m` double DEFAULT NULL,
-  `2nd 50m` double DEFAULT NULL
+  `2nd 50m` double DEFAULT NULL,
+  `generated` tinyint(1) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -1094,7 +1114,8 @@ CREATE TABLE `SpeedChart-freestyle-200m-female-lc` (
   `4th 50m` double DEFAULT NULL,
   `FES 100m` double DEFAULT NULL,
   `Mid 100m` double DEFAULT NULL,
-  `BES 100m` double DEFAULT NULL
+  `BES 100m` double DEFAULT NULL,
+  `generated` tinyint(1) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -1122,7 +1143,8 @@ CREATE TABLE `SpeedChart-freestyle-200m-male-lc` (
   `4th 50m` double DEFAULT NULL,
   `FES 100m` double DEFAULT NULL,
   `Mid 100m` double DEFAULT NULL,
-  `BES 100m` double DEFAULT NULL
+  `BES 100m` double DEFAULT NULL,
+  `generated` tinyint(1) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -1144,7 +1166,8 @@ CREATE TABLE `SpeedChart-freestyle-50m-female-lc` (
   `0-45m` double DEFAULT NULL,
   `45-50m` double DEFAULT NULL,
   `1st 25m` double DEFAULT NULL,
-  `2nd 25m` double DEFAULT NULL
+  `2nd 25m` double DEFAULT NULL,
+  `generated` tinyint(1) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -1166,7 +1189,8 @@ CREATE TABLE `SpeedChart-freestyle-50m-male-lc` (
   `0-45m` double DEFAULT NULL,
   `45-50m` double DEFAULT NULL,
   `1st 25m` double DEFAULT NULL,
-  `2nd 25m` double DEFAULT NULL
+  `2nd 25m` double DEFAULT NULL,
+  `generated` tinyint(1) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -1194,7 +1218,8 @@ CREATE TABLE `SpeedChart-individual_medley-200m-female-lc` (
   `4th 50m` double DEFAULT NULL,
   `FES 100m` double DEFAULT NULL,
   `Mid 100m` double DEFAULT NULL,
-  `BES 100m` double DEFAULT NULL
+  `BES 100m` double DEFAULT NULL,
+  `generated` tinyint(1) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -1222,7 +1247,8 @@ CREATE TABLE `SpeedChart-individual_medley-200m-male-lc` (
   `4th 50m` double DEFAULT NULL,
   `FES 100m` double DEFAULT NULL,
   `Mid 100m` double DEFAULT NULL,
-  `BES 100m` double DEFAULT NULL
+  `BES 100m` double DEFAULT NULL,
+  `generated` tinyint(1) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -1399,6 +1425,373 @@ CREATE TABLE `UserTypes` (
 --
 -- Dumping routines for database 'swimming'
 --
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION' */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `generate_100m_single_stroke` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_uca1400_ai_ci */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`%` PROCEDURE `generate_100m_single_stroke`(IN p_table varchar(128))
+BEGIN
+  DECLARE sql_text LONGTEXT;
+
+  /* Delete existing generated rows */
+  SET sql_text = CONCAT(
+    'DELETE FROM `', p_table, '` WHERE generated = 1'
+  );
+  PREPARE stmt FROM sql_text;
+  EXECUTE stmt;
+  DEALLOCATE PREPARE stmt;
+
+  /* Insert regenerated rows */
+  SET sql_text = CONCAT(
+'INSERT INTO `', p_table, '` (
+  `100m Time`,
+  `0-15m`, `0-20m`, `0-25m`, `0-30m`, `0-35m`,
+  `0-40m`, `0-45m`, `0-50m`, `0-60m`, `0-65m`,
+  `0-70m`, `0-75m`, `0-80m`, `0-85m`, `0-90m`,
+  `0-95m`, `95-100m`,
+  `Turn`, `1st 50m`, `2nd 50m`,
+  `generated`
+)
+WITH RECURSIVE
+base AS (
+  SELECT *
+  FROM `', p_table, '`
+  WHERE generated = 0
+  ORDER BY `100m Time` DESC
+  LIMIT 1
+),
+steps AS (
+  SELECT ROUND(`100m Time` + 0.5, 2) AS new_time FROM base
+  UNION ALL
+  SELECT ROUND(new_time + 0.5, 2)
+  FROM steps, base
+  WHERE new_time + 0.5 <= ROUND(base.`100m Time` * 1.25, 2)
+)
+SELECT
+  s.new_time,
+
+  ROUND(b.`0-15m` * (s.new_time / b.`100m Time`), 2),
+  ROUND(b.`0-20m` * (s.new_time / b.`100m Time`), 2),
+  ROUND(b.`0-25m` * (s.new_time / b.`100m Time`), 2),
+  ROUND(b.`0-30m` * (s.new_time / b.`100m Time`), 2),
+  ROUND(b.`0-35m` * (s.new_time / b.`100m Time`), 2),
+  ROUND(b.`0-40m` * (s.new_time / b.`100m Time`), 2),
+  ROUND(b.`0-45m` * (s.new_time / b.`100m Time`), 2),
+  ROUND(b.`0-50m` * (s.new_time / b.`100m Time`), 2),
+
+  ROUND(b.`0-60m` * (s.new_time / b.`100m Time`), 2),
+  ROUND(b.`0-65m` * (s.new_time / b.`100m Time`), 2),
+  ROUND(b.`0-70m` * (s.new_time / b.`100m Time`), 2),
+  ROUND(b.`0-75m` * (s.new_time / b.`100m Time`), 2),
+  ROUND(b.`0-80m` * (s.new_time / b.`100m Time`), 2),
+  ROUND(b.`0-85m` * (s.new_time / b.`100m Time`), 2),
+  ROUND(b.`0-90m` * (s.new_time / b.`100m Time`), 2),
+  ROUND(b.`0-95m` * (s.new_time / b.`100m Time`), 2),
+
+  ROUND(
+    s.new_time
+    - ROUND(b.`0-95m` * (s.new_time / b.`100m Time`), 2),
+    2
+  ),
+
+  ROUND(b.`Turn` * (s.new_time / b.`100m Time`), 2),
+  ROUND(b.`1st 50m` * (s.new_time / b.`100m Time`), 2),
+  ROUND(
+    s.new_time
+    - ROUND(b.`1st 50m` * (s.new_time / b.`100m Time`), 2),
+    2
+  ),
+
+  1
+FROM steps s
+CROSS JOIN base b;'
+  );
+
+  PREPARE stmt FROM sql_text;
+  EXECUTE stmt;
+  DEALLOCATE PREPARE stmt;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION' */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `generate_200m_individual_medley` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_uca1400_ai_ci */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`%` PROCEDURE `generate_200m_individual_medley`(IN p_table varchar(128))
+BEGIN
+  DECLARE sql_text LONGTEXT;
+
+  /* Delete existing generated rows */
+  SET sql_text = CONCAT(
+    'DELETE FROM `', p_table, '` WHERE generated = 1'
+  );
+  PREPARE stmt FROM sql_text;
+  EXECUTE stmt;
+  DEALLOCATE PREPARE stmt;
+
+  /* Insert regenerated rows */
+  SET sql_text = CONCAT(
+'INSERT INTO `', p_table, '` (
+  `200m Time`,
+  `0-15m`, `0-25m`, `0-50m`, `0-75m`, `0-100m`,
+  `0-125m`, `0-150m`, `0-175m`, `175-200m`,
+  `1st 50m`, `2nd 50m`, `3rd 50m`, `4th 50m`,
+  `FES 100m`, `Mid 100m`, `BES 100m`,
+  `generated`
+)
+WITH RECURSIVE
+base AS (
+  SELECT
+    `200m Time` AS base_time,
+    (`0-15m`  / `200m Time`) AS f15,
+    (`0-25m`  / `200m Time`) AS f25,
+    (`0-50m`  / `200m Time`) AS f50,
+    (`0-75m`  / `200m Time`) AS f75,
+    (`0-100m` / `200m Time`) AS f100,
+    (`0-125m` / `200m Time`) AS f125,
+    (`0-150m` / `200m Time`) AS f150,
+    (`0-175m` / `200m Time`) AS f175
+  FROM `', p_table, '`
+  WHERE generated = 0
+  ORDER BY `200m Time` DESC
+  LIMIT 1
+),
+steps AS (
+  SELECT ROUND(base_time + 0.5, 2) AS new_time FROM base
+  UNION ALL
+  SELECT ROUND(new_time + 0.5, 2)
+  FROM steps, base
+  WHERE new_time + 0.5 <= ROUND(base_time * 1.25, 2)
+)
+SELECT
+  s.new_time,
+
+  ROUND(b.f15  * s.new_time, 2),
+  ROUND(b.f25  * s.new_time, 2),
+  ROUND(b.f50  * s.new_time, 2),
+  ROUND(b.f75  * s.new_time, 2),
+  ROUND(b.f100 * s.new_time, 2),
+  ROUND(b.f125 * s.new_time, 2),
+  ROUND(b.f150 * s.new_time, 2),
+  ROUND(b.f175 * s.new_time, 2),
+
+  ROUND(s.new_time - (b.f175 * s.new_time), 2),
+
+  ROUND(b.f50 * s.new_time, 2),                               -- 1st 50 (Fly)
+  ROUND((b.f100 - b.f50) * s.new_time, 2),                    -- 2nd 50 (Back)
+  ROUND((b.f150 - b.f100) * s.new_time, 2),                   -- 3rd 50 (Breast)
+  ROUND((1 - b.f150) * s.new_time, 2),                        -- 4th 50 (Free)
+
+  ROUND(b.f100 * s.new_time, 2),                              -- FES 100
+  ROUND((b.f150 - b.f50) * s.new_time, 2),                    -- Mid 100
+  ROUND((1 - b.f100) * s.new_time, 2),                        -- BES 100
+
+  1
+FROM steps s
+CROSS JOIN base b;'
+  );
+
+  PREPARE stmt FROM sql_text;
+  EXECUTE stmt;
+  DEALLOCATE PREPARE stmt;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION' */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `generate_200m_single_stroke` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_uca1400_ai_ci */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`%` PROCEDURE `generate_200m_single_stroke`(IN p_table varchar(128))
+BEGIN
+  DECLARE sql_text LONGTEXT;
+
+  /* 1. Delete existing generated rows */
+  SET sql_text = CONCAT(
+    'DELETE FROM `', p_table, '` WHERE generated = 1'
+  );
+  PREPARE stmt FROM sql_text;
+  EXECUTE stmt;
+  DEALLOCATE PREPARE stmt;
+
+  /* 2. Insert regenerated rows */
+  SET sql_text = CONCAT(
+'INSERT INTO `', p_table, '` (
+  `200m Time`,
+  `0-15m`, `0-25m`, `0-50m`, `0-75m`, `0-100m`,
+  `0-125m`, `0-150m`, `0-175m`, `175-200m`,
+  `1st 50m`, `2nd 50m`, `3rd 50m`, `4th 50m`,
+  `FES 100m`, `Mid 100m`, `BES 100m`,
+  `generated`
+)
+WITH RECURSIVE
+base AS (
+  SELECT
+    `200m Time` AS base_time,
+    (`0-15m`  / `200m Time`) AS f15,
+    (`0-25m`  / `200m Time`) AS f25,
+    (`0-50m`  / `200m Time`) AS f50,
+    (`0-75m`  / `200m Time`) AS f75,
+    (`0-100m` / `200m Time`) AS f100,
+    (`0-125m` / `200m Time`) AS f125,
+    (`0-150m` / `200m Time`) AS f150,
+    (`0-175m` / `200m Time`) AS f175
+  FROM `', p_table, '`
+  WHERE generated = 0
+  ORDER BY `200m Time` DESC
+  LIMIT 1
+),
+steps AS (
+  SELECT ROUND(base_time + 0.5, 2) AS new_time FROM base
+  UNION ALL
+  SELECT ROUND(new_time + 0.5, 2)
+  FROM steps, base
+  WHERE new_time + 0.5 <= ROUND(base_time * 1.25, 2)
+)
+SELECT
+  s.new_time,
+
+  ROUND(b.f15  * s.new_time, 2),
+  ROUND(b.f25  * s.new_time, 2),
+  ROUND(b.f50  * s.new_time, 2),
+  ROUND(b.f75  * s.new_time, 2),
+  ROUND(b.f100 * s.new_time, 2),
+  ROUND(b.f125 * s.new_time, 2),
+  ROUND(b.f150 * s.new_time, 2),
+  ROUND(b.f175 * s.new_time, 2),
+
+  ROUND(s.new_time - (b.f175 * s.new_time), 2),
+
+  ROUND(b.f50 * s.new_time, 2),
+  ROUND((b.f100 - b.f50) * s.new_time, 2),
+  ROUND((b.f150 - b.f100) * s.new_time, 2),
+  ROUND((1 - b.f150) * s.new_time, 2),
+
+  ROUND(b.f100 * s.new_time, 2),
+  ROUND((b.f150 - b.f50) * s.new_time, 2),
+  ROUND((1 - b.f100) * s.new_time, 2),
+
+  1
+FROM steps s
+CROSS JOIN base b;'
+  );
+
+  PREPARE stmt FROM sql_text;
+  EXECUTE stmt;
+  DEALLOCATE PREPARE stmt;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION' */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `generate_50m_single_stroke` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_uca1400_ai_ci */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`%` PROCEDURE `generate_50m_single_stroke`(IN p_table varchar(128))
+BEGIN
+  DECLARE sql_text LONGTEXT;
+
+  /* Delete existing generated rows */
+  SET sql_text = CONCAT(
+    'DELETE FROM `', p_table, '` WHERE generated = 1'
+  );
+  PREPARE stmt FROM sql_text;
+  EXECUTE stmt;
+  DEALLOCATE PREPARE stmt;
+
+  /* Insert regenerated rows */
+  SET sql_text = CONCAT(
+'INSERT INTO `', p_table, '` (
+  `50m Time`,
+  `0-15m`, `0-20m`, `0-25m`, `0-30m`, `0-35m`,
+  `0-40m`, `0-45m`, `45-50m`,
+  `1st 25m`, `2nd 25m`,
+  `generated`
+)
+WITH RECURSIVE
+base AS (
+  SELECT *
+  FROM `', p_table, '`
+  WHERE generated = 0
+  ORDER BY `50m Time` DESC
+  LIMIT 1
+),
+steps AS (
+  SELECT ROUND(`50m Time` + 0.2, 2) AS new_time FROM base
+  UNION ALL
+  SELECT ROUND(new_time + 0.2, 2)
+  FROM steps, base
+  WHERE new_time + 0.2 <= ROUND(base.`50m Time` * 1.25, 2)
+)
+SELECT
+  s.new_time,
+
+  ROUND(b.`0-15m` * (s.new_time / b.`50m Time`), 2),
+  ROUND(b.`0-20m` * (s.new_time / b.`50m Time`), 2),
+  ROUND(b.`0-25m` * (s.new_time / b.`50m Time`), 2),
+  ROUND(b.`0-30m` * (s.new_time / b.`50m Time`), 2),
+  ROUND(b.`0-35m` * (s.new_time / b.`50m Time`), 2),
+  ROUND(b.`0-40m` * (s.new_time / b.`50m Time`), 2),
+  ROUND(b.`0-45m` * (s.new_time / b.`50m Time`), 2),
+
+  ROUND(
+    s.new_time
+    - ROUND(b.`0-45m` * (s.new_time / b.`50m Time`), 2),
+    2
+  ),
+
+  ROUND(b.`1st 25m` * (s.new_time / b.`50m Time`), 2),
+  ROUND(
+    s.new_time
+    - ROUND(b.`1st 25m` * (s.new_time / b.`50m Time`), 2),
+    2
+  ),
+
+  1
+FROM steps s
+CROSS JOIN base b;'
+  );
+
+  PREPARE stmt FROM sql_text;
+  EXECUTE stmt;
+  DEALLOCATE PREPARE stmt;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
 
 --
 -- Current Database: `swimming`
