@@ -281,7 +281,7 @@
             v-for="row in displayLines"
             :key="Object.values(row)[0]"
           >
-            <tr class="divide-x divide-gray-200">
+            <tr class="divide-x divide-gray-200" :class="{ generated: !!row.generated }">
               <td
                 v-for="header in headers"
                 :key="header"
@@ -330,3 +330,13 @@
     </div>
   </StandardPage>
 </template>
+
+<style type="scss" scoped>
+  tr {
+    &.generated {
+      td {
+        font-style: italic;
+      }
+    }
+  }
+</style>
