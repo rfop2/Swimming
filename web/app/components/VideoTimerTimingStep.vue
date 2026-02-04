@@ -33,6 +33,8 @@
     ( e: "stop", payload: { markers: Marker[] } ): void
   }>()
 
+  
+
   const videoEl = ref<HTMLVideoElement | null>( null )
   const isRunning = ref( false )
   const isReady = ref( false )
@@ -58,7 +60,11 @@
     if ( isRunning.value ) raf = requestAnimationFrame( tick )
   }
 
+  const isPortrait = ref( false )
+
   const onLoadedMetadata = () => {
+    const v = videoEl.value
+    if ( v ) isPortrait.value = v.videoHeight > v.videoWidth
     isReady.value = true
     nowMs.value = readTimeMs()
   }
@@ -112,11 +118,12 @@
   }
 
   const formatMs = ( ms: number ) => {
-    const s = Math.floor( ms / 1000 )
-    const m = Math.floor( s / 60 )
-    const ss = String( s % 60 ).padStart( 2, "0" )
-    const ms3 = String( ms % 1000 ).padStart( 3, "0" )
-    return `${m}:${ss}.${ms3}`
+    const totalMs = Math.max( 0, Math.floor( ms ) )
+    const totalSeconds = Math.floor( totalMs / 1000 )
+    const m = Math.floor( totalSeconds / 60 )
+    const ss = String( totalSeconds % 60 ).padStart( 2, "0" )
+    const t = Math.floor( ( totalMs % 1000 ) / 100 )
+    return `${m}:${ss}.${t}`
   }
 
   onBeforeUnmount( () => {
@@ -147,13 +154,17 @@
                   <div><span class="font-semibold">Distance:</span> {{ props.selections.distance }}</div>
                 </div>
 
-                <div class="aspect-video bg-black flex items-center justify-center max-h-[520px] overflow-hidden">
+                <div
+                  class="bg-black flex items-center justify-center overflow-hidden"
+                  :class="isPortrait ? 'h-[75vh] max-h-[720px]' : 'aspect-video max-h-[520px]'"
+                >
                   <video
                     ref="videoEl"
                     :src="props.video.playbackUrl"
                     controls
                     playsinline
-                    class="w-full h-full object-contain"
+                    class="object-contain max-w-full max-h-full"
+                    :class="isPortrait ? 'h-full w-auto' : 'w-full h-full'"
                     @loadedmetadata="onLoadedMetadata"
                   />
                 </div>
