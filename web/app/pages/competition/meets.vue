@@ -1,6 +1,6 @@
 <script setup lang="ts">
   import type { InternalApi } from "nitropack"
-  import { haversineDistance, type Club, type Meet } from "lib"
+  import { haversineDistance, type Club, type ClubMeet } from "lib"
   import {
     createCalendar,
     createViewDay,
@@ -36,7 +36,7 @@
     latitude: 51.5844700, longitude: -2.0982042
   }
 
-  interface ExtMeet extends Meet {
+  interface ExtMeet extends ClubMeet {
     distance: number | null
   }
 
@@ -257,6 +257,8 @@
       if ( selections.level.length === 0 || !selections.level.includes( event.meet.level as ( typeof selections.level )[number] ) )
         return false
       if ( selections.distance && event.meet.distance && selections.distance < event.meet.distance )
+        return false
+      if ( selections.club && selections.club !== event.meet.clubId )
         return false
       if ( selections.tagged && !event.meet.tagged )
         return false
