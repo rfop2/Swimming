@@ -44,10 +44,12 @@ import {
   parseMeetResults,
   setupNordFetch,
   addNotification,
+  REGIONS,
 } from "lib"
 
 import type {
   Club,
+  ClubMeet,
   IndividualStats,
   Meet,
   MeetResults,
@@ -263,6 +265,8 @@ ON DUPLICATE KEY UPDATE
   contact    = :contact,
   email      = :email
 ;`
+
+const updateMeetClub = "REPLACE INTO ClubMeets ( clubId, meetId ) VALUES ( :clubId, :meetId )"
 
 const checkIndividual = async ( swimmer: Swimmer ) => {
   console.log( `Checking recent individual data for swimmer '${swimmer.fullName}'` )
@@ -575,9 +579,11 @@ const updateMeets = async ( force: boolean ) => {
   console.log( "Updating meets" )
 
   const pool = await getPool()
-  const selectMeets = prepareStatement<unknown[],Meet>( pool, "SELECT * FROM Meets WHERE date >= DATE_FORMAT(CURDATE(), '%Y-%m-01')" )
+  const selectClubs = prepareStatement<void,Club>( pool, "SELECT * FROM Clubs" )
+  const clubs = await selectClubs.all()
+  const selectMeets = prepareStatement<unknown[],ClubMeet>( pool, "SELECT Meets.*, ClubMeets.clubId FROM Meets LEFT JOIN ClubMeets ON(Meets.id = ClubMeets.meetId) WHERE date >= DATE_FORMAT(CURDATE(), '%Y-%m-01')" )
   const meets = await selectMeets.all()
-  const meetsMap = new Map<Meet["id"],Meet>( meets.map( m => ( [ m.id, m ] ) ) )
+  const meetsMap = new Map<ClubMeet["id"],ClubMeet>( meets.map( m => ( [ m.id, m ] ) ) )
   const fetchedMeets = new Set<Meet["id"]>()
 
   const region = "P"
@@ -589,7 +595,8 @@ const updateMeets = async ( force: boolean ) => {
     updated: 0,
     deleted: 0,
   }
-  const saveMeets = prepareStatement( pool, insertMeetsSql )
+  const saveMeet = prepareStatement<Partial<Meet>>( pool, insertMeetsSql )
+  const saveClubMeet = prepareStatement<{meetId:string, clubId:string}>( pool, updateMeetClub )
   do {
     const page: PageInfo = {
       label: `meets_list_${region}-${pageNo}`,
@@ -612,6 +619,7 @@ const updateMeets = async ( force: boolean ) => {
       }
       fetchedMeets.add( meet.id )
       const dbMeet = meetsMap.get( meet.id )
+      let clubId: ClubMeet["clubId"] = undefined
       if ( dbMeet ) {
         if (
           meet.name !== dbMeet.name
@@ -636,9 +644,28 @@ const updateMeets = async ( force: boolean ) => {
         try {
           await updateMeet( meet, force )
           // console.log( meet )
-          await saveMeets.run( meet )
+          await saveMeet.run( meet )
         } catch ( error ) {
-          console.log( `Unable to update meet '${meet.name}'`, error )
+          console.error( `Unable to update meet '${meet.name}'`, error )
+        }
+      }
+      const meetClubs = clubs.filter( club => {
+        const meetName = meet.name?.replace( /^\d{4}\s+/, "" )
+        return meet.region === `${REGIONS[club.clubRegion]} Region` && ( meetName?.startsWith( club.meetName ) || meetName?.startsWith( club.clubName ) )
+      } )
+      if ( meetClubs.length === 1 ) {
+        clubId = meetClubs[0].clubId
+        console.warn( `Assigned meet '${meet.name} to club '${meetClubs[0].clubName}'` )
+      } else if ( meetClubs.length > 1 ) {
+        console.warn( `Multiple club meet matches for '${meet.name}`, meetClubs )
+      } else {
+        console.log( `No club matches for '${meet.name}` )
+      }
+      if ( clubId && ( !dbMeet || dbMeet?.clubId !== clubId ) ) {
+        try {
+          await saveClubMeet.run( { meetId: meet.id, clubId } )
+        } catch ( error ) {
+          console.error( `Unable to update club id '${clubId}' for meet '${meet.name}'`, error )
         }
       }
     }
