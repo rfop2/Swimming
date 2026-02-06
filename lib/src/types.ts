@@ -168,6 +168,11 @@ export interface Meet {
   tagged: number
 }
 
+export interface ClubMeet extends Meet {
+  clubId?: string
+  clubName?: string
+}
+
 export interface MeetResults {
   id: number
   code: string
