@@ -1427,6 +1427,67 @@ CREATE TABLE `UserTypes` (
 --
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION' */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `extend_speedchart_data` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_uca1400_ai_ci */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`%` PROCEDURE `extend_speedchart_data`()
+BEGIN
+  DECLARE extendPge INT(5) UNSIGNED;
+  
+  SET extendPge = 50;
+
+  CALL generate_200m_single_stroke('SpeedChart-freestyle-200m-male-lc',extendPge);
+  CALL generate_200m_single_stroke('SpeedChart-freestyle-200m-female-lc',extendPge);
+
+  CALL generate_200m_single_stroke('SpeedChart-backstroke-200m-male-lc',extendPge);
+  CALL generate_200m_single_stroke('SpeedChart-backstroke-200m-female-lc',extendPge);
+
+  CALL generate_200m_single_stroke('SpeedChart-breaststroke-200m-male-lc',extendPge);
+  CALL generate_200m_single_stroke('SpeedChart-breaststroke-200m-female-lc',extendPge);
+
+  CALL generate_200m_single_stroke('SpeedChart-butterfly-200m-male-lc',extendPge);
+  CALL generate_200m_single_stroke('SpeedChart-butterfly-200m-female-lc',extendPge);
+
+  CALL generate_100m_single_stroke('SpeedChart-freestyle-100m-male-lc',extendPge);
+  CALL generate_100m_single_stroke('SpeedChart-freestyle-100m-female-lc',extendPge);
+
+  CALL generate_100m_single_stroke('SpeedChart-backstroke-100m-male-lc',extendPge);
+  CALL generate_100m_single_stroke('SpeedChart-backstroke-100m-female-lc',extendPge);
+
+  CALL generate_100m_single_stroke('SpeedChart-breaststroke-100m-male-lc',extendPge);
+  CALL generate_100m_single_stroke('SpeedChart-breaststroke-100m-female-lc',extendPge);
+
+  CALL generate_100m_single_stroke('SpeedChart-butterfly-100m-male-lc',extendPge);
+  CALL generate_100m_single_stroke('SpeedChart-butterfly-100m-female-lc',extendPge);
+
+  CALL generate_50m_single_stroke('SpeedChart-freestyle-50m-male-lc',extendPge);
+  CALL generate_50m_single_stroke('SpeedChart-freestyle-50m-female-lc',extendPge);
+
+  CALL generate_50m_single_stroke('SpeedChart-backstroke-50m-male-lc',extendPge);
+  CALL generate_50m_single_stroke('SpeedChart-backstroke-50m-female-lc',extendPge);
+
+  CALL generate_50m_single_stroke('SpeedChart-breaststroke-50m-male-lc',extendPge);
+  CALL generate_50m_single_stroke('SpeedChart-breaststroke-50m-female-lc',extendPge);
+
+  CALL generate_50m_single_stroke('SpeedChart-butterfly-50m-male-lc',extendPge);
+  CALL generate_50m_single_stroke('SpeedChart-butterfly-50m-female-lc',extendPge);
+
+  CALL generate_200m_individual_medley('SpeedChart-individual_medley-200m-male-lc',extendPge);
+  CALL generate_200m_individual_medley('SpeedChart-individual_medley-200m-female-lc',extendPge);
+
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION' */ ;
 /*!50003 DROP PROCEDURE IF EXISTS `generate_100m_single_stroke` */;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
 /*!50003 SET @saved_cs_results     = @@character_set_results */ ;
@@ -1435,7 +1496,7 @@ CREATE TABLE `UserTypes` (
 /*!50003 SET character_set_results = utf8mb4 */ ;
 /*!50003 SET collation_connection  = utf8mb4_uca1400_ai_ci */ ;
 DELIMITER ;;
-CREATE DEFINER=`root`@`%` PROCEDURE `generate_100m_single_stroke`(IN p_table varchar(128))
+CREATE DEFINER=`root`@`%` PROCEDURE `generate_100m_single_stroke`(IN p_table varchar(128), IN p_pge int(5) unsigned)
 BEGIN
   DECLARE sql_text LONGTEXT;
 
@@ -1471,7 +1532,7 @@ steps AS (
   UNION ALL
   SELECT ROUND(new_time + 0.5, 2)
   FROM steps, base
-  WHERE new_time + 0.5 <= ROUND(base.`100m Time` * 1.25, 2)
+  WHERE new_time + 0.5 <= ROUND(base.`100m Time` * ', (100+p_pge ) / 100.0, ', 2)
 )
 SELECT
   s.new_time,
@@ -1532,7 +1593,7 @@ DELIMITER ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
 /*!50003 SET collation_connection  = utf8mb4_uca1400_ai_ci */ ;
 DELIMITER ;;
-CREATE DEFINER=`root`@`%` PROCEDURE `generate_200m_individual_medley`(IN p_table varchar(128))
+CREATE DEFINER=`root`@`%` PROCEDURE `generate_200m_individual_medley`(IN p_table varchar(128), IN p_pge int(5) unsigned)
 BEGIN
   DECLARE sql_text LONGTEXT;
 
@@ -1576,7 +1637,7 @@ steps AS (
   UNION ALL
   SELECT ROUND(new_time + 0.5, 2)
   FROM steps, base
-  WHERE new_time + 0.5 <= ROUND(base_time * 1.25, 2)
+  WHERE new_time + 0.5 <= ROUND(base_time * ', (100+p_pge ) / 100.0, ', 2)
 )
 SELECT
   s.new_time,
@@ -1625,7 +1686,7 @@ DELIMITER ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
 /*!50003 SET collation_connection  = utf8mb4_uca1400_ai_ci */ ;
 DELIMITER ;;
-CREATE DEFINER=`root`@`%` PROCEDURE `generate_200m_single_stroke`(IN p_table varchar(128))
+CREATE DEFINER=`root`@`%` PROCEDURE `generate_200m_single_stroke`(IN p_table varchar(128), IN p_pge int(5) unsigned)
 BEGIN
   DECLARE sql_text LONGTEXT;
 
@@ -1669,7 +1730,7 @@ steps AS (
   UNION ALL
   SELECT ROUND(new_time + 0.5, 2)
   FROM steps, base
-  WHERE new_time + 0.5 <= ROUND(base_time * 1.25, 2)
+  WHERE new_time + 0.5 <= ROUND(base_time * ', (100+p_pge ) / 100.0, ', 2)
 )
 SELECT
   s.new_time,
@@ -1718,7 +1779,7 @@ DELIMITER ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
 /*!50003 SET collation_connection  = utf8mb4_uca1400_ai_ci */ ;
 DELIMITER ;;
-CREATE DEFINER=`root`@`%` PROCEDURE `generate_50m_single_stroke`(IN p_table varchar(128))
+CREATE DEFINER=`root`@`%` PROCEDURE `generate_50m_single_stroke`(IN p_table varchar(128), IN p_pge int(5) unsigned )
 BEGIN
   DECLARE sql_text LONGTEXT;
 
@@ -1752,7 +1813,7 @@ steps AS (
   UNION ALL
   SELECT ROUND(new_time + 0.2, 2)
   FROM steps, base
-  WHERE new_time + 0.2 <= ROUND(base.`50m Time` * 1.25, 2)
+  WHERE new_time + 0.2 <= ROUND(base.`50m Time` * ', (100+p_pge ) / 100.0, ', 2)
 )
 SELECT
   s.new_time,
