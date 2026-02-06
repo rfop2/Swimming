@@ -233,32 +233,6 @@ CREATE TABLE `MeetsMeta` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Temporary table structure for view `MeetsView`
---
-
-DROP TABLE IF EXISTS `MeetsView`;
-/*!50001 DROP VIEW IF EXISTS `MeetsView`*/;
-SET @saved_cs_client     = @@character_set_client;
-SET character_set_client = utf8mb4;
-/*!50001 CREATE VIEW `MeetsView` AS SELECT
- 1 AS `id`,
-  1 AS `code`,
-  1 AS `date`,
-  1 AS `duration`,
-  1 AS `name`,
-  1 AS `country`,
-  1 AS `region`,
-  1 AS `location`,
-  1 AS `latitude`,
-  1 AS `longitude`,
-  1 AS `course`,
-  1 AS `level`,
-  1 AS `type`,
-  1 AS `contact`,
-  1 AS `email` */;
-SET character_set_client = @saved_cs_client;
-
---
 -- Table structure for table `NotificationViews`
 --
 
@@ -1853,30 +1827,6 @@ DELIMITER ;
 /*!50003 SET character_set_client  = @saved_cs_client */ ;
 /*!50003 SET character_set_results = @saved_cs_results */ ;
 /*!50003 SET collation_connection  = @saved_col_connection */ ;
-
---
--- Current Database: `swimming`
---
-
-USE `swimming`;
-
---
--- Final view structure for view `MeetsView`
---
-
-/*!50001 DROP VIEW IF EXISTS `MeetsView`*/;
-/*!50001 SET @saved_cs_client          = @@character_set_client */;
-/*!50001 SET @saved_cs_results         = @@character_set_results */;
-/*!50001 SET @saved_col_connection     = @@collation_connection */;
-/*!50001 SET character_set_client      = utf8mb4 */;
-/*!50001 SET character_set_results     = utf8mb4 */;
-/*!50001 SET collation_connection      = utf8mb4_uca1400_ai_ci */;
-/*!50001 CREATE ALGORITHM=UNDEFINED */
-/*!50013 DEFINER=`root`@`%` SQL SECURITY DEFINER */
-/*!50001 VIEW `MeetsView` AS select `Meets`.`id` AS `id`,`Meets`.`code` AS `code`,`Meets`.`date` AS `date`,`Meets`.`duration` AS `duration`,`Meets`.`name` AS `name`,`Meets`.`country` AS `country`,`Meets`.`region` AS `region`,`Meets`.`location` AS `location`,`Locations`.`latitude` AS `latitude`,`Locations`.`longitude` AS `longitude`,`Meets`.`course` AS `course`,`Meets`.`level` AS `level`,`Meets`.`type` AS `type`,`Meets`.`contact` AS `contact`,`Meets`.`email` AS `email` from (`Meets` left join `Locations` on(`Meets`.`locationId` = `Locations`.`locationId`)) */;
-/*!50001 SET character_set_client      = @saved_cs_client */;
-/*!50001 SET character_set_results     = @saved_cs_results */;
-/*!50001 SET collation_connection      = @saved_col_connection */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
