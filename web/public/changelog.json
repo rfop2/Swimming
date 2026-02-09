@@ -1,14 +1,48 @@
 [
   {
-    "isoDate": "2026-02-06",
-    "niceDate": "6 February 2026",
-    "diff": "14.7.1..",
-    "href": "https://bitbucket.org/swimracing/swimming/compare/14.8.0..14.7.1",
+    "isoDate": "2026-02-09",
+    "niceDate": "9 February 2026",
+    "diff": "14.8.0..",
+    "href": "https://bitbucket.org/swimracing/swimming/compare/14.8.1..14.8.0",
     "major": false,
     "minor": false,
     "tag": null,
+    "title": "14.8.1",
+    "date": "2026-02-09T10:34:26.991Z",
+    "summary": null,
+    "commits": [
+      {
+        "hash": "258abb2eb114da84bdcc4f7372c67ee1bd94f650",
+        "shorthash": "258abb2",
+        "author": "Philip Coombes",
+        "email": "phil@web2wire.com",
+        "date": "2026-02-09T10:34:04.000Z",
+        "niceDate": "9 February 2026",
+        "subject": "Allow .env override of DB host",
+        "message": "Allow .env override of DB host",
+        "fixes": null,
+        "href": "https://bitbucket.org/swimracing/swimming/commits/258abb2eb114da84bdcc4f7372c67ee1bd94f650",
+        "breaking": false,
+        "files": 6,
+        "insertions": 7,
+        "deletions": 2,
+        "merge": null
+      }
+    ],
+    "merges": [],
+    "fixes": []
+  },
+  {
+    "isoDate": "2026-02-06",
+    "niceDate": "6 February 2026",
+    "diff": "14.7.1..14.8.0",
+    "href": "https://bitbucket.org/swimracing/swimming/compare/14.8.0..14.7.1",
+    "major": false,
+    "minor": true,
+    "tag": "14.8.0",
+    "date": "2026-02-06",
     "title": "14.8.0",
-    "date": "2026-02-06T18:32:39.479Z",
+    "version": "14.8.0",
     "summary": null,
     "commits": [
       {
