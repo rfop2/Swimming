@@ -7,7 +7,7 @@ export const getPool = async () => {
   if ( !pool ) {
     const mysql = await import( "mysql2/promise" ) // Dynamic import
     pool = mysql.createPool( {
-      host: process.env.NODE_ENV === "production" ? "db" : "192.168.45.2",
+      host: process.env.MARIADB_HOST ?? ( process.env.NODE_ENV === "production" ? "db" : "192.168.45.3" ),
       user: process.env.MARIADB_USER,
       password: process.env.MARIADB_PASSWORD,
       database: process.env.MARIADB_DATABASE,
