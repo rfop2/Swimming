@@ -350,22 +350,23 @@
   </div>
 </template>
 
-<style lang="scss" scoped>
+<style lang="scss">
+.sx__event-modal {
+  animation: none !important;
+}
 .sx__event-icon {
   margin-top: 4px;
 }
-
 .sx__event-modal__title {
   grid-template-columns: 30px 1fr 24px;
 }
-
 .sx__event-modal-default {
-  max-height: 400px !important;
+  max-height: 480px !important;
   height: auto !important;
   width: auto !important;
   overflow-y: hidden;
+  top: 35% !important;
 }
-
 .sx__event-modal__time {
   font-size: 16px;
 }
