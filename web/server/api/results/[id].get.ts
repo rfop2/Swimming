@@ -28,6 +28,11 @@ export default defineEventHandler( async ( event ) => {
     "SELECT * FROM Results WHERE swimmer = :id AND course = :course AND stroke = :stroke AND distance = :distance AND date > COALESCE( :startDate, '1970-01-01' ) AND date <= COALESCE( :endDate, CURDATE() ) ORDER BY date ASC"
   )
 
+  const selectAllStrokeRecords = prepareStatement<Params & { id: string }, ResultsRow>(
+    await getPool(),
+    "SELECT * FROM Results WHERE swimmer = :id AND course = :course AND distance = :distance AND date > COALESCE( :startDate, '1970-01-01' ) AND date <= COALESCE( :endDate, CURDATE() ) ORDER BY date ASC"
+  )
+
   const selectAllRecords = prepareStatement<{ id: string }, ResultsRow>(
     await getPool(),
     "SELECT * FROM Results WHERE swimmer = :id ORDER BY date ASC"
@@ -37,7 +42,11 @@ export default defineEventHandler( async ( event ) => {
   if ( Object.values( query ).length ) {
     if ( !query.startDate ) query.startDate = null
     if ( !query.endDate ) query.endDate = null
-    return await selectFilteredRecords.all( { id, ...query } )
+    if ( query.stroke ) {
+      return await selectFilteredRecords.all( { id, ...query } )
+    } else {
+      return await selectAllStrokeRecords.all( { id, ...query } )
+    }
   } else {
     return await selectAllRecords.all( { id } )
   }

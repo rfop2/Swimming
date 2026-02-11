@@ -5,7 +5,7 @@ import { Mysql2Adapter } from "@lucia-auth/adapter-mysql"
 import type { DatabaseUser } from "lib"
 
 const pool = createPool( {
-  host: process.env.MARIADB_HOST ?? ( process.env.NODE_ENV === "production" ? "db" : "192.168.45.3" ),
+  host: process.env.MARIADB_HOST ?? ( process.env.NODE_ENV === "production" ? "db" : "192.168.45.2" ),
   user: process.env.MARIADB_USER,
   password: process.env.MARIADB_PASSWORD,
   database: process.env.MARIADB_DATABASE,
