@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS `VideoTimerSessions` (
   `course` varchar(8) NOT NULL,
   `stroke` varchar(32) NOT NULL,
   `distance` varchar(8) NOT NULL,
+  `startOffsetMs` int unsigned DEFAULT NULL,
   `notes` text DEFAULT NULL,
   `created` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
@@ -46,16 +47,21 @@ CREATE TABLE IF NOT EXISTS `VideoTimerSessions` (
     ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
+
 CREATE TABLE IF NOT EXISTS `VideoTimerMarkers` (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT,
   `sessionId` varchar(36) NOT NULL,
   `seq` int unsigned NOT NULL,
   `type` enum('surfacing','split') NOT NULL,
+  `code` varchar(32) NOT NULL,
+  `label` varchar(64) NOT NULL,
   `tMs` int unsigned NOT NULL,
   `created` timestamp NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`),
   UNIQUE KEY `uniq_session_seq` (`sessionId`,`seq`),
   KEY `idx_session_time` (`sessionId`,`tMs`),
+  KEY `idx_session_type` (`sessionId`,`type`),
+  KEY `idx_session_code` (`sessionId`,`code`),
   CONSTRAINT `fk_VideoTimerMarkers_Session`
     FOREIGN KEY (`sessionId`) REFERENCES `VideoTimerSessions` (`id`)
     ON DELETE CASCADE ON UPDATE CASCADE

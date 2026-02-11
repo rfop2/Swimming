@@ -9,6 +9,7 @@ type SessionRow = {
   course: string
   stroke: string
   distance: string
+  startOffsetMs: number | null
   meetId: string | null
   meetName: string | null
   swimmerId: string | null
@@ -23,6 +24,8 @@ type SessionRow = {
 
 type MarkerRow = {
   type: "surfacing" | "split"
+  code: string
+  label: string
   tMs: number
   seq: number
 }
@@ -50,12 +53,11 @@ export default defineEventHandler( async ( event ) => {
         s.course as course,
         s.stroke as stroke,
         s.distance as distance,
+        s.startOffsetMs as startOffsetMs,
         s.meetId as meetId,
         mt.name as meetName,
         s.swimmerId as swimmerId,
         sw.fullName as swimmerName,
-        sw.firstName,
-        sw.lastName,
         v.id as videoId,
         v.playbackUrl as playbackUrl,
         v.originalName as originalName,
@@ -79,6 +81,8 @@ export default defineEventHandler( async ( event ) => {
       `
       SELECT
         m.type as type,
+        m.code as code,
+        m.label as label,
         m.tMs as tMs,
         m.seq as seq
       FROM VideoTimerMarkers m
@@ -93,6 +97,7 @@ export default defineEventHandler( async ( event ) => {
       id: row.id,
       createdAt: row.created,
       notes: row.notes,
+      startOffsetMs: row.startOffsetMs ?? null,
       selections: { course: row.course, stroke: row.stroke, distance: row.distance },
       swimmer: row.swimmerId ? { id: row.swimmerId, fullName: row.swimmerName ?? "" } : null,
       meet: row.meetId ? { id: row.meetId, name: row.meetName ?? "" } : null,
@@ -107,6 +112,8 @@ export default defineEventHandler( async ( event ) => {
       markers: markers.map( ( m ) => ( {
         id: `${row.id}-${m.seq}`,
         type: m.type,
+        code: m.code,
+        label: m.label,
         tMs: Number( m.tMs ) || 0,
       } ) ),
     }
@@ -119,9 +126,9 @@ export default defineEventHandler( async ( event ) => {
     throw createError( { status: 500, message: "Unable to load video timer session" } )
   } finally {
     try {
-      conn.release() 
+      conn.release()
     } catch ( err ) {
-      void err 
+      void err
     }
   }
 } )

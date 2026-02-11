@@ -1,12 +1,24 @@
-<!-- app/components/VideoTimerTimingStep.vue -->
 <script setup lang="ts">
   import type { PropType } from "vue"
+
+  const LABELS: Record<string, string> = {
+    breakout: "Break out",
+    m10: "10m",
+    turn_end_5: "5m (turn end)",
+    hit_pad: "Hit pad",
+    turn_end_10: "10m (turn end)",
+    m5: "5m",
+    finish_end_5: "5m (Finish end)",
+    finish: "Finish",
+  }
 
   type MarkerType = "surfacing" | "split"
 
   type Marker = {
     id: string
     type: MarkerType
+    code: string
+    label: string
     tMs: number
   }
 
@@ -30,17 +42,77 @@
 
   const emit = defineEmits<{
     ( e: "back" ): void
-    ( e: "stop", payload: { markers: Marker[] } ): void
+    ( e: "stop", payload: { markers: Marker[]; startOffsetMs: number | null } ): void
   }>()
+
+  const videoEl = ref<HTMLVideoElement | null>( null )
+  const isReady = ref( false )
+
+  const isRunning = ref( false )
+  const startOffsetMs = ref<number | null>( null )
 
   
 
-  const videoEl = ref<HTMLVideoElement | null>( null )
-  const isRunning = ref( false )
-  const isReady = ref( false )
   const markers = ref<Marker[]>( [] )
-  const nowMs = ref( 0 )
-  let raf = 0
+
+  const normCourse = ( v: string ) => String( v || "" ).toLowerCase()
+
+  const parseDistanceM = ( v: string ) => {
+    const n = Number( String( v ).replace( /[^\d]/g, "" ) )
+    return Number.isFinite( n ) ? n : 0
+  }
+
+  const poolLenM = ( course: string ) => ( normCourse( course ) === "sc" ? 25 : 50 )
+
+  const buildSurfacePlanCodes = ( course: string ) =>
+    normCourse( course ) === "sc" ? [ "breakout", "breakout", "breakout" ] : [ "breakout" ]
+
+  const buildSplitPlanCodes = ( course: string, distance: string ) => {
+    const d = parseDistanceM( distance )
+    if ( !d ) return []
+
+    const c = normCourse( course )
+    const len = poolLenM( c )
+    const turns = len > 0 ? Math.max( 0, Math.floor( d / len ) - 1 ) : 0
+
+    const out: string[] = []
+    out.push( "m10" )
+
+    for ( let i = 0; i < turns; i++ ) {
+      out.push( "turn_end_5" )
+      out.push( "hit_pad" )
+      out.push( "turn_end_10" )
+    }
+
+    out.push( c === "lc" ? "finish_end_5" : "m5" )
+    out.push( "finish" )
+    return out
+  }
+
+  const surfacePlan = computed( () => buildSurfacePlanCodes( props.selections.course ) )
+  const splitPlan = computed( () => buildSplitPlanCodes( props.selections.course, props.selections.distance ) )
+
+  const surfaceCount = computed( () => markers.value.filter( m => m.type === "surfacing" ).length )
+  const splitCount = computed( () => markers.value.filter( m => m.type === "split" ).length )
+
+  const nextSurfaceCode = computed( () => surfacePlan.value[surfaceCount.value] ?? null )
+  const nextSplitCode = computed( () => splitPlan.value[splitCount.value] ?? null )
+
+  const nextSurface = computed( () => {
+    const code = nextSurfaceCode.value
+    if ( !code ) return null
+    const label = LABELS[code]
+    if ( !label ) return null
+    return { code, label }
+  } )
+
+  const nextSplit = computed( () => {
+    const code = nextSplitCode.value
+    if ( !code ) return null
+    const label = LABELS[code]
+    if ( !label ) return null
+    return { code, label }
+  } )
 
   const makeId = () => {
     const c = globalThis.crypto as Crypto | undefined
@@ -48,15 +120,24 @@
     return `${Date.now()}-${Math.random().toString( 16 ).slice( 2 )}`
   }
 
-  const readTimeMs = () => {
+  const readVideoMs = () => {
     const v = videoEl.value
     if ( !v ) return 0
     const t = Number.isFinite( v.currentTime ) ? v.currentTime : 0
     return Math.max( 0, Math.round( t * 1000 ) )
   }
 
+  const toRaceMs = ( videoMs: number ) => {
+    const s = startOffsetMs.value
+    if ( s === null ) return 0
+    return Math.max( 0, videoMs - s )
+  }
+
+  const nowMs = ref( 0 )
+  let raf = 0
+
   const tick = () => {
-    nowMs.value = readTimeMs()
+    nowMs.value = toRaceMs( readVideoMs() )
     if ( isRunning.value ) raf = requestAnimationFrame( tick )
   }
 
@@ -66,47 +147,46 @@
     const v = videoEl.value
     if ( v ) isPortrait.value = v.videoHeight > v.videoWidth
     isReady.value = true
-    nowMs.value = readTimeMs()
+    nowMs.value = toRaceMs( readVideoMs() )
   }
 
-  const onGo = async () => {
+  const togglePlay = async () => {
     const v = videoEl.value
     if ( !v ) return
-
     try {
-      v.currentTime = 0
-    } catch ( err ) {
-      void err
+      if ( v.paused ) await v.play()
+      else v.pause()
+    } catch {
+      return
     }
+  }
 
+  const onStartTiming = () => {
+    if ( !isReady.value ) return
+    startOffsetMs.value = readVideoMs()
     markers.value = []
+    nowMs.value = 0
     isRunning.value = true
-    nowMs.value = readTimeMs()
-
     cancelAnimationFrame( raf )
     raf = requestAnimationFrame( tick )
-
-    try {
-      await v.play()
-    } catch ( err ) {
-      void err
-      isRunning.value = false
-      cancelAnimationFrame( raf )
-    }
   }
 
-  const addMarker = ( type: MarkerType ) => {
+  const addMarker = ( type: MarkerType, next: { code: string; label: string } | null ) => {
     if ( !isRunning.value ) return
-    const tMs = readTimeMs()
-    markers.value.push( { id: makeId(), type, tMs } )
+    if ( !next ) return
+    const tMs = readVideoMs()
+    markers.value.push( { id: makeId(), type, code: next.code, label: next.label, tMs } )
   }
+
+  const onSurface = () => addMarker( "surfacing", nextSurface.value )
+  const onSplit = () => addMarker( "split", nextSplit.value )
 
   const onStop = () => {
     const v = videoEl.value
     if ( v ) v.pause()
     isRunning.value = false
     cancelAnimationFrame( raf )
-    emit( "stop", { markers: markers.value.slice() } )
+    emit( "stop", { markers: markers.value.slice(), startOffsetMs: startOffsetMs.value } )
   }
 
   const onBack = () => {
@@ -179,32 +259,41 @@
                   {{ formatMs(nowMs) }}
                 </div>
 
-                <div class="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div class="mt-4 grid grid-cols-1 sm:grid-cols-4 gap-3">
+                  <button
+                    class="h-12 rounded-md bg-gray-200 text-gray-900 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
+                    type="button"
+                    :disabled="!isReady"
+                    @click="togglePlay"
+                  >
+                    Play / Pause
+                  </button>
+
                   <button
                     class="h-12 rounded-md bg-green-600 text-white disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
                     type="button"
                     :disabled="!isReady || isRunning"
-                    @click="onGo"
+                    @click="onStartTiming"
                   >
-                    GO
+                    Start timing
                   </button>
 
                   <button
                     class="h-12 rounded-md bg-gray-900 text-white disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
                     type="button"
-                    :disabled="!isRunning"
-                    @click="addMarker('surfacing')"
+                    :disabled="!isRunning || !nextSurface"
+                    @click="onSurface"
                   >
-                    Surfacing
+                    {{ nextSurface?.label ?? "Surfacing" }}
                   </button>
 
                   <button
                     class="h-12 rounded-md bg-gray-900 text-white disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
                     type="button"
-                    :disabled="!isRunning"
-                    @click="addMarker('split')"
+                    :disabled="!isRunning || !nextSplit"
+                    @click="onSplit"
                   >
-                    Split
+                    {{ nextSplit ? `Split: ${nextSplit.label}` : "Split" }}
                   </button>
                 </div>
 
@@ -227,14 +316,14 @@
                     :key="m.id"
                     class="px-3 py-2 text-xs border-b last:border-b-0 flex items-center justify-between"
                   >
-                    <span class="font-semibold">{{ m.type }}</span>
-                    <span class="tabular-nums">{{ formatMs(m.tMs) }}</span>
+                    <span class="font-semibold">{{ m.label ?? m.type }}</span>
+                    <span class="tabular-nums">{{ formatMs(toRaceMs(m.tMs)) }}</span>
                   </div>
                 </div>
               </div>
 
               <div class="mt-2 text-xs text-gray-500">
-                GO starts playback. Surfacing/Split capture the exact video timestamp.
+                Play the video, then click “Start timing” at the real race start. Markers capture the video timestamp; the UI shows race time (relative).
               </div>
             </div>
           </div>

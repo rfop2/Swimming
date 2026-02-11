@@ -5,6 +5,8 @@
   type Marker = {
     id: string
     type: MarkerType
+    code: string
+    label: string
     tMs: number
   }
 
@@ -26,7 +28,13 @@
     meetId: string | null
     notes: string
     markers: Marker[]
+    startOffsetMs: number | null
   }>()
+
+  const toRaceMs = ( videoMs: number ) => {
+    const s = props.startOffsetMs ?? 0
+    return Math.max( 0, videoMs - s )
+  }
 
   const emit = defineEmits<{
     ( e: "back" ): void
@@ -132,8 +140,9 @@
           swimmerId,
           meetId,
           notes: props.notes ?? "",
-          markers: sortedMarkers.value,
-        },
+          startOffsetMs: props.startOffsetMs,
+          markers: sortedMarkers.value.map( m => ( { type: m.type, code: m.code, label: m.label, tMs: m.tMs } ) ),
+        }
       } )
       savedId.value = res.id
       emit( "saved", { sessionId: res.id } )
@@ -218,11 +227,11 @@
                 <div v-else class="divide-y">
                   <div v-for="m in sortedMarkers" :key="m.id" class="p-3 flex items-center gap-3">
                     <button class="h-9 px-3 rounded-md bg-gray-100 text-gray-900" type="button" @click="seekTo(m.tMs)">
-                      {{ formatMs(m.tMs) }}
+                      {{ formatMs(toRaceMs(m.tMs)) }}
                     </button>
 
                     <div class="text-xs px-2 py-1 rounded bg-gray-100 text-gray-700">
-                      {{ m.type }}
+                      {{ m.label ?? m.type }}
                     </div>
 
                     <div class="flex-1">
@@ -231,8 +240,13 @@
                         type="number"
                         min="0"
                         step="1"
-                        :value="m.tMs"
-                        @input="updateMarkerTime(m.id, Number(($event.target as HTMLInputElement).value))"
+                        :value="toRaceMs(m.tMs)"
+                        @input="
+                          updateMarkerTime(
+                            m.id,
+                            Number(($event.target as HTMLInputElement).value) + (props.startOffsetMs ?? 0)
+                          )
+                        "
                       >
                       <div class="text-[11px] text-gray-500 mt-1">milliseconds (click the time button to seek)</div>
                     </div>
