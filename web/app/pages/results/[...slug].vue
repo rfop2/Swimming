@@ -1,7 +1,8 @@
 <script setup lang="ts">
-  import { convertTime, COURSES, secondsToTime, strokes, ucFirst } from "lib"
+  import type { ResultsRow, StrokeType} from "lib"
+  import { convertTime, COURSES, distanceTypes, formatStroke, secondsToTime, strokes, ucFirst } from "lib"
   import { Line } from "vue-chartjs"
-  import { Chart as ChartJS, CategoryScale, LinearScale, TimeScale, PointElement, LineElement, Title, Tooltip, Legend, type ChartData, type ChartOptions, type TooltipItem } from "chart.js"
+  import { Chart as ChartJS, CategoryScale, LinearScale, TimeScale, PointElement, LineElement, Title, Tooltip, Legend, type ChartData, type ChartOptions, type TooltipItem, type Point } from "chart.js"
   import "chartjs-adapter-date-fns"
   import annotationPlugin, { type AnnotationOptions } from "chartjs-plugin-annotation"
 
@@ -28,7 +29,7 @@
   } = useQualifying()
 
   const courseOptions = Object.entries( COURSES ).map( ( [ k, v ] ) => ( { value: k, label: v } ) )
-  const strokeOptions = Object.entries( strokes ).map( ( [ k, v ] ) => ( { value: k, label: v.label } ) )
+  const strokeOptions = Object.entries( strokes ).map( ( [ k, v ] ) => ( { value: k, label: v.label } ) ).concat( [ { value: "", label: "All Strokes"} ] )
   const distanceOptions = reactive<{ value: string, label: string }[]>( strokes[slug[1] ?? Object.keys( strokes )[0]!]!.distances.map( d => ( { value: d, label: d } ) ) )
 
   const selections = reactive( {
@@ -42,9 +43,15 @@
     }
   } )
 
+  const allStrokes = computed( () => selections.stroke === "" )
+
   watch( () => selections.stroke, ( newStroke ) => {
     distanceOptions.length = 0
-    distanceOptions.push( ...strokes[newStroke]!.distances.map( d => ( { value: d, label: d } ) ) )
+    if ( newStroke ) {
+      distanceOptions.push( ...strokes[newStroke]!.distances.map( d => ( { value: d, label: d } ) ) )
+    } else {
+      distanceOptions.push( ...distanceTypes.map( d => ( { value: d, label: d } ) ) )
+    }
     if ( selections.distance && !distanceOptions.find( o => o.value === selections.distance ) )
       selections.distance = distanceOptions[0]!.value
   } )
@@ -74,14 +81,16 @@
     if ( hasSwimmer( swimmer ) ) {
       const query: {
         course: string
-        stroke: string
+        stroke?: string
         distance: string
         startDate?: string
         endDate?: string
       } = {
         course: selections.course,
-        stroke: selections.stroke,
         distance: selections.distance,
+      }
+      if ( selections.stroke ) {
+        query.stroke = selections.stroke
       }
       if ( selections.period.startDate ) {
         query.startDate = selections.period.startDate
@@ -107,7 +116,7 @@
   } )
 
   const getQualifyingTime = ( qp?: QualifyingInfo ) => {
-    if ( !qp )
+    if ( !qp || allStrokes.value )
       return []
     // If there are qualification times speifically for this course length then return those
     const courseTimes = qp.times
@@ -164,38 +173,83 @@
     annotationPlugin
   )
 
+  const lineColours = [
+    "#60A5FA", // blue-400
+    "#F87171", // red-400
+    "#34D399", // emerald-400
+    "#FBBF24", // amber-400
+    "#A78BFA", // violet-400
+    "#22D3EE", // cyan-400
+  ]
+
   const dataValues = computed( () =>
     ( records?.value || [] ).map( record => Number( record.time ) )
   )
 
-  const data = computed<ChartData<"line", number[], string>>( () => ( {
-    labels: ( records?.value || [] ).map( record => record.date ),
-    datasets: [
-      {
-        label: "Time",
-        borderColor: "#60a5fa", // line color
-        borderWidth: 1.5, // line thickness
-        data: dataValues.value,
-        segment: {
-          borderDash: ctx => {
-            const p0 = ctx.p0?.parsed?.y
-            const p1 = ctx.p1?.parsed?.y
-            return p1! > p0! ? [ 6, 2 ] : [] // dashed if going down
+  const strokeRecords = computed( () => ( records?.value || [] ).reduce( ( strokeMap, record ) => {
+    if ( !strokeMap.has( record.stroke ) )
+      strokeMap.set( record.stroke, [] )
+    strokeMap.get( record.stroke )!.push( record )
+    return strokeMap
+  }, new Map<StrokeType,ResultsRow[]> ) )
+
+  const data = computed<ChartData<"line", Point[]>>( () => {
+    if ( !allStrokes.value ) {
+      return {
+        datasets: [
+          {
+            label: "Time",
+            borderColor: lineColours[0], // line color
+            borderWidth: 1.5, // line thickness
+            data: records.value.map( record => ( { x: new Date( record.date ).getTime(), y: Number( record.time )} ) ),
+            segment: {
+              borderDash: ctx => {
+                const p0 = ctx.p0?.parsed?.y
+                const p1 = ctx.p1?.parsed?.y
+                return p1! > p0! ? [ 6, 2 ] : [] // dashed if going down
+              }
+            },
+            pointStyle: ctx => {
+              const data = ctx.chart.data.datasets[0]!.data as number[]
+              const minVal = Math.min( ...data )
+              return ctx.parsed.y === minVal ? "rectRot" : "circle"
+            },
+            pointRadius: ctx => {
+              const data = ctx.chart.data.datasets[0]!.data as number[]
+              const minVal = Math.min( ...data )
+              return ctx.parsed.y === minVal ? 4 : 2 // make diamond slightly larger
+            },
           }
-        },
-        pointStyle: ctx => {
-          const data = ctx.chart.data.datasets[0]!.data as number[]
-          const minVal = Math.min( ...data )
-          return ctx.parsed.y === minVal ? "rectRot" : "circle"
-        },
-        pointRadius: ctx => {
-          const data = ctx.chart.data.datasets[0]!.data as number[]
-          const minVal = Math.min( ...data )
-          return ctx.parsed.y === minVal ? 4 : 2 // make diamond slightly larger
-        },
+        ]
       }
-    ]
-  } ) )
+    } else {
+      return {
+        datasets: [ ...strokeRecords.value.entries() ].map( ( [ stroke, records ], index ) => ( {
+          label: formatStroke( stroke ),
+          borderColor: lineColours[index], // line color
+          borderWidth: 1.5, // line thickness
+          data: records.map( record => ( { x: new Date( record.date ).getTime(), y: Number( record.time )} ) ),
+          segment: {
+            borderDash: ctx => {
+              const p0 = ctx.p0?.parsed?.y
+              const p1 = ctx.p1?.parsed?.y
+              return p1! > p0! ? [ 6, 2 ] : [] // dashed if going down
+            }
+          },
+          pointStyle: ctx => {
+            const data = ctx.chart.data.datasets[0]!.data as number[]
+            const minVal = Math.min( ...data )
+            return ctx.parsed.y === minVal ? "rectRot" : "circle"
+          },
+          pointRadius: ctx => {
+            const data = ctx.chart.data.datasets[0]!.data as number[]
+            const minVal = Math.min( ...data )
+            return ctx.parsed.y === minVal ? 4 : 2 // make diamond slightly larger
+          },
+        } ) )
+      }
+    }
+  } )
 
   const qualValues = computed( () =>
     Math.min( ...qualifyingTimes.value.map( q => q.courseTime ) )
@@ -237,7 +291,7 @@
   }
   const boxes = computed( () => Object.fromEntries( qualifyingTimes.value.map( ( time, i ) => ( [ `zone${i + 1}`, {
     type: "box",
-    yMin: ( i > 0 ) ? qualifyingTimes.value[i - 1].courseTime : 0,
+    yMin: ( i > 0 ) ? qualifyingTimes.value[i - 1]!.courseTime : 0,
     yMax: time.courseTime,
     backgroundColor: boxColours[time.type].background,
     borderWidth: 0,
@@ -303,13 +357,15 @@
     },
     plugins: {
       legend: {
-        display: false // Hides the legend
+        display: allStrokes.value
       },
       tooltip: {
         callbacks: {
           label: ( context: TooltipItem<"line"> ) => {
             const label = context.dataset.label || ""
-            return `${label}: ${secondsToTime( context.raw as number )}`
+            if ( typeof context.raw === "number" )
+              return `${label}: ${secondsToTime( context.raw )}`
+            return `${label}: ${secondsToTime( ( context.raw as Point ).y as number )}`
           }
         }
       },
@@ -360,7 +416,7 @@
       </div>
     </template>
     <div
-      v-if="data.datasets[0].data.length > 0"
+      v-if="dataValues.length > 0"
     >
       <div
         class="overflow-x-auto"
@@ -376,7 +432,7 @@
           />
         </div>
       </div>
-      <div class="overflow-x-auto">
+      <div v-if="!allStrokes" class="overflow-x-auto">
         <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
           <table class="min-w-full divide-y divide-gray-300">
             <thead>
