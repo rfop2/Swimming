@@ -1,7 +1,7 @@
 <script setup lang="ts">
   import type { InternalApi } from "nitropack"
   import { LinkIcon, ChartBarIcon } from "@heroicons/vue/24/outline"
-  import { COUNTIES, type IndividualStats, REGIONS, type Swimmer, convertTime, secondsToTime, strokeSort, type ScopeType, type QualifyingType, generateRankingUrl } from "lib"
+  import { COUNTIES, type IndividualStats, REGIONS, type Swimmer, convertTime, secondsToTime, strokeSort, type ScopeType, type QualifyingType, generateRankingUrl, formatStroke } from "lib"
   import { differenceInCalendarMonths, format, parseISO } from "date-fns"
   import { FetchError } from "ofetch"
 
@@ -432,7 +432,7 @@
                 {{ row.distance }}
               </td>
               <td class="whitespace-nowrap px-2 py-2 text-sm text-gray-900">
-                {{ row.stroke.replace( /_/g, " " ).replace(/\b\w/g, char => char.toUpperCase()) }}
+                {{ formatStroke( row.stroke ) }}
               </td>
               <td class="whitespace-nowrap px-2 py-2 text-sm text-gray-900">
                 {{ row.course === "lc" ? "Long" : "Short" }}
