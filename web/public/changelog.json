@@ -2,13 +2,47 @@
   {
     "isoDate": "2026-02-11",
     "niceDate": "11 February 2026",
-    "diff": "14.8.1..",
-    "href": "https://bitbucket.org/swimracing/swimming/compare/14.9.0..14.8.1",
+    "diff": "14.9.0..",
+    "href": "https://bitbucket.org/swimracing/swimming/compare/14.9.1..14.9.0",
     "major": false,
     "minor": false,
     "tag": null,
+    "title": "14.9.1",
+    "date": "2026-02-11T17:05:40.909Z",
+    "summary": null,
+    "commits": [
+      {
+        "hash": "0d3e02b2b92f096bd71a9c822c5a38cea627350b",
+        "shorthash": "0d3e02b",
+        "author": "Philip Coombes",
+        "email": "phil@web2wire.com",
+        "date": "2026-02-11T17:02:17.000Z",
+        "niceDate": "11 February 2026",
+        "subject": "Slighty kludgy fix for issues with event modals.",
+        "message": "Slighty kludgy fix for issues with event modals.",
+        "fixes": null,
+        "href": "https://bitbucket.org/swimracing/swimming/commits/0d3e02b2b92f096bd71a9c822c5a38cea627350b",
+        "breaking": false,
+        "files": 1,
+        "insertions": 6,
+        "deletions": 5,
+        "merge": null
+      }
+    ],
+    "merges": [],
+    "fixes": []
+  },
+  {
+    "isoDate": "2026-02-11",
+    "niceDate": "11 February 2026",
+    "diff": "14.8.1..14.9.0",
+    "href": "https://bitbucket.org/swimracing/swimming/compare/14.9.0..14.8.1",
+    "major": false,
+    "minor": true,
+    "tag": "14.9.0",
+    "date": "2026-02-11",
     "title": "14.9.0",
-    "date": "2026-02-11T15:51:23.033Z",
+    "version": "14.9.0",
     "summary": null,
     "commits": [
       {
