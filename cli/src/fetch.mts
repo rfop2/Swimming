@@ -575,6 +575,75 @@ const updateMeet = async ( meet: Partial<Meet>, force: boolean ) => {
   await parseMeet( page, $, meet )
 }
 
+const commonPrefixLength = ( a: string, b: string ): number => {
+  const max = Math.min( a.length, b.length )
+  let i = 0
+  while ( i < max && a[i] === b[i] ) {
+    i++
+  }
+  return i
+}
+
+type MatchResult =
+  | { status: "unique"; club: Club; score: number }
+  | { status: "ambiguous"; clubs: { club: Club; score: number }[] }
+  | { status: "none" }
+
+const MIN_MEET_MATCH_LENGTH = 5
+
+const resolveClubMatch = (
+  meet: Meet,
+  clubs: Club[]
+): MatchResult =>  {
+
+  const meetName = meet.name?.replace( /^\d{4}\s+/, "" ) ?? ""
+
+  let bestScore = 0
+  const bestMatches: { club: Club; score: number }[] = []
+
+  for ( const club of clubs ) {
+    if ( meet.region !== `${REGIONS[club.clubRegion]} Region` )
+      continue
+
+    const meetScore = club.meetName
+      ? commonPrefixLength( meetName, club.meetName )
+      : 0
+
+    const clubScore = club.clubName
+      ? commonPrefixLength( meetName, club.clubName )
+      : 0
+
+    const score = Math.max( meetScore, clubScore )
+
+    if ( score < MIN_MEET_MATCH_LENGTH ) continue
+
+    if ( score > bestScore ) {
+      bestScore = score
+      bestMatches.length = 0
+      bestMatches.push( { club, score } )
+    } else if ( score === bestScore ) {
+      bestMatches.push( { club, score } )
+    }
+  }
+
+  if ( bestMatches.length === 0 ) {
+    return { status: "none" }
+  }
+
+  if ( bestMatches.length === 1 ) {
+    return {
+      status: "unique",
+      club: bestMatches[0].club,
+      score: bestScore
+    }
+  }
+
+  return {
+    status: "ambiguous",
+    clubs: bestMatches
+  }
+}
+
 const updateMeets = async ( force: boolean ) => {
   console.log( "Updating meets" )
 
@@ -649,15 +718,13 @@ const updateMeets = async ( force: boolean ) => {
           console.error( `Unable to update meet '${meet.name}'`, error )
         }
       }
-      const meetClubs = clubs.filter( club => {
-        const meetName = meet.name?.replace( /^\d{4}\s+/, "" )
-        return meet.region === `${REGIONS[club.clubRegion]} Region` && ( meetName?.startsWith( club.meetName ) || meetName?.startsWith( club.clubName ) )
-      } )
-      if ( meetClubs.length === 1 ) {
-        clubId = meetClubs[0].clubId
-        console.warn( `Assigned meet '${meet.name} to club '${meetClubs[0].clubName}'` )
-      } else if ( meetClubs.length > 1 ) {
-        console.warn( `Multiple club meet matches for '${meet.name}`, meetClubs )
+
+      const clubMatch = resolveClubMatch( meet as Meet, clubs )
+      if ( clubMatch.status === "unique" ) {
+        clubId = clubMatch.club.clubId
+        console.warn( `Assigned meet '${meet.name} to club '${clubMatch.club.clubName}'` )
+      } else if ( clubMatch.status === "ambiguous" ) {
+        console.warn( `Multiple club meet matches for '${meet.name}`, clubMatch.clubs )
       } else {
         console.log( `No club matches for '${meet.name}` )
       }
