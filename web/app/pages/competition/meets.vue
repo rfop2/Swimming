@@ -41,7 +41,7 @@
   }
 
   const { formatTemporal } = useTemporal()
-  const updated = ref( "<never>" )
+  const updated = useState<string>( "meets-updated", () => "<never>" )
 
   type MeetApiResponse = InternalApi["/api/meets"]["get"]
   const { data } = await useFetch(
@@ -374,47 +374,45 @@
       Forthcoming events and competitions. Meets last updated {{ updated }}.
     </template>
     <template #controls>
-      <ClientOnly>
-        <div class="min-w-48">
-          <UI-Listbox
-            v-model="selections.course"
-            :options="courses"
-            label="Course"
-          />
-        </div>
-        <div class="min-w-72">
-          <UI-Listbox
-            v-model="selections.level"
-            :options="levels"
-            label="Level"
-            placeholder="All Levels"
-            multiple
-          />
-        </div>
-        <div class="min-w-64">
-          <UI-Combobox
-            id="club"
-            v-model="selections.club"
-            label="Club"
-            placeholder="Type club name"
-            :fetch-options="searchClubs"
-          />
-        </div>
-        <div class="min-w-36">
-          <UI-Listbox
-            v-model="selections.distance"
-            :options="distances"
-            label="Distance"
-          />
-        </div>
-        <div class="min-w-36">
-          <UI-Listbox
-            v-model="selections.tagged"
-            :options="taggings"
-            label="Tagged"
-          />
-        </div>
-      </ClientOnly>
+      <div class="min-w-48">
+        <UI-Listbox
+          v-model="selections.course"
+          :options="courses"
+          label="Course"
+        />
+      </div>
+      <div class="min-w-72">
+        <UI-Listbox
+          v-model="selections.level"
+          :options="levels"
+          label="Level"
+          placeholder="All Levels"
+          multiple
+        />
+      </div>
+      <div class="min-w-64">
+        <UI-Combobox
+          id="club"
+          v-model="selections.club"
+          label="Club"
+          placeholder="Type club name"
+          :fetch-options="searchClubs"
+        />
+      </div>
+      <div class="min-w-36">
+        <UI-Listbox
+          v-model="selections.distance"
+          :options="distances"
+          label="Distance"
+        />
+      </div>
+      <div class="min-w-36">
+        <UI-Listbox
+          v-model="selections.tagged"
+          :options="taggings"
+          label="Tagged"
+        />
+      </div>
     </template>
     <ClientOnly>
       <ScheduleXCalendar
