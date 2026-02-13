@@ -27,7 +27,15 @@
 
   type Mode = "setup" | "uploading" | "ready"
   type Step = "setup" | "timing" | "review"
-  type Marker = { id: string; type: "surfacing" | "split"; tMs: number }
+  type MarkerType = "surfacing" | "split"
+  type Marker = {
+    id: string
+    type: MarkerType
+    code: string
+    label: string
+    tMs: number
+  }
+
 
   type UploadVideoResponse = {
     id?: string
@@ -51,16 +59,22 @@
 
   const step = ref<Step>( "setup" )
   const markers = ref<Marker[]>( [] )
+  const startOffsetMs = ref<number | null>( null )
   const onContinue = () => {
     markers.value = []
+    startOffsetMs.value = null
     if ( !canProceed.value ) return
     if ( mode.value === "uploading" ) return
     step.value = "timing"
   }
 
+
+  
   const onBackFromTiming = () => {
+    startOffsetMs.value = null
     step.value = "setup"
   }
+
 
 
   const onBackFromReview = () => {
@@ -68,8 +82,9 @@
   }
 
 
-  const onStopTiming = ( payload: { markers: Marker[] } ) => {
+  const onStopTiming = ( payload: { markers: Marker[]; startOffsetMs: number | null } ) => {
     markers.value = payload.markers
+    startOffsetMs.value = payload.startOffsetMs
     step.value = "review"
   }
   const onSavedSession = () => {
@@ -183,6 +198,7 @@
 
   const resetVideo = () => {
     markers.value = []
+    startOffsetMs.value = null
     step.value = "setup"
     if ( xhrRef.value ) xhrRef.value.abort()
     xhrRef.value = null
@@ -563,6 +579,7 @@
       :swimmer="swimmer"
       :meet-id="meetId"
       :notes="notes"
+      :start-offset-ms="startOffsetMs"
       @back="onBackFromReview"
       @saved="onSavedSession"
     />
