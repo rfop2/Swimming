@@ -1,5 +1,5 @@
 export default defineEventHandler( async ( event ) => {
-  const { user, impersonating } = await validateRequest( event )
+  const { user, isImpersonating } = event.context
 
   if ( !user ) {
     throw createError( {
@@ -8,5 +8,8 @@ export default defineEventHandler( async ( event ) => {
     } )
   }
 
-  return { user, impersonating }
+  return {
+    user,
+    impersonating: isImpersonating
+  }
 } )

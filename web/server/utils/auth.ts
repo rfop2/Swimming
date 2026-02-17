@@ -46,14 +46,9 @@ declare module "lucia" {
 }
 
 export const validateRequest = async ( event: H3Event ) => {
-  const sessionId = getCookie( event, lucia.sessionCookieName )
-  if ( !sessionId ) return { user: null, session: null, impersonating: false }
-
-  const { session, user } = await lucia.validateSession( sessionId )
-  if ( !session || !user ) return { user: null, session: null, impersonating: false }
-
-  const adminSessionId = getCookie( event, "admin_session" )
-  const impersonating = !!adminSessionId
-
-  return { user, session, impersonating }
+  return {
+    user: event.context.user,
+    session: event.context.session,
+    impersonating: event.context.isImpersonating
+  }
 }
