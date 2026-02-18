@@ -1,5 +1,5 @@
-<!-- app/components/VideoTimerReviewStep.vue -->
 <script setup lang="ts">
+  import type { Swimmer } from "lib"
   type MarkerType = "surfacing" | "split"
 
   type Marker = {
@@ -17,12 +17,13 @@
     durationMs?: number
   }
 
-  type SwimmerRef = Record<string, unknown> | null
+  type SwimmerRef = Swimmer | undefined
 
   const props = defineProps<{
     video: UploadedVideo
     selections: { course: string; stroke: string; distance: string }
     swimmer: SwimmerRef
+    meetId: string | null
     notes: string
     markers: Marker[]
   }>()
@@ -37,16 +38,20 @@
   const saving = ref( false )
   const errorMsg = ref<string | null>( null )
   const savedId = ref<string | null>( null )
+  const isPortrait = ref( false )
+
+  const onReviewLoadedMetadata = () => {
+    const v = videoRef.value
+    if ( v ) isPortrait.value = v.videoHeight > v.videoWidth
+  }
 
   const formatMs = ( ms: number ) => {
-    const total = Math.max( 0, Math.floor( ms ) )
-    const m = Math.floor( total / 60000 )
-    const s = Math.floor( ( total % 60000 ) / 1000 )
-    const r = total % 1000
-    const mm = String( m )
-    const ss = String( s ).padStart( 2, "0" )
-    const rr = String( r ).padStart( 3, "0" )
-    return `${mm}:${ss}.${rr}`
+    const totalMs = Math.max( 0, Math.floor( ms ) )
+    const totalSeconds = Math.floor( totalMs / 1000 )
+    const m = Math.floor( totalSeconds / 60 )
+    const ss = String( totalSeconds % 60 ).padStart( 2, "0" )
+    const t = Math.floor( ( totalMs % 1000 ) / 100 )
+    return `${m}:${ss}.${t}`
   }
 
   const sortedMarkers = computed( () => {
@@ -105,6 +110,9 @@
   const saveSession = async () => {
     errorMsg.value = null
     savedId.value = null
+    const swimmerId = props.swimmer?.id ?? null
+    const meetId = props.meetId ?? null
+
 
     if ( !canSave.value ) {
       if ( !props.video?.id ) errorMsg.value = "Video not uploaded yet."
@@ -113,13 +121,16 @@
     }
 
     saving.value = true
+
+
     try {
       const res = await $fetch<{ id: string }>( "/api/competition/video-timer-session", {
         method: "POST",
         body: {
           video: props.video,
           selections: props.selections,
-          swimmer: props.swimmer ?? null,
+          swimmerId,
+          meetId,
           notes: props.notes ?? "",
           markers: sortedMarkers.value,
         },
@@ -165,8 +176,19 @@
                   </div>
                 </div>
 
-                <div class="aspect-video bg-black flex items-center justify-center max-h-[420px] overflow-hidden">
-                  <video ref="videoRef" :src="video.playbackUrl" controls playsinline class="w-full h-full object-contain" />
+                <div
+                  class="bg-black flex items-center justify-center overflow-hidden"
+                  :class="isPortrait ? 'h-[75vh] max-h-[720px]' : 'aspect-video max-h-[420px]'"
+                >
+                  <video
+                    ref="videoRef"
+                    :src="video.playbackUrl"
+                    controls
+                    playsinline
+                    class="object-contain max-w-full max-h-full"
+                    :class="isPortrait ? 'h-full w-auto' : 'w-full h-full'"
+                    @loadedmetadata="onReviewLoadedMetadata"
+                  />
                 </div>
               </div>
 
