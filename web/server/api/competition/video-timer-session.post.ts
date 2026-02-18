@@ -3,7 +3,6 @@ import { createError, defineEventHandler, readBody } from "h3"
 import { getPool, isMySql2Error, prepareStatement } from "lib"
 import { randomUUID } from "node:crypto"
 
-
 type MarkerType = "surfacing" | "split"
 
 type Body = {
@@ -19,10 +18,12 @@ type Body = {
   swimmerId?: string | null
   meetId?: string | null
   notes?: string
-  markers: { type: MarkerType; tMs: number }[]
+  startOffsetMs?: number | null
+  markers: { type: MarkerType; code: string; label: string; tMs: number }[]
 }
 
 const asNonEmptyString = ( v: unknown ) => ( typeof v === "string" && v.trim() ? v.trim() : null )
+
 const asIntMs = ( v: unknown ) => {
   const n = typeof v === "number" ? v : Number( v )
   if ( !Number.isFinite( n ) ) return null
@@ -31,15 +32,16 @@ const asIntMs = ( v: unknown ) => {
   return i
 }
 
+const asIntMsOrNull = ( v: unknown ) => {
+  if ( v === null || v === undefined ) return null
+  return asIntMs( v )
+}
+
 export default defineEventHandler( async ( event ) => {
-  if ( !event.context.session || !event.context.user ) {
-    throw createError( { status: 401 } )
-  }
+  if ( !event.context.session || !event.context.user ) throw createError( { status: 401 } )
 
   const userId = event.context.user.id
-  if ( !userId ) {
-    throw createError( { status: 401 } )
-  }
+  if ( !userId ) throw createError( { status: 401 } )
 
   let body: Body
   try {
@@ -52,7 +54,10 @@ export default defineEventHandler( async ( event ) => {
   const playbackUrl = asNonEmptyString( body?.video?.playbackUrl )
   const originalName = asNonEmptyString( body?.video?.originalName )
   const mimeType = asNonEmptyString( body?.video?.mimeType )
-  const size = typeof body?.video?.size === "number" && Number.isFinite( body.video.size ) ? Math.max( 0, Math.round( body.video.size ) ) : null
+  const size =
+    typeof body?.video?.size === "number" && Number.isFinite( body.video.size )
+      ? Math.max( 0, Math.round( body.video.size ) )
+      : null
 
   const course = asNonEmptyString( body?.selections?.course )
   const stroke = asNonEmptyString( body?.selections?.stroke )
@@ -61,6 +66,7 @@ export default defineEventHandler( async ( event ) => {
   const swimmerId = body?.swimmerId ? asNonEmptyString( body.swimmerId ) : null
   const meetId = body?.meetId ? asNonEmptyString( body.meetId ) : null
   const notes = typeof body?.notes === "string" ? body.notes : null
+  const startOffsetMs = asIntMsOrNull( body?.startOffsetMs )
 
   if ( !videoId || !playbackUrl || !originalName || !mimeType || size === null ) {
     throw createError( { status: 400, message: "Missing video fields" } )
@@ -73,9 +79,16 @@ export default defineEventHandler( async ( event ) => {
   const markers = markersIn
     .map( ( m ) => ( {
       type: m?.type === "surfacing" || m?.type === "split" ? m.type : null,
+      code: asNonEmptyString( m?.code ),
+      label: asNonEmptyString( m?.label ),
       tMs: asIntMs( m?.tMs ),
     } ) )
-    .filter( ( m ) => m.type && m.tMs !== null ) as { type: MarkerType; tMs: number }[]
+    .filter( ( m ) => m.type && m.code && m.label && m.tMs !== null ) as {
+    type: MarkerType
+    code: string
+    label: string
+    tMs: number
+  }[]
 
   const pool = await getPool()
   const conn: PoolConnection = await pool.getConnection()
@@ -113,8 +126,8 @@ export default defineEventHandler( async ( event ) => {
     const insertSession = prepareStatement(
       conn,
       `
-      INSERT INTO VideoTimerSessions (id, userId, swimmerId, videoId, meetId, course, stroke, distance, notes)
-      VALUES (:id, :userId, :swimmerId, :videoId, :meetId, :course, :stroke, :distance, :notes)
+      INSERT INTO VideoTimerSessions (id, userId, swimmerId, videoId, meetId, course, stroke, distance, startOffsetMs, notes)
+      VALUES (:id, :userId, :swimmerId, :videoId, :meetId, :course, :stroke, :distance, :startOffsetMs, :notes)
       `
     )
 
@@ -127,6 +140,7 @@ export default defineEventHandler( async ( event ) => {
       course,
       stroke,
       distance,
+      startOffsetMs,
       notes,
     } )
 
@@ -134,8 +148,8 @@ export default defineEventHandler( async ( event ) => {
       const insertMarker = prepareStatement(
         conn,
         `
-        INSERT INTO VideoTimerMarkers (sessionId, seq, type, tMs)
-        VALUES (:sessionId, :seq, :type, :tMs)
+        INSERT INTO VideoTimerMarkers (sessionId, seq, type, code, label, tMs)
+        VALUES (:sessionId, :seq, :type, :code, :label, :tMs)
         `
       )
 
@@ -145,15 +159,15 @@ export default defineEventHandler( async ( event ) => {
           sessionId,
           seq: i + 1,
           type: m.type,
+          code: m.code,
+          label: m.label,
           tMs: m.tMs,
         } )
       }
     }
 
     await conn.commit()
-
     return { id: sessionId }
-
   } catch ( error ) {
     try {
       await conn.rollback()
@@ -164,7 +178,6 @@ export default defineEventHandler( async ( event ) => {
     if ( isMySql2Error( error ) ) {
       throw createError( { status: 500, message: `Database error: ${error.sqlMessage}` } )
     }
-
     throw createError( { status: 500, message: "Unable to save video timer session" } )
   } finally {
     try {
