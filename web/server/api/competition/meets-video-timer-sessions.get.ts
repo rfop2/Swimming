@@ -41,7 +41,7 @@ export default defineEventHandler( async ( event ) => {
           OR location LIKE :searchLike
           OR code LIKE :searchLike
         )
-      ORDER BY date DESC
+      ORDER BY date DESC, name ASC
       LIMIT 200
       `
     )

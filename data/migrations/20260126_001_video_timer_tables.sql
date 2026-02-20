@@ -28,24 +28,50 @@ CREATE TABLE IF NOT EXISTS `VideoTimerSessions` (
   `notes` text DEFAULT NULL,
   `created` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
+
+  `resultSwimmer` varchar(8) DEFAULT NULL,
+  `resultCourse` varchar(8) DEFAULT NULL,
+  `resultStroke` varchar(32) DEFAULT NULL,
+  `resultDistance` varchar(8) DEFAULT NULL,
+  `resultSeq` int(11) DEFAULT NULL,
+
   PRIMARY KEY (`id`),
+
   KEY `idx_userId` (`userId`),
   KEY `idx_swimmerId` (`swimmerId`),
   KEY `idx_videoId` (`videoId`),
   KEY `idx_meetId` (`meetId`),
+
+  KEY `idx_result` (`resultSwimmer`,`resultCourse`,`resultStroke`,`resultDistance`,`resultSeq`),
+
+  UNIQUE KEY `ux_vts_user_result` (
+    `userId`,
+    `resultSwimmer`,`resultCourse`,`resultStroke`,`resultDistance`,`resultSeq`
+  ),
+
   CONSTRAINT `fk_VideoTimerSessions_User`
     FOREIGN KEY (`userId`) REFERENCES `User` (`id`)
     ON DELETE CASCADE ON UPDATE CASCADE,
+
   CONSTRAINT `fk_VideoTimerSessions_Swimmers`
     FOREIGN KEY (`swimmerId`) REFERENCES `Swimmers` (`id`)
     ON DELETE SET NULL ON UPDATE CASCADE,
+
   CONSTRAINT `fk_VideoTimerSessions_Video`
     FOREIGN KEY (`videoId`) REFERENCES `VideoTimerVideos` (`id`)
     ON DELETE RESTRICT ON UPDATE CASCADE,
+
   CONSTRAINT `fk_VideoTimerSessions_Meets`
     FOREIGN KEY (`meetId`) REFERENCES `Meets` (`id`)
-    ON DELETE SET NULL ON UPDATE CASCADE
+    ON DELETE SET NULL ON UPDATE CASCADE,
+
+  CONSTRAINT `fk_VideoTimerSessions_Result`
+    FOREIGN KEY (`resultSwimmer`,`resultCourse`,`resultStroke`,`resultDistance`,`resultSeq`)
+    REFERENCES `Results` (`swimmer`,`course`,`stroke`,`distance`,`seq`)
+    ON DELETE SET NULL
+    ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
 
 
 CREATE TABLE IF NOT EXISTS `VideoTimerMarkers` (
