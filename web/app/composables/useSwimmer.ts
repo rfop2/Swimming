@@ -12,6 +12,7 @@ export const useSwimmer = () => {
 
   const { swimmers } = useSwimmers()
   const updated = useLastUpdate()
+  const requestFetch = useRequestFetch()
 
   /**
    * Ensure persisted swimmerId is valid whenever swimmers change.
@@ -82,7 +83,7 @@ export const useSwimmer = () => {
       }
 
       try {
-        const lastUpdate = await $fetch( `/api/updated/${id}` )
+        const lastUpdate = await requestFetch( `/api/updated/${id}` )
         updated.value = format( lastUpdate, "yyyy-MM-dd" )
       } catch ( error ) {
         if ( error instanceof FetchError && error.status === 404 ) {

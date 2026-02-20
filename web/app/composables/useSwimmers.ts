@@ -3,9 +3,10 @@ import type { ExtSwimmer } from "lib"
 
 export const useSwimmers = ( userId?: string ) => {
   const swimmers = useState<ExtSwimmer[]>( `${userId ?? "0"}:swimmers`, () => [] )
+  const requestFetch = useRequestFetch()
 
   const fetchSwimmers = async (): Promise<ExtSwimmer[]> => {
-    const data = await $fetch<ExtSwimmer[]>( `/api/swimmers/${userId ?? ""}` )
+    const data = await requestFetch<ExtSwimmer[]>( `/api/swimmers/${userId ?? ""}` )
     return data
       .map( s => ( {
         ...s,

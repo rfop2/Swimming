@@ -83,6 +83,12 @@
         {{ formatTemporal( calendarEvent.start ) }} &ndash; {{ formatTemporal( calendarEvent.end ) }}
       </div>
     </div>
+    <div v-if="meet.clubId" class="sx__has-icon sx__event-modal__club">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="sx__event-icon">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 6v.75m0 3v.75m0 3v.75m0 3V18m-9-5.25h5.25M7.5 15h3M3.375 5.25c-.621 0-1.125.504-1.125 1.125v3.026a2.999 2.999 0 0 1 0 5.198v3.026c0 .621.504 1.125 1.125 1.125h17.25c.621 0 1.125-.504 1.125-1.125v-3.026a2.999 2.999 0 0 1 0-5.198V6.375c0-.621-.504-1.125-1.125-1.125H3.375Z" />
+      </svg>
+      <div>{{ meet.clubName }}</div>
+    </div>
     <div class="sx__has-icon sx__event-modal__location">
       <svg
         viewBox="0 0 24 24"
@@ -344,22 +350,23 @@
   </div>
 </template>
 
-<style lang="scss" scoped>
+<style lang="scss">
+.sx__event-modal {
+  animation: none !important;
+}
 .sx__event-icon {
   margin-top: 4px;
 }
-
 .sx__event-modal__title {
   grid-template-columns: 30px 1fr 24px;
 }
-
 .sx__event-modal-default {
-  max-height: 400px !important;
+  max-height: 480px !important;
   height: auto !important;
   width: auto !important;
   overflow-y: hidden;
+  top: 35% !important;
 }
-
 .sx__event-modal__time {
   font-size: 16px;
 }

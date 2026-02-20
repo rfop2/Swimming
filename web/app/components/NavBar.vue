@@ -168,10 +168,9 @@
 
   const activeUserNavigation = computed( () => filterNav( userNavigation.value ) )
 
-  const lastNotificationId = ref<number>( 0 )
   const { notifications } = useNotificationsCheck()
   const { readNotification, readNotifications, deleteNotifications } = useNotifications()
-  const newNotifications = computed<Notification[]>( () => notifications.value.filter( n => !lastNotificationId.value || ( n.notificationId > lastNotificationId.value ) ) )
+  const newNotifications = computed<Notification[]>( () => notifications.value.filter( n => !Number( n.notificationViewed ) ) )
   const maxNotificationSeverity = computed<NotificationType>( () => {
     if ( notifications.value.length > 0 ) {
       const maxIndex = notifications.value.reduce( ( index, notification ) => {
@@ -193,18 +192,6 @@
   } )
 
   const showNotifications = ref( false )
-
-  const clearNotifications = () => {
-    console.log( "Clear", notifications.value[notifications.value.length - 1]?.notificationId )
-    const lastNotification = notifications.value.at( notifications.value.length - 1 )
-    lastNotificationId.value = lastNotification ? lastNotification.notificationId : 0
-  }
-
-  watch( showNotifications, ( show ) => {
-    if ( !show ) {
-      clearNotifications()
-    }
-  } )
 </script>
 
 <template>

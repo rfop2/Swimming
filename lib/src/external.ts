@@ -129,6 +129,8 @@ export const strokeSort: Record<StrokeType,number> = {
   individual_medley: 4
 }
 
+export const formatStroke = ( stroke: string ) => stroke.replace( /_/g, " " ).replace( /\b\w/g, char => char.toUpperCase() )
+
 const strokeData = Object.entries( STROKE_DISTANCE ).reduce( ( strokes, [ strokeDistance, code ] ) => {
   const matches = strokeDistance.toLocaleLowerCase().match( /(?<stroke>\w+)__(?<distance>\d+m)$/ )
   if ( !matches ) {
@@ -137,7 +139,7 @@ const strokeData = Object.entries( STROKE_DISTANCE ).reduce( ( strokes, [ stroke
   const { stroke = "", distance = "" } = { ...matches?.groups }
   if ( !strokes[stroke] ) {
     strokes[stroke] = {
-      label: stroke.replace( /_/g, " " ).replace( /\b\w/g, char => char.toUpperCase() ),
+      label: formatStroke( stroke ),
       order: strokeSort[stroke as StrokeType],
       distances: [ distance as DistanceType ],
       codes: [ code ],

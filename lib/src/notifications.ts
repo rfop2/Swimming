@@ -41,7 +41,8 @@ export const getUserNotifications = async( conn: Pool | PoolConnection, user: Da
       Notifications.notificationTargetId,
       Notifications.notificationType,
       Notifications.notificationText,
-      NotificationViews.notificationViewed
+      NotificationViews.notificationViewed,
+      Notifications.created
     FROM
       Notifications
       LEFT JOIN NotificationViews
@@ -50,7 +51,7 @@ export const getUserNotifications = async( conn: Pool | PoolConnection, user: Da
       (notificationTargetId = :userId OR (notificationTargetId = 'admin' AND :isAdmin) OR notificationTargetId = '')
       AND (notificationType = :type OR ISNULL(:type))
       AND (ISNULL(notificationDeleted) OR notificationDeleted != 1)
-    ORDER BY Notifications.notificationId ASC
+    ORDER BY Notifications.notificationId DESC
     `,
   )
   return await getNotifications.all( {
