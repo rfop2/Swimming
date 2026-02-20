@@ -8,6 +8,8 @@
   import type { InternalApi } from "nitropack"
   import { format } from "date-fns"
 
+  import { VideoCameraIcon } from "@heroicons/vue/24/outline"
+
   definePageMeta( {
     layout: "secure",
     middleware: [ "protected" ]
@@ -20,8 +22,35 @@
     ]
   } )
 
+  
+
   const route = useRoute()
+  const router = useRouter()
   const slug = Array.isArray( route.params.slug ) ? route.params.slug : []
+
+  const openVideoForResult = ( row: ResultRow ) => {
+    const sessionId = row.videoTimerSessionId
+
+    if ( sessionId ) {
+      router.push( `/competition/video-timer/sessions/${encodeURIComponent( sessionId )}` )
+      return
+    }
+
+    router.push( {
+      path: "/competition/video-timer",
+      query: {
+        course: String( row.course ?? "" ),
+        stroke: String( row.stroke ?? "" ),
+        distance: String( row.distance ?? "" ),
+        resultSwimmer: String( row.swimmer ?? "" ),
+        resultSeq: String( row.seq ?? "" ),
+        resultDate: String( row.date ?? "" ),
+        meetHint: String( row.meet ?? "" ),
+      },
+    } )
+  }
+
+
 
   const {
     calcActiveQualifyingPeriods,
@@ -62,6 +91,12 @@
 
   type ResultsApiResponse = InternalApi["/api/results/:id"]["get"]
   type ResultType = ResultsApiResponse[number]
+
+  type ResultRow = ResultType & {
+    videoTimerSessionId?: string | null
+    meetId?: string | null
+  }
+
 
   const records = ref<ResultsApiResponse>( [] )
 
@@ -431,6 +466,12 @@
                 >
                   Level
                 </th>
+                <th
+                  scope="col"
+                  class="whitespace-nowrap align-bottom px-2 py-3.5 text-center text-sm font-semibold text-gray-900"
+                >
+                  Video
+                </th>
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-200 bg-white">
@@ -440,7 +481,7 @@
                 class="divide-x divide-gray-200"
               >
                 <td class="whitespace-nowrap py-2 pl-4 pr-3 text-right text-sm font-medium text-gray-900 sm:pl-0">
-                  {{ format( row.date, "yyyy-MM-dd" ) }}
+                  {{ typeof row.date === "string" ? row.date : format(row.date, "yyyy-MM-dd") }}
                 </td>
                 <td class="whitespace-nowrap p-2 text-right text-sm text-gray-900">
                   {{ row.time ? secondsToTime( row.time ) : '' }}
@@ -462,6 +503,15 @@
                 </td>
                 <td class="whitespace-nowrap py-2 pl-3 pr-4 text-sm text-gray-500 sm:pr-0">
                   {{ row.level }}
+                </td>
+                <td class="whitespace-nowrap p-2 text-center">
+                  <button
+                    type="button"
+                    class="inline-flex h-8 w-8 items-center justify-center rounded-md hover:bg-gray-100"
+                    @click="openVideoForResult(row)"
+                  >
+                    <VideoCameraIcon class="h-5 w-5 text-gray-700" />
+                  </button>
                 </td>
               </tr>
             </tbody>

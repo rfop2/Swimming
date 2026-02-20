@@ -2,6 +2,7 @@
   import { COURSES, strokes, type CourseType, type DistanceType, type StrokeType } from "lib"
   import VideoTimerReviewStep from "~/components/VideoTimerReviewStep.vue"
   import VideoTimerTimingStep from "~/components/VideoTimerTimingStep.vue"
+  import UIMeetListbox from "../../web/app/components/MeetListbox.vue"
 
   definePageMeta( {
     layout: "secure",
@@ -14,9 +15,23 @@
     meta: [ { name: "description", content: "Upload a video and record swimmer timings while it plays" } ],
   } )
 
-  const { showNav } = useLayoutUi()
+  const route = useRoute()
+
 
   const meetId = ref<string | null>( null )
+  const meetHint = ref<string | null>( null )
+  const resultDate = ref<string | null>( null )
+
+  watch(
+    () => route.query,
+    ( q ) => {
+      meetId.value = typeof q.meetId === "string" && q.meetId ? q.meetId : null
+      meetHint.value = typeof q.meetHint === "string" && q.meetHint ? q.meetHint : null
+      resultDate.value = typeof q.resultDate === "string" && q.resultDate ? q.resultDate : null
+    },
+    { immediate: true }
+  )
+  const { showNav } = useLayoutUi()
 
   const previewIsPortrait = ref( false )
 
@@ -53,9 +68,6 @@
     durationMs?: number
   }
 
-  type MeetOption = { value: string | null; label: string }
-
-  
 
   const step = ref<Step>( "setup" )
   const markers = ref<Marker[]>( [] )
@@ -108,49 +120,6 @@
       distance: distanceOptions[0]!.value,
     },
     "reactive"
-  )
-
-  const meetSearch = ref( "" )
-  const debouncedMeetSearch = ref( "" )
-  let meetSearchT: ReturnType<typeof setTimeout> | null = null
-
-  watch( meetSearch, ( v ) => {
-    if ( meetSearchT ) clearTimeout( meetSearchT )
-    meetSearchT = setTimeout( () => {
-      debouncedMeetSearch.value = v
-    }, 250 )
-  } )
-
-  const { data: meets } = await useAsyncData(
-    () => `video-timer-meets-${selections.course}-${debouncedMeetSearch.value}`,
-    () =>
-      $fetch<Array<{ id: string; name: string; date: string; course: string; location: string | null; code: string }>>(
-        "/api/competition/meets-video-timer-sessions",
-        {
-          query: {
-            course: selections.course,
-            q: debouncedMeetSearch.value || undefined,
-          },
-        }
-      ),
-    { default: () => [] }
-  )
-
-  const meetOptions = computed<MeetOption[]>( () => {
-    const list = meets.value ?? []
-    return [
-      { value: null, label: "No meet (optional)" },
-      ...list.map( ( m ) => ( {
-        value: String( m.id ),
-        label: m.name,
-      } ) ),
-    ]
-  } )
-  watch(
-    () => selections.course,
-    () => {
-      meetId.value = null
-    }
   )
   watch(
     () => selections.stroke,
@@ -424,19 +393,21 @@
               <div class="w-full sm:w-24">
                 <UI-Listbox v-model="selections.distance" :options="distanceOptions" label="Distance" placeholder="Choose Distance" />
               </div>
+            </div>  
+            <p v-if="meetHint && !meetId" class="mt-4 text-xs text-gray-500">
+              Suggested from result: “{{ meetHint }}”<span v-if="resultDate"> ({{ resultDate }})</span> (select manually)
+            </p>
+            <div class="mt-3">
+              <UIMeetListbox
+                v-model="meetId"
+                :course="selections.course"
+                label="Meet"
+                placeholder="Search meet..."
+                class="w-full"
+              />
 
-              <div class="w-full sm:w-56">
-                <div class="text-xs font-medium text-gray-700 mb-1">Meet search</div>
-                <UI-Input v-model="meetSearch" placeholder="Search meet (optional)" class="w-full" />
-              </div>
 
-              <div class="w-full sm:w-56">
-                <UI-Listbox v-model="meetId" :options="meetOptions" label="Meet" placeholder="Choose Meet (optional)" />
-              </div>
 
-              <NuxtLink class="h-10 px-4 rounded-md bg-gray-200 text-gray-900 flex items-center" to="/competition/video-timer/sessions">
-                Sessions
-              </NuxtLink>
             </div>
 
 

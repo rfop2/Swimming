@@ -122,6 +122,7 @@
       { name: "Races", href: "/competition/races" },
       { name: "Timer", href: "/competition/timer" },
       { name: "Video Timer", href: "/competition/video-timer" },
+      { name: "Sessions", href: "/competition/video-timer/sessions" },
     ] },
     { name: "Qualifications", children: [
       { name: "Cut-off Dates", href: "/qualifying/dates" },
