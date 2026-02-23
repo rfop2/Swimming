@@ -148,9 +148,7 @@
                     {{ m.label || m.type }}
                   </div>
 
-                  <div class="text-xs text-gray-500 tabular-nums">
-                    {{ m.tMs }} ms
-                  </div>
+                  
                 </div>
               </div>
             </div>

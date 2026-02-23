@@ -22,15 +22,7 @@
   const meetHint = ref<string | null>( null )
   const resultDate = ref<string | null>( null )
 
-  watch(
-    () => route.query,
-    ( q ) => {
-      meetId.value = typeof q.meetId === "string" && q.meetId ? q.meetId : null
-      meetHint.value = typeof q.meetHint === "string" && q.meetHint ? q.meetHint : null
-      resultDate.value = typeof q.resultDate === "string" && q.resultDate ? q.resultDate : null
-    },
-    { immediate: true }
-  )
+
   const { showNav } = useLayoutUi()
 
   const previewIsPortrait = ref( false )
@@ -129,6 +121,7 @@
       if ( !ds.includes( selections.distance ) ) selections.distance = ds[0] as DistanceType
     }
   )
+  
 
   const notes = ref( "" )
   const mode = ref<Mode>( "setup" )
@@ -146,6 +139,8 @@
   const xhrRef = ref<XMLHttpRequest | null>( null )
   const uploadToken = ref( 0 )
 
+  const resultOfficialFinishTime = ref<string>( "" )
+
   onBeforeUnmount( () => {
     showNav()
     if ( localVideoUrl.value ) URL.revokeObjectURL( localVideoUrl.value )
@@ -162,6 +157,18 @@
     }
     return `${v.toFixed( i === 0 ? 0 : 1 )} ${units[i]}`
   }
+
+  watch(
+    () => route.query,
+    ( q ) => {
+      meetId.value = typeof q.meetId === "string" && q.meetId ? q.meetId : null
+      meetHint.value = typeof q.meetHint === "string" && q.meetHint ? q.meetHint : null
+      resultDate.value = typeof q.resultDate === "string" && q.resultDate ? q.resultDate : null
+      resultOfficialFinishTime.value = typeof q.officialFinishTime === "string" ? q.officialFinishTime : ""
+
+    },
+    { immediate: true }
+  )
 
   const openPicker = () => fileInput.value?.click()
 
@@ -393,6 +400,15 @@
               <div class="w-full sm:w-24">
                 <UI-Listbox v-model="selections.distance" :options="distanceOptions" label="Distance" placeholder="Choose Distance" />
               </div>
+              <div v-if="resultOfficialFinishTime" class="w-full sm:w-32">
+                <label class="block text-xs font-medium text-gray-700 mb-1">Official time</label>
+                <input
+                  :value="resultOfficialFinishTime"
+                  type="text"
+                  readonly
+                  class="w-full h-10 rounded-md border border-gray-300 bg-gray-50 px-3 text-sm text-gray-900"
+                >
+              </div>
             </div>  
             <p v-if="meetHint && !meetId" class="mt-4 text-xs text-gray-500">
               Suggested from result: “{{ meetHint }}”<span v-if="resultDate"> ({{ resultDate }})</span> (select manually)
@@ -401,6 +417,8 @@
               <UIMeetListbox
                 v-model="meetId"
                 :course="selections.course"
+                :hint-name="meetHint"
+                :hint-date="resultDate"
                 label="Meet"
                 placeholder="Search meet..."
                 class="w-full"
@@ -505,7 +523,7 @@
                 </div>
 
                 <div class="mt-2 text-xs text-gray-500">
-                  Continue will be used to enter the timing mode (GO/play + marker buttons) in the next step.
+                  Continue will be used to enter the timing mode in the next step.
                 </div>
               </div>
             </div>
@@ -538,6 +556,7 @@
       :swimmer="swimmer"
       :meet-id="meetId"
       :notes="notes"
+      :initial-official-finish-time="resultOfficialFinishTime"
       @back="onBackFromTiming"
       @stop="onStopTiming"
     />
