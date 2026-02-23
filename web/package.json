@@ -10,7 +10,8 @@
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
-    "test": "vitest"
+    "test": "vitest",
+    "migrate": "tsx server/db/migrate.ts"
   },
   "dependencies": {
     "@headlessui/vue": "^1.7.23",
@@ -29,6 +30,7 @@
     "@vee-validate/yup": "^4.15.1",
     "ag-grid-community": "^34.3.1",
     "ag-grid-vue3": "^34.3.1",
+    "busboy": "^1.6.0",
     "chart.js": "^4.5.1",
     "chartjs-adapter-date-fns": "^3.0.0",
     "chartjs-plugin-annotation": "^3.1.0",
@@ -55,13 +57,16 @@
     "@primevue/nuxt-module": "^4.5.4",
     "@stylistic/eslint-plugin": "^5.6.1",
     "@tailwindcss/forms": "^0.5.11",
+    "@types/busboy": "^1.5.4",
     "@typescript-eslint/eslint-plugin": "^8.51.0",
     "@typescript-eslint/parser": "^8.51.0",
     "auto-changelog": "^2.5.0",
+    "dotenv": "^17.2.3",
     "eslint": "^9.39.2",
     "eslint-plugin-vue": "^10.6.2",
     "rollup-plugin-visualizer": "^6.0.5",
     "sass": "^1.97.1",
+    "tsx": "^4.21.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.51.0"
   }
