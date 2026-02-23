@@ -1,6 +1,7 @@
 import { verify } from "@node-rs/argon2"
 import { type DatabaseUser, getPool, prepareStatement } from "lib"
 import * as yup from "yup"
+import { checkRateLimit } from "~~/server/utils/rateLimiter"
 
 const loginSchema = yup.object( {
   username: yup.string().required().min( 3 ).max( 63 ).email(),
@@ -8,6 +9,13 @@ const loginSchema = yup.object( {
 } )
 
 export default defineEventHandler( async ( event ) => {
+  const ip = getRequestIP( event, { xForwardedFor: true } ) ?? "unknown"
+  const { allowed, retryAfter } = checkRateLimit( `login:${ip}`, 10, 15 * 60 * 1000 )
+  if ( !allowed ) {
+    setHeader( event, "Retry-After", retryAfter ?? 0 )
+    throw createError( { statusCode: 429, message: "Too many login attempts. Please try again later." } )
+  }
+
   const formData = await readFormData( event )
   const raw = { username: formData.get( "username" ), password: formData.get( "password" ) }
 
