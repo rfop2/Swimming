@@ -18,6 +18,19 @@ export default defineEventHandler( async ( event ) => {
   const course = typeof q.course === "string" && q.course.trim() ? q.course.trim() : null
   const search = typeof q.q === "string" && q.q.trim() ? q.q.trim() : null
 
+  const tokens = ( search ?? "" )
+    .trim()
+    .toLowerCase()
+    .split( /\s+/ )
+    .filter( Boolean )
+    .slice( 0, 8 )
+
+  const tokenClauses = tokens.map( ( _, i ) =>
+    `LOWER(CONCAT_WS(' ', DATE_FORMAT(date, '%Y-%m-%d'), name, COALESCE(location, ''), code)) LIKE :token${i}`
+  )
+
+  const searchClause = tokenClauses.length ? `AND ${tokenClauses.join( " AND " )}` : ""
+
   const pool = await getPool()
   const conn: PoolConnection = await pool.getConnection()
 
@@ -35,32 +48,29 @@ export default defineEventHandler( async ( event ) => {
       FROM Meets
       WHERE
         (:course IS NULL OR course = :course)
-        AND (
-          :search IS NULL
-          OR name LIKE :searchLike
-          OR location LIKE :searchLike
-          OR code LIKE :searchLike
-        )
+        AND date <= CURDATE()
+        ${searchClause}
       ORDER BY date DESC, name ASC
       LIMIT 200
       `
     )
 
-    const rows = ( await stmt.all( {
-      course,
-      search,
-      searchLike: search ? `%${search}%` : null,
-    } ) ) as MeetRow[]
+    const params: Record<string, string | null> = { course }
 
+    tokens.forEach( ( token, i ) => {
+      params[`token${i}`] = `%${token}%`
+    } )
+
+    const rows = ( await stmt.all( params ) ) as MeetRow[]
     return rows
   } catch ( error ) {
     if ( isMySql2Error( error ) ) throw createError( { status: 500, message: `Database error: ${error.sqlMessage}` } )
     throw createError( { status: 500, message: "Unable to load meets" } )
   } finally {
     try {
-      conn.release() 
+      conn.release()
     } catch ( err ) {
-      void err 
+      void err
     }
   }
 } )

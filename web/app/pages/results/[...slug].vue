@@ -47,6 +47,7 @@
         resultSeq: String( row.seq ?? "" ),
         resultDate: String( row.date ?? "" ),
         meetHint: String( row.meet ?? "" ),
+        officialFinishTime: row.time != null ? secondsToTime( Number( row.time ) ) : "",
       },
     } )
   }

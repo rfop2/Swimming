@@ -29,6 +29,8 @@
       searchPlaceholder?: string
       panelClass?: string
       debounceMs?: number
+      hintName?: string | null
+      hintDate?: string | null
     }>(),
     {
       id: undefined,
@@ -39,6 +41,8 @@
       searchPlaceholder: "Search meet…",
       panelClass: "max-h-[60vh]",
       debounceMs: 250,
+      hintName: null,
+      hintDate: null,
     }
   )
 
@@ -78,21 +82,164 @@
     { default: () => [] }
   )
 
-  const sorted = computed( () => {
-    const list = ( meets.value ?? [] ).slice()
-    list.sort( ( a, b ) => {
-      const da = String( a.date ?? "" )
-      const db = String( b.date ?? "" )
-      if ( da !== db ) return db.localeCompare( da )
-      return String( a.name ?? "" ).localeCompare( String( b.name ?? "" ) )
+  const todayIsoLocal = () => {
+    const d = new Date()
+    const y = d.getFullYear()
+    const m = String( d.getMonth() + 1 ).padStart( 2, "0" )
+    const day = String( d.getDate() ).padStart( 2, "0" )
+    return `${y}-${m}-${day}`
+  }
+
+  const normalizeText = ( value: string ) =>
+    String( value ?? "" )
+      .toLowerCase()
+      .normalize( "NFD" )
+      .replace( /[\u0300-\u036f]/g, "" )
+      .replace( /[•·]/g, " " )
+      .replace( /\s+/g, " " )
+      .trim()
+
+  const queryTokens = computed( () =>
+    normalizeText( query.value )
+      .split( " " )
+      .filter( Boolean )
+  )
+
+  const matchesMeetQuery = ( m: MeetRow ) => {
+    if ( queryTokens.value.length === 0 ) return true
+
+    const haystack = normalizeText(
+      `${m.date} ${m.name} ${m.location ?? ""} ${m.code}`
+    )
+
+    return queryTokens.value.every( token => haystack.includes( token ) )
+  }
+
+
+
+  const parseIsoDateToDay = ( value?: string | null ) => {
+    const s = String( value ?? "" ).trim()
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec( s )
+    if ( !m ) return null
+    const y = Number( m[1] )
+    const mo = Number( m[2] )
+    const d = Number( m[3] )
+    return Math.floor( Date.UTC( y, mo - 1, d ) / 86400000 )
+  }
+
+  const tokenOverlapScore = ( candidate: string, hint: string ) => {
+    const c = normalizeText( candidate )
+    const h = normalizeText( hint )
+    if ( !c || !h ) return 0
+
+    const cTokens = new Set( c.split( " " ).filter( ( x ) => x.length >= 2 ) )
+    const hTokens = new Set( h.split( " " ).filter( ( x ) => x.length >= 2 ) )
+
+    if ( !cTokens.size || !hTokens.size ) return 0
+
+    let common = 0
+    for ( const token of hTokens ) {
+      if ( cTokens.has( token ) ) common++
+    }
+
+    return Math.round( ( common / hTokens.size ) * 100 )
+  }
+
+  const calcNameScore = ( meetName: string, hintName?: string | null ) => {
+    const hint = String( hintName ?? "" ).trim()
+    if ( !hint ) return 0
+
+    const a = normalizeText( meetName )
+    const b = normalizeText( hint )
+    if ( !a || !b ) return 0
+
+    if ( a === b ) return 300
+    if ( a.includes( b ) || b.includes( a ) ) return 220
+
+    return tokenOverlapScore( a, b )
+  }
+
+  const calcDateScore = ( meetDate: string, hintDate?: string | null ) => {
+    const a = parseIsoDateToDay( meetDate )
+    const b = parseIsoDateToDay( hintDate )
+    if ( a === null || b === null ) return 0
+
+    const diff = Math.abs( a - b )
+
+    if ( diff === 0 ) return 300
+    if ( diff <= 1 ) return 220
+    if ( diff <= 3 ) return 160
+    if ( diff <= 7 ) return 100
+    if ( diff <= 14 ) return 50
+    return 0
+  }
+
+  const rankMeet = ( meet: MeetRow ) => {
+    const nameScore = calcNameScore( meet.name, props.hintName )
+    const dateScore = calcDateScore( meet.date, props.hintDate )
+
+    const strongName = nameScore >= 220
+    const sameDate = dateScore === 300
+    const nearDate = dateScore > 0
+
+    let boost = 0
+    if ( sameDate && strongName ) boost += 500
+    else if ( nearDate && strongName ) boost += 200
+
+    const total = ( dateScore * 3 ) + ( nameScore * 2 ) + boost
+
+    return { total, nameScore, dateScore }
+  }
+
+  const filteredNotFuture = computed( () => {
+    const today = todayIsoLocal()
+    return ( meets.value ?? [] ).filter( ( m ) => {
+      const date = String( m.date ?? "" ).trim()
+      if ( !date ) return true
+      return date <= today
     } )
+  } )
+
+  const defaultSort = ( a: MeetRow, b: MeetRow ) => {
+    const da = String( a.date ?? "" )
+    const db = String( b.date ?? "" )
+    if ( da !== db ) return db.localeCompare( da )
+    return String( a.name ?? "" ).localeCompare( String( b.name ?? "" ) )
+  }
+
+  const sorted = computed( () => {
+    const list = filteredNotFuture.value.slice()
+
+    const hasHintName = !!String( props.hintName ?? "" ).trim()
+    const hasHintDate = !!String( props.hintDate ?? "" ).trim()
+    const userTypedSearch = !!debounced.value.trim()
+
+    if ( !userTypedSearch && ( hasHintName || hasHintDate ) ) {
+      list.sort( ( a, b ) => {
+        const ra = rankMeet( a )
+        const rb = rankMeet( b )
+
+        if ( ra.total !== rb.total ) return rb.total - ra.total
+        if ( ra.dateScore !== rb.dateScore ) return rb.dateScore - ra.dateScore
+        if ( ra.nameScore !== rb.nameScore ) return rb.nameScore - ra.nameScore
+
+        return defaultSort( a, b )
+      } )
+      return list
+    }
+
+    list.sort( defaultSort )
     return list
+  } )
+
+  const visibleMeets = computed( () => {
+    return sorted.value.filter( matchesMeetQuery )
   } )
 
   const options = computed<Option[]>( () => {
     return [
       { value: null, label: "No meet (optional)" },
-      ...sorted.value.map( ( m ) => ( {
+      ...visibleMeets.value.map( ( m ) => ( {
         value: String( m.id ),
         label: `${m.date} • ${m.name}`,
       } ) ),
@@ -106,7 +253,6 @@
     return options.value.find( ( o ) => o.value === model.value )?.label ?? String( model.value )
   } )
 </script>
-
 <template>
   <Listbox :id="props.id ?? defaultId" v-model="model" as="div" :required="props.required">
     <ListboxLabel v-if="props.label" class="block text-sm font-medium leading-6 text-gray-900">
