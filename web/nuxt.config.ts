@@ -15,6 +15,11 @@ const siteUrl =
 const siteName = process.env.SITE_NAME ?? "Swim.Racing"
 
 export default defineNuxtConfig( {
+  nitro: {
+    publicAssets: [
+      { baseURL: "/uploads", dir: "public/uploads" }
+    ]
+  },
   devtools: { enabled: true },
 
   modules: [

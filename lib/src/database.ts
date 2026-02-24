@@ -1,5 +1,5 @@
 import type { Pool, PoolConnection, ResultSetHeader, RowDataPacket } from "mysql2/promise"
-export type { Pool, PoolConnection }
+export type { Pool, PoolConnection, RowDataPacket }
 
 let pool: Pool | null = null
 
@@ -8,6 +8,7 @@ export const getPool = async () => {
     const mysql = await import( "mysql2/promise" ) // Dynamic import
     pool = mysql.createPool( {
       host: process.env.MARIADB_HOST ?? ( process.env.NODE_ENV === "production" ? "db" : "192.168.45.2" ),
+      port: Number( process.env.MARIADB_PORT ?? "3306" ),
       user: process.env.MARIADB_USER,
       password: process.env.MARIADB_PASSWORD,
       database: process.env.MARIADB_DATABASE,

@@ -1,26 +1,29 @@
 import { verify } from "@node-rs/argon2"
 import { type DatabaseUser, getPool, prepareStatement } from "lib"
+import * as yup from "yup"
+import { checkRateLimit } from "~~/server/utils/rateLimiter"
+
+const loginSchema = yup.object( {
+  username: yup.string().required().min( 3 ).max( 63 ).email(),
+  password: yup.string().required().min( 6 ).max( 255 ),
+} )
 
 export default defineEventHandler( async ( event ) => {
-  const formData = await readFormData( event )
-  const username = formData.get( "username" )
-  if (
-    typeof username !== "string"
-    || username.length < 3
-    || username.length > 63
-    || !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test( username )
-  ) {
-    throw createError( {
-      message: "Invalid username",
-      status: 400
-    } )
+  const ip = getRequestIP( event, { xForwardedFor: true } ) ?? "unknown"
+  const { allowed, retryAfter } = checkRateLimit( `login:${ip}`, 10, 15 * 60 * 1000 )
+  if ( !allowed ) {
+    setHeader( event, "Retry-After", retryAfter ?? 0 )
+    throw createError( { statusCode: 429, message: "Too many login attempts. Please try again later." } )
   }
-  const password = formData.get( "password" )
-  if ( typeof password !== "string" || password.length < 6 || password.length > 255 ) {
-    throw createError( {
-      message: "Invalid password",
-      status: 400
-    } )
+
+  const formData = await readFormData( event )
+  const raw = { username: formData.get( "username" ), password: formData.get( "password" ) }
+
+  let username: string, password: string
+  try {
+    ( { username, password } = await loginSchema.validate( raw, { abortEarly: true } ) )
+  } catch ( err ) {
+    throw createError( { statusCode: 400, message: ( err as yup.ValidationError ).message } )
   }
 
   const getExistingUser = prepareStatement( await getPool(), "SELECT * FROM User WHERE username = :username" )

@@ -3,8 +3,16 @@ import { createError, readBody } from "h3"
 import { getPool, prepareStatement } from "lib"
 import { sendEmail } from "~~/server/utils/email"
 import type { User } from "lucia"
+import { checkRateLimit } from "~~/server/utils/rateLimiter"
 
 export default defineEventHandler( async ( event ) => {
+  const ip = getRequestIP( event, { xForwardedFor: true } ) ?? "unknown"
+  const { allowed, retryAfter } = checkRateLimit( `reset:${ip}`, 5, 60 * 60 * 1000 )
+  if ( !allowed ) {
+    setHeader( event, "Retry-After", retryAfter ?? 0 )
+    throw createError( { statusCode: 429, message: "Too many reset requests. Please try again later." } )
+  }
+
   const config = useRuntimeConfig()
 
   const { email } = await readBody<{ email: string }>( event )
