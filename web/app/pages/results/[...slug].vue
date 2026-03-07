@@ -8,7 +8,9 @@
   import type { InternalApi } from "nitropack"
   import { format } from "date-fns"
 
-  import { VideoCameraIcon } from "@heroicons/vue/24/outline"
+  import { VideoCameraIcon, EyeIcon } from "@heroicons/vue/24/outline"
+
+  
 
   definePageMeta( {
     layout: "secure",
@@ -28,28 +30,36 @@
   const router = useRouter()
   const slug = Array.isArray( route.params.slug ) ? route.params.slug : []
 
-  const openVideoForResult = ( row: ResultRow ) => {
-    const sessionId = row.videoTimerSessionId
+const openVideoForResult = ( row: ResultRow ) => {
+  const sessionId = row.videoTimerSessionId
 
-    if ( sessionId ) {
-      router.push( `/competition/video-timer/sessions/${encodeURIComponent( sessionId )}` )
-      return
-    }
+  if ( sessionId ) {
+    const href = router.resolve( {
+      path: `/competition/video-timer/sessions/${encodeURIComponent( sessionId )}`
+    } ).href
 
-    router.push( {
-      path: "/competition/video-timer",
-      query: {
-        course: String( row.course ?? "" ),
-        stroke: String( row.stroke ?? "" ),
-        distance: String( row.distance ?? "" ),
-        resultSwimmer: String( row.swimmer ?? "" ),
-        resultSeq: String( row.seq ?? "" ),
-        resultDate: String( row.date ?? "" ),
-        meetHint: String( row.meet ?? "" ),
-        officialFinishTime: row.time != null ? secondsToTime( Number( row.time ) ) : "",
-      },
-    } )
+    window.open( href, "_blank", "noopener,noreferrer" )
+    return
   }
+
+  const query = {
+    course: String( row.course ?? "" ),
+    stroke: String( row.stroke ?? "" ),
+    distance: String( row.distance ?? "" ),
+    resultSwimmer: String( row.swimmer ?? "" ),
+    resultSeq: String( row.seq ?? "" ),
+    resultDate: String( row.date ?? "" ),
+    meetHint: String( row.meet ?? "" ),
+    officialFinishTime: row.time != null ? secondsToTime( Number( row.time ) ) : "",
+  }
+
+  const href = router.resolve( {
+    path: "/competition/video-timer",
+    query,
+  } ).href
+
+  window.open( href, "_blank", "noopener,noreferrer" )
+}
 
 
 
@@ -506,14 +516,21 @@
                   {{ row.level }}
                 </td>
                 <td class="whitespace-nowrap p-2 text-center">
-                  <button
-                    type="button"
-                    class="inline-flex h-8 w-8 items-center justify-center rounded-md hover:bg-gray-100"
-                    @click="openVideoForResult(row)"
-                  >
-                    <VideoCameraIcon class="h-5 w-5 text-gray-700" />
-                  </button>
-                </td>
+  <button
+    type="button"
+    class="inline-flex h-8 w-8 items-center justify-center rounded-md hover:bg-gray-100"
+    @click="openVideoForResult(row)"
+  >
+    <EyeIcon
+      v-if="row.videoTimerSessionId"
+      class="h-5 w-5 text-gray-700"
+    />
+    <VideoCameraIcon
+      v-else
+      class="h-5 w-5 text-gray-700"
+    />
+  </button>
+</td>
               </tr>
             </tbody>
           </table>

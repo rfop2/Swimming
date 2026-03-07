@@ -92,3 +92,20 @@ CREATE TABLE IF NOT EXISTS `VideoTimerMarkers` (
     FOREIGN KEY (`sessionId`) REFERENCES `VideoTimerSessions` (`id`)
     ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+
+CREATE TABLE IF NOT EXISTS `VideoTimerSessionAnalysis` (
+  `sessionId` varchar(36) NOT NULL,
+  `count10to50` smallint unsigned DEFAULT NULL,
+  `count60to100` smallint unsigned DEFAULT NULL,
+  `reactionMs` int unsigned DEFAULT NULL,
+  `breakoutStartM` decimal(5,2) DEFAULT NULL,
+  `turnRotationMs` int unsigned DEFAULT NULL,
+  `breakoutTurnM` decimal(5,2) DEFAULT NULL,
+  `created` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
+  PRIMARY KEY (`sessionId`),
+  CONSTRAINT `fk_VideoTimerSessionAnalysis_Session`
+    FOREIGN KEY (`sessionId`) REFERENCES `VideoTimerSessions` (`id`)
+    ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
