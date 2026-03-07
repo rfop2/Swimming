@@ -26,22 +26,22 @@
     $fetch<SessionListItem[]>( "/api/competition/video-timer-sessions" )
   )
 
- const dateFormatter = new Intl.DateTimeFormat( "en-GB", {
-  timeZone: "Europe/London",
-  day: "2-digit",
-  month: "2-digit",
-  year: "numeric",
-  hour: "2-digit",
-  minute: "2-digit",
-  second: "2-digit",
-  hour12: false,
-} )
+  const dateFormatter = new Intl.DateTimeFormat( "en-GB", {
+    timeZone: "Europe/London",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  } )
 
-const formatDate = ( iso: string ) => {
-  const d = new Date( iso )
-  if ( Number.isNaN( d.getTime() ) ) return iso
-  return dateFormatter.format( d )
-}
+  const formatDate = ( iso: string ) => {
+    const d = new Date( iso )
+    if ( Number.isNaN( d.getTime() ) ) return iso
+    return dateFormatter.format( d )
+  }
 
   const normalizedSwimmerFilter = computed( () => swimmerFilter.value.trim().toLowerCase() )
 

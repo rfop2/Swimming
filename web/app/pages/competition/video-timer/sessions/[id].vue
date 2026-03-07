@@ -127,7 +127,6 @@
   }
 
   const raceMsByCode = ( code: string ) => raceMsFromVideoMs( markerMap.value[code]?.tMs ?? null )
-  const videoMsByCode = ( code: string ) => markerMap.value[code]?.tMs ?? null
 
   const deltaMs = ( endMs: number | null, startMs: number | null ) => {
     if ( endMs === null || startMs === null ) return null

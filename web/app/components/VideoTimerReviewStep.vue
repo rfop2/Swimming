@@ -223,12 +223,12 @@
   const free10to50Sr = computed( () => calcSr( props.draft.count10to50, free10to50TimeSec.value ) )
   const free60to100Sr = computed( () => calcSr( props.draft.count60to100, free60to100TimeSec.value ) )
 
-const totalCount = computed( () => {
-  if ( props.draft.count10to50 !== null && props.draft.count60to100 !== null ) {
-    return props.draft.count10to50 + props.draft.count60to100
-  }
-  return null
-} )
+  const totalCount = computed( () => {
+    if ( props.draft.count10to50 !== null && props.draft.count60to100 !== null ) {
+      return props.draft.count10to50 + props.draft.count60to100
+    }
+    return null
+  } )
 
   const avgDps = computed( () => {
     const vals = [ free10to50Dps.value, free60to100Dps.value ].filter( ( v ): v is number => v !== null )

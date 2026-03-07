@@ -145,13 +145,13 @@ export default defineEventHandler( async ( event ) => {
       } ) ),
       analysis: analysisRow
         ? {
-            count10to50: analysisRow.count10to50 !== null ? Number( analysisRow.count10to50 ) : null,
-            count60to100: analysisRow.count60to100 !== null ? Number( analysisRow.count60to100 ) : null,
-            reactionMs: analysisRow.reactionMs !== null ? Number( analysisRow.reactionMs ) : null,
-            breakoutStartM: analysisRow.breakoutStartM !== null ? Number( analysisRow.breakoutStartM ) : null,
-            turnRotationMs: analysisRow.turnRotationMs !== null ? Number( analysisRow.turnRotationMs ) : null,
-            breakoutTurnM: analysisRow.breakoutTurnM !== null ? Number( analysisRow.breakoutTurnM ) : null,
-          }
+          count10to50: analysisRow.count10to50 !== null ? Number( analysisRow.count10to50 ) : null,
+          count60to100: analysisRow.count60to100 !== null ? Number( analysisRow.count60to100 ) : null,
+          reactionMs: analysisRow.reactionMs !== null ? Number( analysisRow.reactionMs ) : null,
+          breakoutStartM: analysisRow.breakoutStartM !== null ? Number( analysisRow.breakoutStartM ) : null,
+          turnRotationMs: analysisRow.turnRotationMs !== null ? Number( analysisRow.turnRotationMs ) : null,
+          breakoutTurnM: analysisRow.breakoutTurnM !== null ? Number( analysisRow.breakoutTurnM ) : null,
+        }
         : null,
     }
   } catch ( error ) {

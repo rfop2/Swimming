@@ -437,11 +437,11 @@
   const uploadReady = computed( () => mode.value === "ready" && !!uploadedVideo.value?.id && !!uploadedVideo.value?.playbackUrl )
 
   const canProceed = computed( () =>
-    uploadReady.value
-    && !!selections.course
-    && !!selections.stroke
-    && !!selections.distance
-    && !!resultOfficialFinishTime.value.trim()
+    uploadReady.value &&
+    !!selections.course &&
+    !!selections.stroke &&
+    !!selections.distance &&
+    !!resultOfficialFinishTime.value.trim()
   )
 
   const uploadStatusText = computed( () => {

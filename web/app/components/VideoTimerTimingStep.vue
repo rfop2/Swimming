@@ -85,7 +85,7 @@
   }
 
   
-const cloneDraft = () => structuredClone( toRaw( props.draft ) ) as VideoTimerDraft
+  const cloneDraft = () => structuredClone( toRaw( props.draft ) ) as VideoTimerDraft
 
   const updateDraft = ( updater: ( next: VideoTimerDraft ) => void ) => {
     const next = cloneDraft()
@@ -101,17 +101,17 @@ const cloneDraft = () => structuredClone( toRaw( props.draft ) ) as VideoTimerDr
   const normCourse = ( v: string ) => String( v || "" ).toLowerCase()
   const poolLenM = ( course: string ) => ( normCourse( course ) === "sc" ? 25 : 50 )
 
-const buildSurfacePlanCodes = ( course: string, distance: string ) => {
-  const c = normCourse( course )
-  const d = parseDistanceM( distance )
+  const buildSurfacePlanCodes = ( course: string, distance: string ) => {
+    const c = normCourse( course )
+    const d = parseDistanceM( distance )
 
-  if ( d === 100 ) {
-    return [ "breakout_start", "breakout_after_turn" ]
+    if ( d === 100 ) {
+      return [ "breakout_start", "breakout_after_turn" ]
+    }
+
+    if ( c === "sc" ) return [ "breakout_start", "breakout_after_turn", "breakout_after_turn" ]
+    return [ "breakout_start" ]
   }
-
-  if ( c === "sc" ) return [ "breakout_start", "breakout_after_turn", "breakout_after_turn" ]
-  return [ "breakout_start" ]
-}
 
   const buildSplitPlanCodes = ( course: string, distance: string ) => {
     const d = parseDistanceM( distance )
@@ -288,7 +288,6 @@ const buildSurfacePlanCodes = ( course: string, distance: string ) => {
   const dragging = ref<{ kind: "start" | "finish" | "marker"; id?: string } | null>( null )
 
   const finishVideoMs = computed( () => props.draft.finishVideoMs )
-  const startOffsetMs = computed( () => props.draft.startOffsetMs )
   const hasFinishMarked = computed( () => finishVideoMs.value !== null )
 
   const setCurrentFromVideo = () => {
@@ -326,20 +325,20 @@ const buildSurfacePlanCodes = ( course: string, distance: string ) => {
 
   const showFinishEditor = ref( false )
 
-const recalculateStartFromCurrentFinish = () => {
-  if ( props.draft.finishVideoMs === null || officialFinishMs.value === null ) return
+  const recalculateStartFromCurrentFinish = () => {
+    if ( props.draft.finishVideoMs === null || officialFinishMs.value === null ) return
 
-  updateDraft( ( next ) => {
-    next.startOffsetMs = next.finishVideoMs !== null
-      ? next.finishVideoMs - officialFinishMs.value
-      : null
-  } )
-}
+    updateDraft( ( next ) => {
+      next.startOffsetMs = next.finishVideoMs !== null
+        ? next.finishVideoMs - officialFinishMs.value
+        : null
+    } )
+  }
 
-const setFinishHereAndCloseEditor = () => {
-  setFinishHere()
-  showFinishEditor.value = false
-}
+  const setFinishHereAndCloseEditor = () => {
+    setFinishHere()
+    showFinishEditor.value = false
+  }
 
   const formatRaceMs = ( ms: number ) => {
     const totalMs = Math.max( 0, Math.floor( ms ) )
@@ -552,16 +551,16 @@ const setFinishHereAndCloseEditor = () => {
       .every( s => s.videoMs !== null )
   )
 
-const canStop = computed( () =>
-  isReady.value
-  && props.draft.startOffsetMs !== null
-  && props.draft.finishVideoMs !== null
-  && allMarkersPlaced.value
-  && props.draft.count10to50 !== null
-  && props.draft.count10to50 > 0
-  && props.draft.count60to100 !== null
-  && props.draft.count60to100 > 0
-)
+  const canStop = computed( () =>
+    isReady.value &&
+    props.draft.startOffsetMs !== null &&
+    props.draft.finishVideoMs !== null &&
+    allMarkersPlaced.value &&
+    props.draft.count10to50 !== null &&
+    props.draft.count10to50 > 0 &&
+    props.draft.count60to100 !== null &&
+    props.draft.count60to100 > 0
+  )
 
   const emitStop = () => {
     const out: Marker[] = []
@@ -807,116 +806,116 @@ const canStop = computed( () =>
 
               <div class="w-full rounded-xl border border-gray-200 bg-white p-4">
                 <template v-if="!hasFinishMarked">
-  <div class="mt-2">
-    <div class="text-xs font-semibold text-gray-700 mb-2">
-      Step 1: Find the exact finish moment
-    </div>
+                  <div class="mt-2">
+                    <div class="text-xs font-semibold text-gray-700 mb-2">
+                      Step 1: Find the exact finish moment
+                    </div>
 
-    <div class="grid grid-cols-1 gap-3">
-      <div>
-        <label class="block text-xs font-semibold text-gray-700 mb-1">
-          Official finish time
-        </label>
+                    <div class="grid grid-cols-1 gap-3">
+                      <div>
+                        <label class="block text-xs font-semibold text-gray-700 mb-1">
+                          Official finish time
+                        </label>
 
-        <input
-          v-model="officialFinishText"
-          type="text"
-          placeholder="e.g. 1:14.58"
-          class="w-full h-10 rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-900"
-        >
+                        <input
+                          v-model="officialFinishText"
+                          type="text"
+                          placeholder="e.g. 1:14.58"
+                          class="w-full h-10 rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-900"
+                        >
 
-        <div class="mt-1 text-[11px] text-gray-500">
-          Enter the official race time used to calculate race start.
-        </div>
+                        <div class="mt-1 text-[11px] text-gray-500">
+                          Enter the official race time used to calculate race start.
+                        </div>
 
-        <div
-          v-if="officialFinishText.trim() && officialFinishMs === null"
-          class="mt-1 text-[11px] text-red-600"
-        >
-          Invalid time format.
-        </div>
-      </div>
+                        <div
+                          v-if="officialFinishText.trim() && officialFinishMs === null"
+                          class="mt-1 text-[11px] text-red-600"
+                        >
+                          Invalid time format.
+                        </div>
+                      </div>
 
-      <button
-        class="h-10 px-3 rounded-md bg-red-600 text-white disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
-        type="button"
-        :disabled="!isReady || officialFinishMs === null"
-        @click="setFinishHere"
-      >
-        Set finish and calculate race start
-      </button>
-    </div>
-  </div>
-</template>
+                      <button
+                        class="h-10 px-3 rounded-md bg-red-600 text-white disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
+                        type="button"
+                        :disabled="!isReady || officialFinishMs === null"
+                        @click="setFinishHere"
+                      >
+                        Set finish and calculate race start
+                      </button>
+                    </div>
+                  </div>
+                </template>
 
                 <template v-else>
                   <div class="mb-3 flex items-center justify-between gap-3">
-  <div class="text-xs font-semibold text-gray-700">
-    Step 2: Place markers
-  </div>
+                    <div class="text-xs font-semibold text-gray-700">
+                      Step 2: Place markers
+                    </div>
 
-  <button
-    class="text-xs font-semibold text-blue-600 hover:text-blue-700"
-    type="button"
-    @click="showFinishEditor = !showFinishEditor"
-  >
-    {{ showFinishEditor ? "Hide finish editor" : "Edit finish / start" }}
-  </button>
-</div>
-<div
-  v-if="showFinishEditor"
-  class="mb-3 rounded-md border border-amber-200 bg-amber-50 p-3"
->
-  <div class="text-xs font-semibold text-gray-700 mb-2">
-    Edit finish / race start
-  </div>
+                    <button
+                      class="text-xs font-semibold text-blue-600 hover:text-blue-700"
+                      type="button"
+                      @click="showFinishEditor = !showFinishEditor"
+                    >
+                      {{ showFinishEditor ? "Hide finish editor" : "Edit finish / start" }}
+                    </button>
+                  </div>
+                  <div
+                    v-if="showFinishEditor"
+                    class="mb-3 rounded-md border border-amber-200 bg-amber-50 p-3"
+                  >
+                    <div class="text-xs font-semibold text-gray-700 mb-2">
+                      Edit finish / race start
+                    </div>
 
-  <div class="grid grid-cols-1 gap-3">
-    <div>
-      <label class="block text-xs font-semibold text-gray-700 mb-1">
-        Official finish time
-      </label>
+                    <div class="grid grid-cols-1 gap-3">
+                      <div>
+                        <label class="block text-xs font-semibold text-gray-700 mb-1">
+                          Official finish time
+                        </label>
 
-      <input
-        v-model="officialFinishText"
-        type="text"
-        placeholder="e.g. 1:14.58"
-        class="w-full h-10 rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-900"
-      >
+                        <input
+                          v-model="officialFinishText"
+                          type="text"
+                          placeholder="e.g. 1:14.58"
+                          class="w-full h-10 rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-900"
+                        >
 
-      <div
-        v-if="officialFinishText.trim() && officialFinishMs === null"
-        class="mt-1 text-[11px] text-red-600"
-      >
-        Invalid time format.
-      </div>
-    </div>
+                        <div
+                          v-if="officialFinishText.trim() && officialFinishMs === null"
+                          class="mt-1 text-[11px] text-red-600"
+                        >
+                          Invalid time format.
+                        </div>
+                      </div>
 
-    <div class="grid grid-cols-1 gap-2">
-  <button
-    class="min-h-[40px] px-3 py-2 rounded-md bg-gray-900 text-white disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed whitespace-normal leading-5"
-    type="button"
-    :disabled="props.draft.finishVideoMs === null || officialFinishMs === null"
-    @click="recalculateStartFromCurrentFinish"
-  >
-    Recalculate start from current finish
-  </button>
+                      <div class="grid grid-cols-1 gap-2">
+                        <button
+                          class="min-h-[40px] px-3 py-2 rounded-md bg-gray-900 text-white disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed whitespace-normal leading-5"
+                          type="button"
+                          :disabled="props.draft.finishVideoMs === null || officialFinishMs === null"
+                          @click="recalculateStartFromCurrentFinish"
+                        >
+                          Recalculate start from current finish
+                        </button>
 
-  <button
-    class="min-h-[40px] px-3 py-2 rounded-md bg-red-600 text-white disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed whitespace-normal leading-5"
-    type="button"
-    :disabled="!isReady || officialFinishMs === null"
-    @click="setFinishHereAndCloseEditor"
-  >
-    Set finish here and recalculate
-  </button>
-</div>
+                        <button
+                          class="min-h-[40px] px-3 py-2 rounded-md bg-red-600 text-white disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed whitespace-normal leading-5"
+                          type="button"
+                          :disabled="!isReady || officialFinishMs === null"
+                          @click="setFinishHereAndCloseEditor"
+                        >
+                          Set finish here and recalculate
+                        </button>
+                      </div>
 
-    <div class="text-[11px] text-gray-600">
-      Use the first button if only the official time changed. Use the second if you also want to move the finish marker to the current cursor position.
-    </div>
-  </div>
-</div>
+                      <div class="text-[11px] text-gray-600">
+                        Use the first button if only the official time changed. Use the second if you also want to move the finish marker to the current cursor position.
+                      </div>
+                    </div>
+                  </div>
                   <div class="rounded-md border border-gray-200 bg-gray-50 p-3">
                     <div class="flex items-center justify-between gap-3">
                       <div class="text-xs font-semibold text-gray-700">Current action</div>
@@ -1046,7 +1045,7 @@ const canStop = computed( () =>
 
                   
 
-                    <div class="mt-4 rounded-md border border-gray-200 bg-white p-3">
+                  <div class="mt-4 rounded-md border border-gray-200 bg-white p-3">
                     <div class="text-xs font-semibold text-gray-700 mb-2">Stroke counts</div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
