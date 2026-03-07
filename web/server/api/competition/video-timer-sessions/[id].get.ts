@@ -30,6 +30,15 @@ type MarkerRow = {
   seq: number
 }
 
+type AnalysisRow = {
+  count10to50: number | null
+  count60to100: number | null
+  reactionMs: number | null
+  breakoutStartM: number | null
+  turnRotationMs: number | null
+  breakoutTurnM: number | null
+}
+
 export default defineEventHandler( async ( event ) => {
   if ( !event.context.session || !event.context.user ) throw createError( { status: 401 } )
   const userId = event.context.user.id
@@ -93,6 +102,24 @@ export default defineEventHandler( async ( event ) => {
 
     const markers = ( await getMarkers.all( { sessionId: id } ) ) as MarkerRow[]
 
+    const getAnalysis = prepareStatement(
+      conn,
+      `
+      SELECT
+        a.count10to50 as count10to50,
+        a.count60to100 as count60to100,
+        a.reactionMs as reactionMs,
+        a.breakoutStartM as breakoutStartM,
+        a.turnRotationMs as turnRotationMs,
+        a.breakoutTurnM as breakoutTurnM
+      FROM VideoTimerSessionAnalysis a
+      WHERE a.sessionId = :sessionId
+      LIMIT 1
+      `
+    )
+
+    const analysisRow = ( await getAnalysis.get( { sessionId: id } ) ) as AnalysisRow | undefined
+
     return {
       id: row.id,
       createdAt: row.created,
@@ -116,6 +143,16 @@ export default defineEventHandler( async ( event ) => {
         label: m.label,
         tMs: Number( m.tMs ) || 0,
       } ) ),
+      analysis: analysisRow
+        ? {
+          count10to50: analysisRow.count10to50 !== null ? Number( analysisRow.count10to50 ) : null,
+          count60to100: analysisRow.count60to100 !== null ? Number( analysisRow.count60to100 ) : null,
+          reactionMs: analysisRow.reactionMs !== null ? Number( analysisRow.reactionMs ) : null,
+          breakoutStartM: analysisRow.breakoutStartM !== null ? Number( analysisRow.breakoutStartM ) : null,
+          turnRotationMs: analysisRow.turnRotationMs !== null ? Number( analysisRow.turnRotationMs ) : null,
+          breakoutTurnM: analysisRow.breakoutTurnM !== null ? Number( analysisRow.breakoutTurnM ) : null,
+        }
+        : null,
     }
   } catch ( error ) {
     if ( error && typeof error === "object" && "statusCode" in error ) throw error

@@ -19,22 +19,65 @@ type Body = {
   meetId?: string | null
   notes?: string
   startOffsetMs?: number | null
+  resultSwimmer?: string | null
+  resultCourse?: string | null
+  resultStroke?: string | null
+  resultDistance?: string | null
+  resultSeq?: string | number | null
   markers: { type: MarkerType; code: string; label: string; tMs: number }[]
+  analysis?: {
+    skills?: {
+      start?: {
+        reactionSec?: number | null
+        breakoutM?: number | null
+      }
+      turns?: Array<{
+        rotationSec?: number | null
+        breakoutM?: number | null
+      }>
+    }
+    freeSwim?: {
+      segment10to50?: {
+        count?: number | null
+      }
+      segment60to100?: {
+        count?: number | null
+      }
+    }
+  }
 }
 
 const asNonEmptyString = ( v: unknown ) => ( typeof v === "string" && v.trim() ? v.trim() : null )
 
-const asIntMs = ( v: unknown ) => {
+const asInt = ( v: unknown ) => {
   const n = typeof v === "number" ? v : Number( v )
   if ( !Number.isFinite( n ) ) return null
-  const i = Math.round( n )
-  if ( i < 0 ) return null
-  return i
+  return Math.round( n )
 }
 
-const asIntMsOrNull = ( v: unknown ) => {
-  if ( v === null || v === undefined ) return null
-  return asIntMs( v )
+const asUnsignedInt = ( v: unknown ) => {
+  const n = asInt( v )
+  if ( n === null || n < 0 ) return null
+  return n
+}
+
+const asUnsignedIntOrNull = ( v: unknown ) => {
+  if ( v === null || v === undefined || v === "" ) return null
+  return asUnsignedInt( v )
+}
+
+const asDecimalOrNull = ( v: unknown ) => {
+  if ( v === null || v === undefined || v === "" ) return null
+  const n = typeof v === "number" ? v : Number( v )
+  if ( !Number.isFinite( n ) ) return null
+  return Number( n.toFixed( 2 ) )
+}
+
+const asSecondsToMsOrNull = ( v: unknown ) => {
+  if ( v === null || v === undefined || v === "" ) return null
+  const n = typeof v === "number" ? v : Number( v )
+  if ( !Number.isFinite( n ) || n < 0 ) return null
+  return Math.round( n * 1000 )
 }
 
 export default defineEventHandler( async ( event ) => {
@@ -59,6 +102,8 @@ export default defineEventHandler( async ( event ) => {
       ? Math.max( 0, Math.round( body.video.size ) )
       : null
 
+  const durationMs = asUnsignedIntOrNull( body?.video?.durationMs )
+
   const course = asNonEmptyString( body?.selections?.course )
   const stroke = asNonEmptyString( body?.selections?.stroke )
   const distance = asNonEmptyString( body?.selections?.distance )
@@ -66,11 +111,18 @@ export default defineEventHandler( async ( event ) => {
   const swimmerId = body?.swimmerId ? asNonEmptyString( body.swimmerId ) : null
   const meetId = body?.meetId ? asNonEmptyString( body.meetId ) : null
   const notes = typeof body?.notes === "string" ? body.notes : null
-  const startOffsetMs = asIntMsOrNull( body?.startOffsetMs )
+  const startOffsetMs = asUnsignedIntOrNull( body?.startOffsetMs )
+
+  const resultSwimmer = body?.resultSwimmer ? asNonEmptyString( body.resultSwimmer ) : null
+  const resultCourse = body?.resultCourse ? asNonEmptyString( body.resultCourse ) : null
+  const resultStroke = body?.resultStroke ? asNonEmptyString( body.resultStroke ) : null
+  const resultDistance = body?.resultDistance ? asNonEmptyString( body.resultDistance ) : null
+  const resultSeq = asUnsignedIntOrNull( body?.resultSeq )
 
   if ( !videoId || !playbackUrl || !originalName || !mimeType || size === null ) {
     throw createError( { status: 400, message: "Missing video fields" } )
   }
+
   if ( !course || !stroke || !distance ) {
     throw createError( { status: 400, message: "Missing selections" } )
   }
@@ -81,7 +133,7 @@ export default defineEventHandler( async ( event ) => {
       type: m?.type === "surfacing" || m?.type === "split" ? m.type : null,
       code: asNonEmptyString( m?.code ),
       label: asNonEmptyString( m?.label ),
-      tMs: asIntMs( m?.tMs ),
+      tMs: asUnsignedIntOrNull( m?.tMs ),
     } ) )
     .filter( ( m ) => m.type && m.code && m.label && m.tMs !== null ) as {
     type: MarkerType
@@ -89,6 +141,14 @@ export default defineEventHandler( async ( event ) => {
     label: string
     tMs: number
   }[]
+
+  const count10to50 = asUnsignedIntOrNull( body?.analysis?.freeSwim?.segment10to50?.count )
+  const count60to100 = asUnsignedIntOrNull( body?.analysis?.freeSwim?.segment60to100?.count )
+  const reactionMs = asSecondsToMsOrNull( body?.analysis?.skills?.start?.reactionSec )
+  const breakoutStartM = asDecimalOrNull( body?.analysis?.skills?.start?.breakoutM )
+  const firstTurn = Array.isArray( body?.analysis?.skills?.turns ) ? body.analysis.skills.turns[0] : null
+  const turnRotationMs = asSecondsToMsOrNull( firstTurn?.rotationSec )
+  const breakoutTurnM = asDecimalOrNull( firstTurn?.breakoutM )
 
   const pool = await getPool()
   const conn: PoolConnection = await pool.getConnection()
@@ -118,7 +178,7 @@ export default defineEventHandler( async ( event ) => {
       originalName,
       mimeType,
       size,
-      durationMs: body.video.durationMs ?? null,
+      durationMs,
     } )
 
     const sessionId = randomUUID()
@@ -126,8 +186,40 @@ export default defineEventHandler( async ( event ) => {
     const insertSession = prepareStatement(
       conn,
       `
-      INSERT INTO VideoTimerSessions (id, userId, swimmerId, videoId, meetId, course, stroke, distance, startOffsetMs, notes)
-      VALUES (:id, :userId, :swimmerId, :videoId, :meetId, :course, :stroke, :distance, :startOffsetMs, :notes)
+      INSERT INTO VideoTimerSessions (
+        id,
+        userId,
+        swimmerId,
+        videoId,
+        meetId,
+        course,
+        stroke,
+        distance,
+        startOffsetMs,
+        notes,
+        resultSwimmer,
+        resultCourse,
+        resultStroke,
+        resultDistance,
+        resultSeq
+      )
+      VALUES (
+        :id,
+        :userId,
+        :swimmerId,
+        :videoId,
+        :meetId,
+        :course,
+        :stroke,
+        :distance,
+        :startOffsetMs,
+        :notes,
+        :resultSwimmer,
+        :resultCourse,
+        :resultStroke,
+        :resultDistance,
+        :resultSeq
+      )
       `
     )
 
@@ -142,6 +234,11 @@ export default defineEventHandler( async ( event ) => {
       distance,
       startOffsetMs,
       notes,
+      resultSwimmer,
+      resultCourse,
+      resultStroke,
+      resultDistance,
+      resultSeq,
     } )
 
     if ( markers.length ) {
@@ -166,6 +263,40 @@ export default defineEventHandler( async ( event ) => {
       }
     }
 
+    const insertAnalysis = prepareStatement(
+      conn,
+      `
+      INSERT INTO VideoTimerSessionAnalysis (
+        sessionId,
+        count10to50,
+        count60to100,
+        reactionMs,
+        breakoutStartM,
+        turnRotationMs,
+        breakoutTurnM
+      )
+      VALUES (
+        :sessionId,
+        :count10to50,
+        :count60to100,
+        :reactionMs,
+        :breakoutStartM,
+        :turnRotationMs,
+        :breakoutTurnM
+      )
+      `
+    )
+
+    await insertAnalysis.run( {
+      sessionId,
+      count10to50,
+      count60to100,
+      reactionMs,
+      breakoutStartM,
+      turnRotationMs,
+      breakoutTurnM,
+    } )
+
     await conn.commit()
     return { id: sessionId }
   } catch ( error ) {
@@ -178,6 +309,7 @@ export default defineEventHandler( async ( event ) => {
     if ( isMySql2Error( error ) ) {
       throw createError( { status: 500, message: `Database error: ${error.sqlMessage}` } )
     }
+
     throw createError( { status: 500, message: "Unable to save video timer session" } )
   } finally {
     try {

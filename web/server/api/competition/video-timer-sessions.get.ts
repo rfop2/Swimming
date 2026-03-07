@@ -61,12 +61,13 @@ export default defineEventHandler( async ( event ) => {
     return rows.map( ( r ) => ( {
       id: r.id,
       createdAt: r.created,
-      selections: { course: r.course, stroke: r.stroke, distance: r.distance },
+      swimmerName: r.swimmerName ?? null,
+      course: r.course ?? null,
+      stroke: r.stroke ?? null,
+      distance: r.distance ?? null,
       notes: r.notes,
       markersCount: Number( r.markersCount ) || 0,
-      swimmer: r.swimmerId ? { id: r.swimmerId, fullName: r.swimmerName ?? "" } : null,
-      meet: r.meetId ? { id: r.meetId, name: r.meetName ?? "" } : null,
-      video: { originalName: r.originalName },
+      videoOriginalName: r.originalName ?? null,
     } ) )
   } catch ( error ) {
     if ( isMySql2Error( error ) ) {
