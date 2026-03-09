@@ -13,7 +13,7 @@ export default defineEventHandler( async ( event ) => {
     throw createError( { statusCode: 415, statusMessage: "Expected multipart/form-data" } )
   }
 
-  const maxBytes = 300 * 1024 * 1024
+  const maxBytes = 700 * 1024 * 1024
   const dir = join( process.cwd(), "public", "uploads" )
   await fsp.mkdir( dir, { recursive: true } )
 
