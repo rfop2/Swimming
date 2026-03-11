@@ -1,5 +1,6 @@
 <script setup lang="ts">
-  import type { VideoTimerDraft, VideoTimerMarkerRecord, COURSES, strokes, type CourseType, type DistanceType, type StrokeType    } from "lib"
+  import { COURSES, strokes } from "lib"
+  import type { VideoTimerDraft, VideoTimerMarkerRecord, CourseType, DistanceType, StrokeType } from "lib"
 
   import VideoTimerReviewStep from "~/components/VideoTimerReviewStep.vue"
   import VideoTimerTimingStep from "~/components/VideoTimerTimingStep.vue"
