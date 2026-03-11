@@ -1,29 +1,20 @@
 <script setup lang="ts">
   import type { PropType } from "vue"
   import { toRaw } from "vue"
+  import {
+    buildSplitMarkerPlan,
+    buildStrokeCountSlots,
+    buildSurfaceMarkerPlan,
+    buildTurnPlan,
+    type MarkerPlanItem,
+    type MarkerType,
+    type VideoTimerDraft,
+    type VideoTimerMarkerRecord,
+    type VideoTimerTurnAnalysisRecord,
+    type StrokeCountSlot as PlanStrokeCountSlot,
+  } from "lib"
 
-  const LABELS: Record<string, string> = {
-    breakout_start: "Break out",
-    breakout_after_turn: "Break out after turn",
-    m10: "10m",
-    before_turn_5: "5m before turn",
-    hit_pad: "Hit pad",
-    after_turn_10: "10m after turn",
-    before_finish_5: "5m before finish",
-    finish_time: "Finish time",
-    finish: "Finish",
-  }
-
-  type MarkerType = "surfacing" | "split"
   type NextActionKind = "surfacing" | "split" | null
-
-  type Marker = {
-    id: string
-    type: MarkerType
-    code: string
-    label: string
-    tMs: number
-  }
 
   type UploadedVideo = {
     id?: string
@@ -36,30 +27,10 @@
 
   type SwimmerRef = Record<string, unknown> | null
 
-  type MarkerSlot = {
-    id: string
-    type: MarkerType
-    code: string
-    label: string
-    videoMs: number | null
-    missed: boolean
-  }
+  type MarkerSlot = VideoTimerDraft["surfaceSlots"][number]
+  type StrokeCountSlot = VideoTimerDraft["strokeCountSlots"][number]
 
-  type VideoTimerDraft = {
-    finishVideoMs: number | null
-    startOffsetMs: number | null
-    surfaceSlots: MarkerSlot[]
-    splitSlots: MarkerSlot[]
-    selectedSlotId: string | null
-    markers: Marker[]
-    strokeCount: number | null
-    count10to50: number | null
-    count60to100: number | null
-    reactionSec: number | null
-    breakoutStartM: number | null
-    turnRotationSec: number | null
-    breakoutTurnM: number | null
-  }
+  type TurnPlanItem = ReturnType<typeof buildTurnPlan>[number]
 
   const props = defineProps( {
     video: { type: Object as PropType<UploadedVideo>, required: true },
@@ -74,7 +45,7 @@
 
   const emit = defineEmits<{
     ( e: "back" ): void
-    ( e: "stop", payload: { markers: Marker[] } ): void
+    ( e: "stop", payload: { markers: VideoTimerMarkerRecord[] } ): void
     ( e: "update:draft", v: VideoTimerDraft ): void
   }>()
 
@@ -84,7 +55,6 @@
     return `${Date.now()}-${Math.random().toString( 16 ).slice( 2 )}`
   }
 
-  
   const cloneDraft = () => structuredClone( toRaw( props.draft ) ) as VideoTimerDraft
 
   const updateDraft = ( updater: ( next: VideoTimerDraft ) => void ) => {
@@ -93,95 +63,154 @@
     emit( "update:draft", next )
   }
 
-  const parseDistanceM = ( v: string ) => {
-    const n = Number( String( v ).replace( /[^\d]/g, "" ) )
-    return Number.isFinite( n ) ? n : 0
+  const buildSurfacePlan = (): MarkerPlanItem[] =>
+    buildSurfaceMarkerPlan( props.selections.course, props.selections.distance ) ?? []
+
+  const buildSplitPlan = (): MarkerPlanItem[] => {
+    const raw = buildSplitMarkerPlan( props.selections.course, props.selections.distance ) ?? []
+    const filtered = raw.filter( item => item.code !== "finish" )
+    if ( filtered.some( item => item.code === "finish_time" ) ) return filtered
+    return [ ...filtered, { seq: filtered.length + 1, type: "split", code: "finish_time", label: "Finish time", lengthIndex: null, turnIndex: null } ]
   }
 
-  const normCourse = ( v: string ) => String( v || "" ).toLowerCase()
-  const poolLenM = ( course: string ) => ( normCourse( course ) === "sc" ? 25 : 50 )
+  const buildStrokeCountPlan = (): PlanStrokeCountSlot[] =>
+    buildStrokeCountSlots( props.selections.course, props.selections.distance ) ?? []
 
-  const buildSurfacePlanCodes = ( course: string, distance: string ) => {
-    const c = normCourse( course )
-    const d = parseDistanceM( distance )
+  const buildTurnsPlan = (): TurnPlanItem[] =>
+    buildTurnPlan( props.selections.course, props.selections.distance ) ?? []
 
-    if ( d === 100 ) {
-      return [ "breakout_start", "breakout_after_turn" ]
-    }
+  const markerPlanKey = ( item: Pick<MarkerPlanItem, "code" | "lengthIndex" | "turnIndex"> ) =>
+    `${item.code}::${item.lengthIndex ?? "x"}::${item.turnIndex ?? "x"}`
 
-    if ( c === "sc" ) return [ "breakout_start", "breakout_after_turn", "breakout_after_turn" ]
-    return [ "breakout_start" ]
-  }
+  const strokePlanKey = ( item: Pick<PlanStrokeCountSlot, "lengthIndex" | "fromM" | "toM"> ) =>
+    `${item.lengthIndex}::${item.fromM}::${item.toM}`
 
-  const buildSplitPlanCodes = ( course: string, distance: string ) => {
-    const d = parseDistanceM( distance )
-    if ( !d ) return []
+  const makeMarkerSlotsFromPlan = ( items: MarkerPlanItem[], currentSlots: MarkerSlot[] ): MarkerSlot[] =>
+    items.map( item => {
+      const existing = currentSlots.find( slot => markerPlanKey( slot ) === markerPlanKey( item ) )
 
-    const c = normCourse( course )
+      return {
+        id: existing?.id ?? makeId(),
+        seq: item.seq,
+        type: item.type,
+        code: item.code,
+        label: item.label,
+        lengthIndex: item.lengthIndex,
+        turnIndex: item.turnIndex,
+        videoMs: existing?.videoMs ?? null,
+        missed: existing?.missed ?? false,
+      }
+    } )
 
-    if ( c === "lc" && d === 100 ) {
-      return [
-        "m10",
-        "before_turn_5",
-        "hit_pad",
-        "after_turn_10",
-        "before_finish_5",
-        "finish_time",
-        "finish",
-      ]
-    }
+  const makeStrokeCountDraftSlots = ( items: PlanStrokeCountSlot[], currentSlots: StrokeCountSlot[] ): StrokeCountSlot[] =>
+    items.map( item => {
+      const existing = currentSlots.find( slot => strokePlanKey( slot ) === strokePlanKey( item ) )
 
-    const len = poolLenM( c )
-    const turns = len > 0 ? Math.max( 0, Math.floor( d / len ) - 1 ) : 0
+      return {
+        id: existing?.id ?? makeId(),
+        lengthIndex: item.lengthIndex,
+        fromM: item.fromM,
+        toM: item.toM,
+        label: item.label,
+        count: existing?.count ?? null,
+      }
+    } )
 
-    const out: string[] = []
-    out.push( "m10" )
+  const makeTurnDraftRows = ( items: TurnPlanItem[], currentRows: VideoTimerDraft["turns"] ): VideoTimerTurnAnalysisRecord[] =>
+    items.map( item => {
+      const existing = currentRows.find( row => row.turnIndex === item.turnIndex )
 
-    for ( let i = 0; i < turns; i++ ) {
-      out.push( "before_turn_5" )
-      out.push( "hit_pad" )
-      out.push( "after_turn_10" )
-    }
+      return {
+        turnIndex: item.turnIndex,
+        breakoutM: existing?.breakoutM ?? null,
+      }
+    } )
 
-    out.push( "before_finish_5" )
-    out.push( "finish_time" )
-    out.push( "finish" )
-    return out
-  }
+  const getCurrentPlanShape = () => ( {
+    surfaceKeys: props.draft.surfaceSlots.map( slot => markerPlanKey( slot ) ),
+    splitKeys: props.draft.splitSlots.map( slot => markerPlanKey( slot ) ),
+    strokeCountKeys: props.draft.strokeCountSlots.map( slot => strokePlanKey( slot ) ),
+    turnKeys: props.draft.turns.map( row => row.turnIndex ),
+  } )
 
-  const makeSlotsFromCodes = ( type: MarkerType, codes: string[] ): MarkerSlot[] =>
-    codes.map( code => ( {
-      id: makeId(),
-      type,
-      code,
-      label: LABELS[code] ?? code,
-      videoMs: null,
-      missed: false,
-    } ) )
+  const getExpectedPlanShape = () => {
+    const surface = buildSurfacePlan()
+    const split = buildSplitPlan()
+    const strokeCounts = buildStrokeCountPlan()
+    const turns = buildTurnsPlan()
 
-  const buildMarkerPlans = ( course: string, distance: string ) => {
-    const surfaceCodes = buildSurfacePlanCodes( course, distance )
-    const splitCodes = buildSplitPlanCodes( course, distance ).filter( c => c !== "finish" )
     return {
-      surface: makeSlotsFromCodes( "surfacing", surfaceCodes ),
-      split: makeSlotsFromCodes( "split", splitCodes ),
+      surface,
+      split,
+      strokeCounts,
+      turns,
+      surfaceKeys: surface.map( item => markerPlanKey( item ) ),
+      splitKeys: split.map( item => markerPlanKey( item ) ),
+      strokeCountKeys: strokeCounts.map( item => strokePlanKey( item ) ),
+      turnKeys: turns.map( item => item.turnIndex ),
     }
   }
 
-  const ensureDraftInitialized = () => {
-    if ( props.draft.surfaceSlots.length || props.draft.splitSlots.length ) return
+  const sameStringArray = ( a: string[], b: string[] ) =>
+    a.length === b.length && a.every( ( value, index ) => value === b[index] )
 
-    const plans = buildMarkerPlans( props.selections.course, props.selections.distance )
-    updateDraft( ( next ) => {
-      next.surfaceSlots = plans.surface
-      next.splitSlots = plans.split
-      next.selectedSlotId = [ ...next.surfaceSlots, ...next.splitSlots ][0]?.id ?? null
+  const sameNumberArray = ( a: number[], b: number[] ) =>
+    a.length === b.length && a.every( ( value, index ) => value === b[index] )
+
+  const syncDraftPlan = () => {
+    const current = getCurrentPlanShape()
+    const expected = getExpectedPlanShape()
+
+    const samePlan =
+      sameStringArray( current.surfaceKeys, expected.surfaceKeys )
+      && sameStringArray( current.splitKeys, expected.splitKeys )
+      && sameStringArray( current.strokeCountKeys, expected.strokeCountKeys )
+      && sameNumberArray( current.turnKeys, expected.turnKeys )
+
+    if ( samePlan ) {
+      if ( !props.draft.selectedSlotId ) {
+        const firstId = [ ...props.draft.surfaceSlots, ...props.draft.splitSlots ][0]?.id ?? null
+        if ( firstId ) {
+          updateDraft( next => {
+            next.selectedSlotId = firstId
+          } )
+        }
+      }
+      return
+    }
+
+    const nextSurfaceSlots = makeMarkerSlotsFromPlan( expected.surface, props.draft.surfaceSlots )
+    const nextSplitSlots = makeMarkerSlotsFromPlan( expected.split, props.draft.splitSlots )
+    const nextStrokeCountSlots = makeStrokeCountDraftSlots( expected.strokeCounts, props.draft.strokeCountSlots )
+    const nextTurns = makeTurnDraftRows( expected.turns, props.draft.turns )
+    const firstId = [ ...nextSurfaceSlots, ...nextSplitSlots ][0]?.id ?? null
+
+    updateDraft( next => {
+      next.finishVideoMs = null
+      next.startOffsetMs = null
+      next.surfaceSlots = nextSurfaceSlots.map( slot => ( { ...slot, videoMs: null, missed: false } ) )
+      next.splitSlots = nextSplitSlots.map( slot => ( { ...slot, videoMs: slot.code === "finish_time" ? null : null, missed: false } ) )
+      next.strokeCountSlots = nextStrokeCountSlots
+      next.turns = nextTurns
+      next.selectedSlotId = firstId
+      next.markers = []
+      next.breakoutStartM = 10
     } )
   }
 
-  ensureDraftInitialized()
+  watch(
+    () => [ props.selections.course, props.selections.distance ],
+    () => {
+      syncDraftPlan()
+    },
+    { immediate: true }
+  )
 
-  const allMarkerSlots = computed( () => [ ...props.draft.surfaceSlots, ...props.draft.splitSlots ] )
+  const allMarkerSlots = computed( () =>
+    [ ...props.draft.surfaceSlots, ...props.draft.splitSlots ]
+      .slice()
+      .sort( ( a, b ) => a.seq - b.seq )
+  )
 
   const findSlotById = ( id: string | null ) => {
     if ( !id ) return null
@@ -284,11 +313,23 @@
   const timelineCenterMs = ref( 0 )
   const officialFinishText = ref( props.initialOfficialFinishTime || "" )
   const officialFinishMs = computed( () => parseOfficialTimeMs( officialFinishText.value ) )
+  const showFinishEditor = ref( false )
+  const finishSetupError = ref( "" )
 
   const dragging = ref<{ kind: "start" | "finish" | "marker"; id?: string } | null>( null )
 
   const finishVideoMs = computed( () => props.draft.finishVideoMs )
-  const hasFinishMarked = computed( () => finishVideoMs.value !== null )
+  const startOffsetMs = computed( () => props.draft.startOffsetMs )
+
+  const hasFinishMarked = computed( () =>
+    finishVideoMs.value !== null
+    && startOffsetMs.value !== null
+    && startOffsetMs.value >= 0
+  )
+
+  watch( officialFinishText, () => {
+    finishSetupError.value = ""
+  } )
 
   const setCurrentFromVideo = () => {
     const v = videoEl.value
@@ -323,23 +364,6 @@
     return videoMs - props.draft.startOffsetMs
   }
 
-  const showFinishEditor = ref( false )
-
-  const recalculateStartFromCurrentFinish = () => {
-    if ( props.draft.finishVideoMs === null || officialFinishMs.value === null ) return
-
-    updateDraft( ( next ) => {
-      next.startOffsetMs = next.finishVideoMs !== null
-        ? next.finishVideoMs - officialFinishMs.value
-        : null
-    } )
-  }
-
-  const setFinishHereAndCloseEditor = () => {
-    setFinishHere()
-    showFinishEditor.value = false
-  }
-
   const formatRaceMs = ( ms: number ) => {
     const totalMs = Math.max( 0, Math.floor( ms ) )
     const totalSeconds = Math.floor( totalMs / 1000 )
@@ -360,7 +384,7 @@
 
   const markerPinClass = ( s: MarkerSlot ) => [
     s.type === "surfacing" ? "bg-cyan-500" : "bg-blue-500",
-    s.id === props.draft.selectedSlotId ? "z-10 ring-2 ring-white ring-offset-1 ring-offset-gray-200" : ""
+    s.id === props.draft.selectedSlotId ? "z-10 ring-2 ring-white ring-offset-1 ring-offset-gray-200" : "",
   ]
 
   const startPinMs = computed( () => props.draft.startOffsetMs )
@@ -411,32 +435,104 @@
     return Math.round( visibleStartMs.value + ( pct * range ) )
   }
 
+  const getLiveVideoMs = () => {
+    const v = videoEl.value
+    if ( v && Number.isFinite( v.currentTime ) ) {
+      return Math.max( 0, Math.round( v.currentTime * 1000 ) )
+    }
+    return Math.max( 0, currentVideoMs.value )
+  }
+
+  const validateFinishSetup = ( finishMs: number ) => {
+    if ( officialFinishMs.value === null ) {
+      return {
+        ok: false as const,
+        message: "Official finish time is required.",
+        startOffset: null,
+      }
+    }
+
+    const startOffset = finishMs - officialFinishMs.value
+
+    if ( startOffset < 0 ) {
+      return {
+        ok: false as const,
+        message: "Calculated race start falls before the beginning of the video. Move the finish position later in the video or check the official finish time.",
+        startOffset: null,
+      }
+    }
+
+    return {
+      ok: true as const,
+      message: "",
+      startOffset,
+    }
+  }
+
   const setFinishHere = () => {
-    if ( !isReady.value ) return
-    const finish = currentVideoMs.value
-    updateDraft( ( next ) => {
-      next.finishVideoMs = finish
-      next.startOffsetMs = officialFinishMs.value !== null ? finish - officialFinishMs.value : null
+    if ( !isReady.value ) return false
+
+    const finishMs = getLiveVideoMs()
+    const validation = validateFinishSetup( finishMs )
+
+    if ( !validation.ok || validation.startOffset === null ) {
+      finishSetupError.value = validation.message
+      return false
+    }
+
+    finishSetupError.value = ""
+
+    updateDraft( next => {
+      next.finishVideoMs = finishMs
+      next.startOffsetMs = validation.startOffset
       const finishTimeSlot = next.splitSlots.find( s => s.code === "finish_time" ) ?? null
       if ( finishTimeSlot ) {
-        finishTimeSlot.videoMs = finish
+        finishTimeSlot.videoMs = finishMs
         finishTimeSlot.missed = false
       }
     } )
+
+    currentVideoMs.value = finishMs
+    timelineCenterMs.value = finishMs
+
+    return true
+  }
+
+  const recalculateStartFromCurrentFinish = () => {
+    if ( props.draft.finishVideoMs === null ) return
+
+    const validation = validateFinishSetup( props.draft.finishVideoMs )
+
+    if ( !validation.ok || validation.startOffset === null ) {
+      finishSetupError.value = validation.message
+      return
+    }
+
+    finishSetupError.value = ""
+
+    updateDraft( next => {
+      next.startOffsetMs = validation.startOffset
+    } )
+  }
+
+  const setFinishHereAndCloseEditor = () => {
+    if ( setFinishHere() ) {
+      showFinishEditor.value = false
+    }
   }
 
   const clearMarker = ( id: string ) => {
-    updateDraft( ( next ) => {
-      const s = [ ...next.surfaceSlots, ...next.splitSlots ].find( x => x.id === id ) ?? null
-      if ( !s ) return
-      if ( s.code === "finish_time" ) return
-      s.videoMs = null
-      s.missed = false
+    updateDraft( next => {
+      const slot = [ ...next.surfaceSlots, ...next.splitSlots ].find( x => x.id === id ) ?? null
+      if ( !slot ) return
+      if ( slot.code === "finish_time" ) return
+      slot.videoMs = null
+      slot.missed = false
     } )
   }
 
   const selectMarker = ( id: string ) => {
-    updateDraft( ( next ) => {
+    updateDraft( next => {
       next.selectedSlotId = id
     } )
     const selected = findSlotById( id )
@@ -448,27 +544,29 @@
   const placeMarkerAtCursor = ( type: MarkerType ) => {
     if ( !isReady.value ) return
 
+    const nowMs = getLiveVideoMs()
+
     if ( type === "surfacing" ) {
-      const next = nextSurfaceSlot.value
-      if ( !next ) return
-      updateDraft( ( draft ) => {
-        const s = draft.surfaceSlots.find( x => x.id === next.id )
-        if ( !s ) return
-        s.videoMs = currentVideoMs.value
-        s.missed = false
-        draft.selectedSlotId = s.id
+      const nextSlot = nextSurfaceSlot.value
+      if ( !nextSlot ) return
+      updateDraft( draft => {
+        const slot = draft.surfaceSlots.find( x => x.id === nextSlot.id )
+        if ( !slot ) return
+        slot.videoMs = nowMs
+        slot.missed = false
+        draft.selectedSlotId = slot.id
       } )
       return
     }
 
-    const next = nextSplitSlot.value
-    if ( !next ) return
-    updateDraft( ( draft ) => {
-      const s = draft.splitSlots.find( x => x.id === next.id )
-      if ( !s ) return
-      s.videoMs = currentVideoMs.value
-      s.missed = false
-      draft.selectedSlotId = s.id
+    const nextSlot = nextSplitSlot.value
+    if ( !nextSlot ) return
+    updateDraft( draft => {
+      const slot = draft.splitSlots.find( x => x.id === nextSlot.id )
+      if ( !slot ) return
+      slot.videoMs = nowMs
+      slot.missed = false
+      draft.selectedSlotId = slot.id
     } )
   }
 
@@ -484,8 +582,11 @@
     ;( e.currentTarget as HTMLElement ).setPointerCapture( e.pointerId )
     const ms = msFromClientXVisible( e.clientX )
 
-    updateDraft( ( next ) => {
-      if ( kind === "start" ) next.startOffsetMs = ms
+    updateDraft( next => {
+      if ( kind === "start" ) {
+        next.startOffsetMs = ms
+      }
+
       if ( kind === "finish" ) {
         next.finishVideoMs = ms
         const finishTimeSlot = next.splitSlots.find( s => s.code === "finish_time" ) ?? null
@@ -494,11 +595,12 @@
           finishTimeSlot.missed = false
         }
       }
+
       if ( kind === "marker" && id ) {
-        const s = [ ...next.surfaceSlots, ...next.splitSlots ].find( x => x.id === id ) ?? null
-        if ( s ) {
-          s.videoMs = ms
-          s.missed = false
+        const slot = [ ...next.surfaceSlots, ...next.splitSlots ].find( x => x.id === id ) ?? null
+        if ( slot ) {
+          slot.videoMs = ms
+          slot.missed = false
           next.selectedSlotId = id
         }
       }
@@ -512,8 +614,11 @@
     const ms = msFromClientXVisible( e.clientX )
     const { kind, id } = dragging.value
 
-    updateDraft( ( next ) => {
-      if ( kind === "start" ) next.startOffsetMs = ms
+    updateDraft( next => {
+      if ( kind === "start" ) {
+        next.startOffsetMs = ms
+      }
+
       if ( kind === "finish" ) {
         next.finishVideoMs = ms
         const finishTimeSlot = next.splitSlots.find( s => s.code === "finish_time" ) ?? null
@@ -522,11 +627,12 @@
           finishTimeSlot.missed = false
         }
       }
+
       if ( kind === "marker" && id ) {
-        const s = [ ...next.surfaceSlots, ...next.splitSlots ].find( x => x.id === id ) ?? null
-        if ( s ) {
-          s.videoMs = ms
-          s.missed = false
+        const slot = [ ...next.surfaceSlots, ...next.splitSlots ].find( x => x.id === id ) ?? null
+        if ( slot ) {
+          slot.videoMs = ms
+          slot.missed = false
         }
       }
     } )
@@ -551,40 +657,56 @@
       .every( s => s.videoMs !== null )
   )
 
+  const strokeCountsComplete = computed( () =>
+    props.draft.strokeCountSlots.length > 0
+    && props.draft.strokeCountSlots.every( slot => slot.count !== null && slot.count > 0 )
+  )
+
   const canStop = computed( () =>
-    isReady.value &&
-    props.draft.startOffsetMs !== null &&
-    props.draft.finishVideoMs !== null &&
-    allMarkersPlaced.value &&
-    props.draft.count10to50 !== null &&
-    props.draft.count10to50 > 0 &&
-    props.draft.count60to100 !== null &&
-    props.draft.count60to100 > 0
+    isReady.value
+    && props.draft.startOffsetMs !== null
+    && props.draft.startOffsetMs >= 0
+    && props.draft.finishVideoMs !== null
+    && allMarkersPlaced.value
+    && strokeCountsComplete.value
   )
 
   const emitStop = () => {
-    const out: Marker[] = []
-
-    for ( const s of allMarkerSlots.value ) {
-      if ( s.videoMs === null ) continue
-      out.push( {
-        id: makeId(),
-        type: s.type,
-        code: s.code,
-        label: s.label,
-        tMs: s.videoMs,
-      } )
-    }
+    const markers: VideoTimerMarkerRecord[] = allMarkerSlots.value
+      .filter( slot => slot.videoMs !== null )
+      .map( slot => ( {
+        id: slot.id,
+        type: slot.type,
+        code: slot.code,
+        label: slot.label,
+        lengthIndex: slot.lengthIndex,
+        turnIndex: slot.turnIndex,
+        tMs: slot.videoMs as number,
+      } ) )
 
     const v = videoEl.value
     if ( v ) v.pause()
-    emit( "stop", { markers: out } )
+    emit( "stop", { markers } )
   }
 
   const onBack = () => {
     const v = videoEl.value
     if ( v ) v.pause()
     emit( "back" )
+  }
+
+  const parseCountValue = ( raw: string ) => {
+    const n = Number( raw )
+    if ( !Number.isFinite( n ) || n <= 0 ) return null
+    return Math.floor( n )
+  }
+
+  const updateStrokeCountValue = ( id: string, raw: string ) => {
+    updateDraft( next => {
+      const slot = next.strokeCountSlots.find( item => item.id === id ) ?? null
+      if ( !slot ) return
+      slot.count = parseCountValue( raw )
+    } )
   }
 
   onMounted( () => {
@@ -824,15 +946,18 @@
                           class="w-full h-10 rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-900"
                         >
 
-                        <div class="mt-1 text-[11px] text-gray-500">
-                          Enter the official race time used to calculate race start.
-                        </div>
-
                         <div
                           v-if="officialFinishText.trim() && officialFinishMs === null"
                           class="mt-1 text-[11px] text-red-600"
                         >
                           Invalid time format.
+                        </div>
+
+                        <div
+                          v-else-if="finishSetupError"
+                          class="mt-1 text-[11px] text-red-600"
+                        >
+                          {{ finishSetupError }}
                         </div>
                       </div>
 
@@ -862,6 +987,7 @@
                       {{ showFinishEditor ? "Hide finish editor" : "Edit finish / start" }}
                     </button>
                   </div>
+
                   <div
                     v-if="showFinishEditor"
                     class="mb-3 rounded-md border border-amber-200 bg-amber-50 p-3"
@@ -888,6 +1014,13 @@
                           class="mt-1 text-[11px] text-red-600"
                         >
                           Invalid time format.
+                        </div>
+
+                        <div
+                          v-else-if="finishSetupError"
+                          class="mt-1 text-[11px] text-red-600"
+                        >
+                          {{ finishSetupError }}
                         </div>
                       </div>
 
@@ -916,6 +1049,7 @@
                       </div>
                     </div>
                   </div>
+
                   <div class="rounded-md border border-gray-200 bg-gray-50 p-3">
                     <div class="flex items-center justify-between gap-3">
                       <div class="text-xs font-semibold text-gray-700">Current action</div>
@@ -952,7 +1086,7 @@
                         :disabled="!isReady || !nextSurfaceSlot"
                         @click="placeMarkerAtCursor('surfacing')"
                       >
-                        <span v-if="nextSurfaceSlot">Select next surfacing: {{ nextSurfaceSlot.label }}</span>
+                        <span v-if="nextSurfaceSlot">Place next surfacing: {{ nextSurfaceSlot.label }}</span>
                         <span v-else>No pending surfacing markers</span>
                       </button>
 
@@ -963,7 +1097,7 @@
                         :disabled="!isReady || !nextSplitSlot"
                         @click="placeMarkerAtCursor('split')"
                       >
-                        <span v-if="nextSplitSlot">Select next split: {{ nextSplitSlot.label }}</span>
+                        <span v-if="nextSplitSlot">Place next split: {{ nextSplitSlot.label }}</span>
                         <span v-else>No pending split markers</span>
                       </button>
                     </div>
@@ -1043,39 +1177,33 @@
                     </details>
                   </div>
 
-                  
-
                   <div class="mt-4 rounded-md border border-gray-200 bg-white p-3">
                     <div class="text-xs font-semibold text-gray-700 mb-2">Stroke counts</div>
 
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div>
-                        <label class="block text-xs font-semibold text-gray-700 mb-1">Count 10 - 50m</label>
-                        <input
-                          :value="props.draft.count10to50 ?? ''"
-                          class="w-full h-10 rounded-md border border-gray-300 px-3 text-sm"
-                          type="number"
-                          min="1"
-                          step="1"
-                          inputmode="numeric"
-                          @input="updateDraft((next) => { next.count10to50 = Number(($event.target as HTMLInputElement).value) || null })"
-                        >
-                      </div>
+                    <div v-if="props.draft.strokeCountSlots.length" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div
+                        v-for="slot in props.draft.strokeCountSlots"
+                        :key="slot.id"
+                      >
+                        <label class="block text-xs font-semibold text-gray-700 mb-1">
+                          {{ slot.label }}
+                        </label>
 
-                      <div>
-                        <label class="block text-xs font-semibold text-gray-700 mb-1">Count 60 - 100m</label>
                         <input
-                          :value="props.draft.count60to100 ?? ''"
+                          :value="slot.count ?? ''"
                           class="w-full h-10 rounded-md border border-gray-300 px-3 text-sm"
                           type="number"
                           min="1"
                           step="1"
                           inputmode="numeric"
-                          @input="updateDraft((next) => { next.count60to100 = Number(($event.target as HTMLInputElement).value) || null })"
+                          @input="(event) => updateStrokeCountValue(slot.id, (event.target as HTMLInputElement).value)"
                         >
                       </div>
                     </div>
-                  
+
+                    <div v-else class="text-xs text-gray-500">
+                      No stroke count segments available for this race plan.
+                    </div>
                   </div>
 
                   <button

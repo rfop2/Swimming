@@ -61,6 +61,7 @@ export default defineEventHandler( async ( event ) => {
     return rows.map( ( r ) => ( {
       id: r.id,
       createdAt: r.created,
+      swimmerId: r.swimmerId ?? null,
       swimmerName: r.swimmerName ?? null,
       course: r.course ?? null,
       stroke: r.stroke ?? null,
@@ -76,9 +77,9 @@ export default defineEventHandler( async ( event ) => {
     throw createError( { status: 500, message: "Unable to load video timer sessions" } )
   } finally {
     try {
-      conn.release() 
+      conn.release()
     } catch ( err ) {
-      void err 
+      void err
     }
   }
 } )

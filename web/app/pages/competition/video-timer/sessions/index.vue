@@ -1,4 +1,6 @@
 <script setup lang="ts">
+  import type { Swimmer } from "lib"
+
   definePageMeta( {
     layout: "secure",
     middleware: [ "protected" ],
@@ -11,6 +13,7 @@
   type SessionListItem = {
     id: string
     createdAt: string
+    swimmerId?: string | null
     swimmerName?: string | null
     course?: string | null
     stroke?: string | null
@@ -20,7 +23,15 @@
     videoOriginalName?: string | null
   }
 
-  const swimmerFilter = ref( "" )
+  type FilterOption = {
+    value: string
+    label: string
+  }
+
+  const { swimmer } = useSwimmer()
+
+  const selectedStroke = ref( "" )
+  const selectedDistance = ref( "" )
 
   const { data, pending, error, refresh } = await useAsyncData( "video-timer-sessions", () =>
     $fetch<SessionListItem[]>( "/api/competition/video-timer-sessions" )
@@ -43,16 +54,73 @@
     return dateFormatter.format( d )
   }
 
-  const normalizedSwimmerFilter = computed( () => swimmerFilter.value.trim().toLowerCase() )
+  const toLabel = ( value: string ) => value.charAt( 0 ).toUpperCase() + value.slice( 1 )
+
+  const strokeOptions = computed<FilterOption[]>( () => {
+    const values = Array.from(
+      new Set(
+        ( data.value ?? [] )
+          .map( s => String( s.stroke ?? "" ).trim() )
+          .filter( Boolean )
+      )
+    ).sort( ( a, b ) => a.localeCompare( b, "en-GB" ) )
+
+    return [
+      { value: "", label: "All strokes" },
+      ...values.map( value => ( { value, label: toLabel( value ) } ) ),
+    ]
+  } )
+
+  const distanceOptions = computed<FilterOption[]>( () => {
+    const items = data.value ?? []
+    const filteredByStroke = selectedStroke.value
+      ? items.filter( s => String( s.stroke ?? "" ).trim() === selectedStroke.value )
+      : items
+
+    const values = Array.from(
+      new Set(
+        filteredByStroke
+          .map( s => String( s.distance ?? "" ).trim() )
+          .filter( Boolean )
+      )
+    ).sort( ( a, b ) => a.localeCompare( b, "en-GB", { numeric: true } ) )
+
+    return [
+      { value: "", label: "All distances" },
+      ...values.map( value => ( { value, label: value } ) ),
+    ]
+  } )
+
+  watch( selectedStroke, () => {
+    if ( selectedDistance.value && !distanceOptions.value.find( option => option.value === selectedDistance.value ) ) {
+      selectedDistance.value = ""
+    }
+  } )
 
   const filteredSessions = computed( () => {
-    const items = data.value ?? []
-    const q = normalizedSwimmerFilter.value
+    let items = data.value ?? []
 
-    if ( !q ) return items
+    const selectedSwimmerId = swimmer.value?.id
+    if ( selectedSwimmerId ) {
+      items = items.filter( s => s.swimmerId === selectedSwimmerId )
+    }
 
-    return items.filter( s => String( s.swimmerName ?? "" ).toLowerCase().includes( q ) )
+    if ( selectedStroke.value ) {
+      items = items.filter( s => String( s.stroke ?? "" ).trim() === selectedStroke.value )
+    }
+
+    if ( selectedDistance.value ) {
+      items = items.filter( s => String( s.distance ?? "" ).trim() === selectedDistance.value )
+    }
+
+    return items
   } )
+
+  const clearFilters = () => {
+    swimmer.value = undefined as Swimmer | undefined
+    selectedStroke.value = ""
+    selectedDistance.value = ""
+  }
 </script>
 
 <template>
@@ -76,20 +144,37 @@
         </div>
 
         <div class="mt-4 rounded-xl border border-gray-200 bg-white p-4">
-          <div class="grid grid-cols-1 md:grid-cols-[minmax(0,320px)_auto] gap-3 items-end">
-            <div>
-              <label class="block text-xs font-semibold text-gray-700 mb-1">
-                Filter by swimmer
-              </label>
-              <input
-                v-model="swimmerFilter"
-                type="text"
-                placeholder="Type swimmer name"
-                class="w-full h-10 rounded-md border border-gray-300 px-3 text-sm text-gray-900"
-              >
+          <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-[minmax(0,280px)_minmax(0,220px)_minmax(0,220px)_auto_auto] gap-3 items-end">
+            <SwimmerSelector v-model="swimmer" />
+
+            <div class="min-w-48">
+              <UI-Listbox
+                v-model="selectedStroke"
+                :options="strokeOptions"
+                label="Stroke"
+                placeholder="Choose stroke"
+              />
             </div>
 
-            <div class="text-xs text-gray-500">
+            <div class="min-w-40">
+              <UI-Listbox
+                v-model="selectedDistance"
+                :options="distanceOptions"
+                label="Distance"
+                placeholder="Choose distance"
+              />
+            </div>
+
+            <button
+              class="h-10 px-4 rounded-md bg-gray-200 text-gray-900 disabled:bg-gray-100 disabled:text-gray-400"
+              type="button"
+              :disabled="!swimmer && !selectedStroke && !selectedDistance"
+              @click="clearFilters"
+            >
+              Clear filters
+            </button>
+
+            <div class="text-xs text-gray-500 xl:text-right">
               <span v-if="pending">Loading…</span>
               <span v-else>{{ filteredSessions.length }} session<span v-if="filteredSessions.length !== 1">s</span></span>
             </div>
