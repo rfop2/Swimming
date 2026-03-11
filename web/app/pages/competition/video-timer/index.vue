@@ -1,10 +1,9 @@
 <script setup lang="ts">
-  import { COURSES, strokes, type CourseType, type DistanceType, type StrokeType } from "lib"
+  import type { VideoTimerDraft, VideoTimerMarkerRecord, COURSES, strokes, type CourseType, type DistanceType, type StrokeType    } from "lib"
+
   import VideoTimerReviewStep from "~/components/VideoTimerReviewStep.vue"
   import VideoTimerTimingStep from "~/components/VideoTimerTimingStep.vue"
   import UIMeetListbox from "../../web/app/components/MeetListbox.vue"
-  import type { VideoTimerTurnAnalysisRecord } from "./analysis.js"
-  import type { VideoTimerDraft, VideoTimerMarkerRecord } from "lib"
 
   definePageMeta( {
     layout: "secure",
@@ -49,24 +48,7 @@
 
   type Mode = "setup" | "uploading" | "ready"
   type Step = "setup" | "timing" | "review"
-  type MarkerType = "surfacing" | "split"
 
-  type Marker = {
-    id: string
-    type: MarkerType
-    code: string
-    label: string
-    tMs: number
-  }
-
-  type MarkerSlot = {
-    id: string
-    type: MarkerType
-    code: string
-    label: string
-    videoMs: number | null
-    missed: boolean
-  }
 
   type UploadVideoResponse = {
     id?: string
@@ -84,18 +66,18 @@
     durationMs?: number
   }
 
-const createEmptyDraft = (): VideoTimerDraft => ( {
-  finishVideoMs: null,
-  startOffsetMs: null,
-  surfaceSlots: [],
-  splitSlots: [],
-  strokeCountSlots: [],
-  turns: [],
-  selectedSlotId: null,
-  markers: [],
-  breakoutStartM: 10,
-  breakoutTurnM: null,
-} )
+  const createEmptyDraft = (): VideoTimerDraft => ( {
+    finishVideoMs: null,
+    startOffsetMs: null,
+    surfaceSlots: [],
+    splitSlots: [],
+    strokeCountSlots: [],
+    turns: [],
+    selectedSlotId: null,
+    markers: [],
+    breakoutStartM: 10,
+    breakoutTurnM: null,
+  } )
   const step = ref<Step>( "setup" )
   const draft = ref<VideoTimerDraft>( createEmptyDraft() )
 
@@ -114,10 +96,10 @@ const createEmptyDraft = (): VideoTimerDraft => ( {
     step.value = "timing"
   }
 
-const onStopTiming = ( payload: { markers: VideoTimerMarkerRecord[] } ) => {
-  draft.value.markers = payload.markers
-  step.value = "review"
-}
+  const onStopTiming = ( payload: { markers: VideoTimerMarkerRecord[] } ) => {
+    draft.value.markers = payload.markers
+    step.value = "review"
+  }
 
   const onSavedSession = () => {
     step.value = "setup"
@@ -610,20 +592,20 @@ const onStopTiming = ( payload: { markers: VideoTimerMarkerRecord[] } ) => {
       @update:draft="draft = $event"
     />
 
-<VideoTimerReviewStep
-  v-else-if="step === 'review'"
-  v-model:markers="draft.markers"
-  :video="uploadedVideo!"
-  :selections="selections"
-  :swimmer="swimmer"
-  :meet-id="meetId"
-  :notes="notes"
-  :start-offset-ms="draft.startOffsetMs"
-  :result-link="resultLink"
-  :draft="draft"
-  @back="onBackFromReview"
-  @saved="onSavedSession"
-  @update:draft="draft = $event"
-/>
+    <VideoTimerReviewStep
+      v-else-if="step === 'review'"
+      v-model:markers="draft.markers"
+      :video="uploadedVideo!"
+      :selections="selections"
+      :swimmer="swimmer"
+      :meet-id="meetId"
+      :notes="notes"
+      :start-offset-ms="draft.startOffsetMs"
+      :result-link="resultLink"
+      :draft="draft"
+      @back="onBackFromReview"
+      @saved="onSavedSession"
+      @update:draft="draft = $event"
+    />
   </div>
 </template>
