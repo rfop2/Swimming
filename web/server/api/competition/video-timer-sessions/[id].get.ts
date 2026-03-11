@@ -1,6 +1,11 @@
-import type { PoolConnection } from "lib"
+import type {
+  PoolConnection,
+  VideoTimerMarkerRecord,
+  VideoTimerStrokeCountRecord,
+  VideoTimerTurnAnalysisRecord,
+} from "lib"
+import { buildVideoTimerComputedAnalysis, getPool, isMySql2Error, prepareStatement } from "lib"
 import { createError, defineEventHandler, getRouterParam } from "h3"
-import { getPool, isMySql2Error, prepareStatement } from "lib"
 
 type SessionRow = {
   id: string
@@ -28,15 +33,24 @@ type MarkerRow = {
   label: string
   tMs: number
   seq: number
+  lengthIndex: number | null
+  turnIndex: number | null
 }
 
 type AnalysisRow = {
-  count10to50: number | null
-  count60to100: number | null
-  reactionMs: number | null
   breakoutStartM: number | null
-  turnRotationMs: number | null
-  breakoutTurnM: number | null
+}
+
+type StrokeCountRow = {
+  lengthIndex: number
+  fromM: number
+  toM: number
+  count: number | null
+}
+
+type TurnRow = {
+  turnIndex: number
+  breakoutM: number | null
 }
 
 export default defineEventHandler( async ( event ) => {
@@ -93,25 +107,33 @@ export default defineEventHandler( async ( event ) => {
         m.code as code,
         m.label as label,
         m.tMs as tMs,
-        m.seq as seq
+        m.seq as seq,
+        m.lengthIndex as lengthIndex,
+        m.turnIndex as turnIndex
       FROM VideoTimerMarkers m
       WHERE m.sessionId = :sessionId
       ORDER BY m.seq ASC
       `
     )
 
-    const markers = ( await getMarkers.all( { sessionId: id } ) ) as MarkerRow[]
+    const markerRows = ( await getMarkers.all( { sessionId: id } ) ) as MarkerRow[]
+
+    const markers: VideoTimerMarkerRecord[] = markerRows.map( marker => ( {
+      id: `${row.id}-${marker.seq}`,
+      seq: Number( marker.seq ) || 0,
+      type: marker.type,
+      code: marker.code,
+      label: marker.label,
+      lengthIndex: marker.lengthIndex !== null ? Number( marker.lengthIndex ) : null,
+      turnIndex: marker.turnIndex !== null ? Number( marker.turnIndex ) : null,
+      tMs: Number( marker.tMs ) || 0,
+    } ) )
 
     const getAnalysis = prepareStatement(
       conn,
       `
       SELECT
-        a.count10to50 as count10to50,
-        a.count60to100 as count60to100,
-        a.reactionMs as reactionMs,
-        a.breakoutStartM as breakoutStartM,
-        a.turnRotationMs as turnRotationMs,
-        a.breakoutTurnM as breakoutTurnM
+        a.breakoutStartM as breakoutStartM
       FROM VideoTimerSessionAnalysis a
       WHERE a.sessionId = :sessionId
       LIMIT 1
@@ -120,12 +142,75 @@ export default defineEventHandler( async ( event ) => {
 
     const analysisRow = ( await getAnalysis.get( { sessionId: id } ) ) as AnalysisRow | undefined
 
+    const getStrokeCounts = prepareStatement(
+      conn,
+      `
+      SELECT
+        sc.lengthIndex as lengthIndex,
+        sc.fromM as fromM,
+        sc.toM as toM,
+        sc.count as count
+      FROM VideoTimerSessionStrokeCounts sc
+      WHERE sc.sessionId = :sessionId
+      ORDER BY sc.lengthIndex ASC
+      `
+    )
+
+    const strokeCountRows = ( await getStrokeCounts.all( { sessionId: id } ) ) as StrokeCountRow[]
+
+    const strokeCounts: VideoTimerStrokeCountRecord[] = strokeCountRows.map( row => ( {
+      lengthIndex: Number( row.lengthIndex ) || 0,
+      fromM: Number( row.fromM ) || 0,
+      toM: Number( row.toM ) || 0,
+      count: row.count !== null ? Number( row.count ) : null,
+    } ) )
+
+    const getTurns = prepareStatement(
+      conn,
+      `
+      SELECT
+        t.turnIndex as turnIndex,
+        t.breakoutM as breakoutM
+      FROM VideoTimerSessionTurns t
+      WHERE t.sessionId = :sessionId
+      ORDER BY t.turnIndex ASC
+      `
+    )
+
+    const turnRows = ( await getTurns.all( { sessionId: id } ) ) as TurnRow[]
+
+    const turns: VideoTimerTurnAnalysisRecord[] = turnRows.map( row => ( {
+      turnIndex: Number( row.turnIndex ) || 0,
+      breakoutM: row.breakoutM !== null ? Number( row.breakoutM ) : null,
+    } ) )
+
+    const analysis =
+      analysisRow
+        ? {
+          breakoutStartM: analysisRow.breakoutStartM !== null ? Number( analysisRow.breakoutStartM ) : null,
+        }
+        : null
+
+    const computed = buildVideoTimerComputedAnalysis( {
+      course: row.course,
+      distance: row.distance,
+      startOffsetMs: row.startOffsetMs ?? null,
+      markers,
+      analysis,
+      strokeCounts,
+      turns,
+    } )
+
     return {
       id: row.id,
       createdAt: row.created,
       notes: row.notes,
       startOffsetMs: row.startOffsetMs ?? null,
-      selections: { course: row.course, stroke: row.stroke, distance: row.distance },
+      selections: {
+        course: row.course,
+        stroke: row.stroke,
+        distance: row.distance,
+      },
       swimmer: row.swimmerId ? { id: row.swimmerId, fullName: row.swimmerName ?? "" } : null,
       meet: row.meetId ? { id: row.meetId, name: row.meetName ?? "" } : null,
       video: {
@@ -136,23 +221,11 @@ export default defineEventHandler( async ( event ) => {
         size: row.size,
         durationMs: row.durationMs ?? undefined,
       },
-      markers: markers.map( ( m ) => ( {
-        id: `${row.id}-${m.seq}`,
-        type: m.type,
-        code: m.code,
-        label: m.label,
-        tMs: Number( m.tMs ) || 0,
-      } ) ),
-      analysis: analysisRow
-        ? {
-          count10to50: analysisRow.count10to50 !== null ? Number( analysisRow.count10to50 ) : null,
-          count60to100: analysisRow.count60to100 !== null ? Number( analysisRow.count60to100 ) : null,
-          reactionMs: analysisRow.reactionMs !== null ? Number( analysisRow.reactionMs ) : null,
-          breakoutStartM: analysisRow.breakoutStartM !== null ? Number( analysisRow.breakoutStartM ) : null,
-          turnRotationMs: analysisRow.turnRotationMs !== null ? Number( analysisRow.turnRotationMs ) : null,
-          breakoutTurnM: analysisRow.breakoutTurnM !== null ? Number( analysisRow.breakoutTurnM ) : null,
-        }
-        : null,
+      markers,
+      analysis,
+      strokeCounts,
+      turns,
+      computed,
     }
   } catch ( error ) {
     if ( error && typeof error === "object" && "statusCode" in error ) throw error
@@ -160,6 +233,7 @@ export default defineEventHandler( async ( event ) => {
     if ( isMySql2Error( error ) ) {
       throw createError( { status: 500, message: `Database error: ${error.sqlMessage}` } )
     }
+
     throw createError( { status: 500, message: "Unable to load video timer session" } )
   } finally {
     try {

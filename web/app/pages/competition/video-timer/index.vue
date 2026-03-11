@@ -3,6 +3,8 @@
   import VideoTimerReviewStep from "~/components/VideoTimerReviewStep.vue"
   import VideoTimerTimingStep from "~/components/VideoTimerTimingStep.vue"
   import UIMeetListbox from "../../web/app/components/MeetListbox.vue"
+  import type { VideoTimerTurnAnalysisRecord } from "./analysis.js"
+  import type { VideoTimerDraft, VideoTimerMarkerRecord } from "lib"
 
   definePageMeta( {
     layout: "secure",
@@ -82,38 +84,18 @@
     durationMs?: number
   }
 
-  type VideoTimerDraft = {
-    finishVideoMs: number | null
-    startOffsetMs: number | null
-    surfaceSlots: MarkerSlot[]
-    splitSlots: MarkerSlot[]
-    selectedSlotId: string | null
-    markers: Marker[]
-    strokeCount: number | null
-    count10to50: number | null
-    count60to100: number | null
-    reactionSec: number | null
-    breakoutStartM: number | null
-    turnRotationSec: number | null
-    breakoutTurnM: number | null
-  }
-
-  const createEmptyDraft = (): VideoTimerDraft => ( {
-    finishVideoMs: null,
-    startOffsetMs: null,
-    surfaceSlots: [],
-    splitSlots: [],
-    selectedSlotId: null,
-    markers: [],
-    strokeCount: null,
-    count10to50: null,
-    count60to100: null,
-    reactionSec: null,
-    breakoutStartM: 10,
-    turnRotationSec: null,
-    breakoutTurnM: 8,
-  } )
-
+const createEmptyDraft = (): VideoTimerDraft => ( {
+  finishVideoMs: null,
+  startOffsetMs: null,
+  surfaceSlots: [],
+  splitSlots: [],
+  strokeCountSlots: [],
+  turns: [],
+  selectedSlotId: null,
+  markers: [],
+  breakoutStartM: 10,
+  breakoutTurnM: null,
+} )
   const step = ref<Step>( "setup" )
   const draft = ref<VideoTimerDraft>( createEmptyDraft() )
 
@@ -132,10 +114,10 @@
     step.value = "timing"
   }
 
-  const onStopTiming = ( payload: { markers: Marker[] } ) => {
-    draft.value.markers = payload.markers
-    step.value = "review"
-  }
+const onStopTiming = ( payload: { markers: VideoTimerMarkerRecord[] } ) => {
+  draft.value.markers = payload.markers
+  step.value = "review"
+}
 
   const onSavedSession = () => {
     step.value = "setup"
@@ -628,21 +610,20 @@
       @update:draft="draft = $event"
     />
 
-    <VideoTimerReviewStep
-      v-else-if="step === 'review'"
-      v-model:markers="draft.markers"
-      :video="uploadedVideo!"
-      :selections="selections"
-      :swimmer="swimmer"
-      :meet-id="meetId"
-      :notes="notes"
-      :start-offset-ms="draft.startOffsetMs"
-      :stroke-count="draft.strokeCount"
-      :result-link="resultLink"
-      :draft="draft"
-      @back="onBackFromReview"
-      @saved="onSavedSession"
-      @update:draft="draft = $event"
-    />
+<VideoTimerReviewStep
+  v-else-if="step === 'review'"
+  v-model:markers="draft.markers"
+  :video="uploadedVideo!"
+  :selections="selections"
+  :swimmer="swimmer"
+  :meet-id="meetId"
+  :notes="notes"
+  :start-offset-ms="draft.startOffsetMs"
+  :result-link="resultLink"
+  :draft="draft"
+  @back="onBackFromReview"
+  @saved="onSavedSession"
+  @update:draft="draft = $event"
+/>
   </div>
 </template>
