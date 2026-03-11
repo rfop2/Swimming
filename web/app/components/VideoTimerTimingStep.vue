@@ -162,10 +162,10 @@
     const expected = getExpectedPlanShape()
 
     const samePlan =
-      sameStringArray( current.surfaceKeys, expected.surfaceKeys )
-      && sameStringArray( current.splitKeys, expected.splitKeys )
-      && sameStringArray( current.strokeCountKeys, expected.strokeCountKeys )
-      && sameNumberArray( current.turnKeys, expected.turnKeys )
+      sameStringArray( current.surfaceKeys, expected.surfaceKeys ) &&
+      sameStringArray( current.splitKeys, expected.splitKeys ) &&
+      sameStringArray( current.strokeCountKeys, expected.strokeCountKeys ) &&
+      sameNumberArray( current.turnKeys, expected.turnKeys )
 
     if ( samePlan ) {
       if ( !props.draft.selectedSlotId ) {
@@ -322,9 +322,9 @@
   const startOffsetMs = computed( () => props.draft.startOffsetMs )
 
   const hasFinishMarked = computed( () =>
-    finishVideoMs.value !== null
-    && startOffsetMs.value !== null
-    && startOffsetMs.value >= 0
+    finishVideoMs.value !== null &&
+    startOffsetMs.value !== null &&
+    startOffsetMs.value >= 0
   )
 
   watch( officialFinishText, () => {
@@ -658,17 +658,17 @@
   )
 
   const strokeCountsComplete = computed( () =>
-    props.draft.strokeCountSlots.length > 0
-    && props.draft.strokeCountSlots.every( slot => slot.count !== null && slot.count > 0 )
+    props.draft.strokeCountSlots.length > 0 &&
+    props.draft.strokeCountSlots.every( slot => slot.count !== null && slot.count > 0 )
   )
 
   const canStop = computed( () =>
-    isReady.value
-    && props.draft.startOffsetMs !== null
-    && props.draft.startOffsetMs >= 0
-    && props.draft.finishVideoMs !== null
-    && allMarkersPlaced.value
-    && strokeCountsComplete.value
+    isReady.value &&
+    props.draft.startOffsetMs !== null &&
+    props.draft.startOffsetMs >= 0 &&
+    props.draft.finishVideoMs !== null &&
+    allMarkersPlaced.value &&
+    strokeCountsComplete.value
   )
 
   const emitStop = () => {

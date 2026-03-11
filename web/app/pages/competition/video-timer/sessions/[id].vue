@@ -1,301 +1,301 @@
 <script setup lang="ts">
-import { Line } from "vue-chartjs"
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend,
-  type ChartData,
-  type ChartOptions,
-  type TooltipItem,
-} from "chart.js"
-import type {
-  VideoTimerComputedAnalysis,
-  VideoTimerMarkerRecord,
-  VideoTimerStrokeCountRecord,
-  VideoTimerTurnAnalysisRecord,
-} from "lib"
-import { parseDistanceM } from "lib"
+  import { Line } from "vue-chartjs"
+  import {
+    Chart as ChartJS,
+    CategoryScale,
+    LinearScale,
+    PointElement,
+    LineElement,
+    Title,
+    Tooltip,
+    Legend,
+    type ChartData,
+    type ChartOptions,
+    type TooltipItem,
+  } from "chart.js"
+  import type {
+    VideoTimerComputedAnalysis,
+    VideoTimerMarkerRecord,
+    VideoTimerStrokeCountRecord,
+    VideoTimerTurnAnalysisRecord,
+  } from "lib"
+  import { parseDistanceM } from "lib"
 
-definePageMeta( {
-  layout: "secure",
-  middleware: [ "protected" ],
-} )
+  definePageMeta( {
+    layout: "secure",
+    middleware: [ "protected" ],
+  } )
 
-useHead( {
-  title: "Video Timer Session",
-} )
+  useHead( {
+    title: "Video Timer Session",
+  } )
 
-type SessionDetail = {
-  id: string
-  createdAt: string
-  notes: string | null
-  startOffsetMs: number | null
-  selections: {
-    course: string
-    stroke: string
-    distance: string
+  type SessionDetail = {
+    id: string
+    createdAt: string
+    notes: string | null
+    startOffsetMs: number | null
+    selections: {
+      course: string
+      stroke: string
+      distance: string
+    }
+    swimmer: {
+      id: string
+      fullName: string
+    } | null
+    meet: {
+      id: string
+      name: string
+    } | null
+    video: {
+      id: string
+      playbackUrl: string
+      originalName: string
+      mimeType: string
+      size: number
+      durationMs?: number
+    }
+    markers: VideoTimerMarkerRecord[]
+    analysis: {
+      breakoutStartM: number | null
+    } | null
+    strokeCounts: VideoTimerStrokeCountRecord[]
+    turns: VideoTimerTurnAnalysisRecord[]
+    computed: VideoTimerComputedAnalysis
   }
-  swimmer: {
-    id: string
-    fullName: string
-  } | null
-  meet: {
-    id: string
-    name: string
-  } | null
-  video: {
-    id: string
-    playbackUrl: string
-    originalName: string
-    mimeType: string
-    size: number
-    durationMs?: number
+
+  type TabKey = "analysis" | "video" | "markers"
+
+  ChartJS.register(
+    CategoryScale,
+    LinearScale,
+    PointElement,
+    LineElement,
+    Title,
+    Tooltip,
+    Legend
+  )
+
+  const route = useRoute()
+  const sessionId = computed( () => String( route.params.id ?? "" ) )
+  const activeTab = ref<TabKey>( "analysis" )
+
+  const { data, pending, error, refresh } = await useAsyncData(
+    () => `video-timer-session-${sessionId.value}`,
+    () => $fetch<SessionDetail>( `/api/competition/video-timer-sessions/${sessionId.value}` ),
+    { watch: [ sessionId ] }
+  )
+
+  const session = computed( () => data.value ?? null )
+  const computedAnalysis = computed( () => session.value?.computed ?? null )
+
+  const dateFormatter = new Intl.DateTimeFormat( "en-GB", {
+    timeZone: "Europe/London",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  } )
+
+  const formatDate = ( iso: string ) => {
+    const d = new Date( iso )
+    if ( Number.isNaN( d.getTime() ) ) return iso
+    return dateFormatter.format( d )
   }
-  markers: VideoTimerMarkerRecord[]
-  analysis: {
-    breakoutStartM: number | null
-  } | null
-  strokeCounts: VideoTimerStrokeCountRecord[]
-  turns: VideoTimerTurnAnalysisRecord[]
-  computed: VideoTimerComputedAnalysis
-}
 
-type TabKey = "analysis" | "video" | "markers"
+  const average = ( values: Array<number | null | undefined> ) => {
+    const valid = values.filter( ( value ): value is number =>
+      typeof value === "number" && Number.isFinite( value )
+    )
 
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend
-)
+    if ( !valid.length ) return null
 
-const route = useRoute()
-const sessionId = computed( () => String( route.params.id ?? "" ) )
-const activeTab = ref<TabKey>( "analysis" )
+    return valid.reduce( ( sum, value ) => sum + value, 0 ) / valid.length
+  }
 
-const { data, pending, error, refresh } = await useAsyncData(
-  () => `video-timer-session-${sessionId.value}`,
-  () => $fetch<SessionDetail>( `/api/competition/video-timer-sessions/${sessionId.value}` ),
-  { watch: [ sessionId ] }
-)
+  const formatRaceMs = ( ms: number | null | undefined ) => {
+    if ( ms === null || ms === undefined || !Number.isFinite( ms ) ) return "—"
+    const totalMs = Math.max( 0, Math.round( ms ) )
+    const totalSeconds = Math.floor( totalMs / 1000 )
+    const minutes = Math.floor( totalSeconds / 60 )
+    const seconds = String( totalSeconds % 60 ).padStart( 2, "0" )
+    const centiseconds = String( Math.floor( ( totalMs % 1000 ) / 10 ) ).padStart( 2, "0" )
+    return `${minutes}:${seconds}.${centiseconds}`
+  }
 
-const session = computed( () => data.value ?? null )
-const computedAnalysis = computed( () => session.value?.computed ?? null )
+  const formatVideoMs = ( ms: number | null | undefined ) => {
+    if ( ms === null || ms === undefined || !Number.isFinite( ms ) ) return "—"
+    const totalMs = Math.max( 0, Math.round( ms ) )
+    const totalSeconds = Math.floor( totalMs / 1000 )
+    const minutes = Math.floor( totalSeconds / 60 )
+    const seconds = String( totalSeconds % 60 ).padStart( 2, "0" )
+    const millis = String( totalMs % 1000 ).padStart( 3, "0" )
+    return `${minutes}:${seconds}.${millis}`
+  }
 
-const dateFormatter = new Intl.DateTimeFormat( "en-GB", {
-  timeZone: "Europe/London",
-  day: "2-digit",
-  month: "2-digit",
-  year: "numeric",
-  hour: "2-digit",
-  minute: "2-digit",
-  second: "2-digit",
-  hour12: false,
-} )
+  const formatNumber = ( value: number | null | undefined, digits = 2 ) => {
+    if ( value === null || value === undefined || !Number.isFinite( value ) ) return "—"
+    return value.toFixed( digits )
+  }
 
-const formatDate = ( iso: string ) => {
-  const d = new Date( iso )
-  if ( Number.isNaN( d.getTime() ) ) return iso
-  return dateFormatter.format( d )
-}
+  const formatPercent = ( value: number | null | undefined ) => {
+    if ( value === null || value === undefined || !Number.isFinite( value ) ) return "—"
+    return `${value.toFixed( 1 )}%`
+  }
 
-const average = ( values: Array<number | null | undefined> ) => {
-  const valid = values.filter( ( value ): value is number =>
+  const raceMsFromVideoMs = ( videoMs: number | null | undefined ) => {
+    if ( videoMs === null || videoMs === undefined ) return null
+    if ( session.value?.startOffsetMs === null || session.value?.startOffsetMs === undefined ) return null
+    return Math.max( 0, videoMs - session.value.startOffsetMs )
+  }
+
+  const titleText = computed( () => {
+    const selections = session.value?.selections
+    if ( !selections ) return "Session"
+    return `${selections.distance} ${selections.stroke} (${String( selections.course || "" ).toUpperCase() })`
+  } )
+
+  const useCollapsedSections = computed( () => {
+    const selections = session.value?.selections
+    if ( !selections ) return false
+    return parseDistanceM( selections.distance ) >= 400
+  } )
+
+  const averageFreeSwimTimeMs = computed( () => computedAnalysis.value?.swimFree.averageTimeMs ?? null )
+  const averageStrokeCount = computed( () => computedAnalysis.value?.swimFree.averageStrokeCount ?? null )
+  const totalStrokeCount = computed( () => computedAnalysis.value?.swimFree.totalStrokeCount ?? null )
+
+  const isFiniteNumber = ( value: unknown ): value is number =>
     typeof value === "number" && Number.isFinite( value )
+
+  const metricChartLabels = computed( () => {
+    const rows = computedAnalysis.value?.swimFree.rows ?? []
+    return [ ...rows.map( row => row.label ), "Average" ]
+  } )
+
+  const metricChartData = computed<ChartData<"line", ( number | null )[], string>>( () => {
+    const rows = computedAnalysis.value?.swimFree.rows ?? []
+    const averageDps = computedAnalysis.value?.swimFree.averageDps ?? null
+    const averageSpeed = computedAnalysis.value?.swimFree.averageSpeed ?? null
+    const averageSr = computedAnalysis.value?.swimFree.averageSr ?? null
+
+    return {
+      labels: metricChartLabels.value,
+      datasets: [
+        {
+          label: "DPS (m)",
+          data: [ ...rows.map( row => row.dps ), averageDps ],
+          borderColor: "#3b82f6",
+          backgroundColor: "#3b82f6",
+          yAxisID: "y",
+          tension: 0,
+          pointRadius: 3,
+          pointHoverRadius: 4,
+          spanGaps: true,
+        },
+        {
+          label: "Speed (m/s)",
+          data: [ ...rows.map( row => row.speed ), averageSpeed ],
+          borderColor: "#ef4444",
+          backgroundColor: "#ef4444",
+          yAxisID: "y",
+          tension: 0.25,
+          pointRadius: 3,
+          pointHoverRadius: 4,
+          spanGaps: true,
+        },
+        {
+          label: "SR (str/Min)",
+          data: [ ...rows.map( row => row.sr ), averageSr ],
+          borderColor: "#f59e0b",
+          backgroundColor: "#f59e0b",
+          yAxisID: "ySr",
+          tension: 0.25,
+          pointRadius: 3,
+          pointHoverRadius: 4,
+          spanGaps: true,
+        },
+      ],
+    }
+  } )
+
+  const hasMetricChartData = computed( () =>
+    metricChartData.value.datasets.some( dataset =>
+      ( dataset.data ?? [] ).some( value => isFiniteNumber( value ) )
+    )
   )
 
-  if ( !valid.length ) return null
-
-  return valid.reduce( ( sum, value ) => sum + value, 0 ) / valid.length
-}
-
-const formatRaceMs = ( ms: number | null | undefined ) => {
-  if ( ms === null || ms === undefined || !Number.isFinite( ms ) ) return "—"
-  const totalMs = Math.max( 0, Math.round( ms ) )
-  const totalSeconds = Math.floor( totalMs / 1000 )
-  const minutes = Math.floor( totalSeconds / 60 )
-  const seconds = String( totalSeconds % 60 ).padStart( 2, "0" )
-  const centiseconds = String( Math.floor( ( totalMs % 1000 ) / 10 ) ).padStart( 2, "0" )
-  return `${minutes}:${seconds}.${centiseconds}`
-}
-
-const formatVideoMs = ( ms: number | null | undefined ) => {
-  if ( ms === null || ms === undefined || !Number.isFinite( ms ) ) return "—"
-  const totalMs = Math.max( 0, Math.round( ms ) )
-  const totalSeconds = Math.floor( totalMs / 1000 )
-  const minutes = Math.floor( totalSeconds / 60 )
-  const seconds = String( totalSeconds % 60 ).padStart( 2, "0" )
-  const millis = String( totalMs % 1000 ).padStart( 3, "0" )
-  return `${minutes}:${seconds}.${millis}`
-}
-
-const formatNumber = ( value: number | null | undefined, digits = 2 ) => {
-  if ( value === null || value === undefined || !Number.isFinite( value ) ) return "—"
-  return value.toFixed( digits )
-}
-
-const formatPercent = ( value: number | null | undefined ) => {
-  if ( value === null || value === undefined || !Number.isFinite( value ) ) return "—"
-  return `${value.toFixed( 1 )}%`
-}
-
-const raceMsFromVideoMs = ( videoMs: number | null | undefined ) => {
-  if ( videoMs === null || videoMs === undefined ) return null
-  if ( session.value?.startOffsetMs === null || session.value?.startOffsetMs === undefined ) return null
-  return Math.max( 0, videoMs - session.value.startOffsetMs )
-}
-
-const titleText = computed( () => {
-  const selections = session.value?.selections
-  if ( !selections ) return "Session"
-  return `${selections.distance} ${selections.stroke} (${String( selections.course || "" ).toUpperCase() })`
-} )
-
-const useCollapsedSections = computed( () => {
-  const selections = session.value?.selections
-  if ( !selections ) return false
-  return parseDistanceM( selections.distance ) >= 400
-} )
-
-const averageFreeSwimTimeMs = computed( () => computedAnalysis.value?.swimFree.averageTimeMs ?? null )
-const averageStrokeCount = computed( () => computedAnalysis.value?.swimFree.averageStrokeCount ?? null )
-const totalStrokeCount = computed( () => computedAnalysis.value?.swimFree.totalStrokeCount ?? null )
-
-const isFiniteNumber = ( value: unknown ): value is number =>
-  typeof value === "number" && Number.isFinite( value )
-
-const metricChartLabels = computed( () => {
-  const rows = computedAnalysis.value?.swimFree.rows ?? []
-  return [ ...rows.map( row => row.label ), "Average" ]
-} )
-
-const metricChartData = computed<ChartData<"line", ( number | null )[], string>>( () => {
-  const rows = computedAnalysis.value?.swimFree.rows ?? []
-  const averageDps = computedAnalysis.value?.swimFree.averageDps ?? null
-  const averageSpeed = computedAnalysis.value?.swimFree.averageSpeed ?? null
-  const averageSr = computedAnalysis.value?.swimFree.averageSr ?? null
-
-  return {
-    labels: metricChartLabels.value,
-    datasets: [
-      {
-        label: "DPS (m)",
-        data: [ ...rows.map( row => row.dps ), averageDps ],
-        borderColor: "#3b82f6",
-        backgroundColor: "#3b82f6",
-        yAxisID: "y",
-        tension: 0,
-        pointRadius: 3,
-        pointHoverRadius: 4,
-        spanGaps: true,
-      },
-      {
-        label: "Speed (m/s)",
-        data: [ ...rows.map( row => row.speed ), averageSpeed ],
-        borderColor: "#ef4444",
-        backgroundColor: "#ef4444",
-        yAxisID: "y",
-        tension: 0.25,
-        pointRadius: 3,
-        pointHoverRadius: 4,
-        spanGaps: true,
-      },
-      {
-        label: "SR (str/Min)",
-        data: [ ...rows.map( row => row.sr ), averageSr ],
-        borderColor: "#f59e0b",
-        backgroundColor: "#f59e0b",
-        yAxisID: "ySr",
-        tension: 0.25,
-        pointRadius: 3,
-        pointHoverRadius: 4,
-        spanGaps: true,
-      },
-    ],
-  }
-} )
-
-const hasMetricChartData = computed( () =>
-  metricChartData.value.datasets.some( dataset =>
-    ( dataset.data ?? [] ).some( value => isFiniteNumber( value ) )
-  )
-)
-
-const metricChartOptions = computed<ChartOptions<"line">>( () => ( {
-  responsive: true,
-  maintainAspectRatio: false,
-  interaction: {
-    mode: "index",
-    intersect: false,
-  },
-  plugins: {
-    legend: {
-      display: true,
-      position: "bottom",
+  const metricChartOptions = computed<ChartOptions<"line">>( () => ( {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: {
+      mode: "index",
+      intersect: false,
     },
-    tooltip: {
-      callbacks: {
-        label: ( context: TooltipItem<"line"> ) => {
-          const label = context.dataset.label || ""
-          const value = Number( context.parsed.y )
+    plugins: {
+      legend: {
+        display: true,
+        position: "bottom",
+      },
+      tooltip: {
+        callbacks: {
+          label: ( context: TooltipItem<"line"> ) => {
+            const label = context.dataset.label || ""
+            const value = Number( context.parsed.y )
 
-          if ( !Number.isFinite( value ) ) return `${label}: —`
-          if ( label.startsWith( "SR" ) ) return `${label}: ${value.toFixed( 1 )}`
-          return `${label}: ${value.toFixed( 2 )}`
+            if ( !Number.isFinite( value ) ) return `${label}: —`
+            if ( label.startsWith( "SR" ) ) return `${label}: ${value.toFixed( 1 )}`
+            return `${label}: ${value.toFixed( 2 )}`
+          },
         },
       },
     },
-  },
-  scales: {
-    x: {
-      title: {
-        display: true,
-        text: "Segment",
+    scales: {
+      x: {
+        title: {
+          display: true,
+          text: "Segment",
+        },
+        grid: {
+          display: false,
+        },
       },
-      grid: {
-        display: false,
+      y: {
+        type: "linear",
+        position: "left",
+        title: {
+          display: true,
+          text: "DPS / Speed",
+        },
+        ticks: {
+          callback: value => Number( value ).toFixed( 2 ),
+        },
+      },
+      ySr: {
+        type: "linear",
+        position: "right",
+        title: {
+          display: true,
+          text: "SR (str/Min)",
+        },
+        grid: {
+          drawOnChartArea: false,
+        },
+        ticks: {
+          callback: value => Number( value ).toFixed( 1 ),
+        },
       },
     },
-    y: {
-      type: "linear",
-      position: "left",
-      title: {
-        display: true,
-        text: "DPS / Speed",
-      },
-      ticks: {
-        callback: value => Number( value ).toFixed( 2 ),
-      },
-    },
-    ySr: {
-      type: "linear",
-      position: "right",
-      title: {
-        display: true,
-        text: "SR (str/Min)",
-      },
-      grid: {
-        drawOnChartArea: false,
-      },
-      ticks: {
-        callback: value => Number( value ).toFixed( 1 ),
-      },
-    },
-  },
-} ) )
+  } ) )
 
-const tabClass = ( key: TabKey ) =>
-  activeTab.value === key
-    ? "border-blue-600 text-blue-700"
-    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+  const tabClass = ( key: TabKey ) =>
+    activeTab.value === key
+      ? "border-blue-600 text-blue-700"
+      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
 </script>
 
 <template>
@@ -460,7 +460,7 @@ const tabClass = ( key: TabKey ) =>
                         <tbody class="text-gray-900">
                           <tr>
                             <td class="py-2 pr-4 tabular-nums">{{ formatRaceMs(computedAnalysis.start.tenMs) }}</td>
-                         <td class="py-2 tabular-nums">{{ formatRaceMs(computedAnalysis.start.breakoutMs) }}</td>
+                            <td class="py-2 tabular-nums">{{ formatRaceMs(computedAnalysis.start.breakoutMs) }}</td>
                           </tr>
                         </tbody>
                       </table>
