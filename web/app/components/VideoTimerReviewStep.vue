@@ -1,14 +1,17 @@
-<script setup lang="ts">
-  import type { Swimmer } from "lib"
-  type MarkerType = "surfacing" | "split"
-
-  type Marker = {
-    id: string
-    type: MarkerType
-    code: string
-    label: string
-    tMs: number
-  }
+  <script setup lang="ts">
+  import type {
+    Swimmer,
+    VideoTimerDraft,
+    VideoTimerMarkerRecord,
+    VideoTimerStrokeCountRecord,
+  } from "lib"
+  import {
+    buildStrokeCountSlots,
+    buildTurnPlan,
+    buildVideoTimerComputedAnalysis,
+    parseDistanceM,
+  } from "lib"
+  import { toRaw } from "vue"
 
   type UploadedVideo = {
     id?: string
@@ -27,75 +30,187 @@
     swimmer: SwimmerRef
     meetId: string | null
     notes: string
-    markers: Marker[]
+    markers: VideoTimerMarkerRecord[]
     startOffsetMs: number | null
+    resultLink: {
+      resultSwimmer: string | null
+      resultCourse: string | null
+      resultStroke: string | null
+      resultDistance: string | null
+      resultSeq: string | null
+      resultDate: string | null
+    }
+    draft: VideoTimerDraft
   }>()
-
-  const toRaceMs = ( videoMs: number ) => {
-    const s = props.startOffsetMs ?? 0
-    return Math.max( 0, videoMs - s )
-  }
 
   const emit = defineEmits<{
     ( e: "back" ): void
-    ( e: "update:markers", v: Marker[] ): void
+    ( e: "update:markers", v: VideoTimerMarkerRecord[] ): void
     ( e: "saved", payload: { sessionId: string } ): void
+    ( e: "update:draft", v: VideoTimerDraft ): void
   }>()
 
-  const videoRef = ref<HTMLVideoElement | null>( null )
   const saving = ref( false )
   const errorMsg = ref<string | null>( null )
   const savedId = ref<string | null>( null )
-  const isPortrait = ref( false )
+  const FIXED_BREAKOUT_M = 10
 
-  const onReviewLoadedMetadata = () => {
-    const v = videoRef.value
-    if ( v ) isPortrait.value = v.videoHeight > v.videoWidth
+  const cloneDraft = () => structuredClone( toRaw( props.draft ) ) as VideoTimerDraft
+
+  const updateDraft = ( updater: ( next: VideoTimerDraft ) => void ) => {
+    const next = cloneDraft()
+    updater( next )
+    emit( "update:draft", next )
   }
 
-  const formatMs = ( ms: number ) => {
-    const totalMs = Math.max( 0, Math.floor( ms ) )
-    const totalSeconds = Math.floor( totalMs / 1000 )
-    const m = Math.floor( totalSeconds / 60 )
-    const ss = String( totalSeconds % 60 ).padStart( 2, "0" )
-    const t = Math.floor( ( totalMs % 1000 ) / 100 )
-    return `${m}:${ss}.${t}`
+  const makeId = () => {
+    const c = globalThis.crypto as Crypto | undefined
+    if ( c?.randomUUID ) return c.randomUUID()
+    return `${Date.now()}-${Math.random().toString( 16 ).slice( 2 )}`
   }
 
-  const sortedMarkers = computed( () => {
-    return [ ...props.markers ].sort( ( a, b ) => a.tMs - b.tMs )
+  const round1 = ( v: number ) => Math.round( v * 10 ) / 10
+
+  const formatNumber = ( v: number | null | undefined, decimals = 2 ) => {
+    if ( v === null || v === undefined || !Number.isFinite( v ) ) return "—"
+    return v.toFixed( decimals )
+  }
+
+  const formatPercent = ( v: number | null | undefined ) => {
+    if ( v === null || v === undefined || !Number.isFinite( v ) ) return "—"
+    return `${round1( v ).toFixed( 1 )}%`
+  }
+
+  const formatRaceClockMs = ( ms: number | null | undefined ) => {
+    if ( ms === null || ms === undefined || !Number.isFinite( ms ) ) return "—"
+    const totalHundredths = Math.round( ms / 10 )
+    const totalSeconds = Math.floor( totalHundredths / 100 )
+    const hundredths = totalHundredths % 100
+    const minutes = Math.floor( totalSeconds / 60 )
+    const seconds = totalSeconds % 60
+    return `${String( minutes ).padStart( 2, "0" )}:${String( seconds ).padStart( 2, "0" )}.${String( hundredths ).padStart( 2, "0" )}`
+  }
+
+  const distanceM = computed( () => parseDistanceM( props.selections.distance ) )
+  const useCollapsedSections = computed( () => distanceM.value >= 400 )
+
+  const sortedMarkers = computed( () => [ ...props.markers ].sort( ( a, b ) => a.tMs - b.tMs ) )
+
+  const strokeCountPlan = computed( () =>
+    buildStrokeCountSlots( props.selections.course, props.selections.distance )
+  )
+
+  const turnPlan = computed( () =>
+    buildTurnPlan( props.selections.course, props.selections.distance )
+  )
+
+  const syncReviewDraft = () => {
+    const nextStrokeCountSlots = strokeCountPlan.value.map( slot => {
+      const existing = props.draft.strokeCountSlots.find(
+        item =>
+          item.lengthIndex === slot.lengthIndex &&
+          item.fromM === slot.fromM &&
+          item.toM === slot.toM
+      )
+
+      return {
+        id: existing?.id ?? makeId(),
+        lengthIndex: slot.lengthIndex,
+        fromM: slot.fromM,
+        toM: slot.toM,
+        label: slot.label,
+        count: existing?.count ?? null,
+      }
+    } )
+
+    const nextTurns = turnPlan.value.map( turn => {
+      const existing = props.draft.turns.find( item => item.turnIndex === turn.turnIndex )
+
+      return {
+        turnIndex: turn.turnIndex,
+        breakoutM: existing?.breakoutM ?? FIXED_BREAKOUT_M,
+      }
+    } )
+
+    const sameStrokeShape =
+      props.draft.strokeCountSlots.length === nextStrokeCountSlots.length &&
+      props.draft.strokeCountSlots.every( ( slot, index ) => {
+        const next = nextStrokeCountSlots[index]
+        return !!next &&
+          slot.lengthIndex === next.lengthIndex &&
+          slot.fromM === next.fromM &&
+          slot.toM === next.toM
+      } )
+
+    const sameTurnShape =
+      props.draft.turns.length === nextTurns.length &&
+      props.draft.turns.every( ( row, index ) => {
+        const next = nextTurns[index]
+        return !!next && row.turnIndex === next.turnIndex
+      } )
+
+    if ( sameStrokeShape && sameTurnShape && props.draft.breakoutStartM === FIXED_BREAKOUT_M ) return
+
+    updateDraft( next => {
+      next.strokeCountSlots = nextStrokeCountSlots
+      next.turns = nextTurns
+      next.breakoutStartM = FIXED_BREAKOUT_M
+    } )
+  }
+
+  watch(
+    () => [ props.selections.course, props.selections.distance ],
+    () => {
+      syncReviewDraft()
+    },
+    { immediate: true }
+  )
+
+  const strokeCountRecords = computed<VideoTimerStrokeCountRecord[]>( () =>
+    props.draft.strokeCountSlots.map( slot => ( {
+      lengthIndex: slot.lengthIndex,
+      fromM: slot.fromM,
+      toM: slot.toM,
+      count: slot.count,
+    } ) )
+  )
+
+  const computedAnalysis = computed( () =>
+    buildVideoTimerComputedAnalysis( {
+      course: props.selections.course,
+      distance: props.selections.distance,
+      startOffsetMs: props.startOffsetMs,
+      markers: sortedMarkers.value,
+      analysis: {
+        breakoutStartM: props.draft.breakoutStartM,
+      },
+      strokeCounts: strokeCountRecords.value,
+      turns: props.draft.turns,
+    } )
+  )
+
+  const totalStrokeCount = computed( () => computedAnalysis.value.swimFree.totalStrokeCount )
+
+  const averageTurnMetrics = computed( () => {
+    const rows = computedAnalysis.value.turns
+
+    const avg = ( values: Array<number | null | undefined> ) => {
+      const valid = values.filter( ( value ): value is number => typeof value === "number" && Number.isFinite( value ) )
+      if ( !valid.length ) return null
+      return valid.reduce( ( sum, value ) => sum + value, 0 ) / valid.length
+    }
+
+    return {
+      fiveInMs: avg( rows.map( row => row.fiveInMs ) ),
+      tenOutMs: avg( rows.map( row => row.tenOutMs ) ),
+      breakoutM: avg( rows.map( row => row.breakoutM ) ),
+      breakoutMs: avg( rows.map( row => row.breakoutMs ) ),
+    }
   } )
-
-  const hasMarkers = computed( () => sortedMarkers.value.length > 0 )
-
-  const seekTo = ( tMs: number ) => {
-    const v = videoRef.value
-    if ( !v ) return
-    const t = Math.max( 0, tMs / 1000 )
-    v.currentTime = t
-    v.pause()
-  }
-
-  const updateMarkerTime = ( id: string, nextMs: number ) => {
-    const next = props.markers.map( ( m ) =>
-      m.id === id ? { ...m, tMs: Math.max( 0, Math.floor( nextMs ) ) } : m
-    )
-    emit( "update:markers", next )
-  }
-
-  const removeMarker = ( id: string ) => {
-    const next = props.markers.filter( ( m ) => m.id !== id )
-    emit( "update:markers", next )
-  }
-
-  const clearAll = () => {
-    emit( "update:markers", [] )
-  }
 
   const canSave = computed( () => {
     if ( saving.value ) return false
     if ( !props.video?.id ) return false
-    if ( !hasMarkers.value ) return false
     return true
   } )
 
@@ -121,15 +236,12 @@
     const swimmerId = props.swimmer?.id ?? null
     const meetId = props.meetId ?? null
 
-
     if ( !canSave.value ) {
       if ( !props.video?.id ) errorMsg.value = "Video not uploaded yet."
-      else if ( !hasMarkers.value ) errorMsg.value = "Add at least one marker before saving."
       return
     }
 
     saving.value = true
-
 
     try {
       const res = await $fetch<{ id: string }>( "/api/competition/video-timer-session", {
@@ -141,9 +253,29 @@
           meetId,
           notes: props.notes ?? "",
           startOffsetMs: props.startOffsetMs,
-          markers: sortedMarkers.value.map( m => ( { type: m.type, code: m.code, label: m.label, tMs: m.tMs } ) ),
-        }
+          resultSwimmer: props.resultLink.resultSwimmer,
+          resultCourse: props.resultLink.resultCourse,
+          resultStroke: props.resultLink.resultStroke,
+          resultDistance: props.resultLink.resultDistance,
+          resultSeq: props.resultLink.resultSeq,
+          resultDate: props.resultLink.resultDate,
+          markers: sortedMarkers.value.map( marker => ( {
+            type: marker.type,
+            code: marker.code,
+            label: marker.label,
+            lengthIndex: marker.lengthIndex,
+            turnIndex: marker.turnIndex,
+            tMs: marker.tMs,
+          } ) ),
+          analysis: {
+            breakoutStartM: props.draft.breakoutStartM,
+          },
+          strokeCounts: strokeCountRecords.value,
+          turns: props.draft.turns,
+          computed: computedAnalysis.value,
+        },
       } )
+
       savedId.value = res.id
       emit( "saved", { sessionId: res.id } )
     } catch ( e: unknown ) {
@@ -152,16 +284,16 @@
       saving.value = false
     }
   }
-</script>
+  </script>
 
 <template>
   <div class="h-full flex flex-col overflow-hidden select-none">
     <div class="flex-1 overflow-y-auto">
       <div class="flex flex-col items-center px-6 py-6">
-        <div class="w-full max-w-5xl">
+        <div class="w-full max-w-6xl">
           <div class="flex items-center justify-between">
             <div>
-              <div class="text-lg font-semibold text-gray-900">Review</div>
+              <div class="text-lg font-semibold text-gray-900">Performance analysis</div>
               <div class="text-xs text-gray-500 mt-1">
                 Course: {{ selections.course }} • Stroke: {{ selections.stroke }} • Distance: {{ selections.distance }}
               </div>
@@ -172,97 +304,204 @@
             </button>
           </div>
 
-          <div class="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-            <div class="w-full">
-              <div class="text-sm font-semibold text-gray-800 mb-2">Video</div>
+          <div class="mt-4 grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
+            <div class="xl:col-span-1 space-y-4">
+              <div class="rounded-xl border border-gray-200 bg-white p-4">
+                <div class="text-sm font-semibold text-gray-800 mb-3">Summary</div>
 
-              <div class="w-full rounded-xl bg-gray-50 border border-gray-200 overflow-hidden">
-                <div class="p-3 text-xs text-gray-700 flex flex-wrap gap-x-4 gap-y-1">
-                  <div><span class="font-semibold">Source:</span> Server</div>
-                  <div><span class="font-semibold">File:</span> {{ video.originalName }}</div>
-                  <div v-if="video.durationMs !== undefined">
-                    <span class="font-semibold">Duration:</span> {{ (video.durationMs / 1000).toFixed(2) }}s
+                <div class="grid grid-cols-1 gap-3 text-sm">
+                  <div class="flex items-center justify-between gap-3">
+                    <span class="text-gray-600">Swimmer</span>
+                    <span class="font-medium text-gray-900">{{ swimmer?.fullName ?? "—" }}</span>
+                  </div>
+
+                  <div class="flex items-center justify-between gap-3">
+                    <span class="text-gray-600">Video</span>
+                    <span class="font-medium text-gray-900 truncate">{{ video.originalName }}</span>
+                  </div>
+
+                  <div class="flex items-center justify-between gap-3">
+                    <span class="text-gray-600">Official time</span>
+                    <span class="font-medium text-gray-900">{{ formatRaceClockMs(computedAnalysis.finishTimeMs) }}</span>
+                  </div>
+
+                  <div class="flex items-center justify-between gap-3">
+                    <span class="text-gray-600">Total stroke count</span>
+                    <span class="font-medium text-gray-900">{{ totalStrokeCount ?? "—" }}</span>
                   </div>
                 </div>
+              </div>
 
-                <div
-                  class="bg-black flex items-center justify-center overflow-hidden"
-                  :class="isPortrait ? 'h-[75vh] max-h-[720px]' : 'aspect-video max-h-[420px]'"
-                >
-                  <video
-                    ref="videoRef"
-                    :src="video.playbackUrl"
-                    controls
-                    playsinline
-                    class="object-contain max-w-full max-h-full"
-                    :class="isPortrait ? 'h-full w-auto' : 'w-full h-full'"
-                    @loadedmetadata="onReviewLoadedMetadata"
-                  />
+              <details class="rounded-xl border border-gray-200 bg-white p-4" :open="!useCollapsedSections">
+                <summary class="text-sm font-semibold text-gray-800 cursor-pointer">Lap</summary>
+
+                <div class="mt-3" :class="useCollapsedSections ? 'overflow-auto max-h-[360px]' : 'overflow-x-auto'">
+                  <table class="min-w-full text-sm">
+                    <thead>
+                      <tr class="border-b">
+                        <th class="py-2 pr-3 text-left font-semibold text-gray-700">Segment</th>
+                        <th class="py-2 pr-3 text-left font-semibold text-gray-700">Split</th>
+                        <th class="py-2 pr-3 text-left font-semibold text-gray-700">Time</th>
+                        <th class="py-2 text-left font-semibold text-gray-700">%</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="row in computedAnalysis.laps" :key="row.lengthIndex" class="border-b last:border-b-0">
+                        <td class="py-2 pr-3 text-gray-900">{{ row.label }}</td>
+                        <td class="py-2 pr-3 text-gray-900">{{ formatRaceClockMs(row.splitMs) }}</td>
+                        <td class="py-2 pr-3 text-gray-900">{{ formatRaceClockMs(row.cumulativeMs) }}</td>
+                        <td class="py-2 text-gray-900">{{ formatPercent(row.pct) }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
                 </div>
-              </div>
-
-              <div v-if="notes" class="mt-3 text-sm text-gray-700">
-                <span class="font-semibold">Notes:</span> {{ notes }}
-              </div>
+              </details>
             </div>
 
-            <div class="w-full">
-              <div class="flex items-center justify-between mb-2">
-                <div class="text-sm font-semibold text-gray-800">Markers ({{ sortedMarkers.length }})</div>
-                <button
-                  class="h-9 px-3 rounded-md bg-gray-200 text-gray-900 disabled:opacity-50"
-                  type="button"
-                  :disabled="sortedMarkers.length === 0"
-                  @click="clearAll"
-                >
-                  Clear all
-                </button>
-              </div>
+            <div class="xl:col-span-2 space-y-4">
+              <details class="rounded-xl border border-gray-200 bg-white p-4" :open="!useCollapsedSections">
+                <summary class="text-sm font-semibold text-gray-800 cursor-pointer">Skills</summary>
 
-              <div class="rounded-xl border border-gray-200 bg-white overflow-hidden">
-                <div v-if="sortedMarkers.length === 0" class="p-4 text-sm text-gray-500">
-                  No markers yet. Go back and add Surfacing/Split marks.
-                </div>
-
-                <div v-else class="divide-y">
-                  <div v-for="m in sortedMarkers" :key="m.id" class="p-3 flex items-center gap-3">
-                    <button class="h-9 px-3 rounded-md bg-gray-100 text-gray-900" type="button" @click="seekTo(m.tMs)">
-                      {{ formatMs(toRaceMs(m.tMs)) }}
-                    </button>
-
-                    <div class="text-xs px-2 py-1 rounded bg-gray-100 text-gray-700">
-                      {{ m.label ?? m.type }}
+                <div class="mt-4 space-y-4">
+                  <div>
+                    <div class="text-xs font-semibold text-gray-700 mb-2 uppercase tracking-wide">Start</div>
+                    <div class="overflow-x-auto">
+                      <table class="min-w-full text-sm">
+                        <thead>
+                          <tr class="border-b">
+                            <th class="py-2 pr-3 text-left font-semibold text-gray-700">10m</th>
+                            <th class="py-2 pr-3 text-left font-semibold text-gray-700">Breakout (m)</th>
+                            <th class="py-2 text-left font-semibold text-gray-700">Breakout</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td class="py-2 pr-3 text-gray-900">{{ formatRaceClockMs(computedAnalysis.start.tenMs) }}</td>
+                            <td class="py-2 pr-3 text-gray-900">{{ formatNumber(FIXED_BREAKOUT_M, 1) }}</td>
+                            <td class="py-2 text-gray-900">{{ formatRaceClockMs(computedAnalysis.start.breakoutMs) }}</td>
+                          </tr>
+                        </tbody>
+                      </table>
                     </div>
+                  </div>
 
-                    <div class="flex-1">
-                      <input
-                        class="w-full h-9 px-3 rounded-md border border-gray-300 text-sm"
-                        type="number"
-                        min="0"
-                        step="1"
-                        :value="toRaceMs(m.tMs)"
-                        @input="
-                          updateMarkerTime(
-                            m.id,
-                            Number(($event.target as HTMLInputElement).value) + (props.startOffsetMs ?? 0)
-                          )
-                        "
-                      >
-                      <div class="text-[11px] text-gray-500 mt-1">milliseconds (click the time button to seek)</div>
+                  <div>
+                    <div class="text-xs font-semibold text-gray-700 mb-2 uppercase tracking-wide">Turns</div>
+                    <div :class="useCollapsedSections ? 'overflow-auto max-h-[360px]' : 'overflow-x-auto'">
+                      <table class="min-w-full text-sm">
+                        <thead>
+                          <tr class="border-b">
+                            <th class="py-2 pr-3 text-left font-semibold text-gray-700">Turn</th>
+                            <th class="py-2 pr-3 text-left font-semibold text-gray-700">5m IN</th>
+                            <th class="py-2 pr-3 text-left font-semibold text-gray-700">10m OUT</th>
+                            <th class="py-2 pr-3 text-left font-semibold text-gray-700">Breakout (m)</th>
+                            <th class="py-2 text-left font-semibold text-gray-700">Breakout</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr v-for="row in computedAnalysis.turns" :key="row.turnIndex" class="border-b">
+                            <td class="py-2 pr-3 text-gray-900">{{ row.label }}</td>
+                            <td class="py-2 pr-3 text-gray-900">{{ formatRaceClockMs(row.fiveInMs) }}</td>
+                            <td class="py-2 pr-3 text-gray-900">{{ formatRaceClockMs(row.tenOutMs) }}</td>
+                            <td class="py-2 pr-3 text-gray-900">{{ formatNumber(FIXED_BREAKOUT_M, 1) }}</td>
+                            <td class="py-2 text-gray-900">{{ formatRaceClockMs(row.breakoutMs) }}</td>
+                          </tr>
+
+                          <tr v-if="computedAnalysis.turns.length">
+                            <td class="py-2 pr-3 text-gray-900 font-medium">Average</td>
+                            <td class="py-2 pr-3 text-gray-900">{{ formatRaceClockMs(averageTurnMetrics.fiveInMs) }}</td>
+                            <td class="py-2 pr-3 text-gray-900">{{ formatRaceClockMs(averageTurnMetrics.tenOutMs) }}</td>
+                            <td class="py-2 pr-3 text-gray-900">{{ formatNumber(averageTurnMetrics.breakoutM, 1) }}</td>
+                            <td class="py-2 text-gray-900">{{ formatRaceClockMs(averageTurnMetrics.breakoutMs) }}</td>
+                          </tr>
+
+                          <tr v-else>
+                            <td colspan="6" class="py-3 text-sm text-gray-500">No turns for this race.</td>
+                          </tr>
+                        </tbody>
+                      </table>
                     </div>
+                  </div>
 
-                    <button class="h-9 px-3 rounded-md bg-red-50 text-red-700" type="button" @click="removeMarker(m.id)">
-                      Delete
-                    </button>
+                  <div>
+                    <div class="text-xs font-semibold text-gray-700 mb-2 uppercase tracking-wide">Finish</div>
+                    <div class="overflow-x-auto">
+                      <table class="min-w-full text-sm">
+                        <thead>
+                          <tr class="border-b">
+                            <th class="py-2 pr-3 text-left font-semibold text-gray-700">5m IN</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td class="py-2 pr-3 text-gray-900">{{ formatRaceClockMs(computedAnalysis.finish.fiveInMs) }}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 </div>
+              </details>
+
+              <details class="rounded-xl border border-gray-200 bg-white p-4" :open="!useCollapsedSections">
+                <summary class="text-sm font-semibold text-gray-800 cursor-pointer">Swim free</summary>
+
+                <div class="mt-3" :class="useCollapsedSections ? 'overflow-auto max-h-[420px]' : 'overflow-x-auto'">
+                  <table class="min-w-full text-sm">
+                    <thead>
+                      <tr class="border-b">
+                        <th class="py-2 pr-3 text-left font-semibold text-gray-700">Segment</th>
+                        <th class="py-2 pr-3 text-left font-semibold text-gray-700">Time</th>
+                        <th class="py-2 pr-3 text-left font-semibold text-gray-700">DPS</th>
+                        <th class="py-2 pr-3 text-left font-semibold text-gray-700">SR</th>
+                        <th class="py-2 pr-3 text-left font-semibold text-gray-700">Speed</th>
+                        <th class="py-2 text-left font-semibold text-gray-700">Count</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="row in computedAnalysis.swimFree.rows" :key="row.lengthIndex" class="border-b">
+                        <td class="py-2 pr-3 text-gray-900">{{ row.label }}</td>
+                        <td class="py-2 pr-3 text-gray-900">{{ formatRaceClockMs(row.timeMs) }}</td>
+                        <td class="py-2 pr-3 text-gray-900">{{ formatNumber(row.dps) }}</td>
+                        <td class="py-2 pr-3 text-gray-900">{{ formatNumber(row.sr, 1) }}</td>
+                        <td class="py-2 pr-3 text-gray-900">{{ formatNumber(row.speed) }}</td>
+                        <td class="py-2 text-gray-900">
+                          {{ props.draft.strokeCountSlots.find(slot => slot.lengthIndex === row.lengthIndex)?.count ?? "—" }}
+                        </td>
+                      </tr>
+
+                      <tr class="border-b">
+                        <td class="py-2 pr-3 text-gray-900 font-medium">Average</td>
+                        <td class="py-2 pr-3 text-gray-900">{{ formatRaceClockMs(computedAnalysis.swimFree.averageTimeMs) }}</td>
+                        <td class="py-2 pr-3 text-gray-900">{{ formatNumber(computedAnalysis.swimFree.averageDps) }}</td>
+                        <td class="py-2 pr-3 text-gray-900">{{ formatNumber(computedAnalysis.swimFree.averageSr, 1) }}</td>
+                        <td class="py-2 pr-3 text-gray-900">{{ formatNumber(computedAnalysis.swimFree.averageSpeed) }}</td>
+                        <td class="py-2 text-gray-900">{{ formatNumber(computedAnalysis.swimFree.averageStrokeCount, 1) }}</td>
+                      </tr>
+
+                      <tr>
+                        <td class="py-2 pr-3 text-gray-900 font-medium">Total</td>
+                        <td class="py-2 pr-3 text-gray-900">{{ formatRaceClockMs(computedAnalysis.finishTimeMs) }}</td>
+                        <td class="py-2 pr-3 text-gray-900">—</td>
+                        <td class="py-2 pr-3 text-gray-900">—</td>
+                        <td class="py-2 pr-3 text-gray-900">—</td>
+                        <td class="py-2 text-gray-900">{{ totalStrokeCount ?? "—" }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </details>
+
+              <div v-if="notes" class="rounded-xl border border-gray-200 bg-white p-4">
+                <div class="text-sm font-semibold text-gray-800 mb-2">Notes</div>
+                <div class="text-sm text-gray-700 whitespace-pre-wrap">{{ notes }}</div>
               </div>
 
-              <div v-if="errorMsg" class="mt-3 text-sm text-red-600">
+              <div v-if="errorMsg" class="text-sm text-red-600">
                 {{ errorMsg }}
               </div>
 
-              <div v-if="savedId" class="mt-3 text-sm text-green-700">
+              <div v-if="savedId" class="text-sm text-green-700">
                 Saved: {{ savedId }}
               </div>
             </div>
@@ -272,7 +511,7 @@
     </div>
 
     <div class="border-t bg-white px-6 py-4">
-      <div class="w-full max-w-5xl mx-auto flex gap-3">
+      <div class="w-full max-w-6xl mx-auto flex gap-3">
         <button
           class="flex-1 h-12 rounded-md bg-green-600 text-white disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
           type="button"

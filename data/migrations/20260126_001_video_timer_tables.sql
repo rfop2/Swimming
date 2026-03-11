@@ -24,6 +24,10 @@ CREATE TABLE IF NOT EXISTS `VideoTimerSessions` (
   `course` varchar(8) NOT NULL,
   `stroke` varchar(32) NOT NULL,
   `distance` varchar(8) NOT NULL,
+  `poolLengthM` tinyint unsigned NOT NULL,
+  `lengthCount` smallint unsigned NOT NULL,
+  `turnCount` smallint unsigned NOT NULL,
+  `officialFinishMs` int unsigned DEFAULT NULL,
   `startOffsetMs` int unsigned DEFAULT NULL,
   `notes` text DEFAULT NULL,
   `created` timestamp NOT NULL DEFAULT current_timestamp(),
@@ -41,7 +45,6 @@ CREATE TABLE IF NOT EXISTS `VideoTimerSessions` (
   KEY `idx_swimmerId` (`swimmerId`),
   KEY `idx_videoId` (`videoId`),
   KEY `idx_meetId` (`meetId`),
-
   KEY `idx_result` (`resultSwimmer`,`resultCourse`,`resultStroke`,`resultDistance`,`resultSeq`),
 
   UNIQUE KEY `ux_vts_user_result` (
@@ -81,6 +84,8 @@ CREATE TABLE IF NOT EXISTS `VideoTimerMarkers` (
   `type` enum('surfacing','split') NOT NULL,
   `code` varchar(32) NOT NULL,
   `label` varchar(64) NOT NULL,
+  `lengthIndex` smallint unsigned DEFAULT NULL,
+  `turnIndex` smallint unsigned DEFAULT NULL,
   `tMs` int unsigned NOT NULL,
   `created` timestamp NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`),
@@ -88,7 +93,53 @@ CREATE TABLE IF NOT EXISTS `VideoTimerMarkers` (
   KEY `idx_session_time` (`sessionId`,`tMs`),
   KEY `idx_session_type` (`sessionId`,`type`),
   KEY `idx_session_code` (`sessionId`,`code`),
+  KEY `idx_session_length` (`sessionId`,`lengthIndex`),
+  KEY `idx_session_turn` (`sessionId`,`turnIndex`),
   CONSTRAINT `fk_VideoTimerMarkers_Session`
+    FOREIGN KEY (`sessionId`) REFERENCES `VideoTimerSessions` (`id`)
+    ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+
+CREATE TABLE IF NOT EXISTS `VideoTimerSessionAnalysis` (
+  `sessionId` varchar(36) NOT NULL,
+  `breakoutStartM` decimal(5,2) DEFAULT NULL,
+  `created` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
+  PRIMARY KEY (`sessionId`),
+  CONSTRAINT `fk_VideoTimerSessionAnalysis_Session`
+    FOREIGN KEY (`sessionId`) REFERENCES `VideoTimerSessions` (`id`)
+    ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+CREATE TABLE IF NOT EXISTS `VideoTimerSessionStrokeCounts` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `sessionId` varchar(36) NOT NULL,
+  `lengthIndex` smallint unsigned NOT NULL,
+  `fromM` decimal(6,2) NOT NULL,
+  `toM` decimal(6,2) NOT NULL,
+  `count` smallint unsigned DEFAULT NULL,
+  `created` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uniq_session_length` (`sessionId`,`lengthIndex`),
+  KEY `idx_session_from_to` (`sessionId`,`fromM`,`toM`),
+  CONSTRAINT `fk_VideoTimerSessionStrokeCounts_Session`
+    FOREIGN KEY (`sessionId`) REFERENCES `VideoTimerSessions` (`id`)
+    ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+
+CREATE TABLE IF NOT EXISTS `VideoTimerSessionTurns` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `sessionId` varchar(36) NOT NULL,
+  `turnIndex` smallint unsigned NOT NULL,
+  `breakoutM` decimal(5,2) DEFAULT NULL,
+  `created` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uniq_session_turn` (`sessionId`,`turnIndex`),
+  CONSTRAINT `fk_VideoTimerSessionTurns_Session`
     FOREIGN KEY (`sessionId`) REFERENCES `VideoTimerSessions` (`id`)
     ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;

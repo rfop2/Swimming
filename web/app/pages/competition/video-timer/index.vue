@@ -1,5 +1,7 @@
 <script setup lang="ts">
-  import { COURSES, strokes, type CourseType, type DistanceType, type StrokeType } from "lib"
+  import { COURSES, strokes } from "lib"
+  import type { VideoTimerDraft, VideoTimerMarkerRecord, CourseType, DistanceType, StrokeType } from "lib"
+
   import VideoTimerReviewStep from "~/components/VideoTimerReviewStep.vue"
   import VideoTimerTimingStep from "~/components/VideoTimerTimingStep.vue"
   import UIMeetListbox from "../../web/app/components/MeetListbox.vue"
@@ -17,11 +19,24 @@
 
   const route = useRoute()
 
-
   const meetId = ref<string | null>( null )
   const meetHint = ref<string | null>( null )
   const resultDate = ref<string | null>( null )
 
+  const resultSwimmer = ref<string | null>( null )
+  const resultCourse = ref<string | null>( null )
+  const resultStroke = ref<string | null>( null )
+  const resultDistance = ref<string | null>( null )
+  const resultSeq = ref<string | null>( null )
+
+  const resultLink = computed( () => ( {
+    resultSwimmer: resultSwimmer.value,
+    resultCourse: resultCourse.value,
+    resultStroke: resultStroke.value,
+    resultDistance: resultDistance.value,
+    resultSeq: resultSeq.value,
+    resultDate: resultDate.value,
+  } ) )
 
   const { showNav } = useLayoutUi()
 
@@ -34,14 +49,6 @@
 
   type Mode = "setup" | "uploading" | "ready"
   type Step = "setup" | "timing" | "review"
-  type MarkerType = "surfacing" | "split"
-  type Marker = {
-    id: string
-    type: MarkerType
-    code: string
-    label: string
-    tMs: number
-  }
 
 
   type UploadVideoResponse = {
@@ -60,41 +67,47 @@
     durationMs?: number
   }
 
-
+  const createEmptyDraft = (): VideoTimerDraft => ( {
+    finishVideoMs: null,
+    startOffsetMs: null,
+    surfaceSlots: [],
+    splitSlots: [],
+    strokeCountSlots: [],
+    turns: [],
+    selectedSlotId: null,
+    markers: [],
+    breakoutStartM: 10,
+    breakoutTurnM: null,
+  } )
   const step = ref<Step>( "setup" )
-  const markers = ref<Marker[]>( [] )
-  const startOffsetMs = ref<number | null>( null )
+  const draft = ref<VideoTimerDraft>( createEmptyDraft() )
+
   const onContinue = () => {
-    markers.value = []
-    startOffsetMs.value = null
+    draft.value.markers = []
     if ( !canProceed.value ) return
     if ( mode.value === "uploading" ) return
     step.value = "timing"
   }
 
-
-  
   const onBackFromTiming = () => {
-    startOffsetMs.value = null
     step.value = "setup"
   }
-
-
 
   const onBackFromReview = () => {
     step.value = "timing"
   }
 
-
-  const onStopTiming = ( payload: { markers: Marker[]; startOffsetMs: number | null } ) => {
-    markers.value = payload.markers
-    startOffsetMs.value = payload.startOffsetMs
+  const onStopTiming = ( payload: { markers: VideoTimerMarkerRecord[] } ) => {
+    draft.value.markers = payload.markers
     step.value = "review"
   }
+
   const onSavedSession = () => {
     step.value = "setup"
     resetVideo()
+    draft.value = createEmptyDraft()
   }
+
   const { swimmer } = useSwimmer()
 
   const strokeOptions = Object.entries( strokes ).map( ( [ k, v ] ) => ( { value: k as StrokeType, label: v.label } ) )
@@ -113,6 +126,7 @@
     },
     "reactive"
   )
+
   watch(
     () => selections.stroke,
     ( newStroke: StrokeType ) => {
@@ -121,7 +135,6 @@
       if ( !ds.includes( selections.distance ) ) selections.distance = ds[0] as DistanceType
     }
   )
-  
 
   const notes = ref( "" )
   const mode = ref<Mode>( "setup" )
@@ -166,6 +179,23 @@
       resultDate.value = typeof q.resultDate === "string" && q.resultDate ? q.resultDate : null
       resultOfficialFinishTime.value = typeof q.officialFinishTime === "string" ? q.officialFinishTime : ""
 
+      resultSwimmer.value = typeof q.resultSwimmer === "string" && q.resultSwimmer ? q.resultSwimmer : null
+      resultCourse.value = typeof q.course === "string" && q.course ? q.course : null
+      resultStroke.value = typeof q.stroke === "string" && q.stroke ? q.stroke : null
+      resultDistance.value = typeof q.distance === "string" && q.distance ? q.distance : null
+      resultSeq.value = typeof q.resultSeq === "string" && q.resultSeq ? q.resultSeq : null
+
+      if ( resultCourse.value ) {
+        selections.course = resultCourse.value as CourseType
+      }
+
+      if ( resultStroke.value && strokes[resultStroke.value as StrokeType] ) {
+        selections.stroke = resultStroke.value as StrokeType
+      }
+
+      if ( resultDistance.value ) {
+        selections.distance = resultDistance.value as DistanceType
+      }
     },
     { immediate: true }
   )
@@ -173,22 +203,17 @@
   const openPicker = () => fileInput.value?.click()
 
   const resetVideo = () => {
-    markers.value = []
-    startOffsetMs.value = null
     step.value = "setup"
     if ( xhrRef.value ) xhrRef.value.abort()
     xhrRef.value = null
     uploadPercent.value = null
     errorMsg.value = null
-
     selectedFile.value = null
     uploadedVideo.value = null
-
     if ( localVideoUrl.value ) {
       URL.revokeObjectURL( localVideoUrl.value )
       localVideoUrl.value = null
     }
-
     if ( fileInput.value ) fileInput.value.value = ""
     mode.value = "setup"
   }
@@ -257,7 +282,6 @@
         resolve( { ok: false, message: msg } )
       }
 
-
       xhr.onerror = () => {
         if ( token !== uploadToken.value ) return
         uploadPercent.value = null
@@ -305,7 +329,6 @@
   }
 
   const setFile = async ( file: File ) => {
-    markers.value = []
     step.value = "setup"
     errorMsg.value = null
     uploadPercent.value = null
@@ -358,20 +381,33 @@
     if ( !file ) return
     await setFile( file )
   }
+
   const continueLabel = computed( () => ( mode.value === "uploading" ? "Uploading…" : "Continue" ) )
+
   const continueHint = computed( () => {
     if ( !selectedFile.value ) return "The video needs to finish uploading to enable button Continue."
+    if ( !resultOfficialFinishTime.value.trim() ) return "Enter the official time to enable Continue."
     if ( mode.value === "uploading" ) return "Continue will be enabled when the upload finishes."
     if ( !uploadReady.value ) return "Upload must finish successfully to enable Continue. Retry upload."
     return null
   } )
+
   const inlineUploadHint = computed( () => {
     if ( mode.value === "uploading" ) return "You can continue only after the upload finishes."
     if ( selectedFile.value && !uploadReady.value ) return "Continue is locked until upload succeeds."
+    if ( !resultOfficialFinishTime.value.trim() ) return "Continue is locked until official time is entered."
     return null
   } )
+
   const uploadReady = computed( () => mode.value === "ready" && !!uploadedVideo.value?.id && !!uploadedVideo.value?.playbackUrl )
-  const canProceed = computed( () => uploadReady.value && !!selections.course && !!selections.stroke && !!selections.distance )
+
+  const canProceed = computed( () =>
+    uploadReady.value &&
+    !!selections.course &&
+    !!selections.stroke &&
+    !!selections.distance &&
+    !!resultOfficialFinishTime.value.trim()
+  )
 
   const uploadStatusText = computed( () => {
     if ( mode.value !== "uploading" ) return null
@@ -400,19 +436,18 @@
               <div class="w-full sm:w-24">
                 <UI-Listbox v-model="selections.distance" :options="distanceOptions" label="Distance" placeholder="Choose Distance" />
               </div>
-              <div v-if="resultOfficialFinishTime" class="w-full sm:w-32">
+
+              <div class="w-full sm:w-32">
                 <label class="block text-xs font-medium text-gray-700 mb-1">Official time</label>
                 <input
-                  :value="resultOfficialFinishTime"
+                  v-model="resultOfficialFinishTime"
                   type="text"
-                  readonly
-                  class="w-full h-10 rounded-md border border-gray-300 bg-gray-50 px-3 text-sm text-gray-900"
+                  placeholder="e.g. 39.49"
+                  class="w-full h-10 rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-900"
                 >
               </div>
-            </div>  
-            <p v-if="meetHint && !meetId" class="mt-4 text-xs text-gray-500">
-              Suggested from result: “{{ meetHint }}”<span v-if="resultDate"> ({{ resultDate }})</span> (select manually)
-            </p>
+            </div>
+
             <div class="mt-3">
               <UIMeetListbox
                 v-model="meetId"
@@ -423,11 +458,7 @@
                 placeholder="Search meet..."
                 class="w-full"
               />
-
-
-
             </div>
-
 
             <div class="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
               <div>
@@ -444,9 +475,11 @@
                   <div class="flex flex-col gap-3">
                     <div class="text-sm font-semibold text-gray-800">Upload video</div>
                     <div class="text-sm text-gray-600">Drag & drop a video here, or choose a file.</div>
+
                     <div v-if="continueHint" class="w-full max-w-5xl mx-auto mt-2 text-xs text-gray-500">
                       {{ continueHint }}
                     </div>
+
                     <div class="flex flex-wrap gap-3 items-center">
                       <button class="h-10 px-4 rounded-md bg-gray-900 text-white active:scale-95 transition-transform" @click="openPicker">
                         Choose video
@@ -501,7 +534,7 @@
                   <div v-if="uploadedVideo" class="p-3 text-xs text-gray-700 flex flex-wrap gap-x-4 gap-y-1">
                     <div><span class="font-semibold">Source:</span> {{ uploadedVideo.id ? "Server" : "Local" }}</div>
                     <div v-if="uploadedVideo.durationMs !== undefined">
-                      <span class="font-semibold">Duration:</span> {{ (uploadedVideo.durationMs / 1000).toFixed(1) }}s
+                      <span class="font-semibold">Duration:</span> {{ ( uploadedVideo.durationMs / 1000 ).toFixed( 1 ) }}s
                     </div>
                   </div>
 
@@ -521,15 +554,12 @@
                     <div v-else class="text-sm text-gray-500">No video selected</div>
                   </div>
                 </div>
-
-                <div class="mt-2 text-xs text-gray-500">
-                  Continue will be used to enter the timing mode in the next step.
-                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
+
       <div class="border-t bg-white px-6 py-4">
         <div class="w-full max-w-5xl mx-auto flex gap-3">
           <button
@@ -538,7 +568,7 @@
             type="button"
             @click="onContinue"
           >
-            {{continueLabel}}
+            {{ continueLabel }}
           </button>
 
           <button class="h-12 px-4 rounded-md bg-gray-200 text-gray-900" type="button" @click="resetVideo">
@@ -546,9 +576,8 @@
           </button>
         </div>
       </div>
-      
     </template>
-   
+
     <VideoTimerTimingStep
       v-else-if="step === 'timing'"
       :video="uploadedVideo!"
@@ -557,22 +586,27 @@
       :meet-id="meetId"
       :notes="notes"
       :initial-official-finish-time="resultOfficialFinishTime"
+      :result-link="resultLink"
+      :draft="draft"
       @back="onBackFromTiming"
       @stop="onStopTiming"
+      @update:draft="draft = $event"
     />
 
     <VideoTimerReviewStep
       v-else-if="step === 'review'"
-      v-model:markers="markers"
+      v-model:markers="draft.markers"
       :video="uploadedVideo!"
       :selections="selections"
       :swimmer="swimmer"
       :meet-id="meetId"
       :notes="notes"
-      :start-offset-ms="startOffsetMs"
+      :start-offset-ms="draft.startOffsetMs"
+      :result-link="resultLink"
+      :draft="draft"
       @back="onBackFromReview"
       @saved="onSavedSession"
+      @update:draft="draft = $event"
     />
-   
   </div>
 </template>
