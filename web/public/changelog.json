@@ -1,14 +1,82 @@
 [
   {
-    "isoDate": "2026-03-11",
-    "niceDate": "11 March 2026",
-    "diff": "14.12.0..",
-    "href": "https://bitbucket.org/swimracing/swimming/compare/14.13.0..14.12.0",
+    "isoDate": "2026-03-12",
+    "niceDate": "12 March 2026",
+    "diff": "14.13.0..",
+    "href": "https://bitbucket.org/swimracing/swimming/compare/14.14.0..14.13.0",
     "major": false,
     "minor": false,
     "tag": null,
+    "title": "14.14.0",
+    "date": "2026-03-12T16:07:17.992Z",
+    "summary": null,
+    "commits": [
+      {
+        "hash": "4a1c3ba6a99c1b78aabc11d6ea7b76a3f7b30f0d",
+        "shorthash": "4a1c3ba",
+        "author": "Philip Coombes",
+        "email": "phil@web2wire.com",
+        "date": "2026-03-12T16:06:29.000Z",
+        "niceDate": "12 March 2026",
+        "subject": "Don't display regular timer nav option",
+        "message": "Don't display regular timer nav option",
+        "fixes": null,
+        "href": "https://bitbucket.org/swimracing/swimming/commits/4a1c3ba6a99c1b78aabc11d6ea7b76a3f7b30f0d",
+        "breaking": false,
+        "files": 1,
+        "insertions": 1,
+        "deletions": 1,
+        "merge": null
+      },
+      {
+        "hash": "235af924143f8c0e4ae820c0aaf2b879d8c8216b",
+        "shorthash": "235af92",
+        "author": "Philip Coombes",
+        "email": "phil@web2wire.com",
+        "date": "2026-03-12T16:06:06.000Z",
+        "niceDate": "12 March 2026",
+        "subject": "Change label on nav option",
+        "message": "Change label on nav option",
+        "fixes": null,
+        "href": "https://bitbucket.org/swimracing/swimming/commits/235af924143f8c0e4ae820c0aaf2b879d8c8216b",
+        "breaking": false,
+        "files": 1,
+        "insertions": 1,
+        "deletions": 1,
+        "merge": null
+      },
+      {
+        "hash": "651dd67817db52310ed1f63e3def32cfa3d35ae0",
+        "shorthash": "651dd67",
+        "author": "Philip Coombes",
+        "email": "phil@web2wire.com",
+        "date": "2026-03-12T16:05:28.000Z",
+        "niceDate": "12 March 2026",
+        "subject": "Don't display entry button on meets",
+        "message": "Don't display entry button on meets",
+        "fixes": null,
+        "href": "https://bitbucket.org/swimracing/swimming/commits/651dd67817db52310ed1f63e3def32cfa3d35ae0",
+        "breaking": false,
+        "files": 1,
+        "insertions": 1,
+        "deletions": 0,
+        "merge": null
+      }
+    ],
+    "merges": [],
+    "fixes": []
+  },
+  {
+    "isoDate": "2026-03-11",
+    "niceDate": "11 March 2026",
+    "diff": "14.12.0..14.13.0",
+    "href": "https://bitbucket.org/swimracing/swimming/compare/14.13.0..14.12.0",
+    "major": false,
+    "minor": true,
+    "tag": "14.13.0",
+    "date": "2026-03-11",
     "title": "14.13.0",
-    "date": "2026-03-11T15:29:51.988Z",
+    "version": "14.13.0",
     "summary": null,
     "commits": [
       {
@@ -4393,8 +4461,8 @@
   {
     "isoDate": "2025-11-26",
     "niceDate": "26 November 2025",
-    "diff": "12.3.0..12.4.0",
-    "href": "https://bitbucket.org/swimracing/swimming/compare/12.4.0..12.3.0",
+    "diff": "12.3.1..12.4.0",
+    "href": "https://bitbucket.org/swimracing/swimming/compare/12.4.0..12.3.1",
     "major": false,
     "minor": true,
     "tag": "12.4.0",
@@ -4470,7 +4538,63 @@
         "insertions": 3,
         "deletions": 6,
         "merge": null
+      }
+    ],
+    "merges": [
+      {
+        "id": "5",
+        "message": "KAN-77",
+        "href": "https://bitbucket.org/swimracing/swimming/pull-requests/5",
+        "author": "Rodrigo Ferreira",
+        "commit": {
+          "hash": "54f8dd6bb0091482cb42a68828378b47aa685e84",
+          "shorthash": "54f8dd6",
+          "author": "Rodrigo Ferreira",
+          "email": "rf.oliveirapaula@gmail.com",
+          "date": "2025-11-26T14:10:35.000Z",
+          "niceDate": "26 November 2025",
+          "subject": "Merged in KAN-77 (pull request #5)",
+          "message": "Merged in KAN-77 (pull request #5)\n\nKAN-77\n\nApproved-by: Philip Coombes",
+          "fixes": null,
+          "href": "https://bitbucket.org/swimracing/swimming/commits/54f8dd6bb0091482cb42a68828378b47aa685e84",
+          "breaking": false
+        }
       },
+      {
+        "id": "4",
+        "message": "fixUIListboxEslintPdfParse",
+        "href": "https://bitbucket.org/swimracing/swimming/pull-requests/4",
+        "author": "Rodrigo Ferreira",
+        "commit": {
+          "hash": "4f868be48160c95ede9ea722a6ccaf97088bfec1",
+          "shorthash": "4f868be",
+          "author": "Rodrigo Ferreira",
+          "email": "rf.oliveirapaula@gmail.com",
+          "date": "2025-11-25T14:26:04.000Z",
+          "niceDate": "25 November 2025",
+          "subject": "Merged in fixUIListboxEslintPdfParse (pull request #4)",
+          "message": "Merged in fixUIListboxEslintPdfParse (pull request #4)\n\nfixUIListboxEslintPdfParse\n\nApproved-by: Philip Coombes",
+          "fixes": null,
+          "href": "https://bitbucket.org/swimracing/swimming/commits/4f868be48160c95ede9ea722a6ccaf97088bfec1",
+          "breaking": false
+        }
+      }
+    ],
+    "fixes": []
+  },
+  {
+    "isoDate": "2025-11-24",
+    "niceDate": "24 November 2025",
+    "diff": "12.3.0..12.3.1",
+    "href": "https://bitbucket.org/swimracing/swimming/compare/12.3.1..12.3.0",
+    "major": false,
+    "minor": false,
+    "tag": "12.3.1",
+    "date": "2025-11-24",
+    "title": "12.3.1",
+    "version": "12.3.1",
+    "summary": null,
+    "commits": [
       {
         "hash": "baf9d3cbf01f9833d03cb892265e2bfa9d23cf2a",
         "shorthash": "baf9d3c",
@@ -4523,46 +4647,7 @@
         "merge": null
       }
     ],
-    "merges": [
-      {
-        "id": "5",
-        "message": "KAN-77",
-        "href": "https://bitbucket.org/swimracing/swimming/pull-requests/5",
-        "author": "Rodrigo Ferreira",
-        "commit": {
-          "hash": "54f8dd6bb0091482cb42a68828378b47aa685e84",
-          "shorthash": "54f8dd6",
-          "author": "Rodrigo Ferreira",
-          "email": "rf.oliveirapaula@gmail.com",
-          "date": "2025-11-26T14:10:35.000Z",
-          "niceDate": "26 November 2025",
-          "subject": "Merged in KAN-77 (pull request #5)",
-          "message": "Merged in KAN-77 (pull request #5)\n\nKAN-77\n\nApproved-by: Philip Coombes",
-          "fixes": null,
-          "href": "https://bitbucket.org/swimracing/swimming/commits/54f8dd6bb0091482cb42a68828378b47aa685e84",
-          "breaking": false
-        }
-      },
-      {
-        "id": "4",
-        "message": "fixUIListboxEslintPdfParse",
-        "href": "https://bitbucket.org/swimracing/swimming/pull-requests/4",
-        "author": "Rodrigo Ferreira",
-        "commit": {
-          "hash": "4f868be48160c95ede9ea722a6ccaf97088bfec1",
-          "shorthash": "4f868be",
-          "author": "Rodrigo Ferreira",
-          "email": "rf.oliveirapaula@gmail.com",
-          "date": "2025-11-25T14:26:04.000Z",
-          "niceDate": "25 November 2025",
-          "subject": "Merged in fixUIListboxEslintPdfParse (pull request #4)",
-          "message": "Merged in fixUIListboxEslintPdfParse (pull request #4)\n\nfixUIListboxEslintPdfParse\n\nApproved-by: Philip Coombes",
-          "fixes": null,
-          "href": "https://bitbucket.org/swimracing/swimming/commits/4f868be48160c95ede9ea722a6ccaf97088bfec1",
-          "breaking": false
-        }
-      }
-    ],
+    "merges": [],
     "fixes": []
   },
   {
