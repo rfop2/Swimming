@@ -5,8 +5,7 @@ export const useSwimmers = ( userId?: string ) => {
   const swimmers = useState<ExtSwimmer[]>( `${userId ?? "0"}:swimmers`, () => [] )
 
   const fetchSwimmers = async (): Promise<ExtSwimmer[]> => {
-    const url = userId ? `/api/swimmers/${userId}` : "/api/swimmers"
-    const data = await $fetch<ExtSwimmer[]>( url )
+    const data = await $fetch<ExtSwimmer[]>( `/api/swimmers/${userId ?? ""}` )
     return data
       .map( s => ( {
         ...s,
