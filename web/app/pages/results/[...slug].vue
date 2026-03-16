@@ -10,6 +10,8 @@
 
   import { VideoCameraIcon, EyeIcon } from "@heroicons/vue/24/outline"
 
+  import VideoTimerVideoPickerModal from "~/components/VideoTimerVideoPickerModal.vue"
+
   
 
   definePageMeta( {
@@ -30,6 +32,10 @@
   const router = useRouter()
   const slug = Array.isArray( route.params.slug ) ? route.params.slug : []
 
+  const isVideoPickerOpen = ref( false )
+  const selectedResultForVideo = ref<ResultRow | null>( null )
+  
+
   const openVideoForResult = ( row: ResultRow ) => {
     const sessionId = row.videoTimerSessionId
 
@@ -42,7 +48,39 @@
       return
     }
 
+    selectedResultForVideo.value = row
+    isVideoPickerOpen.value = true
+  }
+
+  const closeVideoPicker = () => {
+    isVideoPickerOpen.value = false
+    selectedResultForVideo.value = null
+  }
+
+  type LibraryVideoListItem = {
+    id: string
+    createdAt: string
+    originalName: string
+    mimeType: string
+    size: number
+    durationMs?: number | null
+    playbackUrl: string
+    sessionId?: string | null
+    swimmerId?: string | null
+    swimmerName?: string | null
+    course?: string | null
+    stroke?: string | null
+    distance?: string | null
+    meetName?: string | null
+    meetDate?: string | null
+  }
+
+  const selectVideoForResult = ( video: LibraryVideoListItem ) => {
+    const row = selectedResultForVideo.value
+    if ( !row ) return
+
     const query = {
+      videoId: String( video.id ),
       course: String( row.course ?? "" ),
       stroke: String( row.stroke ?? "" ),
       distance: String( row.distance ?? "" ),
@@ -58,6 +96,7 @@
       query,
     } ).href
 
+    closeVideoPicker()
     window.open( href, "_blank", "noopener,noreferrer" )
   }
 
@@ -542,6 +581,12 @@
         There are no results to display for the select swimmer, event and date range.
       </p>
     </div>
+
+    <VideoTimerVideoPickerModal
+      :open="isVideoPickerOpen"
+      @close="closeVideoPicker"
+      @select="selectVideoForResult"
+    />
   </StandardPage>
 </template>
 
