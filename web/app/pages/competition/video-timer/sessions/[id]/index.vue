@@ -35,6 +35,8 @@
     createdAt: string
     notes: string | null
     startOffsetMs: number | null
+    displayMeetDate: string | null
+    displayMeetName: string | null
     selections: {
       course: string
       stroke: string
@@ -81,7 +83,21 @@
   const sessionId = computed( () => String( route.params.id ?? "" ) )
   const activeTab = ref<TabKey>( "analysis" )
 
-  const { data, pending, error, refresh } = await useAsyncData(
+  const meetDateFormatter = new Intl.DateTimeFormat( "en-GB", {
+    timeZone: "Europe/London",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  } )
+
+  const formatMeetDate = ( iso: string | null | undefined ) => {
+    if ( !iso ) return "—"
+    const d = new Date( iso )
+    if ( Number.isNaN( d.getTime() ) ) return iso
+    return meetDateFormatter.format( d )
+  }
+
+  const { data, pending, error } = await useAsyncData(
     () => `video-timer-session-${sessionId.value}`,
     () => $fetch<SessionDetail>( `/api/competition/video-timer-sessions/${sessionId.value}` ),
     { watch: [ sessionId ] }
@@ -174,11 +190,16 @@
 
   const metricChartLabels = computed( () => {
     const rows = computedAnalysis.value?.swimFree.rows ?? []
-    return [ ...rows.map( row => row.label ), "Average" ]
+    return rows.map( row => row.label )
   } )
+
+  const repeatValue = ( value: number | null, count: number ) =>
+    Array.from( { length: count }, () => value )
 
   const metricChartData = computed<ChartData<"line", ( number | null )[], string>>( () => {
     const rows = computedAnalysis.value?.swimFree.rows ?? []
+    const pointCount = rows.length
+
     const averageDps = computedAnalysis.value?.swimFree.averageDps ?? null
     const averageSpeed = computedAnalysis.value?.swimFree.averageSpeed ?? null
     const averageSr = computedAnalysis.value?.swimFree.averageSr ?? null
@@ -188,7 +209,7 @@
       datasets: [
         {
           label: "DPS (m)",
-          data: [ ...rows.map( row => row.dps ), averageDps ],
+          data: rows.map( row => row.dps ),
           borderColor: "#3b82f6",
           backgroundColor: "#3b82f6",
           yAxisID: "y",
@@ -196,10 +217,11 @@
           pointRadius: 3,
           pointHoverRadius: 4,
           spanGaps: true,
+          pointHitRadius: 0,
         },
         {
           label: "Speed (m/s)",
-          data: [ ...rows.map( row => row.speed ), averageSpeed ],
+          data: rows.map( row => row.speed ),
           borderColor: "#ef4444",
           backgroundColor: "#ef4444",
           yAxisID: "y",
@@ -207,10 +229,11 @@
           pointRadius: 3,
           pointHoverRadius: 4,
           spanGaps: true,
+          pointHitRadius: 0,
         },
         {
           label: "SR (str/Min)",
-          data: [ ...rows.map( row => row.sr ), averageSr ],
+          data: rows.map( row => row.sr ),
           borderColor: "#f59e0b",
           backgroundColor: "#f59e0b",
           yAxisID: "ySr",
@@ -218,6 +241,46 @@
           pointRadius: 3,
           pointHoverRadius: 4,
           spanGaps: true,
+          pointHitRadius: 0,
+        },
+        {
+          label: "Avg DPS (m)",
+          data: repeatValue( averageDps, pointCount ),
+          borderColor: "#3b82f6",
+          backgroundColor: "#3b82f6",
+          yAxisID: "y",
+          tension: 0,
+          pointRadius: 0,
+          pointHoverRadius: 0,
+          borderDash: [ 6, 6 ],
+          spanGaps: true,
+          pointHitRadius: 0,
+        },
+        {
+          label: "Avg Speed (m/s)",
+          data: repeatValue( averageSpeed, pointCount ),
+          borderColor: "#ef4444",
+          backgroundColor: "#ef4444",
+          yAxisID: "y",
+          tension: 0,
+          pointRadius: 0,
+          pointHoverRadius: 0,
+          borderDash: [ 6, 6 ],
+          spanGaps: true,
+          pointHitRadius: 0,
+        },
+        {
+          label: "Avg SR (str/Min)",
+          data: repeatValue( averageSr, pointCount ),
+          borderColor: "#f59e0b",
+          backgroundColor: "#f59e0b",
+          yAxisID: "ySr",
+          tension: 0,
+          pointRadius: 0,
+          pointHoverRadius: 0,
+          borderDash: [ 6, 6 ],
+          spanGaps: true,
+          pointHitRadius: 0,
         },
       ],
     }
@@ -240,8 +303,12 @@
       legend: {
         display: true,
         position: "bottom",
+        labels: {
+          filter: item => !String( item.text || "" ).startsWith( "Avg " ),
+        },
       },
       tooltip: {
+        filter: ( context ) => !String( context.dataset.label || "" ).startsWith( "Avg " ),
         callbacks: {
           label: ( context: TooltipItem<"line"> ) => {
             const label = context.dataset.label || ""
@@ -296,6 +363,46 @@
     activeTab.value === key
       ? "border-blue-600 text-blue-700"
       : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+  const deleting = ref( false )
+  const deleteError = ref<string | null>( null )
+
+  const getErrorMessage = ( e: unknown ) => {
+    if ( typeof e === "string" && e.trim() ) return e
+
+    if ( e && typeof e === "object" ) {
+      const obj = e as {
+        data?: { statusMessage?: unknown; message?: unknown }
+        message?: unknown
+      }
+
+      const msg = obj.data?.statusMessage ?? obj.data?.message ?? obj.message
+      if ( typeof msg === "string" && msg.trim() ) return msg
+    }
+
+    return "Failed to delete session."
+  }
+
+  const deleteSession = async () => {
+    if ( !session.value || deleting.value ) return
+
+    const confirmed = window.confirm( "Are you sure you want to delete this session?" )
+    if ( !confirmed ) return
+
+    deleteError.value = null
+    deleting.value = true
+
+    try {
+      await $fetch( `/api/competition/video-timer-sessions/${sessionId.value}`, {
+        method: "DELETE",
+      } )
+
+      await navigateTo( "/competition/video-timer/sessions" )
+    } catch ( e: unknown ) {
+      deleteError.value = getErrorMessage( e )
+    } finally {
+      deleting.value = false
+    }
+  }
 </script>
 
 <template>
@@ -314,12 +421,30 @@
             <NuxtLink class="h-10 px-4 rounded-md bg-gray-200 text-gray-900 flex items-center" to="/competition/video-timer/sessions">
               Back to sessions
             </NuxtLink>
-            <button class="h-10 px-4 rounded-md bg-gray-900 text-white" type="button" @click="refresh()">
-              Refresh
+
+            <NuxtLink
+              v-if="session"
+              class="h-10 px-4 rounded-md bg-blue-600 text-white flex items-center"
+              :to="`/competition/video-timer/sessions/${session.id}/edit`"
+            >
+              Edit session
+            </NuxtLink>
+
+            <button
+              v-if="session"
+              class="h-10 px-4 rounded-md bg-red-600 text-white disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
+              type="button"
+              :disabled="deleting"
+              @click="deleteSession"
+            >
+              {{ deleting ? "Deleting…" : "Delete session" }}
             </button>
           </div>
         </div>
 
+        <div v-if="deleteError" class="mt-4 text-sm text-red-600">
+          {{ deleteError }}
+        </div>
         <div v-if="pending" class="mt-6 text-sm text-gray-600">
           Loading…
         </div>
@@ -339,8 +464,9 @@
                   {{ session.swimmer.fullName }}
                 </div>
                 <div class="text-xs text-gray-500 mt-1">
-                  {{ formatDate(session.createdAt) }}
-                  <span v-if="session.meet?.name"> • {{ session.meet.name }}</span>
+                  Created at: {{ formatDate(session.createdAt) }}
+                  <span v-if="session.displayMeetDate"> • Meet date: {{ formatMeetDate(session.displayMeetDate) }}</span>
+                  <span v-if="session.displayMeetName"> • {{ session.displayMeetName }}</span>
                   <span v-if="session.video.originalName"> • {{ session.video.originalName }}</span>
                   <span> • {{ session.markers.length }} markers</span>
                 </div>
@@ -532,9 +658,9 @@
                         <tr class="border-b border-gray-200 text-left text-gray-500">
                           <th class="py-2 pr-4 font-semibold">Segment</th>
                           <th class="py-2 pr-4 font-semibold">Time</th>
-                          <th class="py-2 pr-4 font-semibold">DPS</th>
-                          <th class="py-2 pr-4 font-semibold">SR</th>
-                          <th class="py-2 pr-4 font-semibold">Speed</th>
+                          <th class="py-2 pr-4 font-semibold">DPS (m/stroke)</th>
+                          <th class="py-2 pr-4 font-semibold">SR (strokes/min)</th>
+                          <th class="py-2 pr-4 font-semibold">Speed (m/s)</th>
                           <th class="py-2 font-semibold">Count</th>
                         </tr>
                       </thead>
@@ -627,8 +753,13 @@
                     </div>
 
                     <div class="flex items-start justify-between gap-4">
+                      <div class="text-gray-500">Meet date</div>
+                      <div class="text-right text-gray-900 font-medium">{{ formatMeetDate(session.displayMeetDate) }}</div>
+                    </div>
+
+                    <div class="flex items-start justify-between gap-4">
                       <div class="text-gray-500">Meet</div>
-                      <div class="text-right text-gray-900 font-medium">{{ session.meet?.name || "—" }}</div>
+                      <div class="text-right text-gray-900 font-medium">{{ session.displayMeetName || "—" }}</div>
                     </div>
 
                     <div class="flex items-start justify-between gap-4">
@@ -674,7 +805,6 @@
                     <tr class="border-b border-gray-200 text-left text-gray-500">
                       <th class="px-4 py-3 font-semibold">#</th>
                       <th class="px-4 py-3 font-semibold">Label</th>
-                      <th class="px-4 py-3 font-semibold">Code</th>
                       <th class="px-4 py-3 font-semibold">Type</th>
                       <th class="px-4 py-3 font-semibold">Length</th>
                       <th class="px-4 py-3 font-semibold">Turn</th>
@@ -690,7 +820,6 @@
                     >
                       <td class="px-4 py-3 tabular-nums">{{ index + 1 }}</td>
                       <td class="px-4 py-3 font-medium">{{ marker.label }}</td>
-                      <td class="px-4 py-3">{{ marker.code }}</td>
                       <td class="px-4 py-3 capitalize">{{ marker.type }}</td>
                       <td class="px-4 py-3 tabular-nums">{{ marker.lengthIndex ?? "—" }}</td>
                       <td class="px-4 py-3 tabular-nums">{{ marker.turnIndex ?? "—" }}</td>

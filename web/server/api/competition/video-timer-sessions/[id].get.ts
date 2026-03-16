@@ -17,6 +17,9 @@ type SessionRow = {
   startOffsetMs: number | null
   meetId: string | null
   meetName: string | null
+  meetDate: string | null
+  resultDate: string | null
+  resultMeetName: string | null
   swimmerId: string | null
   swimmerName: string | null
   videoId: string
@@ -79,6 +82,9 @@ export default defineEventHandler( async ( event ) => {
         s.startOffsetMs as startOffsetMs,
         s.meetId as meetId,
         mt.name as meetName,
+        mt.date as meetDate,
+        r.date as resultDate,
+        r.meet as resultMeetName,
         s.swimmerId as swimmerId,
         sw.fullName as swimmerName,
         v.id as videoId,
@@ -91,6 +97,12 @@ export default defineEventHandler( async ( event ) => {
       INNER JOIN VideoTimerVideos v ON v.id = s.videoId
       LEFT JOIN Swimmers sw ON sw.id = s.swimmerId
       LEFT JOIN Meets mt ON mt.id = s.meetId
+      LEFT JOIN Results r
+        ON r.swimmer = s.resultSwimmer
+        AND r.course = s.resultCourse
+        AND r.stroke = s.resultStroke
+        AND r.distance = s.resultDistance
+        AND r.seq = s.resultSeq
       WHERE s.id = :id AND s.userId = :userId
       LIMIT 1
       `
@@ -201,11 +213,16 @@ export default defineEventHandler( async ( event ) => {
       turns,
     } )
 
+    const displayMeetDate = row.resultDate ?? row.meetDate ?? null
+    const displayMeetName = row.resultMeetName ?? row.meetName ?? null
+
     return {
       id: row.id,
       createdAt: row.created,
       notes: row.notes,
       startOffsetMs: row.startOffsetMs ?? null,
+      displayMeetDate,
+      displayMeetName,
       selections: {
         course: row.course,
         stroke: row.stroke,
