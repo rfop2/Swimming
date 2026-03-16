@@ -119,6 +119,9 @@
     ] },
     { name: "Competition", children: [
       { name: "Meets", href: "/competition/meets" },
+      { name: "Races", href: "/competition/races" },
+      { name: "Timer", href: "/competition/timer" },
+      { name: "Video Library", href: "/competition/video-timer/videos" },
       { name: "Race Results", href: "/competition/races" },
       // { name: "Timer", href: "/competition/timer" },
       { name: "Video Timer", href: "/competition/video-timer" },

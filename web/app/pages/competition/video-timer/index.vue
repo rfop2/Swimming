@@ -18,6 +18,7 @@
   } )
 
   const route = useRoute()
+  const router = useRouter()
 
   const meetId = ref<string | null>( null )
   const meetHint = ref<string | null>( null )
@@ -50,7 +51,6 @@
   type Mode = "setup" | "uploading" | "ready"
   type Step = "setup" | "timing" | "review"
 
-
   type UploadVideoResponse = {
     id?: string
     playbackUrl?: string
@@ -67,6 +67,16 @@
     durationMs?: number
   }
 
+  type LibraryVideoResponse = {
+    id: string
+    playbackUrl: string
+    originalName: string
+    mimeType: string
+    size: number
+    durationMs?: number | null
+    sessionId?: string | null
+  }
+
   const createEmptyDraft = (): VideoTimerDraft => ( {
     finishVideoMs: null,
     startOffsetMs: null,
@@ -79,13 +89,22 @@
     breakoutStartM: 10,
     breakoutTurnM: null,
   } )
+
   const step = ref<Step>( "setup" )
   const draft = ref<VideoTimerDraft>( createEmptyDraft() )
+
+  const canProceed = computed( () =>
+    uploadReady.value &&
+    !!selections.course &&
+    !!selections.stroke &&
+    !!selections.distance &&
+    !!resultOfficialFinishTime.value.trim()
+  )
 
   const onContinue = () => {
     draft.value.markers = []
     if ( !canProceed.value ) return
-    if ( mode.value === "uploading" ) return
+    if ( mode.value === "uploading" || isHydratingLibraryVideo.value ) return
     step.value = "timing"
   }
 
@@ -104,7 +123,7 @@
 
   const onSavedSession = () => {
     step.value = "setup"
-    resetVideo()
+    void resetVideo()
     draft.value = createEmptyDraft()
   }
 
@@ -147,6 +166,8 @@
   const uploadedVideo = ref<UploadedVideo | null>( null )
 
   const errorMsg = ref<string | null>( null )
+  const libraryVideoError = ref<string | null>( null )
+  const isHydratingLibraryVideo = ref( false )
   const uploadPercent = ref<number | null>( null )
 
   const xhrRef = ref<XMLHttpRequest | null>( null )
@@ -154,9 +175,24 @@
 
   const resultOfficialFinishTime = ref<string>( "" )
 
+  const libraryVideoId = computed( () =>
+    typeof route.query.videoId === "string" && route.query.videoId
+      ? route.query.videoId
+      : null
+  )
+
+  const isBlobUrl = ( value: string | null | undefined ) => !!value && value.startsWith( "blob:" )
+
+  const clearLocalPreviewUrl = () => {
+    if ( localVideoUrl.value && isBlobUrl( localVideoUrl.value ) ) {
+      URL.revokeObjectURL( localVideoUrl.value )
+    }
+    localVideoUrl.value = null
+  }
+
   onBeforeUnmount( () => {
     showNav()
-    if ( localVideoUrl.value ) URL.revokeObjectURL( localVideoUrl.value )
+    clearLocalPreviewUrl()
     if ( xhrRef.value ) xhrRef.value.abort()
   } )
 
@@ -200,24 +236,6 @@
     { immediate: true }
   )
 
-  const openPicker = () => fileInput.value?.click()
-
-  const resetVideo = () => {
-    step.value = "setup"
-    if ( xhrRef.value ) xhrRef.value.abort()
-    xhrRef.value = null
-    uploadPercent.value = null
-    errorMsg.value = null
-    selectedFile.value = null
-    uploadedVideo.value = null
-    if ( localVideoUrl.value ) {
-      URL.revokeObjectURL( localVideoUrl.value )
-      localVideoUrl.value = null
-    }
-    if ( fileInput.value ) fileInput.value.value = ""
-    mode.value = "setup"
-  }
-
   const extractDurationMs = ( url: string ) =>
     new Promise<number | undefined>( ( resolve ) => {
       const v = document.createElement( "video" )
@@ -230,6 +248,109 @@
       v.onloadedmetadata = done
       v.onerror = () => resolve( undefined )
     } )
+
+  const loadLibraryVideo = async ( id: string ) => {
+    isHydratingLibraryVideo.value = true
+    libraryVideoError.value = null
+    errorMsg.value = null
+    uploadPercent.value = null
+    step.value = "setup"
+    mode.value = "setup"
+
+    if ( xhrRef.value ) xhrRef.value.abort()
+    xhrRef.value = null
+
+    selectedFile.value = null
+    if ( fileInput.value ) fileInput.value.value = ""
+
+    clearLocalPreviewUrl()
+    uploadedVideo.value = null
+
+    try {
+      const video = await $fetch<LibraryVideoResponse>( `/api/competition/video-timer-library/${id}` )
+
+      if ( video.sessionId ) {
+        throw new Error( "This video is already linked to a session." )
+      }
+
+      uploadedVideo.value = {
+        id: video.id,
+        playbackUrl: video.playbackUrl,
+        originalName: video.originalName,
+        mimeType: video.mimeType,
+        size: Number( video.size ) || 0,
+        durationMs: video.durationMs === null || video.durationMs === undefined ? undefined : Number( video.durationMs ),
+      }
+
+      mode.value = "ready"
+
+      if ( uploadedVideo.value.durationMs === undefined ) {
+        const durationMs = await extractDurationMs( video.playbackUrl )
+        if ( uploadedVideo.value && uploadedVideo.value.id === video.id ) {
+          uploadedVideo.value = {
+            ...uploadedVideo.value,
+            durationMs,
+          }
+        }
+      }
+    } catch ( error ) {
+      uploadedVideo.value = null
+      mode.value = "setup"
+      libraryVideoError.value =
+        error instanceof Error && error.message
+          ? error.message
+          : "Unable to load linked video."
+    } finally {
+      isHydratingLibraryVideo.value = false
+    }
+  }
+
+  watch(
+    libraryVideoId,
+    async ( id ) => {
+      if ( id ) {
+        await loadLibraryVideo( id )
+        return
+      }
+
+      libraryVideoError.value = null
+
+      if ( !selectedFile.value ) {
+        uploadedVideo.value = null
+        clearLocalPreviewUrl()
+        mode.value = "setup"
+      }
+    },
+    { immediate: true }
+  )
+
+  const retryLoadLibraryVideo = async () => {
+    if ( !libraryVideoId.value ) return
+    await loadLibraryVideo( libraryVideoId.value )
+  }
+
+  const openPicker = () => fileInput.value?.click()
+
+  const resetVideo = async () => {
+    step.value = "setup"
+    if ( xhrRef.value ) xhrRef.value.abort()
+    xhrRef.value = null
+    uploadPercent.value = null
+    errorMsg.value = null
+    libraryVideoError.value = null
+    selectedFile.value = null
+    uploadedVideo.value = null
+    clearLocalPreviewUrl()
+    if ( fileInput.value ) fileInput.value.value = ""
+    mode.value = "setup"
+    isHydratingLibraryVideo.value = false
+
+    if ( libraryVideoId.value ) {
+      const query = { ...route.query }
+      delete query.videoId
+      await router.replace( { query } )
+    }
+  }
 
   const uploadToServerWithProgress = ( file: File, token: number ) =>
     new Promise<{ ok: true; id: string; playbackUrl: string } | { ok: false; message: string }>( ( resolve ) => {
@@ -271,12 +392,9 @@
           return
         }
 
-        const msgFromBody =
+        const msg =
           ( typeof body.statusMessage === "string" ? body.statusMessage : "" )
           || ( typeof body.message === "string" ? body.message : "" )
-
-        const msg =
-          msgFromBody
           || `Upload failed with status ${xhr.status}${xhr.statusText ? ` (${xhr.statusText})` : ""}`
 
         resolve( { ok: false, message: msg } )
@@ -299,6 +417,7 @@
 
   const performUpload = async ( file: File ) => {
     errorMsg.value = null
+    libraryVideoError.value = null
     uploadPercent.value = 0
     mode.value = "uploading"
 
@@ -331,6 +450,7 @@
   const setFile = async ( file: File ) => {
     step.value = "setup"
     errorMsg.value = null
+    libraryVideoError.value = null
     uploadPercent.value = null
 
     if ( !file.type.startsWith( "video/" ) ) {
@@ -338,12 +458,18 @@
       return
     }
 
+    if ( libraryVideoId.value ) {
+      const query = { ...route.query }
+      delete query.videoId
+      await router.replace( { query } )
+    }
+
     selectedFile.value = file
 
     if ( xhrRef.value ) xhrRef.value.abort()
     xhrRef.value = null
 
-    if ( localVideoUrl.value ) URL.revokeObjectURL( localVideoUrl.value )
+    clearLocalPreviewUrl()
     localVideoUrl.value = URL.createObjectURL( file )
 
     uploadedVideo.value = {
@@ -382,32 +508,42 @@
     await setFile( file )
   }
 
-  const continueLabel = computed( () => ( mode.value === "uploading" ? "Uploading…" : "Continue" ) )
+  const continueLabel = computed( () => {
+    if ( isHydratingLibraryVideo.value ) return "Loading video…"
+    if ( mode.value === "uploading" ) return "Uploading…"
+    return "Continue"
+  } )
+
+  const uploadReady = computed( () =>
+    !isHydratingLibraryVideo.value &&
+    mode.value === "ready" &&
+    !!uploadedVideo.value?.id &&
+    !!uploadedVideo.value?.playbackUrl
+  )
 
   const continueHint = computed( () => {
-    if ( !selectedFile.value ) return "The video needs to finish uploading to enable button Continue."
+    if ( isHydratingLibraryVideo.value ) return "The linked library video is still loading."
+    if ( libraryVideoError.value ) return libraryVideoError.value
+    if ( !uploadedVideo.value ) return "Select a video to enable Continue."
     if ( !resultOfficialFinishTime.value.trim() ) return "Enter the official time to enable Continue."
     if ( mode.value === "uploading" ) return "Continue will be enabled when the upload finishes."
-    if ( !uploadReady.value ) return "Upload must finish successfully to enable Continue. Retry upload."
+    if ( !uploadReady.value ) return libraryVideoId.value ? "The linked video must load successfully to enable Continue." : "Upload must finish successfully to enable Continue. Retry upload."
     return null
   } )
 
   const inlineUploadHint = computed( () => {
+    if ( isHydratingLibraryVideo.value ) return "Preparing linked video..."
+    if ( libraryVideoError.value ) return libraryVideoError.value
+    if ( libraryVideoId.value ) {
+      if ( !uploadedVideo.value ) return "This linked video must load before you can continue."
+      if ( !resultOfficialFinishTime.value.trim() ) return "Continue is locked until official time is entered."
+      return null
+    }
     if ( mode.value === "uploading" ) return "You can continue only after the upload finishes."
     if ( selectedFile.value && !uploadReady.value ) return "Continue is locked until upload succeeds."
     if ( !resultOfficialFinishTime.value.trim() ) return "Continue is locked until official time is entered."
     return null
   } )
-
-  const uploadReady = computed( () => mode.value === "ready" && !!uploadedVideo.value?.id && !!uploadedVideo.value?.playbackUrl )
-
-  const canProceed = computed( () =>
-    uploadReady.value &&
-    !!selections.course &&
-    !!selections.stroke &&
-    !!selections.distance &&
-    !!resultOfficialFinishTime.value.trim()
-  )
 
   const uploadStatusText = computed( () => {
     if ( mode.value !== "uploading" ) return null
@@ -465,6 +601,7 @@
                 <input ref="fileInput" type="file" accept="video/*" class="hidden" @change="onPick" >
 
                 <div
+                  v-if="!libraryVideoId"
                   class="w-full rounded-xl border-2 border-dashed p-6 transition-colors"
                   :class="isDragging ? 'border-blue-500 bg-blue-50' : 'border-gray-300 bg-white'"
                   @dragenter.prevent="isDragging = true"
@@ -522,6 +659,76 @@
                   </div>
                 </div>
 
+                <div v-else class="w-full rounded-xl border border-gray-200 bg-white p-6">
+                  <div class="flex flex-col gap-3">
+                    <div class="text-sm font-semibold text-gray-800">Selected library video</div>
+                    <div class="text-sm text-gray-600">
+                      This session will use the video selected from the library.
+                    </div>
+
+                    <div v-if="continueHint" class="text-xs text-gray-500">
+                      {{ continueHint }}
+                    </div>
+
+                    <div v-if="isHydratingLibraryVideo" class="text-sm text-gray-600">
+                      Loading linked video...
+                    </div>
+
+                    <div v-else-if="libraryVideoError" class="space-y-3">
+                      <div class="text-sm text-red-600">
+                        {{ libraryVideoError }}
+                      </div>
+
+                      <div class="flex flex-wrap gap-3 items-center">
+                        <button
+                          class="h-10 px-4 rounded-md bg-gray-900 text-white active:scale-95 transition-transform"
+                          @click="retryLoadLibraryVideo"
+                        >
+                          Retry
+                        </button>
+
+                        <button
+                          class="h-10 px-4 rounded-md bg-gray-200 text-gray-900 active:scale-95 transition-transform"
+                          @click="resetVideo"
+                        >
+                          Remove video
+                        </button>
+                      </div>
+                    </div>
+
+                    <div v-else-if="uploadedVideo" class="space-y-3">
+                      <div class="text-xs text-gray-600 space-y-1">
+                        <div><span class="font-semibold">File:</span> {{ uploadedVideo.originalName }}</div>
+                        <div><span class="font-semibold">Type:</span> {{ uploadedVideo.mimeType }}</div>
+                        <div><span class="font-semibold">Size:</span> {{ formatBytes(uploadedVideo.size) }}</div>
+                        <div v-if="uploadedVideo.durationMs !== undefined">
+                          <span class="font-semibold">Duration:</span> {{ ( uploadedVideo.durationMs / 1000 ).toFixed( 1 ) }}s
+                        </div>
+                      </div>
+
+                      <div v-if="inlineUploadHint" class="text-xs text-gray-500">
+                        {{ inlineUploadHint }}
+                      </div>
+
+                      <div class="flex flex-wrap gap-3 items-center">
+                        <NuxtLink
+                          class="h-10 px-4 rounded-md bg-gray-200 text-gray-900 flex items-center"
+                          to="/competition/video-timer/videos"
+                        >
+                          Open library
+                        </NuxtLink>
+
+                        <button
+                          class="h-10 px-4 rounded-md bg-gray-200 text-gray-900 active:scale-95 transition-transform"
+                          @click="resetVideo"
+                        >
+                          Remove video
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 <div class="mt-4">
                   <UI-Input v-model="notes" type="textarea" placeholder="Notes" class="text-sm" />
                 </div>
@@ -564,7 +771,7 @@
         <div class="w-full max-w-5xl mx-auto flex gap-3">
           <button
             class="flex-1 h-12 rounded-md bg-green-600 text-white disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
-            :disabled="!canProceed || mode === 'uploading'"
+            :disabled="!canProceed || mode === 'uploading' || isHydratingLibraryVideo"
             type="button"
             @click="onContinue"
           >
