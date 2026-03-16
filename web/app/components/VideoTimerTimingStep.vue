@@ -41,6 +41,7 @@
     initialOfficialFinishTime: { type: String, required: false, default: "" },
     resultLink: { type: Object as PropType<Record<string, string | null>>, required: true },
     draft: { type: Object as PropType<VideoTimerDraft>, required: true },
+    mode: { type: String as PropType<"create" | "edit">, required: false, default: "create" },
   } )
 
   const emit = defineEmits<{
@@ -79,15 +80,28 @@
   const buildTurnsPlan = (): TurnPlanItem[] =>
     buildTurnPlan( props.selections.course, props.selections.distance ) ?? []
 
-  const markerPlanKey = ( item: Pick<MarkerPlanItem, "code" | "lengthIndex" | "turnIndex"> ) =>
-    `${item.code}::${item.lengthIndex ?? "x"}::${item.turnIndex ?? "x"}`
+  const markerPlanKey = ( item: Pick<MarkerPlanItem, "type" | "code" | "lengthIndex" | "turnIndex"> ) =>
+    `${item.type}::${item.code}::${item.lengthIndex ?? "x"}::${item.turnIndex ?? "x"}`
+
+  const markerRecordKey = ( item: Pick<VideoTimerMarkerRecord, "type" | "code" | "lengthIndex" | "turnIndex"> ) =>
+    `${item.type}::${item.code}::${item.lengthIndex ?? "x"}::${item.turnIndex ?? "x"}`
 
   const strokePlanKey = ( item: Pick<PlanStrokeCountSlot, "lengthIndex" | "fromM" | "toM"> ) =>
     `${item.lengthIndex}::${item.fromM}::${item.toM}`
 
-  const makeMarkerSlotsFromPlan = ( items: MarkerPlanItem[], currentSlots: MarkerSlot[] ): MarkerSlot[] =>
+  const getSavedFinishVideoMs = () =>
+    props.draft.finishVideoMs ??
+    props.draft.markers.find( marker => marker.code === "finish_time" || marker.code === "finish" )?.tMs ??
+    null
+
+  const makeMarkerSlotsFromPlan = (
+    items: MarkerPlanItem[],
+    currentSlots: MarkerSlot[],
+    savedMarkers: VideoTimerMarkerRecord[]
+  ): MarkerSlot[] =>
     items.map( item => {
       const existing = currentSlots.find( slot => markerPlanKey( slot ) === markerPlanKey( item ) )
+      const saved = savedMarkers.find( marker => markerRecordKey( marker ) === markerPlanKey( item ) ) ?? null
 
       return {
         id: existing?.id ?? makeId(),
@@ -97,11 +111,10 @@
         label: item.label,
         lengthIndex: item.lengthIndex,
         turnIndex: item.turnIndex,
-        videoMs: existing?.videoMs ?? null,
+        videoMs: existing?.videoMs ?? saved?.tMs ?? ( item.code === "finish_time" ? getSavedFinishVideoMs() : null ),
         missed: existing?.missed ?? false,
       }
     } )
-
   const makeStrokeCountDraftSlots = ( items: PlanStrokeCountSlot[], currentSlots: StrokeCountSlot[] ): StrokeCountSlot[] =>
     items.map( item => {
       const existing = currentSlots.find( slot => strokePlanKey( slot ) === strokePlanKey( item ) )
@@ -167,9 +180,27 @@
       sameStringArray( current.strokeCountKeys, expected.strokeCountKeys ) &&
       sameNumberArray( current.turnKeys, expected.turnKeys )
 
-    if ( samePlan ) {
+    const savedMarkerKeys = new Set( props.draft.markers.map( marker => markerRecordKey( marker ) ) )
+
+    const hasUnhydratedSavedMarkers =
+      props.mode === "edit" &&
+      props.draft.markers.length > 0 &&
+      [ ...props.draft.surfaceSlots, ...props.draft.splitSlots ].some(
+        slot => savedMarkerKeys.has( markerPlanKey( slot ) ) && slot.videoMs === null
+      )
+
+    const hasMissingFinishState =
+      props.mode === "edit" &&
+      props.draft.finishVideoMs === null &&
+      getSavedFinishVideoMs() !== null
+
+    if ( samePlan && !hasUnhydratedSavedMarkers && !hasMissingFinishState ) {
       if ( !props.draft.selectedSlotId ) {
-        const firstId = [ ...props.draft.surfaceSlots, ...props.draft.splitSlots ][0]?.id ?? null
+        const firstId =
+          [ ...props.draft.surfaceSlots, ...props.draft.splitSlots ].find( slot => slot.videoMs === null )?.id ??
+          [ ...props.draft.surfaceSlots, ...props.draft.splitSlots ][0]?.id ??
+          null
+
         if ( firstId ) {
           updateDraft( next => {
             next.selectedSlotId = firstId
@@ -179,17 +210,50 @@
       return
     }
 
-    const nextSurfaceSlots = makeMarkerSlotsFromPlan( expected.surface, props.draft.surfaceSlots )
-    const nextSplitSlots = makeMarkerSlotsFromPlan( expected.split, props.draft.splitSlots )
+    const nextSurfaceSlots = makeMarkerSlotsFromPlan( expected.surface, props.draft.surfaceSlots, props.draft.markers )
+    const nextSplitSlots = makeMarkerSlotsFromPlan( expected.split, props.draft.splitSlots, props.draft.markers )
     const nextStrokeCountSlots = makeStrokeCountDraftSlots( expected.strokeCounts, props.draft.strokeCountSlots )
     const nextTurns = makeTurnDraftRows( expected.turns, props.draft.turns )
+
+    const allNextSlots = [ ...nextSurfaceSlots, ...nextSplitSlots ]
+
+    const nextSelectedSlotId =
+      props.draft.selectedSlotId && allNextSlots.some( slot => slot.id === props.draft.selectedSlotId )
+        ? props.draft.selectedSlotId
+        : allNextSlots.find( slot => slot.videoMs === null )?.id ??
+          allNextSlots[0]?.id ??
+          null
+
+    if ( props.mode === "edit" ) {
+      updateDraft( next => {
+        next.finishVideoMs = getSavedFinishVideoMs()
+        next.startOffsetMs = props.draft.startOffsetMs
+        next.surfaceSlots = nextSurfaceSlots
+        next.splitSlots = nextSplitSlots
+        next.strokeCountSlots = nextStrokeCountSlots
+        next.turns = nextTurns
+        next.selectedSlotId = nextSelectedSlotId
+        next.markers = ( toRaw( props.draft.markers ) ?? [] ).map( marker => ( {
+          id: marker.id,
+          type: marker.type,
+          code: marker.code,
+          label: marker.label,
+          lengthIndex: marker.lengthIndex,
+          turnIndex: marker.turnIndex,
+          tMs: marker.tMs,
+        } ) )
+        next.breakoutStartM = props.draft.breakoutStartM ?? 10
+      } )
+      return
+    }
+
     const firstId = [ ...nextSurfaceSlots, ...nextSplitSlots ][0]?.id ?? null
 
     updateDraft( next => {
       next.finishVideoMs = null
       next.startOffsetMs = null
       next.surfaceSlots = nextSurfaceSlots.map( slot => ( { ...slot, videoMs: null, missed: false } ) )
-      next.splitSlots = nextSplitSlots.map( slot => ( { ...slot, videoMs: slot.code === "finish_time" ? null : null, missed: false } ) )
+      next.splitSlots = nextSplitSlots.map( slot => ( { ...slot, videoMs: null, missed: false } ) )
       next.strokeCountSlots = nextStrokeCountSlots
       next.turns = nextTurns
       next.selectedSlotId = firstId

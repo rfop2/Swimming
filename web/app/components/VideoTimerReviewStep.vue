@@ -41,10 +41,12 @@
       resultDate: string | null
     }
     draft: VideoTimerDraft
+    sessionId?: string | null
+    saveMode?: "create" | "update"
   }>()
 
   const emit = defineEmits<{
-    ( e: "back" ): void
+    ( e: "back" | "edit-timing" ): void
     ( e: "update:markers", v: VideoTimerMarkerRecord[] ): void
     ( e: "saved", payload: { sessionId: string } ): void
     ( e: "update:draft", v: VideoTimerDraft ): void
@@ -244,36 +246,45 @@
     saving.value = true
 
     try {
-      const res = await $fetch<{ id: string }>( "/api/competition/video-timer-session", {
-        method: "POST",
-        body: {
-          video: props.video,
-          selections: props.selections,
-          swimmerId,
-          meetId,
-          notes: props.notes ?? "",
-          startOffsetMs: props.startOffsetMs,
-          resultSwimmer: props.resultLink.resultSwimmer,
-          resultCourse: props.resultLink.resultCourse,
-          resultStroke: props.resultLink.resultStroke,
-          resultDistance: props.resultLink.resultDistance,
-          resultSeq: props.resultLink.resultSeq,
-          resultDate: props.resultLink.resultDate,
-          markers: sortedMarkers.value.map( marker => ( {
-            type: marker.type,
-            code: marker.code,
-            label: marker.label,
-            lengthIndex: marker.lengthIndex,
-            turnIndex: marker.turnIndex,
-            tMs: marker.tMs,
-          } ) ),
-          analysis: {
-            breakoutStartM: props.draft.breakoutStartM,
-          },
-          strokeCounts: strokeCountRecords.value,
-          turns: props.draft.turns,
-          computed: computedAnalysis.value,
+      const payload = {
+        video: props.video,
+        selections: props.selections,
+        swimmerId,
+        meetId,
+        notes: props.notes ?? "",
+        startOffsetMs: props.startOffsetMs,
+        resultSwimmer: props.resultLink.resultSwimmer,
+        resultCourse: props.resultLink.resultCourse,
+        resultStroke: props.resultLink.resultStroke,
+        resultDistance: props.resultLink.resultDistance,
+        resultSeq: props.resultLink.resultSeq,
+        resultDate: props.resultLink.resultDate,
+        markers: sortedMarkers.value.map( marker => ( {
+          type: marker.type,
+          code: marker.code,
+          label: marker.label,
+          lengthIndex: marker.lengthIndex,
+          turnIndex: marker.turnIndex,
+          tMs: marker.tMs,
+        } ) ),
+        analysis: {
+          breakoutStartM: props.draft.breakoutStartM,
         },
+        strokeCounts: strokeCountRecords.value,
+        turns: props.draft.turns,
+        computed: computedAnalysis.value,
+      }
+
+      const isUpdate = props.saveMode === "update" && props.sessionId
+      const url = isUpdate
+        ? `/api/competition/video-timer-sessions/${props.sessionId}`
+        : "/api/competition/video-timer-session"
+
+      const method = isUpdate ? "PUT" : "POST"
+
+      const res = await $fetch<{ id: string }>( url, {
+        method,
+        body: payload,
       } )
 
       savedId.value = res.id
@@ -284,6 +295,11 @@
       saving.value = false
     }
   }
+
+  const primaryButtonLabel = computed( () => {
+    if ( saving.value ) return props.saveMode === "update" ? "Updating…" : "Saving…"
+    return props.saveMode === "update" ? "Update session" : "Save session"
+  } )
   </script>
 
 <template>
@@ -518,7 +534,7 @@
           :disabled="!canSave"
           @click="saveSession"
         >
-          {{ saving ? "Saving…" : "Save session" }}
+          {{ primaryButtonLabel }}
         </button>
 
         <button class="h-12 px-4 rounded-md bg-gray-200 text-gray-900" type="button" @click="emit('back')">

@@ -1,9 +1,26 @@
 import Busboy from "busboy"
 import { createError, defineEventHandler } from "h3"
-import { promises as fsp, createWriteStream  } from "node:fs"
-
-import { join, extname } from "node:path"
+import { extname } from "node:path"
 import { randomUUID } from "node:crypto"
+import { S3Client } from "@aws-sdk/client-s3"
+import { Upload } from "@aws-sdk/lib-storage"
+
+const getRequiredEnv = ( name: string ) => {
+  const value = process.env[name]?.trim()
+  if ( !value ) {
+    throw createError( { statusCode: 500, statusMessage: `Missing env: ${name}` } )
+  }
+  return value
+}
+
+const getS3Client = () =>
+  new S3Client( {
+    region: getRequiredEnv( "AWS_REGION" ),
+    credentials: {
+      accessKeyId: getRequiredEnv( "AWS_ACCESS_KEY_ID" ),
+      secretAccessKey: getRequiredEnv( "AWS_SECRET_ACCESS_KEY" ),
+    },
+  } )
 
 export default defineEventHandler( async ( event ) => {
   const req = event.node.req
@@ -13,25 +30,30 @@ export default defineEventHandler( async ( event ) => {
     throw createError( { statusCode: 415, statusMessage: "Expected multipart/form-data" } )
   }
 
+  const bucket = getRequiredEnv( "AWS_S3_BUCKET" )
+  const cloudfrontUrl = getRequiredEnv( "AWS_CLOUDFRONT_URL" ).replace( /\/+$/, "" )
+  const s3 = getS3Client()
   const maxBytes = 700 * 1024 * 1024
-  const dir = join( process.cwd(), "public", "uploads" )
-  await fsp.mkdir( dir, { recursive: true } )
-
   const id = randomUUID()
 
   const result = await new Promise<{ id: string; playbackUrl: string }>( ( resolve, reject ) => {
-    const bb = Busboy( { headers: req.headers, limits: { files: 1, fileSize: maxBytes } } )
+    const bb = Busboy( {
+      headers: req.headers,
+      limits: { files: 1, fileSize: maxBytes },
+    } )
 
-    let storedName = ""
-    let writePath = ""
-    let writeDone: Promise<void> | null = null
     let gotFile = false
     let ended = false
+    let uploadPromise: Promise<unknown> | null = null
+    let uploadKey = ""
+    let activeUpload: Upload | null = null
 
     const fail = ( statusCode: number, statusMessage: string ) => {
       if ( ended ) return
       ended = true
-      if ( writePath ) fsp.unlink( writePath ).catch( () => {} )
+      if ( activeUpload ) {
+        void activeUpload.abort()
+      }
       reject( createError( { statusCode, statusMessage } ) )
     }
 
@@ -53,41 +75,47 @@ export default defineEventHandler( async ( event ) => {
       }
 
       const safeExt = extname( filename ) || ".mp4"
-      storedName = `${id}${safeExt}`
-      writePath = join( dir, storedName )
+      uploadKey = `video-timer/${id}${safeExt}`
 
-      const ws = createWriteStream( writePath )
-
-      writeDone = new Promise<void>( ( res, rej ) => {
-        ws.on( "finish", res )
-        ws.on( "close", res )
-        ws.on( "error", rej )
+      activeUpload = new Upload( {
+        client: s3,
+        params: {
+          Bucket: bucket,
+          Key: uploadKey,
+          Body: file,
+          ContentType: mimeType,
+        },
+        leavePartsOnError: false,
       } )
+
+      uploadPromise = activeUpload.done()
 
       file.on( "limit", () => fail( 413, "File too large" ) )
       file.on( "error", () => fail( 500, "Upload stream error" ) )
-      ws.on( "error", () => fail( 500, "Write error" ) )
-
-      file.pipe( ws )
     } )
 
     bb.on( "error", () => fail( 400, "Malformed multipart data" ) )
 
     bb.on( "finish", () => {
       if ( ended ) return
+
       if ( !gotFile ) {
         fail( 400, "Missing video field" )
         return
       }
 
-      const done = writeDone ?? Promise.resolve()
+      const done = uploadPromise ?? Promise.resolve()
+
       done
         .then( () => {
           if ( ended ) return
           ended = true
-          resolve( { id, playbackUrl: `/api/uploads/${storedName}` } )
+          resolve( {
+            id,
+            playbackUrl: `${cloudfrontUrl}/${uploadKey}`,
+          } )
         } )
-        .catch( () => fail( 500, "Write error" ) )
+        .catch( () => fail( 500, "S3 upload error" ) )
     } )
 
     req.pipe( bb )

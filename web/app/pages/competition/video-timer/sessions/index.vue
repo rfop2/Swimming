@@ -21,6 +21,8 @@
     notes?: string | null
     markersCount?: number | null
     videoOriginalName?: string | null
+    meetName?: string | null
+    meetDate?: string | null
   }
 
   type FilterOption = {
@@ -33,7 +35,7 @@
   const selectedStroke = ref( "" )
   const selectedDistance = ref( "" )
 
-  const { data, pending, error, refresh } = await useAsyncData( "video-timer-sessions", () =>
+  const { data, pending, error } = await useAsyncData( "video-timer-sessions", () =>
     $fetch<SessionListItem[]>( "/api/competition/video-timer-sessions" )
   )
 
@@ -48,10 +50,29 @@
     hour12: false,
   } )
 
+  const meetDateFormatter = new Intl.DateTimeFormat( "en-GB", {
+    timeZone: "Europe/London",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  } )
+
   const formatDate = ( iso: string ) => {
     const d = new Date( iso )
     if ( Number.isNaN( d.getTime() ) ) return iso
     return dateFormatter.format( d )
+  }
+
+  const formatMeetDate = ( iso: string | null | undefined ) => {
+    if ( !iso ) return "—"
+    const d = new Date( iso )
+    if ( Number.isNaN( d.getTime() ) ) return iso
+    return meetDateFormatter.format( d )
+  }
+
+  const formatCourse = ( value: string | null | undefined ) => {
+    const course = String( value ?? "" ).trim()
+    return course ? course.toUpperCase() : "?"
   }
 
   const toLabel = ( value: string ) => value.charAt( 0 ).toUpperCase() + value.slice( 1 )
@@ -113,7 +134,11 @@
       items = items.filter( s => String( s.distance ?? "" ).trim() === selectedDistance.value )
     }
 
-    return items
+    return [ ...items ].sort( ( a, b ) => {
+      const aTime = new Date( a.meetDate || a.createdAt ).getTime()
+      const bTime = new Date( b.meetDate || b.createdAt ).getTime()
+      return bTime - aTime
+    } )
   } )
 
   const clearFilters = () => {
@@ -137,9 +162,6 @@
             <NuxtLink class="h-10 px-4 rounded-md bg-gray-200 text-gray-900 flex items-center" to="/competition/video-timer">
               Back to timer
             </NuxtLink>
-            <button class="h-10 px-4 rounded-md bg-gray-900 text-white" type="button" @click="refresh()">
-              Refresh
-            </button>
           </div>
         </div>
 
@@ -196,31 +218,31 @@
             <NuxtLink
               v-for="s in filteredSessions"
               :key="s.id"
-              class="block p-4 hover:bg-gray-50 transition-colors"
+              class="group block p-4 hover:bg-gray-50 transition-colors"
               :to="`/competition/video-timer/sessions/${s.id}`"
             >
-              <div class="flex items-start justify-between gap-4">
+              <div class="flex items-center justify-between gap-4">
                 <div class="min-w-0">
-                  <div class="text-sm font-semibold text-gray-900 truncate">
-                    {{ s.distance || "?" }} {{ s.stroke || "?" }} ({{ s.course || "?" }})
+                  <div class="text-xs font-medium text-gray-500">
+                    Meet date: {{ formatMeetDate(s.meetDate) }}
                   </div>
 
-                  <div v-if="s.swimmerName" class="text-sm text-gray-700 mt-1 truncate">
-                    {{ s.swimmerName }}
+                  <div v-if="s.meetName" class="mt-1 text-base font-medium text-gray-900 truncate">
+                    {{ s.meetName }}
                   </div>
 
-                  <div class="text-xs text-gray-500 mt-1">
-                    {{ formatDate(s.createdAt) }}
+                  <div class="mt-1 text-sm font-semibold text-gray-900 truncate">
+                    {{ s.distance || "?" }} {{ s.stroke || "?" }} ({{ formatCourse(s.course) }})
+                  </div>
+
+                  <div class="mt-1 text-xs text-gray-400">
+                    Created at: {{ formatDate(s.createdAt) }}
                     <span v-if="s.videoOriginalName"> • {{ s.videoOriginalName }}</span>
                     <span v-if="typeof s.markersCount === 'number'"> • {{ s.markersCount }} markers</span>
                   </div>
-
-                  <div v-if="s.notes" class="text-sm text-gray-700 mt-2 line-clamp-2">
-                    {{ s.notes }}
-                  </div>
                 </div>
 
-                <div class="shrink-0 text-xs text-gray-500">
+                <div class="shrink-0 text-sm font-medium text-gray-500 group-hover:text-gray-900 transition-colors">
                   Open →
                 </div>
               </div>
