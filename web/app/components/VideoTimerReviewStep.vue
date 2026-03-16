@@ -11,7 +11,6 @@
     buildVideoTimerComputedAnalysis,
     parseDistanceM,
   } from "lib"
-  import { toRaw } from "vue"
 
   type UploadedVideo = {
     id?: string
@@ -57,7 +56,57 @@
   const savedId = ref<string | null>( null )
   const FIXED_BREAKOUT_M = 10
 
-  const cloneDraft = () => structuredClone( toRaw( props.draft ) ) as VideoTimerDraft
+  const cloneDraft = (): VideoTimerDraft => ({
+  finishVideoMs: props.draft.finishVideoMs,
+  startOffsetMs: props.draft.startOffsetMs,
+  surfaceSlots: props.draft.surfaceSlots.map(slot => ({
+    id: slot.id,
+    seq: slot.seq,
+    type: slot.type,
+    code: slot.code,
+    label: slot.label,
+    lengthIndex: slot.lengthIndex,
+    turnIndex: slot.turnIndex,
+    videoMs: slot.videoMs,
+    missed: slot.missed,
+  })),
+  splitSlots: props.draft.splitSlots.map(slot => ({
+    id: slot.id,
+    seq: slot.seq,
+    type: slot.type,
+    code: slot.code,
+    label: slot.label,
+    lengthIndex: slot.lengthIndex,
+    turnIndex: slot.turnIndex,
+    videoMs: slot.videoMs,
+    missed: slot.missed,
+  })),
+  strokeCountSlots: props.draft.strokeCountSlots.map(slot => ({
+    id: slot.id,
+    lengthIndex: slot.lengthIndex,
+    fromM: slot.fromM,
+    toM: slot.toM,
+    label: slot.label,
+    count: slot.count,
+  })),
+  turns: props.draft.turns.map(turn => ({
+    turnIndex: turn.turnIndex,
+    breakoutM: turn.breakoutM,
+  })),
+  selectedSlotId: props.draft.selectedSlotId,
+  markers: props.draft.markers.map(marker => ({
+    id: marker.id,
+    seq: marker.seq,
+    type: marker.type,
+    code: marker.code,
+    label: marker.label,
+    lengthIndex: marker.lengthIndex,
+    turnIndex: marker.turnIndex,
+    tMs: marker.tMs,
+  })),
+  breakoutStartM: props.draft.breakoutStartM,
+  breakoutTurnM: props.draft.breakoutTurnM,
+})
 
   const updateDraft = ( updater: ( next: VideoTimerDraft ) => void ) => {
     const next = cloneDraft()
