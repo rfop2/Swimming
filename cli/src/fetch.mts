@@ -923,13 +923,17 @@ const updateMeetsResults = async ( options: MeetsResultsOptions ) => {
 }
 
 ( async () => {
-  await acquireLock()
+  const bypassLock = process.argv.includes( "--no-lock" )
+  if ( !bypassLock ) {
+    await acquireLock()
+  }
 
   const program = new Command()
 
   program
     .name( "fetch" )
     .description( "Fetch and update data from source site" )
+    .addOption( new Option( "--no-lock", "bypass the lock file check (allows running alongside other fetch processes)" ) )
 
   program.showHelpAfterError()
 
