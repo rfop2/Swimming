@@ -147,6 +147,16 @@ export interface UserClub extends KeepRequired<Club, "clubId"> {
   clubOwner: number
 }
 
+export interface SwimmingPool {
+  poolName: string
+  poolStreet1: string
+  poolStreet2: string
+  poolStreet3: string
+  poolTown: string
+  poolPostCode: string
+  poolWhatThreeWords: string
+}
+
 export interface Meet {
   id: string
   code: string
@@ -166,6 +176,11 @@ export interface Meet {
   contact?: string
   email?: string
   tagged: number
+}
+
+export interface ClubMeet extends Meet {
+  clubId?: string
+  clubName?: string
 }
 
 export interface MeetResults {

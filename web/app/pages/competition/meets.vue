@@ -1,6 +1,6 @@
 <script setup lang="ts">
   import type { InternalApi } from "nitropack"
-  import { haversineDistance, type Club, type Meet } from "lib"
+  import { haversineDistance, type Club, type ClubMeet } from "lib"
   import {
     createCalendar,
     createViewDay,
@@ -36,12 +36,12 @@
     latitude: 51.5844700, longitude: -2.0982042
   }
 
-  interface ExtMeet extends Meet {
+  interface ExtMeet extends ClubMeet {
     distance: number | null
   }
 
   const { formatTemporal } = useTemporal()
-  const updated = ref( "<never>" )
+  const updated = useState<string>( "meets-updated", () => "<never>" )
 
   type MeetApiResponse = InternalApi["/api/meets"]["get"]
   const { data } = await useFetch(
@@ -258,6 +258,8 @@
         return false
       if ( selections.distance && event.meet.distance && selections.distance < event.meet.distance )
         return false
+      if ( selections.club && selections.club !== event.meet.clubId )
+        return false
       if ( selections.tagged && !event.meet.tagged )
         return false
       return true
@@ -372,47 +374,45 @@
       Forthcoming events and competitions. Meets last updated {{ updated }}.
     </template>
     <template #controls>
-      <ClientOnly>
-        <div class="min-w-48">
-          <UI-Listbox
-            v-model="selections.course"
-            :options="courses"
-            label="Course"
-          />
-        </div>
-        <div class="min-w-72">
-          <UI-Listbox
-            v-model="selections.level"
-            :options="levels"
-            label="Level"
-            placeholder="All Levels"
-            multiple
-          />
-        </div>
-        <div class="min-w-64">
-          <UI-Combobox
-            id="club"
-            v-model="selections.club"
-            label="Club"
-            placeholder="Type club name"
-            :fetch-options="searchClubs"
-          />
-        </div>
-        <div class="min-w-36">
-          <UI-Listbox
-            v-model="selections.distance"
-            :options="distances"
-            label="Distance"
-          />
-        </div>
-        <div class="min-w-36">
-          <UI-Listbox
-            v-model="selections.tagged"
-            :options="taggings"
-            label="Tagged"
-          />
-        </div>
-      </ClientOnly>
+      <div class="min-w-48">
+        <UI-Listbox
+          v-model="selections.course"
+          :options="courses"
+          label="Course"
+        />
+      </div>
+      <div class="min-w-72">
+        <UI-Listbox
+          v-model="selections.level"
+          :options="levels"
+          label="Level"
+          placeholder="All Levels"
+          multiple
+        />
+      </div>
+      <div class="min-w-64">
+        <UI-Combobox
+          id="club"
+          v-model="selections.club"
+          label="Club"
+          placeholder="Type club name"
+          :fetch-options="searchClubs"
+        />
+      </div>
+      <div class="min-w-36">
+        <UI-Listbox
+          v-model="selections.distance"
+          :options="distances"
+          label="Distance"
+        />
+      </div>
+      <div class="min-w-36">
+        <UI-Listbox
+          v-model="selections.tagged"
+          :options="taggings"
+          label="Tagged"
+        />
+      </div>
     </template>
     <ClientOnly>
       <ScheduleXCalendar

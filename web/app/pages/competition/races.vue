@@ -33,7 +33,6 @@
   } )
 
   const { swimmer } = useSwimmer()
-  console.log( "S", swimmer )
 
   type ResultsApiResponse = InternalApi["/api/results/:id"]["get"]
   type RecordsApiResponse = InternalApi["/api/personal/:id"]["get"]
@@ -55,8 +54,8 @@
 
   watchEffect( async () => {
     if ( hasSwimmer( swimmer ) ) {
-      results.value = await $fetch( `/api/results/${swimmer.value.id}` )
-      records.value = await $fetch( `/api/personal/${swimmer.value.id}` )
+      results.value = await $fetch<ResultsApiResponse>( `/api/results/${swimmer.value.id}` )
+      records.value = await $fetch<RecordsApiResponse>( `/api/personal/${swimmer.value.id}` )
     }
   } )
 
@@ -83,7 +82,8 @@
     }
     const distanceMetres = Number( result.distance.replace( /m$/, "" ) )
     const meetDate = Temporal.PlainDate.from( result.date )
-    const meet = meets.get( result.meet )
+    const meetTag = `${result.meet} / ${result.date}`
+    const meet = meets.get( meetTag )
     if ( !meet ) {
       const distances: MeetDistanceResults = new Map()
       distances.set( distanceMetres, [ race ] )
@@ -99,19 +99,8 @@
         course: result.course,
         results: strokes,
       }
-      meets.set( result.meet, meetResult )
+      meets.set( meetTag, meetResult )
     } else {
-      if ( Temporal.PlainDate.compare( meetDate, meet.date ) !== 0 ) {
-        // find the earlier one
-        const earliest = Temporal.PlainDate.compare( meetDate, meet.date ) <= 0 ? meetDate : meet.date
-        const latest = Temporal.PlainDate.compare( meetDate, meet.date ) <= 0 ? meet.date : meetDate
-        meet.date = earliest
-
-        // difference in days
-        meet.duration = 1 + latest.since( earliest ).days
-
-        // console.log( meet )
-      }
       if ( meet.course !== result.course ) {
         console.error( "Course mismatch", meet, result )
       }
@@ -190,7 +179,6 @@
       end: meet.date.add( { days: ( meet.duration ?? 1 ) - 1 } ),
       duration: meet.duration as number,
       title: `${meet.level}: ${meet.name}`,
-      // color: distanceColor( meet.distance ,
       location: meet.venue,
       description: "xxx, yyy",
       _options: {
@@ -263,7 +251,7 @@
     title="Races"
   >
     <template #description>
-      Past events, races and results
+      Past events, races and results. Results in <span class="italic">italics</span> are long course.
     </template>
     <template #controls>
       <SwimmerSelector v-model="swimmer" />

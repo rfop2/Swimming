@@ -26,6 +26,10 @@
     warn: ExclamationTriangleIcon,
     error: XCircleIcon,
   } as const
+
+  const { format } = useContextDate()
+
+  const unread = computed( () => !!props.notifications.find( n => !Number( n.notificationViewed ) ) )
 </script>
 
 <template>
@@ -56,10 +60,11 @@
                         <li
                           v-for="n in props.notifications"
                           :key="n.notificationId"
-                          class="flex items-start gap-3 px-4 py-3 cursor-pointer"
-                          :class="{
+                          class="notification flex items-start gap-3 px-4 py-3"
+                          :class="[ n.notificationType, {
                             'bg-gray-50': !n.notificationViewed,
-                          }"
+                            unread: !n.notificationViewed,
+                          }]"
                           @click="markRead( n )"
                         >
                           <!-- Severity icon -->
@@ -74,6 +79,7 @@
                             class="flex-1 text-sm"
                             :class="n.notificationViewed ? 'text-gray-600' : 'font-medium text-gray-900'"
                           >
+                            {{  format( n.created! ) }} &ndash;
                             {{ n.notificationText }}
                           </p>
 
@@ -98,7 +104,7 @@
                     <button
                       type="button"
                       class="form-disabled ml-4 inline-flex justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                      :disabled="!notifications.length"
+                      :disabled="!unread || !notifications.length"
                       @click="markAllRead(); open = false">
                       Mark all read
                     </button>
@@ -125,3 +131,11 @@
     </Dialog>
   </TransitionRoot>
 </template>
+
+<style lang="scss" scoped>
+  .notification {
+    &.unread {
+      cursor: pointer;
+    }
+  }
+</style>

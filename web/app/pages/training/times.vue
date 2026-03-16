@@ -69,10 +69,10 @@
   const strokeOptions = Object.entries( strokes ).map( ( [ stroke, strokeData ] ) => ( { value: stroke, label: strokeData.label } ) )
 
   const { state: selections } = usePersisted( "times-selection", {
-    squad: ( squadOptions.value.find( option => option.value === slug[0] ) ?? squadOptions.value[0] ).value,
+    squad: ( squadOptions.value.find( option => option.value === slug[0] ) ?? squadOptions.value[0] )!.value,
     gender: "",
     age: "",
-    stroke: ( strokeOptions.find( option => option.value === slug[1] ) ?? strokeOptions[0] ).value,
+    stroke: ( strokeOptions.find( option => option.value === slug[1] ) ?? strokeOptions[0] )!.value,
   }, "reactive" )
 
   const filteredSwimmers = computed( () => ( swimmers.value || [] )
@@ -102,7 +102,7 @@
 
   const filteredRecords = computed( () => ( records.value || [] ).filter( record => record.stroke === selections.stroke && swimmersMap.value[record.swimmer] ) )
 
-  const distances = computed( () => strokes[selections.stroke].distances )
+  const distances = computed( () => strokes[selections.stroke]!.distances )
 
   interface QualifiedRow extends IndividualRow {
     qualified?: QualifyingRow
@@ -119,7 +119,7 @@
       if ( !map.get( row.swimmer )?.has( row.course ) ) {
         map.get( row.swimmer )?.set( row.course, new Map( distances.value.map( distance => [ distance, null ] ) ) )
       }
-      const swimmer = swimmersMap.value[row.swimmer]
+      const swimmer = swimmersMap.value[row.swimmer]!
       const swimmerAge = getSwimmerAgeGroup( swimmer )
       const baseQualifyingTimes = ( qualifyingInfo.value ?? [] ).filter( q => {
         if ( q.year !== currentYear )
@@ -164,19 +164,22 @@
       }
     }
     const sortedMap = new Map( [ ...map.entries() ].sort( ( [ keyA, _valA ], [ keyB, _valB ] ) => {
-      const genderSort = swimmersMap.value[keyA].gender.localeCompare( swimmersMap.value[keyB].gender )
+      const genderSort = swimmersMap.value[keyA]!.gender.localeCompare( swimmersMap.value[keyB]!.gender )
       if ( genderSort )
         return genderSort
-      const birthdaySort = swimmersMap.value[keyA].birthday.localeCompare( swimmersMap.value[keyB].birthday )
+      const birthdaySort = swimmersMap.value[keyA]!.birthday.localeCompare( swimmersMap.value[keyB]!.birthday )
       if ( birthdaySort )
         return birthdaySort
-      const lastSort = swimmersMap.value[keyA].lastName.localeCompare( swimmersMap.value[keyB].lastName )
+      const lastSort = swimmersMap.value[keyA]!.lastName.localeCompare( swimmersMap.value[keyB]!.lastName )
       if ( lastSort )
         return lastSort
-      return swimmersMap.value[keyA].firstName.localeCompare( swimmersMap.value[keyB].firstName )
+      return swimmersMap.value[keyA]!.firstName.localeCompare( swimmersMap.value[keyB]!.firstName )
     } ) )
     return sortedMap
   } )
+
+  const maleRecords = computed( () => new Map( [ ...groupedRecords.value ].filter( ( [ id ] ) => swimmersMap.value[id]!.gender !== "female" ) ) )
+  const femaleRecords = computed( () => new Map( [ ...groupedRecords.value ].filter( ( [ id ] ) => swimmersMap.value[id]!.gender === "female" ) ) )
 </script>
 
 <template>
@@ -248,9 +251,9 @@
               </th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-gray-200 bg-white">
+          <tbody v-if="maleRecords.size" class="divide-y divide-gray-200 bg-white">
             <template
-              v-for="[swimmerId,courseRecords] in [...groupedRecords].filter( ( [ id ] ) => swimmersMap[id].gender !== 'female' )"
+              v-for="[swimmerId,courseRecords] in [...maleRecords]"
               :key="swimmerId"
             >
               <tr
@@ -265,7 +268,7 @@
                   :rowspan="courseRecords.size"
                   class="whitespace-wrap sm:whitespace-nowrap px-2 py-2 text-right text-sm text-gray-900"
                 >
-                  {{ swimmers ? swimmersMap[swimmerId].fullName : "Unknown swimmer" }} ({{ getSwimmerAge(swimmersMap[swimmerId]) }})
+                  {{ swimmers ? swimmersMap[swimmerId]!.fullName : "Unknown swimmer" }} ({{ getSwimmerAge(swimmersMap[swimmerId]!) }})
                 </td>
                 <td
                   class="whitespace-nowrap px-2 py-2 text-right text-sm text-gray-900"
@@ -292,14 +295,14 @@
               </tr>
             </template>
           </tbody>
-          <tbody v-if="selections.gender !== 'female'">
+          <tbody v-if="selections.gender === '' && maleRecords.size > 0">
             <tr class="spacer">
               <td :colspan="2 + distances.length" />
             </tr>
           </tbody>
-          <tbody class="divide-y divide-gray-200 bg-white">
+          <tbody v-if="femaleRecords.size" class="divide-y divide-gray-200 bg-white">
             <template
-              v-for="[swimmerId,courseRecords] in [...groupedRecords].filter( ( [ id ] ) => swimmersMap[id].gender === 'female' )"
+              v-for="[swimmerId,courseRecords] in [...femaleRecords]"
               :key="swimmerId"
             >
               <tr
@@ -314,7 +317,7 @@
                   :rowspan="courseRecords.size"
                   class="whitespace-wrap sm:whitespace-nowrap px-2 py-2 text-right text-sm text-gray-900"
                 >
-                  {{ swimmers ? swimmersMap[swimmerId].fullName : "Unknown swimmer" }} ({{ getSwimmerAge(swimmersMap[swimmerId]) }})
+                  {{ swimmers ? swimmersMap[swimmerId]!.fullName : "Unknown swimmer" }} ({{ getSwimmerAge(swimmersMap[swimmerId]!) }})
                 </td>
                 <td
                   class="whitespace-nowrap px-2 py-2 text-right text-sm text-gray-900"

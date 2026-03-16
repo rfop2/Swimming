@@ -44,10 +44,12 @@ import {
   parseMeetResults,
   setupNordFetch,
   addNotification,
+  REGIONS,
 } from "lib"
 
 import type {
   Club,
+  ClubMeet,
   IndividualStats,
   Meet,
   MeetResults,
@@ -263,6 +265,8 @@ ON DUPLICATE KEY UPDATE
   contact    = :contact,
   email      = :email
 ;`
+
+const updateMeetClub = "REPLACE INTO ClubMeets ( clubId, meetId ) VALUES ( :clubId, :meetId )"
 
 const checkIndividual = async ( swimmer: Swimmer ) => {
   console.log( `Checking recent individual data for swimmer '${swimmer.fullName}'` )
@@ -571,13 +575,84 @@ const updateMeet = async ( meet: Partial<Meet>, force: boolean ) => {
   await parseMeet( page, $, meet )
 }
 
+const commonPrefixLength = ( a: string, b: string ): number => {
+  const max = Math.min( a.length, b.length )
+  let i = 0
+  while ( i < max && a[i] === b[i] ) {
+    i++
+  }
+  return i
+}
+
+type MatchResult =
+  | { status: "unique"; club: Club; score: number }
+  | { status: "ambiguous"; clubs: { club: Club; score: number }[] }
+  | { status: "none" }
+
+const MIN_MEET_MATCH_LENGTH = 5
+
+const resolveClubMatch = (
+  meet: Meet,
+  clubs: Club[]
+): MatchResult =>  {
+
+  const meetName = meet.name?.replace( /^\d{4}\s+/, "" ) ?? ""
+
+  let bestScore = 0
+  const bestMatches: { club: Club; score: number }[] = []
+
+  for ( const club of clubs ) {
+    if ( meet.region !== `${REGIONS[club.clubRegion]} Region` )
+      continue
+
+    const meetScore = club.meetName
+      ? commonPrefixLength( meetName, club.meetName )
+      : 0
+
+    const clubScore = club.clubName
+      ? commonPrefixLength( meetName, club.clubName )
+      : 0
+
+    const score = Math.max( meetScore, clubScore )
+
+    if ( score < MIN_MEET_MATCH_LENGTH ) continue
+
+    if ( score > bestScore ) {
+      bestScore = score
+      bestMatches.length = 0
+      bestMatches.push( { club, score } )
+    } else if ( score === bestScore ) {
+      bestMatches.push( { club, score } )
+    }
+  }
+
+  if ( bestMatches.length === 0 ) {
+    return { status: "none" }
+  }
+
+  if ( bestMatches.length === 1 ) {
+    return {
+      status: "unique",
+      club: bestMatches[0].club,
+      score: bestScore
+    }
+  }
+
+  return {
+    status: "ambiguous",
+    clubs: bestMatches
+  }
+}
+
 const updateMeets = async ( force: boolean ) => {
   console.log( "Updating meets" )
 
   const pool = await getPool()
-  const selectMeets = prepareStatement<unknown[],Meet>( pool, "SELECT * FROM Meets WHERE date >= DATE_FORMAT(CURDATE(), '%Y-%m-01')" )
+  const selectClubs = prepareStatement<void,Club>( pool, "SELECT * FROM Clubs" )
+  const clubs = await selectClubs.all()
+  const selectMeets = prepareStatement<unknown[],ClubMeet>( pool, "SELECT Meets.*, ClubMeets.clubId FROM Meets LEFT JOIN ClubMeets ON(Meets.id = ClubMeets.meetId) WHERE date >= DATE_FORMAT(CURDATE(), '%Y-%m-01')" )
   const meets = await selectMeets.all()
-  const meetsMap = new Map<Meet["id"],Meet>( meets.map( m => ( [ m.id, m ] ) ) )
+  const meetsMap = new Map<ClubMeet["id"],ClubMeet>( meets.map( m => ( [ m.id, m ] ) ) )
   const fetchedMeets = new Set<Meet["id"]>()
 
   const region = "P"
@@ -589,7 +664,8 @@ const updateMeets = async ( force: boolean ) => {
     updated: 0,
     deleted: 0,
   }
-  const saveMeets = prepareStatement( pool, insertMeetsSql )
+  const saveMeet = prepareStatement<Partial<Meet>>( pool, insertMeetsSql )
+  const saveClubMeet = prepareStatement<{meetId:string, clubId:string}>( pool, updateMeetClub )
   do {
     const page: PageInfo = {
       label: `meets_list_${region}-${pageNo}`,
@@ -612,6 +688,7 @@ const updateMeets = async ( force: boolean ) => {
       }
       fetchedMeets.add( meet.id )
       const dbMeet = meetsMap.get( meet.id )
+      let clubId: ClubMeet["clubId"] = undefined
       if ( dbMeet ) {
         if (
           meet.name !== dbMeet.name
@@ -636,9 +713,26 @@ const updateMeets = async ( force: boolean ) => {
         try {
           await updateMeet( meet, force )
           // console.log( meet )
-          await saveMeets.run( meet )
+          await saveMeet.run( meet )
         } catch ( error ) {
-          console.log( `Unable to update meet '${meet.name}'`, error )
+          console.error( `Unable to update meet '${meet.name}'`, error )
+        }
+      }
+
+      const clubMatch = resolveClubMatch( meet as Meet, clubs )
+      if ( clubMatch.status === "unique" ) {
+        clubId = clubMatch.club.clubId
+        console.warn( `Assigned meet '${meet.name} to club '${clubMatch.club.clubName}'` )
+      } else if ( clubMatch.status === "ambiguous" ) {
+        console.warn( `Multiple club meet matches for '${meet.name}`, clubMatch.clubs )
+      } else {
+        console.log( `No club matches for '${meet.name}` )
+      }
+      if ( clubId && ( !dbMeet || dbMeet?.clubId !== clubId ) ) {
+        try {
+          await saveClubMeet.run( { meetId: meet.id, clubId } )
+        } catch ( error ) {
+          console.error( `Unable to update club id '${clubId}' for meet '${meet.name}'`, error )
         }
       }
     }
@@ -829,13 +923,17 @@ const updateMeetsResults = async ( options: MeetsResultsOptions ) => {
 }
 
 ( async () => {
-  await acquireLock()
+  const bypassLock = process.argv.includes( "--no-lock" )
+  if ( !bypassLock ) {
+    await acquireLock()
+  }
 
   const program = new Command()
 
   program
     .name( "fetch" )
     .description( "Fetch and update data from source site" )
+    .addOption( new Option( "--no-lock", "bypass the lock file check (allows running alongside other fetch processes)" ) )
 
   program.showHelpAfterError()
 
