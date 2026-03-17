@@ -1,14 +1,50 @@
 [
   {
-    "isoDate": "2026-03-16",
-    "niceDate": "16 March 2026",
-    "diff": "14.16.1..",
-    "href": "https://bitbucket.org/swimracing/swimming/compare/14.17.0..14.16.1",
+    "isoDate": "2026-03-17",
+    "niceDate": "17 March 2026",
+    "diff": "14.17.0..",
+    "href": "https://bitbucket.org/swimracing/swimming/compare/14.18.0..14.17.0",
     "major": false,
     "minor": false,
     "tag": null,
+    "title": "14.18.0",
+    "date": "2026-03-17T08:58:46.491Z",
+    "summary": null,
+    "commits": [],
+    "merges": [
+      {
+        "id": "21",
+        "message": "fixSSR Reload Page Erros",
+        "href": "https://bitbucket.org/swimracing/swimming/pull-requests/21",
+        "author": "Rodrigo Ferreira",
+        "commit": {
+          "hash": "31719f0e77e0f761d5eb9c0c70dcce88208f0924",
+          "shorthash": "31719f0",
+          "author": "Rodrigo Ferreira",
+          "email": "rf.oliveirapaula@gmail.com",
+          "date": "2026-03-17T08:57:19.000Z",
+          "niceDate": "17 March 2026",
+          "subject": "Merged in KAN-91-Changes (pull request #21)",
+          "message": "Merged in KAN-91-Changes (pull request #21)\n\nfixSSR Reload Page Erros",
+          "fixes": null,
+          "href": "https://bitbucket.org/swimracing/swimming/commits/31719f0e77e0f761d5eb9c0c70dcce88208f0924",
+          "breaking": false
+        }
+      }
+    ],
+    "fixes": []
+  },
+  {
+    "isoDate": "2026-03-16",
+    "niceDate": "16 March 2026",
+    "diff": "14.16.1..14.17.0",
+    "href": "https://bitbucket.org/swimracing/swimming/compare/14.17.0..14.16.1",
+    "major": false,
+    "minor": true,
+    "tag": "14.17.0",
+    "date": "2026-03-16",
     "title": "14.17.0",
-    "date": "2026-03-16T23:36:55.595Z",
+    "version": "14.17.0",
     "summary": null,
     "commits": [],
     "merges": [

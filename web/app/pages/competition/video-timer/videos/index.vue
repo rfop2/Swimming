@@ -50,9 +50,13 @@
   const selectedStroke = ref( "" )
   const selectedDistance = ref( "" )
 
-  const { data, pending, error } = await useAsyncData( "video-timer-library", () =>
-    $fetch<VideoListItem[]>( "/api/competition/video-timer-library" )
-  )
+  const { data, pending, error } = await useFetch<VideoListItem[]>(
+  "/api/competition/video-timer-library",
+  {
+    key: "video-timer-library",
+    default: () => [],
+  }
+)
 
   const dateFormatter = new Intl.DateTimeFormat( "en-GB", {
     timeZone: "Europe/London",
