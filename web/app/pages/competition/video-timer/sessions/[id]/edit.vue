@@ -97,7 +97,6 @@
   } )
 
   const notes = ref( "" )
-  const meetId = ref<string | null>( null )
 
   const uploadedVideo = ref<SessionDetail["video"] | null>( null )
 
@@ -161,7 +160,6 @@
       selections.distance = value.selections.distance
 
       notes.value = value.notes ?? ""
-      meetId.value = value.meet?.id ?? null
       uploadedVideo.value = { ...value.video }
 
       swimmer.value = value.swimmer
@@ -224,7 +222,6 @@
       :video="uploadedVideo"
       :selections="selections"
       :swimmer="swimmer"
-      :meet-id="meetId"
       :notes="notes"
       :initial-official-finish-time="initialOfficialFinishTime"
       :result-link="resultLink"
@@ -241,7 +238,6 @@
       :video="uploadedVideo"
       :selections="selections"
       :swimmer="swimmer"
-      :meet-id="meetId"
       :notes="notes"
       :start-offset-ms="draft.startOffsetMs"
       :result-link="resultLink"

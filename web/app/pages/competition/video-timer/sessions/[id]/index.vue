@@ -35,8 +35,8 @@
     createdAt: string
     notes: string | null
     startOffsetMs: number | null
-    displayMeetDate: string | null
-    displayMeetName: string | null
+    resultDate: string | null
+    resultName: string | null
     selections: {
       course: string
       stroke: string
@@ -45,10 +45,6 @@
     swimmer: {
       id: string
       fullName: string
-    } | null
-    meet: {
-      id: string
-      name: string
     } | null
     video: {
       id: string
@@ -83,18 +79,18 @@
   const sessionId = computed( () => String( route.params.id ?? "" ) )
   const activeTab = ref<TabKey>( "analysis" )
 
-  const meetDateFormatter = new Intl.DateTimeFormat( "en-GB", {
+  const resultDateFormatter = new Intl.DateTimeFormat( "en-GB", {
     timeZone: "Europe/London",
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
   } )
 
-  const formatMeetDate = ( iso: string | null | undefined ) => {
+  const formatResultDate = ( iso: string | null | undefined ) => {
     if ( !iso ) return "—"
     const d = new Date( iso )
     if ( Number.isNaN( d.getTime() ) ) return iso
-    return meetDateFormatter.format( d )
+    return resultDateFormatter.format( d )
   }
 
   const { data, pending, error } = await useAsyncData(
@@ -465,8 +461,8 @@
                 </div>
                 <div class="text-xs text-gray-500 mt-1">
                   Created at: {{ formatDate(session.createdAt) }}
-                  <span v-if="session.displayMeetDate"> • Meet date: {{ formatMeetDate(session.displayMeetDate) }}</span>
-                  <span v-if="session.displayMeetName"> • {{ session.displayMeetName }}</span>
+                  <span v-if="session.resultDate"> • Result date: {{ formatResultDate(session.resultDate) }}</span>
+                  <span v-if="session.resultName"> • {{ session.resultName }}</span>
                   <span v-if="session.video.originalName"> • {{ session.video.originalName }}</span>
                   <span> • {{ session.markers.length }} markers</span>
                 </div>
@@ -753,15 +749,14 @@
                     </div>
 
                     <div class="flex items-start justify-between gap-4">
-                      <div class="text-gray-500">Meet date</div>
-                      <div class="text-right text-gray-900 font-medium">{{ formatMeetDate(session.displayMeetDate) }}</div>
+                      <div class="text-gray-500">Result date</div>
+                      <div class="text-right text-gray-900 font-medium">{{ formatResultDate(session.resultDate) }}</div>
                     </div>
 
                     <div class="flex items-start justify-between gap-4">
-                      <div class="text-gray-500">Meet</div>
-                      <div class="text-right text-gray-900 font-medium">{{ session.displayMeetName || "—" }}</div>
+                      <div class="text-gray-500">Result name</div>
+                      <div class="text-right text-gray-900 font-medium">{{ session.resultName || "—" }}</div>
                     </div>
-
                     <div class="flex items-start justify-between gap-4">
                       <div class="text-gray-500">Created</div>
                       <div class="text-right text-gray-900 font-medium">{{ formatDate(session.createdAt) }}</div>

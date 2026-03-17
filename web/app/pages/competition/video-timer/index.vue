@@ -1,10 +1,10 @@
 <script setup lang="ts">
   import { COURSES, strokes } from "lib"
   import type { VideoTimerDraft, VideoTimerMarkerRecord, CourseType, DistanceType, StrokeType } from "lib"
+  import UIResultListbox from "~/components/ResultListbox.vue"
 
   import VideoTimerReviewStep from "~/components/VideoTimerReviewStep.vue"
   import VideoTimerTimingStep from "~/components/VideoTimerTimingStep.vue"
-  import UIMeetListbox from "../../web/app/components/MeetListbox.vue"
 
   definePageMeta( {
     layout: "secure",
@@ -20,7 +20,6 @@
   const route = useRoute()
   const router = useRouter()
 
-  const meetId = ref<string | null>( null )
   const meetHint = ref<string | null>( null )
   const resultDate = ref<string | null>( null )
 
@@ -38,6 +37,29 @@
     resultSeq: resultSeq.value,
     resultDate: resultDate.value,
   } ) )
+
+
+
+  const selectedResultValue = ref<string | null>( null )
+
+  const serializeResultValue = ( payload: {
+    swimmer: string
+    course: string
+    stroke: string
+    distance: string
+    seq: string | number
+    date: string
+    meet: string
+  } ) =>
+    JSON.stringify( {
+      swimmer: payload.swimmer,
+      course: payload.course,
+      stroke: payload.stroke,
+      distance: payload.distance,
+      seq: Number( payload.seq ),
+      date: payload.date,
+      meet: payload.meet,
+    } )
 
   const { showNav } = useLayoutUi()
 
@@ -210,7 +232,6 @@
   watch(
     () => route.query,
     ( q ) => {
-      meetId.value = typeof q.meetId === "string" && q.meetId ? q.meetId : null
       meetHint.value = typeof q.meetHint === "string" && q.meetHint ? q.meetHint : null
       resultDate.value = typeof q.resultDate === "string" && q.resultDate ? q.resultDate : null
       resultOfficialFinishTime.value = typeof q.officialFinishTime === "string" ? q.officialFinishTime : ""
@@ -232,9 +253,66 @@
       if ( resultDistance.value ) {
         selections.distance = resultDistance.value as DistanceType
       }
+
+      if (
+        resultSwimmer.value &&
+        resultCourse.value &&
+        resultStroke.value &&
+        resultDistance.value &&
+        resultSeq.value &&
+        resultDate.value &&
+        meetHint.value
+      ) {
+        selectedResultValue.value = serializeResultValue( {
+          swimmer: resultSwimmer.value,
+          course: resultCourse.value,
+          stroke: resultStroke.value,
+          distance: resultDistance.value,
+          seq: resultSeq.value,
+          date: resultDate.value,
+          meet: meetHint.value,
+        } )
+      } else {
+        selectedResultValue.value = null
+      }
     },
     { immediate: true }
   )
+
+  watch( selectedResultValue, ( value ) => {
+    if ( !value ) {
+      meetHint.value = null
+      resultDate.value = null
+      resultSwimmer.value = null
+      resultCourse.value = null
+      resultStroke.value = null
+      resultDistance.value = null
+      resultSeq.value = null
+      return
+    }
+
+    try {
+      const parsed = JSON.parse( value ) as {
+        swimmer: string
+        course: string
+        stroke: string
+        distance: string
+        seq: number
+        date: string
+        meet: string
+      }
+
+      meetHint.value = parsed.meet
+      resultDate.value = parsed.date
+      resultSwimmer.value = parsed.swimmer
+      resultCourse.value = parsed.course
+      resultStroke.value = parsed.stroke
+      resultDistance.value = parsed.distance
+      resultSeq.value = String( parsed.seq )
+    } catch {
+      selectedResultValue.value = null
+    }
+  } )
 
   const extractDurationMs = ( url: string ) =>
     new Promise<number | undefined>( ( resolve ) => {
@@ -583,18 +661,24 @@
                 >
               </div>
             </div>
+          
+              
 
-            <div class="mt-3">
-              <UIMeetListbox
-                v-model="meetId"
-                :course="selections.course"
-                :hint-name="meetHint"
-                :hint-date="resultDate"
-                label="Meet"
-                placeholder="Search meet..."
-                class="w-full"
-              />
-            </div>
+
+            
+            <UIResultListbox
+              v-if="swimmer?.id"
+              v-model="selectedResultValue"
+              :swimmer-id="swimmer.id"
+              :course="selections.course"
+              :stroke="selections.stroke"
+              :distance="selections.distance"
+              label="Result"
+              placeholder="Choose result (optional)"
+              class="mt-4 w-full"
+            />
+            
+         
 
             <div class="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
               <div>
@@ -763,6 +847,7 @@
                 </div>
               </div>
             </div>
+
           </div>
         </div>
       </div>
@@ -790,7 +875,6 @@
       :video="uploadedVideo!"
       :selections="selections"
       :swimmer="swimmer"
-      :meet-id="meetId"
       :notes="notes"
       :initial-official-finish-time="resultOfficialFinishTime"
       :result-link="resultLink"
@@ -806,7 +890,6 @@
       :video="uploadedVideo!"
       :selections="selections"
       :swimmer="swimmer"
-      :meet-id="meetId"
       :notes="notes"
       :start-offset-ms="draft.startOffsetMs"
       :result-link="resultLink"

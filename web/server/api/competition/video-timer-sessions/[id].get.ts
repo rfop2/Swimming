@@ -15,11 +15,8 @@ type SessionRow = {
   stroke: string
   distance: string
   startOffsetMs: number | null
-  meetId: string | null
-  meetName: string | null
-  meetDate: string | null
   resultDate: string | null
-  resultMeetName: string | null
+  resultName: string | null
   swimmerId: string | null
   swimmerName: string | null
   videoId: string
@@ -80,11 +77,8 @@ export default defineEventHandler( async ( event ) => {
         s.stroke as stroke,
         s.distance as distance,
         s.startOffsetMs as startOffsetMs,
-        s.meetId as meetId,
-        mt.name as meetName,
-        mt.date as meetDate,
         r.date as resultDate,
-        r.meet as resultMeetName,
+        r.meet as resultName,
         s.swimmerId as swimmerId,
         sw.fullName as swimmerName,
         v.id as videoId,
@@ -96,7 +90,6 @@ export default defineEventHandler( async ( event ) => {
       FROM VideoTimerSessions s
       INNER JOIN VideoTimerVideos v ON v.id = s.videoId
       LEFT JOIN Swimmers sw ON sw.id = s.swimmerId
-      LEFT JOIN Meets mt ON mt.id = s.meetId
       LEFT JOIN Results r
         ON r.swimmer = s.resultSwimmer
         AND r.course = s.resultCourse
@@ -213,23 +206,19 @@ export default defineEventHandler( async ( event ) => {
       turns,
     } )
 
-    const displayMeetDate = row.resultDate ?? row.meetDate ?? null
-    const displayMeetName = row.resultMeetName ?? row.meetName ?? null
-
     return {
       id: row.id,
       createdAt: row.created,
       notes: row.notes,
       startOffsetMs: row.startOffsetMs ?? null,
-      displayMeetDate,
-      displayMeetName,
+      resultDate: row.resultDate ?? null,
+      resultName: row.resultName ?? null,
       selections: {
         course: row.course,
         stroke: row.stroke,
         distance: row.distance,
       },
       swimmer: row.swimmerId ? { id: row.swimmerId, fullName: row.swimmerName ?? "" } : null,
-      meet: row.meetId ? { id: row.meetId, name: row.meetName ?? "" } : null,
       video: {
         id: row.videoId,
         playbackUrl: row.playbackUrl,

@@ -20,7 +20,6 @@ type Body = {
     distance: string
   }
   swimmerId?: string | null
-  meetId?: string | null
   notes?: string
   officialFinishMs?: number | null
   startOffsetMs?: number | null
@@ -136,7 +135,6 @@ export default defineEventHandler( async ( event ) => {
   const distance = asNonEmptyString( body?.selections?.distance )
 
   const swimmerId = body?.swimmerId ? asNonEmptyString( body.swimmerId ) : null
-  const meetId = body?.meetId ? asNonEmptyString( body.meetId ) : null
   const notes = typeof body?.notes === "string" ? body.notes : null
   const officialFinishMs = asUnsignedIntOrNull( body?.officialFinishMs )
   const startOffsetMs = asUnsignedIntOrNull( body?.startOffsetMs )
@@ -337,7 +335,6 @@ export default defineEventHandler( async ( event ) => {
         userId,
         swimmerId,
         videoId,
-        meetId,
         course,
         stroke,
         distance,
@@ -358,7 +355,6 @@ export default defineEventHandler( async ( event ) => {
         :userId,
         :swimmerId,
         :videoId,
-        :meetId,
         :course,
         :stroke,
         :distance,
@@ -382,7 +378,6 @@ export default defineEventHandler( async ( event ) => {
       userId,
       swimmerId: swimmerId ?? null,
       videoId,
-      meetId: meetId ?? null,
       course,
       stroke,
       distance,

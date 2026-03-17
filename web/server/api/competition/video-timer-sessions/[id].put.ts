@@ -11,7 +11,6 @@ type Body = {
     distance: string
   }
   swimmerId?: string | null
-  meetId?: string | null
   notes?: string
   startOffsetMs?: number | null
   resultSwimmer?: string | null
@@ -104,7 +103,6 @@ export default defineEventHandler( async ( event ) => {
   }
 
   const swimmerId = body?.swimmerId ? asNonEmptyString( body.swimmerId ) : null
-  const meetId = body?.meetId ? asNonEmptyString( body.meetId ) : null
   const notes = typeof body?.notes === "string" ? body.notes : null
   const startOffsetMs = asUnsignedIntOrNull( body?.startOffsetMs )
 
@@ -209,7 +207,6 @@ export default defineEventHandler( async ( event ) => {
       UPDATE VideoTimerSessions
       SET
         swimmerId = :swimmerId,
-        meetId = :meetId,
         course = :course,
         stroke = :stroke,
         distance = :distance,
@@ -232,7 +229,6 @@ export default defineEventHandler( async ( event ) => {
       id: sessionId,
       userId,
       swimmerId,
-      meetId,
       course,
       stroke,
       distance,
