@@ -2,13 +2,49 @@
   {
     "isoDate": "2026-03-17",
     "niceDate": "17 March 2026",
-    "diff": "14.18.1..",
-    "href": "https://bitbucket.org/swimracing/swimming/compare/14.19.0..14.18.1",
+    "diff": "14.19.0..",
+    "href": "https://bitbucket.org/swimracing/swimming/compare/14.20.0..14.19.0",
     "major": false,
     "minor": false,
     "tag": null,
+    "title": "14.20.0",
+    "date": "2026-03-17T20:45:01.707Z",
+    "summary": null,
+    "commits": [],
+    "merges": [
+      {
+        "id": "23",
+        "message": "refactor video timer sessions to use results instead of meets",
+        "href": "https://bitbucket.org/swimracing/swimming/pull-requests/23",
+        "author": "Rodrigo Ferreira",
+        "commit": {
+          "hash": "4fcd1de8c694e1cbb6d8e3979bdef21b6814fe59",
+          "shorthash": "4fcd1de",
+          "author": "Rodrigo Ferreira",
+          "email": "rf.oliveirapaula@gmail.com",
+          "date": "2026-03-17T20:43:41.000Z",
+          "niceDate": "17 March 2026",
+          "subject": "Merged in KAN-91-Changes (pull request #23)",
+          "message": "Merged in KAN-91-Changes (pull request #23)\n\nrefactor video timer sessions to use results instead of meets",
+          "fixes": null,
+          "href": "https://bitbucket.org/swimracing/swimming/commits/4fcd1de8c694e1cbb6d8e3979bdef21b6814fe59",
+          "breaking": false
+        }
+      }
+    ],
+    "fixes": []
+  },
+  {
+    "isoDate": "2026-03-17",
+    "niceDate": "17 March 2026",
+    "diff": "14.18.1..14.19.0",
+    "href": "https://bitbucket.org/swimracing/swimming/compare/14.19.0..14.18.1",
+    "major": false,
+    "minor": true,
+    "tag": "14.19.0",
+    "date": "2026-03-17",
     "title": "14.19.0",
-    "date": "2026-03-17T17:33:29.944Z",
+    "version": "14.19.0",
     "summary": null,
     "commits": [],
     "merges": [
