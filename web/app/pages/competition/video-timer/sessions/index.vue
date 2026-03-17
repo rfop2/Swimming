@@ -36,12 +36,12 @@
   const selectedDistance = ref( "" )
 
   const { data, pending, error } = await useFetch<SessionListItem[]>(
-  "/api/competition/video-timer-sessions",
-  {
-    key: "video-timer-sessions",
-    default: () => [],
-  }
-)
+    "/api/competition/video-timer-sessions",
+    {
+      key: "video-timer-sessions",
+      default: () => [],
+    }
+  )
 
   const dateFormatter = new Intl.DateTimeFormat( "en-GB", {
     timeZone: "Europe/London",
