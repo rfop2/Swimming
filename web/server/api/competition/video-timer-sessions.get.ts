@@ -13,11 +13,8 @@ type Row = {
   markersCount: number
   swimmerId: string | null
   swimmerName: string | null
-  meetId: string | null
-  meetName: string | null
-  meetDate: string | null
   resultDate: string | null
-  resultMeetName: string | null
+  resultName: string | null
 }
 
 export default defineEventHandler( async ( event ) => {
@@ -31,41 +28,37 @@ export default defineEventHandler( async ( event ) => {
   try {
     const stmt = prepareStatement(
       conn,
-  `
-  SELECT
-    s.id as id,
-    s.created as created,
-    s.course as course,
-    s.stroke as stroke,
-    s.distance as distance,
-    s.notes as notes,
-    s.swimmerId as swimmerId,
-    sw.fullName as swimmerName,
-    s.meetId as meetId,
-    mt.name as meetName,
-    mt.date as meetDate,
-    r.date as resultDate,
-    r.meet as resultMeetName,
-    v.originalName as originalName,
-    (
-      SELECT COUNT(*)
-      FROM VideoTimerMarkers m
-      WHERE m.sessionId = s.id
-    ) as markersCount
-  FROM VideoTimerSessions s
-  INNER JOIN VideoTimerVideos v ON v.id = s.videoId
-  LEFT JOIN Swimmers sw ON sw.id = s.swimmerId
-  LEFT JOIN Meets mt ON mt.id = s.meetId
-  LEFT JOIN Results r
-    ON r.swimmer = s.resultSwimmer
-    AND r.course = s.resultCourse
-    AND r.stroke = s.resultStroke
-    AND r.distance = s.resultDistance
-    AND r.seq = s.resultSeq
-  WHERE s.userId = :userId
-  ORDER BY COALESCE(r.date, mt.date, DATE(s.created)) DESC, s.created DESC
-  LIMIT 200
-  `
+      `
+      SELECT
+        s.id as id,
+        s.created as created,
+        s.course as course,
+        s.stroke as stroke,
+        s.distance as distance,
+        s.notes as notes,
+        s.swimmerId as swimmerId,
+        sw.fullName as swimmerName,
+        r.date as resultDate,
+        r.meet as resultName,
+        v.originalName as originalName,
+        (
+          SELECT COUNT(*)
+          FROM VideoTimerMarkers m
+          WHERE m.sessionId = s.id
+        ) as markersCount
+      FROM VideoTimerSessions s
+      INNER JOIN VideoTimerVideos v ON v.id = s.videoId
+      LEFT JOIN Swimmers sw ON sw.id = s.swimmerId
+      LEFT JOIN Results r
+        ON r.swimmer = s.resultSwimmer
+        AND r.course = s.resultCourse
+        AND r.stroke = s.resultStroke
+        AND r.distance = s.resultDistance
+        AND r.seq = s.resultSeq
+      WHERE s.userId = :userId
+      ORDER BY COALESCE(r.date, DATE(s.created)) DESC, s.created DESC
+      LIMIT 200
+      `
     )
 
     const rows = ( await stmt.all( { userId } ) ) as Row[]
@@ -81,9 +74,8 @@ export default defineEventHandler( async ( event ) => {
       notes: r.notes,
       markersCount: Number( r.markersCount ) || 0,
       videoOriginalName: r.originalName ?? null,
-      meetId: r.meetId ?? null,
-      meetName: r.resultMeetName ?? r.meetName ?? null,
-      meetDate: r.resultDate ?? r.meetDate ?? null,
+      resultName: r.resultName ?? null,
+      resultDate: r.resultDate ?? null,
     } ) )
   } catch ( error ) {
     if ( isMySql2Error( error ) ) {

@@ -18,7 +18,6 @@ type Row = {
   stroke: string | null
   distance: string | null
   notes: string | null
-  meetId: string | null
   meetName: string | null
   meetDate: string | null
   resultDate: string | null
@@ -60,9 +59,6 @@ export default defineEventHandler( async ( event ) => {
         s.stroke as stroke,
         s.distance as distance,
         s.notes as notes,
-        s.meetId as meetId,
-        mt.name as meetName,
-        mt.date as meetDate,
         r.date as resultDate,
         r.meet as resultMeetName,
         s.officialFinishMs as officialFinishMs,
@@ -78,8 +74,6 @@ export default defineEventHandler( async ( event ) => {
         AND s.userId = v.userId
       LEFT JOIN Swimmers sw
         ON sw.id = s.swimmerId
-      LEFT JOIN Meets mt
-        ON mt.id = s.meetId
       LEFT JOIN Results r
         ON r.swimmer = s.resultSwimmer
         AND r.course = s.resultCourse
@@ -117,7 +111,6 @@ export default defineEventHandler( async ( event ) => {
       stroke: row.stroke ?? null,
       distance: row.distance ?? null,
       notes: row.notes ?? null,
-      meetId: row.meetId ?? null,
       meetName: row.resultMeetName ?? row.meetName ?? null,
       meetDate: row.resultDate ?? row.meetDate ?? null,
       officialFinishMs: row.officialFinishMs === null ? null : Number( row.officialFinishMs ),

@@ -15,8 +15,7 @@ type Row = {
   swimmerName: string | null
   course: string | null
   stroke: string | null
-  distance: string | null
-  meetId: string | null
+  distance: string | null  
   meetName: string | null
   meetDate: string | null
   resultDate: string | null
@@ -60,9 +59,6 @@ export default defineEventHandler( async ( event ) => {
         s.course as course,
         s.stroke as stroke,
         s.distance as distance,
-        s.meetId as meetId,
-        mt.name as meetName,
-        mt.date as meetDate,
         r.date as resultDate,
         r.meet as resultMeetName
       FROM VideoTimerVideos v
@@ -71,8 +67,6 @@ export default defineEventHandler( async ( event ) => {
         AND s.userId = v.userId
       LEFT JOIN Swimmers sw
         ON sw.id = s.swimmerId
-      LEFT JOIN Meets mt
-        ON mt.id = s.meetId
       LEFT JOIN Results r
         ON r.swimmer = s.resultSwimmer
         AND r.course = s.resultCourse
@@ -102,7 +96,6 @@ export default defineEventHandler( async ( event ) => {
       course: r.course ?? null,
       stroke: r.stroke ?? null,
       distance: r.distance ?? null,
-      meetId: r.meetId ?? null,
       meetName: r.resultMeetName ?? r.meetName ?? null,
       meetDate: r.resultDate ?? r.meetDate ?? null,
     } ) )
