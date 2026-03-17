@@ -905,7 +905,7 @@ const updateMeetsResults = async ( options: MeetsResultsOptions ) => {
         userId: systemUser.id,
         taskType: "update",
         taskOptions: JSON.stringify( { updateType: "rankings" } ),
-        taskDescription: "Triggered rankings update from meet results",
+        taskDescription: `Triggered rankings update of swimmer ${swimmerId} from meet results`,
         targetType: "swimmer",
         targetId: swimmerId
       } )
