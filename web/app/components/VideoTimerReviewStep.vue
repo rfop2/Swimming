@@ -1,4 +1,4 @@
-  <script setup lang="ts">
+<script setup lang="ts">
   import type {
     Swimmer,
     VideoTimerDraft,
@@ -27,7 +27,6 @@
     video: UploadedVideo
     selections: { course: string; stroke: string; distance: string }
     swimmer: SwimmerRef
-    meetId: string | null
     notes: string
     markers: VideoTimerMarkerRecord[]
     startOffsetMs: number | null
@@ -285,7 +284,6 @@
     errorMsg.value = null
     savedId.value = null
     const swimmerId = props.swimmer?.id ?? null
-    const meetId = props.meetId ?? null
 
     if ( !canSave.value ) {
       if ( !props.video?.id ) errorMsg.value = "Video not uploaded yet."
@@ -299,7 +297,6 @@
         video: props.video,
         selections: props.selections,
         swimmerId,
-        meetId,
         notes: props.notes ?? "",
         startOffsetMs: props.startOffsetMs,
         resultSwimmer: props.resultLink.resultSwimmer,
@@ -349,7 +346,7 @@
     if ( saving.value ) return props.saveMode === "update" ? "Updating…" : "Saving…"
     return props.saveMode === "update" ? "Update session" : "Save session"
   } )
-  </script>
+</script>
 
 <template>
   <div class="h-full flex flex-col overflow-hidden select-none">

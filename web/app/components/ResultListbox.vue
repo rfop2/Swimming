@@ -3,17 +3,22 @@
   import { CheckIcon, ChevronUpDownIcon } from "@heroicons/vue/24/outline"
   import classNames from "classnames"
 
-  type MeetRow = {
-    id: string
-    name: string
-    date: string
-    duration: number
+  type ResultRow = {
+    swimmer: string
     course: string
-    location: string | null
-    code: string
+    stroke: string
+    distance: string
+    seq: number
+    date: string
+    meet: string
+    round: string
   }
 
-  type Option = { value: string | null; label: string }
+  type Option = {
+    value: string | null
+    label: string
+    result?: ResultRow
+  }
 
   const model = defineModel<string | null>()
 
@@ -22,7 +27,10 @@
   const props = withDefaults(
     defineProps<{
       id?: string
-      course: string
+      swimmerId?: string | null
+      course?: string | null
+      stroke?: string | null
+      distance?: string | null
       label?: string
       required?: boolean
       placeholder?: string
@@ -30,20 +38,20 @@
       searchPlaceholder?: string
       panelClass?: string
       debounceMs?: number
-      hintName?: string | null
-      hintDate?: string | null
     }>(),
     {
       id: undefined,
+      swimmerId: null,
+      course: null,
+      stroke: null,
+      distance: null,
       label: undefined,
       required: false,
-      placeholder: "Choose Meet (optional)",
+      placeholder: "Choose result (optional)",
       error: "",
-      searchPlaceholder: "Search meet…",
+      searchPlaceholder: "Search result...",
       panelClass: "max-h-[60vh]",
       debounceMs: 250,
-      hintName: null,
-      hintDate: null,
     }
   )
 
@@ -63,7 +71,7 @@
   } )
 
   watch(
-    () => props.course,
+    () => [ props.swimmerId, props.course, props.stroke, props.distance ],
     () => {
       model.value = null
       query.value = ""
@@ -71,17 +79,28 @@
     }
   )
 
-  const { data: meets, pending } = useAsyncData(
-    () => `meet-listbox-${props.course}-${debounced.value}-${props.hintDate ?? ""}-${props.hintName ?? ""}`,
-    () =>
-      $fetch<MeetRow[]>( "/api/competition/meets-video-timer-sessions", {
+  const enabled = computed( () =>
+    !!props.swimmerId &&
+    !!props.course &&
+    !!props.stroke &&
+    !!props.distance
+  )
+
+  const { data: results, pending } = useAsyncData(
+    () => `result-listbox-${props.swimmerId ?? ""}-${props.course ?? ""}-${props.stroke ?? ""}-${props.distance ?? ""}-${debounced.value}`,
+    () => {
+      if ( !enabled.value ) return Promise.resolve( [] )
+
+      return $fetch<ResultRow[]>( "/api/competition/results-video-timer-sessions", {
         query: {
-          course: props.course,
+          swimmerId: props.swimmerId ?? undefined,
+          course: props.course ?? undefined,
+          stroke: props.stroke ?? undefined,
+          distance: props.distance ?? undefined,
           q: debounced.value.trim() ? debounced.value.trim() : undefined,
-          hintDate: props.hintDate ?? undefined,
-          hintName: props.hintName ?? undefined,
         },
-      } ),
+      } )
+    },
     { default: () => [] }
   )
 
@@ -100,138 +119,15 @@
       .filter( Boolean )
   )
 
-  const matchesMeetQuery = ( m: MeetRow ) => {
+  const matchesResultQuery = ( r: ResultRow ) => {
     if ( queryTokens.value.length === 0 ) return true
 
     const haystack = normalizeText(
-      `${m.date} ${m.name} ${m.location ?? ""} ${m.code}`
+      `${r.date} ${r.meet} ${r.round} ${r.seq}`
     )
 
     return queryTokens.value.every( token => haystack.includes( token ) )
   }
-
-  const parseIsoDateToDay = ( value?: string | null ) => {
-    const s = String( value ?? "" ).trim()
-    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec( s )
-    if ( !m ) return null
-    const y = Number( m[1] )
-    const mo = Number( m[2] )
-    const d = Number( m[3] )
-    return Math.floor( Date.UTC( y, mo - 1, d ) / 86400000 )
-  }
-
-  const getMeetRange = ( meet: MeetRow ) => {
-    const start = parseIsoDateToDay( meet.date )
-    if ( start === null ) return null
-
-    const duration = Number( meet.duration ?? 1 )
-    const safeDuration = Number.isFinite( duration ) && duration > 0 ? Math.floor( duration ) : 1
-    const end = start + safeDuration - 1
-
-    return { start, end }
-  }
-
-  const tokenOverlapScore = ( candidate: string, hint: string ) => {
-    const c = normalizeText( candidate )
-    const h = normalizeText( hint )
-    if ( !c || !h ) return 0
-
-    const cTokens = new Set( c.split( " " ).filter( ( x ) => x.length >= 2 ) )
-    const hTokens = new Set( h.split( " " ).filter( ( x ) => x.length >= 2 ) )
-
-    if ( !cTokens.size || !hTokens.size ) return 0
-
-    let common = 0
-    for ( const token of hTokens ) {
-      if ( cTokens.has( token ) ) common++
-    }
-
-    return Math.round( ( common / hTokens.size ) * 100 )
-  }
-
-  const calcNameScore = ( meetName: string, hintName?: string | null ) => {
-    const hint = String( hintName ?? "" ).trim()
-    if ( !hint ) return 0
-
-    const a = normalizeText( meetName )
-    const b = normalizeText( hint )
-    if ( !a || !b ) return 0
-
-    if ( a === b ) return 300
-    if ( a.includes( b ) || b.includes( a ) ) return 220
-
-    return tokenOverlapScore( a, b )
-  }
-
-  const calcDateScore = ( meet: MeetRow, hintDate?: string | null ) => {
-    const target = parseIsoDateToDay( hintDate )
-    const range = getMeetRange( meet )
-
-    if ( target === null || !range ) return 0
-
-    if ( target >= range.start && target <= range.end ) return 300
-
-    const diff = target < range.start ? range.start - target : target - range.end
-
-    if ( diff <= 1 ) return 220
-    if ( diff <= 3 ) return 160
-    if ( diff <= 7 ) return 100
-    if ( diff <= 14 ) return 50
-    return 0
-  }
-
-  const rankMeet = ( meet: MeetRow ) => {
-    const nameScore = calcNameScore( meet.name, props.hintName )
-    const dateScore = calcDateScore( meet, props.hintDate )
-
-    const strongName = nameScore >= 220
-    const exactWindow = dateScore === 300
-    const nearWindow = dateScore > 0
-
-    let boost = 0
-    if ( exactWindow && strongName ) boost += 500
-    else if ( nearWindow && strongName ) boost += 200
-
-    const total = ( dateScore * 3 ) + ( nameScore * 2 ) + boost
-
-    return { total, nameScore, dateScore }
-  }
-
-  const defaultSort = ( a: MeetRow, b: MeetRow ) => {
-    const da = String( a.date ?? "" )
-    const db = String( b.date ?? "" )
-    if ( da !== db ) return db.localeCompare( da )
-    return String( a.name ?? "" ).localeCompare( String( b.name ?? "" ) )
-  }
-
-  const sorted = computed( () => {
-    const list = ( meets.value ?? [] ).slice()
-
-    const hasHintName = !!String( props.hintName ?? "" ).trim()
-    const hasHintDate = !!String( props.hintDate ?? "" ).trim()
-    const userTypedSearch = !!debounced.value.trim()
-
-    if ( !userTypedSearch && ( hasHintName || hasHintDate ) ) {
-      list.sort( ( a, b ) => {
-        const ra = rankMeet( a )
-        const rb = rankMeet( b )
-
-        if ( ra.total !== rb.total ) return rb.total - ra.total
-        if ( ra.dateScore !== rb.dateScore ) return rb.dateScore - ra.dateScore
-        if ( ra.nameScore !== rb.nameScore ) return rb.nameScore - ra.nameScore
-
-        return defaultSort( a, b )
-      } )
-      return list
-    }
-
-    list.sort( defaultSort )
-    return list
-  } )
-
-  const visibleMeets = computed( () => {
-    return sorted.value.filter( matchesMeetQuery )
-  } )
 
   const formatDisplayDate = ( value?: string | null ) => {
     const s = String( value ?? "" ).trim()
@@ -240,15 +136,29 @@
     return `${m[3]}/${m[2]}/${m[1]}`
   }
 
-  const options = computed<Option[]>( () => {
-    return [
-      { value: null, label: "No meet (optional)" },
-      ...visibleMeets.value.map( ( m ) => ( {
-        value: String( m.id ),
-        label: `${formatDisplayDate( m.date )} • ${m.name}`,
-      } ) ),
-    ]
+  const visibleResults = computed( () => {
+    return ( results.value ?? [] ).filter( matchesResultQuery )
   } )
+
+  const serializeResultValue = ( result: ResultRow ) =>
+    JSON.stringify( {
+      swimmer: result.swimmer,
+      course: result.course,
+      stroke: result.stroke,
+      distance: result.distance,
+      seq: result.seq,
+      date: result.date,
+      meet: result.meet,
+    } )
+
+  const options = computed<Option[]>( () => [
+    { value: null, label: "No linked result" },
+    ...visibleResults.value.map( ( result ) => ( {
+      value: serializeResultValue( result ),
+      label: `${formatDisplayDate( result.date )} • ${result.meet}`,
+      result,
+    } ) ),
+  ] )
 
   const empty = computed( () => model.value === null || model.value === undefined )
 
@@ -290,6 +200,10 @@
 
           <div class="overflow-auto" :class="props.panelClass">
             <div v-if="pending" class="px-3 py-2 text-xs text-gray-500">Loading…</div>
+
+            <div v-else-if="!enabled" class="px-3 py-2 text-xs text-gray-500">
+              Select swimmer, course, stroke and distance first.
+            </div>
 
             <div v-else-if="options.length === 1" class="px-3 py-2 text-xs text-gray-500">
               No matches.

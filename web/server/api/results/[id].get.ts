@@ -12,14 +12,14 @@ type ResultsRowWithSession = ResultsRow & {
   videoTimerSessionId: string | null
 }
 
-export default defineEventHandler(async (event) => {
-  if (!event.context.session || !event.context.user) {
-    throw createError({ status: 401 })
+export default defineEventHandler( async ( event ) => {
+  if ( !event.context.session || !event.context.user ) {
+    throw createError( { status: 401 } )
   }
 
-  const id = getRouterParam(event, "id")
-  if (!id) {
-    throw createError({ message: "No swimmer id supplied", status: 400 })
+  const id = getRouterParam( event, "id" )
+  if ( !id ) {
+    throw createError( { message: "No swimmer id supplied", status: 400 } )
   }
 
   const userId = event.context.user.id
@@ -83,19 +83,19 @@ export default defineEventHandler(async (event) => {
     `
   )
 
-  const query = getQuery<Params>(event)
+  const query = getQuery<Params>( event )
 
-  if (Object.keys(query).length) {
-    if (!query.startDate) query.startDate = null
-    if (!query.endDate) query.endDate = null
+  if ( Object.keys( query ).length ) {
+    if ( !query.startDate ) query.startDate = null
+    if ( !query.endDate ) query.endDate = null
 
-    if (query.stroke) {
-      return await selectFilteredRecords.all({ id, userId, ...query })
+    if ( query.stroke ) {
+      return await selectFilteredRecords.all( { id, userId, ...query } )
     }
 
     const { stroke, ...q } = query
-    return await selectAllStrokeRecords.all({ id, userId, ...q })
+    return await selectAllStrokeRecords.all( { id, userId, ...q } )
   }
 
-  return await selectAllRecords.all({ id, userId })
-})
+  return await selectAllRecords.all( { id, userId } )
+} )

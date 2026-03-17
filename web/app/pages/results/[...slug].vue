@@ -151,7 +151,6 @@
 
   type ResultRow = ResultType & {
     videoTimerSessionId?: string | null
-    meetId?: string | null
   }
 
 

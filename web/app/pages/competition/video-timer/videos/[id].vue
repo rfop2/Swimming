@@ -26,7 +26,6 @@
     stroke?: string | null
     distance?: string | null
     notes?: string | null
-    meetId?: string | null
     meetName?: string | null
     meetDate?: string | null
     officialFinishMs?: number | null

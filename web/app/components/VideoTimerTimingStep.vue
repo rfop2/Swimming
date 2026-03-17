@@ -35,7 +35,6 @@
     video: { type: Object as PropType<UploadedVideo>, required: true },
     selections: { type: Object as PropType<{ course: string; stroke: string; distance: string }>, required: true },
     swimmer: { type: Object as PropType<SwimmerRef>, required: false, default: null },
-    meetId: { type: String, required: false, default: null },
     notes: { type: String, required: false, default: "" },
     initialOfficialFinishTime: { type: String, required: false, default: "" },
     resultLink: { type: Object as PropType<Record<string, string | null>>, required: true },
@@ -777,7 +776,7 @@
   )
 
   const canStop = computed( () =>
-    isReady.value &&
+    ( props.mode === "edit" || isReady.value ) &&
     props.draft.startOffsetMs !== null &&
     props.draft.startOffsetMs >= 0 &&
     props.draft.finishVideoMs !== null &&
@@ -889,6 +888,7 @@
 
     return out
   } )
+
 </script>
 
 <template>

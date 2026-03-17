@@ -21,8 +21,8 @@
     notes?: string | null
     markersCount?: number | null
     videoOriginalName?: string | null
-    meetName?: string | null
-    meetDate?: string | null
+    resultName?: string | null
+    resultDate?: string | null
   }
 
   type FilterOption = {
@@ -54,7 +54,7 @@
     hour12: false,
   } )
 
-  const meetDateFormatter = new Intl.DateTimeFormat( "en-GB", {
+  const resultDateFormatter = new Intl.DateTimeFormat( "en-GB", {
     timeZone: "Europe/London",
     day: "2-digit",
     month: "2-digit",
@@ -67,11 +67,11 @@
     return dateFormatter.format( d )
   }
 
-  const formatMeetDate = ( iso: string | null | undefined ) => {
+  const formatResultDate = ( iso: string | null | undefined ) => {
     if ( !iso ) return "—"
     const d = new Date( iso )
     if ( Number.isNaN( d.getTime() ) ) return iso
-    return meetDateFormatter.format( d )
+    return resultDateFormatter.format( d )
   }
 
   const formatCourse = ( value: string | null | undefined ) => {
@@ -139,8 +139,8 @@
     }
 
     return [ ...items ].sort( ( a, b ) => {
-      const aTime = new Date( a.meetDate || a.createdAt ).getTime()
-      const bTime = new Date( b.meetDate || b.createdAt ).getTime()
+      const aTime = new Date( a.resultDate || a.createdAt ).getTime()
+      const bTime = new Date( b.resultDate || b.createdAt ).getTime()
       return bTime - aTime
     } )
   } )
@@ -228,11 +228,11 @@
               <div class="flex items-center justify-between gap-4">
                 <div class="min-w-0">
                   <div class="text-xs font-medium text-gray-500">
-                    Meet date: {{ formatMeetDate(s.meetDate) }}
+                    Result date: {{ formatResultDate(s.resultDate) }}
                   </div>
 
-                  <div v-if="s.meetName" class="mt-1 text-base font-medium text-gray-900 truncate">
-                    {{ s.meetName }}
+                  <div v-if="s.resultName" class="mt-1 text-base font-medium text-gray-900 truncate">
+                    {{ s.resultName }}
                   </div>
 
                   <div class="mt-1 text-sm font-semibold text-gray-900 truncate">
