@@ -276,7 +276,7 @@
             >
               <div class="flex gap-2 justify-end">
                 <button
-                  v-if="task.taskStatus === 'complete' || task.taskStatus === 'failed'"
+                  v-if="task.taskStatus === 'complete' || task.taskStatus === 'error'"
                   type="button"
                   title="Requeue Task"
                   class="inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
