@@ -1,5 +1,12 @@
 #!/usr/bin/env nodemjs
 import "dotenv/config"
+import * as Sentry from "@sentry/node"
+
+Sentry.init( {
+  dsn: "https://95f3d66ca3d941509f3dacbbf8b478fc@o149151.ingest.us.sentry.io/4511064670011392",
+  tracesSampleRate: 1.0,
+} )
+
 import { format, formatISO, parse, sub } from "date-fns"
 import * as cheerio from "cheerio"
 
@@ -1160,15 +1167,20 @@ const updateMeetsResults = async ( options: MeetsResultsOptions ) => {
   } finally {
     await closeBrowser()
     await closePool()
+    await Sentry.flush( 2000 )
   }
-} )().catch( ( error ) => {
+} )().catch( async ( error ) => {
   console.error( "Uncaught error...", error )
+  Sentry.captureException( error )
+  await Sentry.flush( 2000 )
 } )
 
 process.on( "unhandledRejection", ( reason, promise ) => {
   console.error( "Unhandled rejection in promise:", reason, promise )
+  Sentry.captureException( reason )
 } )
 
 process.on( "uncaughtException", ( err ) => {
   console.error( "Uncaught exception:", err )
+  Sentry.captureException( err )
 } )
