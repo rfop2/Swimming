@@ -20,6 +20,7 @@ export default defineNuxtConfig( {
       { baseURL: "/uploads", dir: "public/uploads" }
     ]
   },
+
   devtools: { enabled: true },
 
   modules: [
@@ -34,6 +35,7 @@ export default defineNuxtConfig( {
     ],
     "@nuxtjs/seo",
     "@nuxtjs/turnstile",
+    "@sentry/nuxt/module"
   ],
 
   app: {
@@ -112,5 +114,14 @@ export default defineNuxtConfig( {
     "/": { redirect: "/performance" },
   },
 
-  compatibilityDate: "2025-11-21"
+  compatibilityDate: "2025-11-21",
+
+  sentry: {
+    org: "web2wire-ltd",
+    project: "swim-racing"
+  },
+
+  sourcemap: {
+    client: "hidden"
+  }
 } )
