@@ -16,6 +16,9 @@ type ResultRow = {
 export default defineEventHandler( async ( event ) => {
   if ( !event.context.session || !event.context.user ) throw createError( { status: 401 } )
 
+  const userId = event.context.user.id
+  if ( !userId ) throw createError( { status: 401 } )
+
   const q = getQuery( event )
 
   const swimmerId = typeof q.swimmerId === "string" && q.swimmerId.trim() ? q.swimmerId.trim() : null
@@ -36,7 +39,7 @@ export default defineEventHandler( async ( event ) => {
     .slice( 0, 8 )
 
   const tokenClauses = tokens.map( ( _, i ) =>
-    `LOWER(CONCAT_WS(' ', DATE_FORMAT(date, '%Y-%m-%d'), meet, round, seq)) LIKE :token${i}`
+    `LOWER(CONCAT_WS(' ', DATE_FORMAT(r.date, '%Y-%m-%d'), r.meet, r.round, r.seq)) LIKE :token${i}`
   )
 
   const searchClause = tokenClauses.length ? `AND ${tokenClauses.join( " AND " )}` : ""
@@ -49,30 +52,41 @@ export default defineEventHandler( async ( event ) => {
       conn,
       `
       SELECT
-        swimmer,
-        course,
-        stroke,
-        distance,
-        seq,
-        date,
-        meet,
-        round
-      FROM Results
+        r.swimmer,
+        r.course,
+        r.stroke,
+        r.distance,
+        r.seq,
+        r.date,
+        r.meet,
+        r.round
+      FROM Results r
       WHERE
-        swimmer = :swimmerId
-        AND course = :course
-        AND stroke = :stroke
-        AND distance = :distance
+        r.swimmer = :swimmerId
+        AND r.course = :course
+        AND r.stroke = :stroke
+        AND r.distance = :distance
+        AND NOT EXISTS (
+          SELECT 1
+          FROM VideoTimerSessions s
+          WHERE s.userId = :userId
+            AND s.resultSwimmer = r.swimmer
+            AND s.resultCourse = r.course
+            AND s.resultStroke = r.stroke
+            AND s.resultDistance = r.distance
+            AND s.resultSeq = r.seq
+        )
         ${searchClause}
       ORDER BY
-        ABS(DATEDIFF(date, CURDATE())) ASC,
-        date DESC,
-        seq DESC
+        ABS(DATEDIFF(r.date, CURDATE())) ASC,
+        r.date DESC,
+        r.seq DESC
       LIMIT 200
       `
     )
 
     const params: Record<string, string | null> = {
+      userId,
       swimmerId,
       course,
       stroke,
