@@ -497,7 +497,7 @@
 
             <div class="sm:col-span-2">
               <UI-Input
-                id="confirm-assword"
+                id="confirm-password"
                 v-model="confirmPassword"
                 label="Confirm Password"
                 v-bind="confirmPasswordAttrs"
