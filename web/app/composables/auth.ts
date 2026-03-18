@@ -6,12 +6,12 @@ export const useUser = () => {
 }
 
 export const useAuthenticatedUser = () => {
-  const user = useUser()
+  const { user, loadingUser } = useSessionUser()
   return computed( () => {
     const userValue = unref( user )
-    if ( !userValue ) {
+    if ( !userValue && !loadingUser.value ) {
       throw createError( "useAuthenticatedUser() can only be used in protected pages" )
     }
-    return userValue
+    return userValue as User
   } )
 }
