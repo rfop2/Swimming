@@ -1,7 +1,9 @@
 import * as Sentry from "@sentry/nuxt"
+import pkg from "./package.json"
 
 Sentry.init( {
   dsn: "https://95f3d66ca3d941509f3dacbbf8b478fc@o149151.ingest.us.sentry.io/4511064670011392",
+  release: pkg.version,
 
   // We recommend adjusting this value in production, or using tracesSampler
   // for finer control

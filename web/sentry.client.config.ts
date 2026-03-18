@@ -4,6 +4,7 @@ Sentry.init( {
   // If set up, you can use your runtime config here
   // dsn: useRuntimeConfig().public.sentry.dsn,
   dsn: "https://95f3d66ca3d941509f3dacbbf8b478fc@o149151.ingest.us.sentry.io/4511064670011392",
+  release: useRuntimeConfig().public.appVersion,
 
   // We recommend adjusting this value in production, or using tracesSampler
   // for finer control
