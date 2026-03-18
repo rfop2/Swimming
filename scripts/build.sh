@@ -5,17 +5,17 @@ REPO_ROOT=$(git rev-parse --show-toplevel)
 echo "Building lib"
 
 cd $REPO_ROOT/lib
-npm install && npm run build
+npm ci && npm run build
 
 echo "Building cli"
 
 cd $REPO_ROOT/cli
-npm install && npm run build
+npm ci && npm run build
 
 echo "Building web"
 
 cd $REPO_ROOT/web
-npm install && npm run build
+npm ci && npm run build
 
 echo "Restarting docker"
 

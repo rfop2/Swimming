@@ -497,7 +497,7 @@
 
             <div class="sm:col-span-2">
               <UI-Input
-                id="confirm-assword"
+                id="confirm-password"
                 v-model="confirmPassword"
                 label="Confirm Password"
                 v-bind="confirmPasswordAttrs"
@@ -993,10 +993,6 @@
               :strict="false"
               :options="squads"
             />
-          </div>
-          <div class="sm:col-span-6">
-            {{ swimmerErrors( editing! ) }}
-            {{ errors }}
           </div>
         </div>
       </form>

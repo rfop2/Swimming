@@ -25,9 +25,15 @@ export function useVersionCheck() {
 
   // initial + periodic checks
   if ( import.meta.client ) {
+    const handleVisibilityChange = () => {
+      if ( document.visibilityState === "visible" )
+        checkVersion()
+    }
+
     onMounted( () => {
       checkVersion() // initial check after mount
       checkTimer = setInterval( checkVersion, 300 * 1000 ) // periodic checks
+      document.addEventListener( "visibilitychange", handleVisibilityChange )
     } )
     watch( user, ( val ) => {
       if ( !val && checkTimer )
@@ -36,6 +42,7 @@ export function useVersionCheck() {
     onUnmounted( () => {
       if ( checkTimer )
         clearInterval( checkTimer )
+      document.removeEventListener( "visibilitychange", handleVisibilityChange )
     } )
   }
 
