@@ -994,10 +994,6 @@
               :options="squads"
             />
           </div>
-          <div class="sm:col-span-6">
-            {{ swimmerErrors( editing! ) }}
-            {{ errors }}
-          </div>
         </div>
       </form>
     </div>
