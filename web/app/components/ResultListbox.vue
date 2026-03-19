@@ -86,22 +86,36 @@
     !!props.distance
   )
 
-  const { data: results, pending } = useAsyncData(
-    () => `result-listbox-${props.swimmerId ?? ""}-${props.course ?? ""}-${props.stroke ?? ""}-${props.distance ?? ""}-${debounced.value}`,
-    () => {
-      if ( !enabled.value ) return Promise.resolve( [] )
+  const fetchKey = computed( () =>
+    `result-listbox-${props.swimmerId ?? ""}-${props.course ?? ""}-${props.stroke ?? ""}-${props.distance ?? ""}-${debounced.value}`
+  )
 
-      return $fetch<ResultRow[]>( "/api/competition/results-video-timer-sessions", {
-        query: {
-          swimmerId: props.swimmerId ?? undefined,
-          course: props.course ?? undefined,
-          stroke: props.stroke ?? undefined,
-          distance: props.distance ?? undefined,
-          q: debounced.value.trim() ? debounced.value.trim() : undefined,
-        },
-      } )
+  const fetchQuery = computed( () => ( {
+    swimmerId: props.swimmerId ?? undefined,
+    course: props.course ?? undefined,
+    stroke: props.stroke ?? undefined,
+    distance: props.distance ?? undefined,
+    q: debounced.value.trim() ? debounced.value.trim() : undefined,
+  } ) )
+
+  const { data: results, pending, refresh } = useFetch<ResultRow[]>( "/api/competition/results-video-timer-sessions", {
+    key: fetchKey,
+    query: fetchQuery,
+    default: () => [],
+    immediate: false,
+  } )
+
+  watch(
+    [ enabled, fetchKey ],
+    async ( [ isEnabled ] ) => {
+      if ( !isEnabled ) {
+        results.value = []
+        return
+      }
+
+      await refresh()
     },
-    { default: () => [] }
+    { immediate: true }
   )
 
   const normalizeText = ( value: string ) =>
