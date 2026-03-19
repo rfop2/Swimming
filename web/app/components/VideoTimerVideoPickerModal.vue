@@ -28,14 +28,10 @@
 
   const search = ref( "" )
 
-  const { data, pending, error, refresh } = await useAsyncData(
-    "video-timer-library-modal",
-    () => $fetch<VideoListItem[]>( "/api/competition/video-timer-library", {
-      query: {
-        status: "available",
-      },
-    } ),
+  const { data, pending, error, refresh } = await useFetch<VideoListItem[]>(
+    "/api/competition/video-timer-library",
     {
+      key: "video-timer-library-modal",
       default: () => [],
     }
   )

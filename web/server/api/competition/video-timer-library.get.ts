@@ -39,7 +39,7 @@ export default defineEventHandler( async ( event ) => {
           SELECT 1
           FROM VideoTimerSessions s
           WHERE s.videoId = v.id
-            AND s.userId = v.userId
+            AND s.userId = :userId
         )
       ORDER BY v.created DESC
       LIMIT 500

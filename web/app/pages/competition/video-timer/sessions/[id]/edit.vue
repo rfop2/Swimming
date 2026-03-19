@@ -144,10 +144,13 @@
     }
   }
 
-  const { data, pending, error } = await useAsyncData(
-    () => `video-timer-edit-session-${sessionId.value}`,
-    () => $fetch<SessionDetail>( `/api/competition/video-timer-sessions/${sessionId.value}` ),
-    { watch: [ sessionId ] }
+  const { data, pending, error } = await useFetch<SessionDetail | null>(
+    () => `/api/competition/video-timer-sessions/${sessionId.value}`,
+    {
+      key: () => `video-timer-edit-session-${sessionId.value}`,
+      watch: [ sessionId ],
+      default: () => null,
+    }
   )
 
   watch(

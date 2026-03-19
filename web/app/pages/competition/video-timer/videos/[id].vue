@@ -37,11 +37,12 @@
 
   const videoId = computed( () => String( route.params.id || "" ).trim() )
 
-  const { data, pending, error, refresh } = await useAsyncData(
-    () => `video-timer-library-item-${videoId.value}`,
-    () => $fetch<VideoLibraryItem>( `/api/competition/video-timer-library/${videoId.value}` ),
+  const { data, pending, error, refresh } = await useFetch<VideoLibraryItem | null>(
+    () => `/api/competition/video-timer-library/${videoId.value}`,
     {
+      key: () => `video-timer-library-item-${videoId.value}`,
       watch: [ videoId ],
+      default: () => null,
     }
   )
 
