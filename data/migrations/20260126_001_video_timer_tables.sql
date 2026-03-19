@@ -20,7 +20,6 @@ CREATE TABLE IF NOT EXISTS `VideoTimerSessions` (
   `userId` varchar(16) NOT NULL,
   `swimmerId` varchar(8) DEFAULT NULL,
   `videoId` varchar(36) NOT NULL,
-  `meetId` varchar(8) DEFAULT NULL,
   `course` varchar(8) NOT NULL,
   `stroke` varchar(32) NOT NULL,
   `distance` varchar(8) NOT NULL,
@@ -44,7 +43,6 @@ CREATE TABLE IF NOT EXISTS `VideoTimerSessions` (
   KEY `idx_userId` (`userId`),
   KEY `idx_swimmerId` (`swimmerId`),
   KEY `idx_videoId` (`videoId`),
-  KEY `idx_meetId` (`meetId`),
   KEY `idx_result` (`resultSwimmer`,`resultCourse`,`resultStroke`,`resultDistance`,`resultSeq`),
 
   UNIQUE KEY `ux_vts_user_result` (
@@ -63,10 +61,6 @@ CREATE TABLE IF NOT EXISTS `VideoTimerSessions` (
   CONSTRAINT `fk_VideoTimerSessions_Video`
     FOREIGN KEY (`videoId`) REFERENCES `VideoTimerVideos` (`id`)
     ON DELETE RESTRICT ON UPDATE CASCADE,
-
-  CONSTRAINT `fk_VideoTimerSessions_Meets`
-    FOREIGN KEY (`meetId`) REFERENCES `Meets` (`id`)
-    ON DELETE SET NULL ON UPDATE CASCADE,
 
   CONSTRAINT `fk_VideoTimerSessions_Result`
     FOREIGN KEY (`resultSwimmer`,`resultCourse`,`resultStroke`,`resultDistance`,`resultSeq`)
