@@ -35,7 +35,15 @@ export default defineNuxtConfig( {
     ],
     "@nuxtjs/seo",
     "@nuxtjs/turnstile",
-    "@sentry/nuxt/module"
+    [
+      "@sentry/nuxt/module",
+      {
+        org: "web2wire-ltd",
+        project: "swim-racing",
+        authToken: process.env.SENTRY_AUTH_TOKEN,
+        release: { name: pkg.version }
+      }
+    ]
   ],
 
   app: {
@@ -119,11 +127,6 @@ export default defineNuxtConfig( {
   },
 
   compatibilityDate: "2025-11-21",
-
-  sentry: {
-    org: "web2wire-ltd",
-    project: "swim-racing"
-  },
 
   sourcemap: {
     client: "hidden"
