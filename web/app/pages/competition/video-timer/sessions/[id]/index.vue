@@ -93,10 +93,13 @@
     return resultDateFormatter.format( d )
   }
 
-  const { data, pending, error } = await useAsyncData(
-    () => `video-timer-session-${sessionId.value}`,
-    () => $fetch<SessionDetail>( `/api/competition/video-timer-sessions/${sessionId.value}` ),
-    { watch: [ sessionId ] }
+  const { data, pending, error } = await useFetch<SessionDetail | null>(
+    () => `/api/competition/video-timer-sessions/${sessionId.value}`,
+    {
+      key: () => `video-timer-session-${sessionId.value}`,
+      watch: [ sessionId ],
+      default: () => null,
+    }
   )
 
   const session = computed( () => data.value ?? null )
