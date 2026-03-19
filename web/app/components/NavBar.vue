@@ -126,6 +126,7 @@
       { name: "Video Library", href: "/competition/video-timer/videos" },
       { name: "Video Timer", href: "/competition/video-timer" },
       { name: "Sessions", href: "/competition/video-timer/sessions" },
+      { name: "Progress", href: "/competition/video-timer/progress" },
     ] },
     { name: "Qualifications", children: [
       { name: "Cut-off Dates", href: "/qualifying/dates" },
