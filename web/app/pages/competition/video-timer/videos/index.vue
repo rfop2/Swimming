@@ -22,13 +22,41 @@
 
   const search = ref( "" )
 
-  const { data, pending, error } = await useFetch<VideoListItem[]>(
+  const { data, pending, error, refresh } = await useFetch<VideoListItem[]>(
     "/api/competition/video-timer-library",
     {
       key: "video-timer-library",
       default: () => [],
     }
   )
+
+  const deletingId = ref<string | null>( null )
+  const deleteError = ref( "" )
+
+  const deleteVideo = async ( video: VideoListItem ) => {
+    if ( deletingId.value ) return
+
+    const confirmed = window.confirm( `Delete "${video.originalName}"?` )
+    if ( !confirmed ) return
+
+    deleteError.value = ""
+    deletingId.value = video.id
+
+    try {
+      await $fetch( `/api/competition/video-timer-library/${video.id}`, {
+        method: "DELETE",
+      } )
+
+      await refresh()
+    } catch ( err: unknown ) {
+      deleteError.value =
+        ( err as { data?: { statusMessage?: string; message?: string } } )?.data?.statusMessage
+        || ( err as { data?: { statusMessage?: string; message?: string } } )?.data?.message
+        || "Failed to delete video."
+    } finally {
+      deletingId.value = null
+    }
+  }
 
   const dateFormatter = new Intl.DateTimeFormat( "en-GB", {
     timeZone: "Europe/London",
@@ -145,7 +173,13 @@
           </div>
         </div>
 
-        <div v-if="pending" class="mt-4 text-sm text-gray-600">Loading…</div>
+        <div v-if="deleteError" class="mt-4 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          {{ deleteError }}
+        </div>
+
+        <div v-if="pending" class="mt-4 text-sm text-gray-600">
+          Loading…
+        </div>
 
         <div v-else-if="error" class="mt-4 text-sm text-red-600">
           Failed to load videos.
@@ -195,6 +229,15 @@
                   >
                     Create session
                   </NuxtLink>
+
+                  <button
+                    class="h-10 px-4 rounded-md bg-red-600 text-white disabled:bg-red-300"
+                    type="button"
+                    :disabled="!!deletingId"
+                    @click="deleteVideo(video)"
+                  >
+                    {{ deletingId === video.id ? "Deleting..." : "Delete" }}
+                  </button>
                 </div>
               </div>
             </div>
