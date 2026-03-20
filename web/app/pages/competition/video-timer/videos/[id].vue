@@ -1,4 +1,6 @@
 <script setup lang="ts">
+  import { computed, ref } from "vue"
+
   definePageMeta( {
     layout: "secure",
     middleware: [ "protected" ],
@@ -57,25 +59,11 @@
     hour12: false,
   } )
 
-  const meetDateFormatter = new Intl.DateTimeFormat( "en-GB", {
-    timeZone: "Europe/London",
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  } )
-
   const formatDate = ( iso: string | null | undefined ) => {
     if ( !iso ) return "—"
     const d = new Date( iso )
     if ( Number.isNaN( d.getTime() ) ) return iso
     return dateFormatter.format( d )
-  }
-
-  const formatMeetDate = ( iso: string | null | undefined ) => {
-    if ( !iso ) return "—"
-    const d = new Date( iso )
-    if ( Number.isNaN( d.getTime() ) ) return iso
-    return meetDateFormatter.format( d )
   }
 
   const formatBytes = ( bytes: number | null | undefined ) => {
@@ -112,6 +100,34 @@
     if ( !data.value ) return ""
     return data.value.sessionId ? "Linked to session" : "Available"
   } )
+
+  const deleting = ref( false )
+  const deleteError = ref( "" )
+
+  const deleteVideo = async () => {
+    if ( !data.value?.id || deleting.value ) return
+
+    const confirmed = window.confirm( `Delete "${data.value.originalName}"?` )
+    if ( !confirmed ) return
+
+    deleteError.value = ""
+    deleting.value = true
+
+    try {
+      await $fetch( `/api/competition/video-timer-library/${data.value.id}`, {
+        method: "DELETE",
+      } )
+
+      await navigateTo( "/competition/video-timer/videos" )
+    } catch ( err: unknown ) {
+      deleteError.value =
+        ( err as { data?: { statusMessage?: string; message?: string } } )?.data?.statusMessage
+        || ( err as { data?: { statusMessage?: string; message?: string } } )?.data?.message
+        || "Failed to delete video."
+    } finally {
+      deleting.value = false
+    }
+  }
 </script>
 
 <template>
@@ -150,6 +166,10 @@
         </div>
 
         <div v-else-if="data" class="mt-4 space-y-4">
+          <div v-if="deleteError" class="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+            {{ deleteError }}
+          </div>
+
           <div class="rounded-xl border border-gray-200 bg-white overflow-hidden">
             <video
               class="w-full bg-black"
@@ -197,6 +217,16 @@
                 >
                   Open session
                 </NuxtLink>
+
+                <button
+                  v-if="!data.sessionId"
+                  class="h-10 px-4 rounded-md bg-red-600 text-white disabled:bg-red-300"
+                  type="button"
+                  :disabled="deleting"
+                  @click="deleteVideo"
+                >
+                  {{ deleting ? "Deleting..." : "Delete video" }}
+                </button>
               </div>
             </div>
 
@@ -232,11 +262,9 @@
               </div>
 
               <div class="rounded-lg border border-gray-200 p-4">
-                <div class="text-xs font-medium uppercase tracking-wide text-gray-500">Meet</div>
-                <div class="mt-3 space-y-2 text-gray-800">
-                  <div><span class="font-medium">Meet name:</span> {{ data.meetName || "—" }}</div>
-                  <div><span class="font-medium">Meet date:</span> {{ formatMeetDate(data.meetDate) }}</div>
-                  <div><span class="font-medium">Notes:</span> {{ data.notes || "—" }}</div>
+                <div class="text-xs font-medium uppercase tracking-wide text-gray-500">Notes</div>
+                <div class="mt-3 text-gray-800 whitespace-pre-wrap break-words">
+                  {{ data.notes || "—" }}
                 </div>
               </div>
             </div>
