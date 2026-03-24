@@ -13,6 +13,8 @@
     type ChartOptions,
     type TooltipItem,
   } from "chart.js"
+  import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/vue"
+  import { ChevronDownIcon } from "@heroicons/vue/24/outline"
   import type {
     VideoTimerComputedAnalysis,
     VideoTimerMarkerRecord,
@@ -30,6 +32,15 @@
     title: "Video Timer Session",
   } )
 
+  type ResultLink = {
+    resultSwimmer: string | null
+    resultCourse: string | null
+    resultStroke: string | null
+    resultDistance: string | null
+    resultSeq: string | null
+    resultDate?: string | null
+  }
+
   type SessionDetail = {
     id: string
     createdAt: string
@@ -37,6 +48,7 @@
     startOffsetMs: number | null
     resultDate: string | null
     resultName: string | null
+    resultLink?: ResultLink
     selections: {
       course: string
       stroke: string
@@ -78,6 +90,7 @@
   const route = useRoute()
   const sessionId = computed( () => String( route.params.id ?? "" ) )
   const activeTab = ref<TabKey>( "analysis" )
+  const resultModalOpen = ref( false )
 
   const resultDateFormatter = new Intl.DateTimeFormat( "en-GB", {
     timeZone: "Europe/London",
@@ -93,7 +106,7 @@
     return resultDateFormatter.format( d )
   }
 
-  const { data, pending, error } = await useFetch<SessionDetail | null>(
+  const { data, pending, error, refresh } = await useFetch<SessionDetail | null>(
     () => `/api/competition/video-timer-sessions/${sessionId.value}`,
     {
       key: () => `video-timer-session-${sessionId.value}`,
@@ -362,6 +375,7 @@
     activeTab.value === key
       ? "border-blue-600 text-blue-700"
       : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+
   const deleting = ref( false )
   const deleteError = ref<string | null>( null )
 
@@ -402,6 +416,18 @@
       deleting.value = false
     }
   }
+
+  const openResultModal = () => {
+    resultModalOpen.value = true
+  }
+
+  const closeResultModal = () => {
+    resultModalOpen.value = false
+  }
+
+  const onResultSaved = async () => {
+    await refresh()
+  }
 </script>
 
 <template>
@@ -416,8 +442,11 @@
             </div>
           </div>
 
-          <div class="flex gap-2">
-            <NuxtLink class="h-10 px-4 rounded-md bg-gray-200 text-gray-900 flex items-center" to="/competition/video-timer/sessions">
+          <div class="flex flex-wrap items-center justify-end gap-2">
+            <NuxtLink
+              class="h-10 px-4 rounded-md bg-gray-200 text-gray-900 flex items-center"
+              to="/competition/video-timer/sessions"
+            >
               Back to sessions
             </NuxtLink>
 
@@ -429,21 +458,66 @@
               Edit session
             </NuxtLink>
 
-            <button
-              v-if="session"
-              class="h-10 px-4 rounded-md bg-red-600 text-white disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
-              type="button"
-              :disabled="deleting"
-              @click="deleteSession"
-            >
-              {{ deleting ? "Deleting…" : "Delete session" }}
-            </button>
+            <Menu v-if="session" as="div" class="relative">
+              <MenuButton class="h-10 px-4 rounded-md bg-gray-900 text-white flex items-center gap-2">
+                Actions
+                <ChevronDownIcon class="h-4 w-4" />
+              </MenuButton>
+
+              <transition
+                enter-active-class="transition duration-100 ease-out"
+                enter-from-class="transform scale-95 opacity-0"
+                enter-to-class="transform scale-100 opacity-100"
+                leave-active-class="transition duration-75 ease-in"
+                leave-from-class="transform scale-100 opacity-100"
+                leave-to-class="transform scale-95 opacity-0"
+              >
+                <MenuItems class="absolute right-0 z-20 mt-2 w-52 origin-top-right rounded-xl border border-gray-200 bg-white p-1 shadow-lg focus:outline-none">
+                  <MenuItem v-slot="{ active }">
+                    <NuxtLink
+                      :to="`/competition/video-timer/sessions/${session.id}/report`"
+                      target="_blank"
+                      class="flex w-full items-center rounded-lg px-3 py-2 text-sm"
+                      :class="active ? 'bg-gray-100 text-gray-900' : 'text-gray-700'"
+                    >
+                      Open report
+                    </NuxtLink>
+                  </MenuItem>
+
+                  <MenuItem v-slot="{ active }">
+                    <NuxtLink
+                      :to="`/competition/video-timer/sessions/${session.id}/report?print=1`"
+                      target="_blank"
+                      class="flex w-full items-center rounded-lg px-3 py-2 text-sm"
+                      :class="active ? 'bg-gray-100 text-gray-900' : 'text-gray-700'"
+                    >
+                      Export PDF
+                    </NuxtLink>
+                  </MenuItem>
+
+                  <div class="my-1 border-t border-gray-200" />
+
+                  <MenuItem v-slot="{ active }">
+                    <button
+                      class="flex w-full items-center rounded-lg px-3 py-2 text-sm"
+                      :class="active ? 'bg-red-50 text-red-700' : 'text-red-600'"
+                      type="button"
+                      :disabled="deleting"
+                      @click="deleteSession"
+                    >
+                      {{ deleting ? "Deleting…" : "Delete session" }}
+                    </button>
+                  </MenuItem>
+                </MenuItems>
+              </transition>
+            </Menu>
           </div>
         </div>
 
         <div v-if="deleteError" class="mt-4 text-sm text-red-600">
           {{ deleteError }}
         </div>
+
         <div v-if="pending" class="mt-6 text-sm text-gray-600">
           Loading…
         </div>
@@ -459,15 +533,35 @@
                 <div class="text-lg font-semibold text-gray-900">
                   {{ titleText }}
                 </div>
+
                 <div v-if="session.swimmer?.fullName" class="text-sm text-gray-700 mt-1">
                   {{ session.swimmer.fullName }}
                 </div>
-                <div class="text-xs text-gray-500 mt-1">
+
+                <div class="mt-1 text-xs text-gray-500">
                   Created at: {{ formatDate(session.createdAt) }}
-                  <span v-if="session.resultDate"> • Result date: {{ formatResultDate(session.resultDate) }}</span>
-                  <span v-if="session.resultName"> • {{ session.resultName }}</span>
-                  <span v-if="session.video.originalName"> • {{ session.video.originalName }}</span>
+                  <span> • {{ session.video.originalName }}</span>
                   <span> • {{ session.markers.length }} markers</span>
+                </div>
+
+                <div class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+                  <span class="text-gray-500">
+                    Result date:
+                    <span class="font-medium text-gray-700">{{ formatResultDate(session.resultDate) }}</span>
+                  </span>
+
+                  <span class="text-gray-500">
+                    Result:
+                    <span class="font-medium text-gray-700">{{ session.resultName || "No linked result" }}</span>
+                  </span>
+
+                  <button
+                    class="font-medium text-blue-600 hover:text-blue-700"
+                    type="button"
+                    @click="openResultModal"
+                  >
+                    {{ session.resultLink?.resultSeq ? "Change result" : "Link result" }}
+                  </button>
                 </div>
               </div>
 
@@ -760,6 +854,7 @@
                       <div class="text-gray-500">Result name</div>
                       <div class="text-right text-gray-900 font-medium">{{ session.resultName || "—" }}</div>
                     </div>
+
                     <div class="flex items-start justify-between gap-4">
                       <div class="text-gray-500">Created</div>
                       <div class="text-right text-gray-900 font-medium">{{ formatDate(session.createdAt) }}</div>
@@ -836,5 +931,17 @@
         </div>
       </div>
     </div>
+    <VideoTimerResultModal
+      v-if="session"
+      :open="resultModalOpen"
+      :session-id="session.id"
+      :swimmer-id="session.swimmer?.id ?? null"
+      :course="session.selections.course"
+      :stroke="session.selections.stroke"
+      :distance="session.selections.distance"
+      :current-result-link="session.resultLink ?? null"
+      @close="closeResultModal"
+      @saved="onResultSaved"
+    />
   </div>
 </template>

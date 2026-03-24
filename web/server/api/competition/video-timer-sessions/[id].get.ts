@@ -15,6 +15,11 @@ type SessionRow = {
   stroke: string
   distance: string
   startOffsetMs: number | null
+  resultSwimmer: string | null
+  resultCourse: string | null
+  resultStroke: string | null
+  resultDistance: string | null
+  resultSeq: string | null
   resultDate: string | null
   resultName: string | null
   swimmerId: string | null
@@ -77,6 +82,11 @@ export default defineEventHandler( async ( event ) => {
         s.stroke as stroke,
         s.distance as distance,
         s.startOffsetMs as startOffsetMs,
+        s.resultSwimmer as resultSwimmer,
+        s.resultCourse as resultCourse,
+        s.resultStroke as resultStroke,
+        s.resultDistance as resultDistance,
+        s.resultSeq as resultSeq,
         r.date as resultDate,
         r.meet as resultName,
         s.swimmerId as swimmerId,
@@ -213,6 +223,14 @@ export default defineEventHandler( async ( event ) => {
       startOffsetMs: row.startOffsetMs ?? null,
       resultDate: row.resultDate ?? null,
       resultName: row.resultName ?? null,
+      resultLink: {
+        resultSwimmer: row.resultSwimmer ?? null,
+        resultCourse: row.resultCourse ?? null,
+        resultStroke: row.resultStroke ?? null,
+        resultDistance: row.resultDistance ?? null,
+        resultSeq: row.resultSeq ?? null,
+        resultDate: row.resultDate ?? null,
+      },
       selections: {
         course: row.course,
         stroke: row.stroke,
