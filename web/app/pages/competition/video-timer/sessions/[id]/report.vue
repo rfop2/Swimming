@@ -616,12 +616,12 @@
               </div>
             </div>
 
-            <div class="rounded-xl border border-gray-200 bg-white p-4 break-inside-avoid">
+            <div class="rounded-xl border border-gray-200 bg-white p-4 break-inside-avoid chart-print-page">
               <div class="text-sm font-semibold text-gray-900">Comparison chart</div>
 
               <div class="mt-4">
                 <ClientOnly>
-                  <div v-if="hasMetricChartData" class="h-[320px]">
+                  <div v-if="hasMetricChartData" class="h-[320px] print-chart-height">
                     <Line :data="metricChartData" :options="metricChartOptions" />
                   </div>
 
@@ -646,6 +646,11 @@
 </template>
 
 <style scoped>
+@page {
+  size: A4 portrait;
+  margin: 12mm;
+}
+
 @media print {
   :global(header),
   :global(nav) {
@@ -653,8 +658,17 @@
   }
 
   .break-inside-avoid {
-    break-inside: avoid;
+    break-inside: avoid-page;
     page-break-inside: avoid;
+  }
+
+  .chart-print-page {
+    break-before: page;
+    page-break-before: always;
+  }
+
+  .print-chart-height {
+    height: 220px !important;
   }
 }
 </style>
