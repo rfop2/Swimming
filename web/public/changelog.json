@@ -1,14 +1,50 @@
 [
   {
-    "isoDate": "2026-03-20",
-    "niceDate": "20 March 2026",
-    "diff": "14.24.0..",
-    "href": "https://bitbucket.org/swimracing/swimming/compare/14.25.0..14.24.0",
+    "isoDate": "2026-03-24",
+    "niceDate": "24 March 2026",
+    "diff": "14.25.0..",
+    "href": "https://bitbucket.org/swimracing/swimming/compare/14.26.0..14.25.0",
     "major": false,
     "minor": false,
     "tag": null,
+    "title": "14.26.0",
+    "date": "2026-03-24T14:07:23.040Z",
+    "summary": null,
+    "commits": [],
+    "merges": [
+      {
+        "id": "28",
+        "message": "Improve video timer session result editing and report export",
+        "href": "https://bitbucket.org/swimracing/swimming/pull-requests/28",
+        "author": "Rodrigo Ferreira",
+        "commit": {
+          "hash": "cb3981d45bde1d99a8938531347bc9d9b582232e",
+          "shorthash": "cb3981d",
+          "author": "Rodrigo Ferreira",
+          "email": "rf.oliveirapaula@gmail.com",
+          "date": "2026-03-24T14:04:29.000Z",
+          "niceDate": "24 March 2026",
+          "subject": "Merged in KAN-91-Changes (pull request #28)",
+          "message": "Merged in KAN-91-Changes (pull request #28)\n\nImprove video timer session result editing and report export",
+          "fixes": null,
+          "href": "https://bitbucket.org/swimracing/swimming/commits/cb3981d45bde1d99a8938531347bc9d9b582232e",
+          "breaking": false
+        }
+      }
+    ],
+    "fixes": []
+  },
+  {
+    "isoDate": "2026-03-20",
+    "niceDate": "20 March 2026",
+    "diff": "14.24.0..14.25.0",
+    "href": "https://bitbucket.org/swimracing/swimming/compare/14.25.0..14.24.0",
+    "major": false,
+    "minor": true,
+    "tag": "14.25.0",
+    "date": "2026-03-20",
     "title": "14.25.0",
-    "date": "2026-03-20T13:58:55.056Z",
+    "version": "14.25.0",
     "summary": null,
     "commits": [
       {
@@ -2119,40 +2155,6 @@
         "files": 2,
         "insertions": 10,
         "deletions": 2,
-        "merge": null
-      }
-    ],
-    "merges": [],
-    "fixes": []
-  },
-  {
-    "isoDate": "2026-02-04",
-    "niceDate": "4 February 2026",
-    "diff": "14.7.0..14.7.1",
-    "href": "https://bitbucket.org/swimracing/swimming/compare/14.7.1..14.7.0",
-    "major": false,
-    "minor": false,
-    "tag": "14.7.1",
-    "date": "2026-02-04",
-    "title": "14.7.1",
-    "version": "14.7.1",
-    "summary": null,
-    "commits": [
-      {
-        "hash": "5acf8fb45883f689803220af8eefbd70aa9140ef",
-        "shorthash": "5acf8fb",
-        "author": "Philip Coombes",
-        "email": "phil@web2wire.com",
-        "date": "2026-02-04T17:02:49.000Z",
-        "niceDate": "4 February 2026",
-        "subject": "Highlight generated speed chart data",
-        "message": "Highlight generated speed chart data",
-        "fixes": null,
-        "href": "https://bitbucket.org/swimracing/swimming/commits/5acf8fb45883f689803220af8eefbd70aa9140ef",
-        "breaking": false,
-        "files": 1,
-        "insertions": 11,
-        "deletions": 1,
         "merge": null
       }
     ],
