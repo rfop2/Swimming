@@ -176,10 +176,38 @@
 
   const empty = computed( () => model.value === null || model.value === undefined )
 
+  const fallbackLabelFromValue = ( value: string | null ) => {
+    if ( !value ) return props.placeholder
+
+    try {
+      const parsed = JSON.parse( value ) as {
+        date?: string
+        meet?: string
+      }
+
+      const date = formatDisplayDate( parsed.date )
+      const meet = String( parsed.meet ?? "" ).trim()
+
+      if ( date && meet ) return `${date} • ${meet}`
+      if ( meet ) return meet
+      if ( date ) return date
+
+      return "Loading result..."
+    } catch {
+      return "Loading result..."
+    }
+  }
+
   const prompt = computed( () => {
     if ( empty.value ) return props.placeholder
-    return options.value.find( ( o ) => o.value === model.value )?.label ?? String( model.value )
+
+    const selectedOption = options.value.find( ( o ) => o.value === model.value )
+    if ( selectedOption ) return selectedOption.label
+
+    return fallbackLabelFromValue( model.value )
   } )
+
+  
 </script>
 
 <template>

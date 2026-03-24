@@ -26,6 +26,7 @@ export default defineEventHandler( async ( event ) => {
   const stroke = typeof q.stroke === "string" && q.stroke.trim() ? q.stroke.trim() : null
   const distance = typeof q.distance === "string" && q.distance.trim() ? q.distance.trim() : null
   const search = typeof q.q === "string" && q.q.trim() ? q.q.trim() : null
+  const currentSessionId = typeof q.currentSessionId === "string" && q.currentSessionId.trim() ? q.currentSessionId.trim() : null
 
   if ( !swimmerId || !course || !stroke || !distance ) {
     return []
@@ -70,6 +71,7 @@ export default defineEventHandler( async ( event ) => {
           SELECT 1
           FROM VideoTimerSessions s
           WHERE s.userId = :userId
+            AND ( :currentSessionId IS NULL OR s.id <> :currentSessionId )
             AND s.resultSwimmer = r.swimmer
             AND s.resultCourse = r.course
             AND s.resultStroke = r.stroke
@@ -91,6 +93,7 @@ export default defineEventHandler( async ( event ) => {
       course,
       stroke,
       distance,
+      currentSessionId,
     }
 
     tokens.forEach( ( token, i ) => {
