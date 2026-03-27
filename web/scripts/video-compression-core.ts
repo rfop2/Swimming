@@ -1,4 +1,3 @@
-import "dotenv/config"
 import mysql from "mysql2/promise"
 import { randomUUID } from "node:crypto"
 import { tmpdir } from "node:os"

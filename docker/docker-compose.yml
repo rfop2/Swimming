@@ -66,32 +66,31 @@ services:
     profiles:
       - live
 
-  video-compression-worker:
-    image: "nuxt-node"
-    hostname: "video-compression-worker"
-    build: .
-    working_dir: /home/node
-    command: sh -lc "npx tsx /home/node/scripts/process-video-compression-worker.ts"
-    environment:
-      NODE_ENV: production
-      MARIADB_HOST: ${MARIADB_HOST}
-      MARIADB_PORT: ${MARIADB_PORT:-3306}
-      MARIADB_DATABASE: ${MARIADB_DATABASE}
-      MARIADB_USER: ${MARIADB_USER}
-      MARIADB_PASSWORD: ${MARIADB_PASSWORD}
-      AWS_REGION: ${AWS_REGION}
-      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
-      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
-      AWS_S3_BUCKET: ${AWS_S3_BUCKET}
-      AWS_CLOUDFRONT_URL: ${AWS_CLOUDFRONT_URL}
-    volumes:
-      - ../web/.output/:/home/node/app
-      - ../web/scripts/:/home/node/scripts:ro
-    restart: unless-stopped
-    depends_on:
-      - db
-    networks:
-      - bridge
+    video-compression-worker:
+      image: "nuxt-node"
+      hostname: "video-compression-worker"
+      build: .
+      working_dir: /home/node/app
+      command: sh -lc "npx tsx scripts/process-video-compression-worker.ts"
+      environment:
+        NODE_ENV: production
+        MARIADB_HOST: ${MARIADB_HOST}
+        MARIADB_PORT: ${MARIADB_PORT:-3306}
+        MARIADB_DATABASE: ${MARIADB_DATABASE}
+        MARIADB_USER: ${MARIADB_USER}
+        MARIADB_PASSWORD: ${MARIADB_PASSWORD}
+        AWS_REGION: ${AWS_REGION}
+        AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+        AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+        AWS_S3_BUCKET: ${AWS_S3_BUCKET}
+        AWS_CLOUDFRONT_URL: ${AWS_CLOUDFRONT_URL}
+      volumes:
+        - ../web/:/home/node/app
+      restart: unless-stopped
+      depends_on:
+        - db
+      networks:
+        - bridge
 
 volumes:
   db-data:
