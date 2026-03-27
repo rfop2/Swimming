@@ -65,6 +65,15 @@ type Body = {
   computed?: unknown
 }
 
+const VIDEO_COMPRESSION_STATUS_IDS = {
+  none: 1,
+  pending: 2,
+  queued: 3,
+  processing: 4,
+  completed: 5,
+  failed: 6,
+} as const
+
 const asNonEmptyString = ( v: unknown ) => ( typeof v === "string" && v.trim() ? v.trim() : null )
 
 const asInt = ( v: unknown ) => {
@@ -512,6 +521,25 @@ export default defineEventHandler( async ( event ) => {
         } )
       }
     }
+
+    const queueCompression = prepareStatement(
+      conn,
+      `
+      UPDATE VideoTimerVideos
+      SET
+        compressionStatusId = :queuedStatusId,
+        compressionQueuedAt = NOW(),
+        compressionError = NULL
+      WHERE id = :videoId
+        AND compressionStatusId = :pendingStatusId
+      `
+    )
+
+    await queueCompression.run( {
+      videoId,
+      queuedStatusId: VIDEO_COMPRESSION_STATUS_IDS.queued,
+      pendingStatusId: VIDEO_COMPRESSION_STATUS_IDS.pending,
+    } )
 
     await conn.commit()
     return { id: sessionId }

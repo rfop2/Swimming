@@ -44,6 +44,7 @@
 
     try {
       const formData = new FormData()
+      formData.append( "source", "library" )
       formData.append( "video", selectedFile.value )
 
       const result = await $fetch<{ id: string }>( "/api/competition/video", {

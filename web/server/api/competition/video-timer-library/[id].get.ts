@@ -18,13 +18,14 @@ type Row = {
   stroke: string | null
   distance: string | null
   notes: string | null
-  meetName: string | null
-  meetDate: string | null
   resultDate: string | null
   resultMeetName: string | null
   officialFinishMs: number | null
   startOffsetMs: number | null
-  markersCount: number
+  markersCount: number | null
+  compressionStatusId: number | null
+  compressionStatusCode: string | null
+  compressionStatusName: string | null
 }
 
 export default defineEventHandler( async ( event ) => {
@@ -38,6 +39,15 @@ export default defineEventHandler( async ( event ) => {
 
   const pool = await getPool()
   const conn: PoolConnection = await pool.getConnection()
+
+  const VIDEO_COMPRESSION_STATUS_IDS = {
+    none: 1,
+    pending: 2,
+    queued: 3,
+    processing: 4,
+    completed: 5,
+    failed: 6,
+  } as const
 
   try {
     const stmt = prepareStatement(
@@ -63,6 +73,9 @@ export default defineEventHandler( async ( event ) => {
         r.meet as resultMeetName,
         s.officialFinishMs as officialFinishMs,
         s.startOffsetMs as startOffsetMs,
+        v.compressionStatusId,
+        cs.code AS compressionStatusCode,
+        cs.name AS compressionStatusName,
         (
           SELECT COUNT(*)
           FROM VideoTimerMarkers m
@@ -80,6 +93,8 @@ export default defineEventHandler( async ( event ) => {
         AND r.stroke = s.resultStroke
         AND r.distance = s.resultDistance
         AND r.seq = s.resultSeq
+      LEFT JOIN VideoTimerVideoCompressionStatuses cs
+        ON cs.id = v.compressionStatusId
       WHERE v.userId = :userId
         AND v.id = :id
       LIMIT 1
@@ -93,29 +108,37 @@ export default defineEventHandler( async ( event ) => {
       throw createError( { status: 404, message: "Video not found" } )
     }
 
+    const isCompressionReady =
+      row.compressionStatusId === VIDEO_COMPRESSION_STATUS_IDS.none
+      || row.compressionStatusId === VIDEO_COMPRESSION_STATUS_IDS.completed
+
     return {
       id: row.id,
       createdAt: row.created,
-      updatedAt: row.updated ?? null,
+      updatedAt: row.updated,
       playbackUrl: row.playbackUrl,
       originalName: row.originalName,
       mimeType: row.mimeType,
       size: Number( row.size ) || 0,
       durationMs: row.durationMs === null ? null : Number( row.durationMs ),
-      sessionId: row.sessionId ?? null,
+      sessionId: row.sessionId || null,
       isLinkedToSession: !!row.sessionId,
-      canCreateSession: !row.sessionId,
-      swimmerId: row.swimmerId ?? null,
-      swimmerName: row.swimmerName ?? null,
-      course: row.course ?? null,
-      stroke: row.stroke ?? null,
-      distance: row.distance ?? null,
-      notes: row.notes ?? null,
-      meetName: row.resultMeetName ?? row.meetName ?? null,
-      meetDate: row.resultDate ?? row.meetDate ?? null,
+      canCreateSession: !row.sessionId && isCompressionReady,
+      compressionStatusId: row.compressionStatusId === null ? null : Number( row.compressionStatusId ),
+      compressionStatusCode: row.compressionStatusCode || null,
+      compressionStatusName: row.compressionStatusName || null,
+      isCompressionReady,
+      swimmerId: row.swimmerId || null,
+      swimmerName: row.swimmerName || null,
+      course: row.course || null,
+      stroke: row.stroke || null,
+      distance: row.distance || null,
+      notes: row.notes || null,
+      meetName: row.resultMeetName || null,
+      meetDate: row.resultDate || null,
       officialFinishMs: row.officialFinishMs === null ? null : Number( row.officialFinishMs ),
       startOffsetMs: row.startOffsetMs === null ? null : Number( row.startOffsetMs ),
-      markersCount: Number( row.markersCount ) || 0,
+      markersCount: row.markersCount === null ? 0 : Number( row.markersCount ),
     }
   } catch ( error ) {
     if ( isMySql2Error( error ) ) {

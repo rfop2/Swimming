@@ -5,11 +5,15 @@ import { getPool, isMySql2Error, prepareStatement } from "lib"
 type Row = {
   id: string
   created: string
+  updated: string | null
   playbackUrl: string
   originalName: string
   mimeType: string
   size: number
   durationMs: number | null
+  compressionStatusId: number | null
+  compressionStatusCode: string | null
+  compressionStatusName: string | null
 }
 
 export default defineEventHandler( async ( event ) => {
@@ -21,6 +25,15 @@ export default defineEventHandler( async ( event ) => {
   const pool = await getPool()
   const conn: PoolConnection = await pool.getConnection()
 
+  const VIDEO_COMPRESSION_STATUS_IDS = {
+    none: 1,
+    pending: 2,
+    queued: 3,
+    processing: 4,
+    completed: 5,
+    failed: 6,
+  } as const
+
   try {
     const stmt = prepareStatement(
       conn,
@@ -28,12 +41,18 @@ export default defineEventHandler( async ( event ) => {
       SELECT
         v.id as id,
         v.created as created,
+        v.updated as updated,
         v.playbackUrl as playbackUrl,
         v.originalName as originalName,
         v.mimeType as mimeType,
         v.size as size,
-        v.durationMs as durationMs
+        v.durationMs as durationMs,
+        v.compressionStatusId as compressionStatusId,
+        cs.code as compressionStatusCode,
+        cs.name as compressionStatusName
       FROM VideoTimerVideos v
+      LEFT JOIN VideoTimerVideoCompressionStatuses cs
+        ON cs.id = v.compressionStatusId
       WHERE v.userId = :userId
         AND NOT EXISTS (
           SELECT 1
@@ -48,23 +67,28 @@ export default defineEventHandler( async ( event ) => {
 
     const rows = ( await stmt.all( { userId } ) ) as Row[]
 
-    return rows.map( r => ( {
-      id: r.id,
-      createdAt: r.created,
-      playbackUrl: r.playbackUrl,
-      originalName: r.originalName,
-      mimeType: r.mimeType,
-      size: Number( r.size ) || 0,
-      durationMs: r.durationMs === null ? null : Number( r.durationMs ),
-      sessionId: null,
-      swimmerId: null,
-      swimmerName: null,
-      course: null,
-      stroke: null,
-      distance: null,
-      meetName: null,
-      meetDate: null,
-    } ) )
+    return rows.map( row => {
+      const isCompressionReady =
+        row.compressionStatusId === VIDEO_COMPRESSION_STATUS_IDS.none
+        || row.compressionStatusId === VIDEO_COMPRESSION_STATUS_IDS.completed
+
+      return {
+        id: row.id,
+        createdAt: row.created,
+        updatedAt: row.updated,
+        playbackUrl: row.playbackUrl,
+        originalName: row.originalName,
+        mimeType: row.mimeType,
+        size: Number( row.size ) || 0,
+        durationMs: row.durationMs === null ? null : Number( row.durationMs ),
+        sessionId: null,
+        compressionStatusId: row.compressionStatusId === null ? null : Number( row.compressionStatusId ),
+        compressionStatusCode: row.compressionStatusCode || null,
+        compressionStatusName: row.compressionStatusName || null,
+        isCompressionReady,
+        canCreateSession: isCompressionReady,
+      }
+    } )
   } catch ( error ) {
     if ( isMySql2Error( error ) ) {
       throw createError( { status: 500, message: `Database error: ${error.sqlMessage}` } )
