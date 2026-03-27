@@ -20,6 +20,7 @@ export default defineNuxtConfig( {
       { baseURL: "/uploads", dir: "public/uploads" }
     ]
   },
+
   devtools: { enabled: true },
 
   modules: [
@@ -34,6 +35,15 @@ export default defineNuxtConfig( {
     ],
     "@nuxtjs/seo",
     "@nuxtjs/turnstile",
+    [
+      "@sentry/nuxt/module",
+      {
+        org: "web2wire-ltd",
+        project: "swim-racing",
+        authToken: process.env.SENTRY_AUTH_TOKEN,
+        release: { name: pkg.version }
+      }
+    ]
   ],
 
   app: {
@@ -110,7 +120,15 @@ export default defineNuxtConfig( {
 
   routeRules: {
     "/": { redirect: "/performance" },
+    // Hashed assets can be cached forever (filenames change on rebuild)
+    "/_nuxt/**": { headers: { "cache-control": "public, max-age=31536000, immutable" } },
+    // HTML pages must always revalidate so users never load stale entry points
+    "/**": { headers: { "cache-control": "no-cache" } },
   },
 
-  compatibilityDate: "2025-11-21"
+  compatibilityDate: "2025-11-21",
+
+  sourcemap: {
+    client: "hidden"
+  }
 } )

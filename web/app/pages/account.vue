@@ -1,4 +1,6 @@
 <script setup lang="ts">
+  import type { User } from "lucia"
+
   definePageMeta( {
     layout: "secure",
     middleware: [ "protected" ]
@@ -23,7 +25,7 @@
       body: JSON.stringify( values ),
     } )
     // await refreshNuxtData()
-    user.value = await useRequestFetch()( "/api/user/current" )
+    user.value = await useRequestFetch()<User>( "/api/user/current" )
     await refreshUserClubs()
     await refreshSwimmers()
   }

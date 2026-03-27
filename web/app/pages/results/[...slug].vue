@@ -13,8 +13,6 @@
 
   import VideoTimerVideoPickerModal from "~/components/VideoTimerVideoPickerModal.vue"
 
-  
-
   definePageMeta( {
     layout: "secure",
     middleware: [ "protected" ]
@@ -27,15 +25,12 @@
     ]
   } )
 
-  
-
   const route = useRoute()
   const router = useRouter()
   const slug = Array.isArray( route.params.slug ) ? route.params.slug : []
 
   const isVideoPickerOpen = ref( false )
   const selectedResultForVideo = ref<ResultRow | null>( null )
-  
 
   const openVideoForResult = ( row: ResultRow ) => {
     const sessionId = row.videoTimerSessionId
@@ -586,7 +581,7 @@
                 class="divide-x divide-gray-200"
               >
                 <td class="whitespace-nowrap py-2 pl-4 pr-3 text-right text-sm font-medium text-gray-900 sm:pl-0">
-                  {{ typeof row.date === "string" ? row.date : format(row.date, "yyyy-MM-dd") }}
+                  {{ typeof row.date === "string" ? row.date : format(row.date, "dd/MM/yyyy") }}
                 </td>
                 <td class="whitespace-nowrap p-2 text-right text-sm text-gray-900">
                   {{ row.time ? secondsToTime( row.time ) : '' }}

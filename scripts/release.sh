@@ -41,11 +41,23 @@ trap rollback ERR
 # --------------------------------------------------------
 # Parse arguments
 # --------------------------------------------------------
-if [[ $# -lt 1 ]]; then
-  die "Usage: $0 <patch|minor|major>"
-fi
+ACTION=""
+MAX_RELEASES="24"
+MAX_DAYS="60"
 
-ACTION=$1
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    patch|minor|major) ACTION="$1" ;;
+    --releases) MAX_RELEASES="$2"; shift ;;
+    --days)     MAX_DAYS="$2";     shift ;;
+    *) die "Usage: $0 <patch|minor|major> [--releases N] [--days N]" ;;
+  esac
+  shift
+done
+
+if [[ -z "$ACTION" ]]; then
+  die "Usage: $0 <patch|minor|major> [--releases N] [--days N]"
+fi
 
 # --------------------------------------------------------
 # Repository root + save state
@@ -96,10 +108,40 @@ git add package*.json
 
 CHANGELOG=public/changelog.json
 
+# Compute the effective starting version from the floor plus any --releases / --days limits.
+# The most recent (most restrictive) candidate wins.
+FLOOR_VERSION="10.0.0"
+CANDIDATES=("$FLOOR_VERSION")
+
+if [[ -n "$MAX_RELEASES" ]]; then
+  # Nth most-recent tag (sorted newest-first) becomes the starting point
+  RELEASE_START=$(git -C "$git_root" tag --sort=-version:refname \
+    | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' \
+    | sed -n "${MAX_RELEASES}p")
+  [[ -n "$RELEASE_START" ]] && CANDIDATES+=("$RELEASE_START")
+fi
+
+if [[ -n "$MAX_DAYS" ]]; then
+  SINCE_EPOCH=$(date -d "${MAX_DAYS} days ago" +%s)
+  # Walk tags oldest-first; stop at the first one inside the window
+  DAYS_START=""
+  while IFS= read -r tag; do
+    tag_epoch=$(git -C "$git_root" log -1 --format="%ct" "$tag" 2>/dev/null || echo 0)
+    if [[ "$tag_epoch" -ge "$SINCE_EPOCH" ]]; then
+      DAYS_START="$tag"
+      break
+    fi
+  done < <(git -C "$git_root" tag --sort=version:refname | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$')
+  [[ -n "$DAYS_START" ]] && CANDIDATES+=("$DAYS_START")
+fi
+
+STARTING_VERSION=$(printf '%s\n' "${CANDIDATES[@]}" | sort -V | tail -n1)
+info "Changelog starting version: $STARTING_VERSION"
+
 npx auto-changelog \
   -p \
   --latest-version "$VERSION" \
-  --starting-version 3.0.0 \
+  --starting-version "$STARTING_VERSION" \
   --commit-limit false \
   --hide-empty-releases \
   --ignore-commit-pattern "update to version|Merge main into release" \
