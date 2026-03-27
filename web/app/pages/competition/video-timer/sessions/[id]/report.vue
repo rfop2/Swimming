@@ -198,10 +198,10 @@
           backgroundColor: "#3b82f6",
           yAxisID: "y",
           tension: 0,
-          pointRadius: 3,
-          pointHoverRadius: 4,
+          pointRadius: 4,
+          pointHoverRadius: 5,
           spanGaps: true,
-          pointHitRadius: 0,
+          pointHitRadius: 6,
         },
         {
           label: "Speed (m/s)",
@@ -210,10 +210,10 @@
           backgroundColor: "#ef4444",
           yAxisID: "y",
           tension: 0.25,
-          pointRadius: 3,
-          pointHoverRadius: 4,
+          pointRadius: 4,
+          pointHoverRadius: 5,
           spanGaps: true,
-          pointHitRadius: 0,
+          pointHitRadius: 6,
         },
         {
           label: "SR (str/Min)",
@@ -222,10 +222,10 @@
           backgroundColor: "#f59e0b",
           yAxisID: "ySr",
           tension: 0.25,
-          pointRadius: 3,
-          pointHoverRadius: 4,
+          pointRadius: 4,
+          pointHoverRadius: 5,
           spanGaps: true,
-          pointHitRadius: 0,
+          pointHitRadius: 6,
         },
         {
           label: "Avg DPS (m)",
@@ -279,19 +279,52 @@
   const metricChartOptions = computed<ChartOptions<"line">>( () => ( {
     responsive: true,
     maintainAspectRatio: false,
+    animation: false,
     interaction: {
       mode: "index",
       intersect: false,
+    },
+    layout: {
+      padding: {
+        top: 8,
+        right: 12,
+        bottom: 0,
+        left: 8,
+      },
+    },
+    elements: {
+      line: {
+        borderWidth: 2,
+      },
+      point: {
+        radius: 4,
+        hoverRadius: 5,
+        hitRadius: 6,
+      },
     },
     plugins: {
       legend: {
         display: true,
         position: "bottom",
         labels: {
+          boxWidth: 18,
+          boxHeight: 3,
+          padding: 16,
+          font: {
+            size: 13,
+            weight: "600",
+          },
           filter: item => !String( item.text || "" ).startsWith( "Avg " ),
         },
       },
       tooltip: {
+        titleFont: {
+          size: 14,
+          weight: "600",
+        },
+        bodyFont: {
+          size: 13,
+        },
         filter: context => !String( context.dataset.label || "" ).startsWith( "Avg " ),
         callbacks: {
           label: ( context: TooltipItem<"line"> ) => {
@@ -310,6 +343,22 @@
         title: {
           display: true,
           text: "Segment",
+          color: "#111827",
+          font: {
+            size: 13,
+            weight: "600",
+          },
+        },
+        ticks: {
+          color: "#374151",
+          font: {
+            size: 12,
+            weight: "600",
+          },
+          maxRotation: 0,
+          minRotation: 0,
+          autoSkip: false,
+          padding: 8,
         },
         grid: {
           display: false,
@@ -321,8 +370,18 @@
         title: {
           display: true,
           text: "DPS / Speed",
+          color: "#111827",
+          font: {
+            size: 13,
+            weight: "600",
+          },
         },
+        grace: "8%",
         ticks: {
+          color: "#374151",
+          font: {
+            size: 12,
+          },
           callback: value => Number( value ).toFixed( 2 ),
         },
       },
@@ -332,11 +391,21 @@
         title: {
           display: true,
           text: "SR (str/Min)",
+          color: "#111827",
+          font: {
+            size: 13,
+            weight: "600",
+          },
         },
+        grace: "8%",
         grid: {
           drawOnChartArea: false,
         },
         ticks: {
+          color: "#374151",
+          font: {
+            size: 12,
+          },
           callback: value => Number( value ).toFixed( 1 ),
         },
       },
@@ -363,7 +432,7 @@
 
 <template>
   <div class="min-h-screen bg-gray-50 print:bg-white">
-    <div class="max-w-6xl mx-auto px-6 py-6 print:px-0 print:py-0">
+    <div class="report-wrap max-w-6xl mx-auto px-6 py-6 print:px-0 print:py-0">
       <div class="mb-6 flex items-center justify-between gap-3 print:hidden">
         <NuxtLink
           class="h-10 px-4 rounded-md bg-gray-200 text-gray-900 flex items-center"
@@ -389,9 +458,9 @@
         Failed to load report.
       </div>
 
-      <div v-else class="space-y-6">
-        <div class="rounded-xl border border-gray-200 bg-white p-6 print:border-0 print:shadow-none">
-          <div class="flex items-start justify-between gap-6">
+      <div v-else class="report-print-root space-y-6">
+        <div class="report-card rounded-xl border border-gray-200 bg-white p-6 print:border-0 print:shadow-none">
+          <div class="report-header flex items-start justify-between gap-6">
             <div class="min-w-0">
               <div class="text-2xl font-semibold text-gray-900">
                 Video Timer Report
@@ -412,7 +481,7 @@
               </div>
             </div>
 
-            <div class="text-sm text-gray-700">
+            <div class="report-meta-block text-sm text-gray-700">
               <div>Course: <span class="font-semibold">{{ session.selections.course }}</span></div>
               <div>Stroke: <span class="font-semibold">{{ session.selections.stroke }}</span></div>
               <div>Distance: <span class="font-semibold">{{ session.selections.distance }}</span></div>
@@ -420,10 +489,10 @@
           </div>
         </div>
 
-        <div class="grid grid-cols-1 xl:grid-cols-[320px_minmax(0,1fr)] gap-6">
+        <div class="report-grid grid grid-cols-1 xl:grid-cols-[320px_minmax(0,1fr)] gap-6">
           <div class="space-y-6">
-            <div class="rounded-xl border border-gray-200 bg-white p-4 break-inside-avoid">
-              <div class="text-sm font-semibold text-gray-900">Summary</div>
+            <div class="report-card rounded-xl border border-gray-200 bg-white p-4 break-inside-avoid">
+              <div class="report-section-title text-sm font-semibold text-gray-900">Summary</div>
 
               <div class="mt-4 space-y-3 text-sm">
                 <div class="flex items-start justify-between gap-4">
@@ -453,11 +522,11 @@
               </div>
             </div>
 
-            <div class="rounded-xl border border-gray-200 bg-white p-4 break-inside-avoid">
-              <div class="text-sm font-semibold text-gray-900">Lap</div>
+            <div class="report-card rounded-xl border border-gray-200 bg-white p-4 break-inside-avoid">
+              <div class="report-section-title text-sm font-semibold text-gray-900">Lap</div>
 
-              <div class="mt-4 overflow-x-auto">
-                <table class="min-w-full text-sm">
+              <div class="report-table-wrap mt-4 overflow-x-auto">
+                <table class="report-table min-w-full text-sm">
                   <thead>
                     <tr class="border-b border-gray-200 text-left text-gray-500">
                       <th class="py-2 pr-4 font-semibold">Segment</th>
@@ -484,14 +553,14 @@
           </div>
 
           <div class="space-y-6">
-            <div class="rounded-xl border border-gray-200 bg-white p-4 break-inside-avoid">
-              <div class="text-sm font-semibold text-gray-900">Skills</div>
+            <div class="report-card rounded-xl border border-gray-200 bg-white p-4 break-inside-avoid">
+              <div class="report-section-title text-sm font-semibold text-gray-900">Skills</div>
 
               <div class="mt-4">
                 <div class="text-xs font-semibold uppercase tracking-wide text-gray-500">Start</div>
 
-                <div class="mt-2 overflow-x-auto">
-                  <table class="min-w-full text-sm">
+                <div class="report-table-wrap mt-2 overflow-x-auto">
+                  <table class="report-table min-w-full text-sm">
                     <thead>
                       <tr class="border-b border-gray-200 text-left text-gray-500">
                         <th class="py-2 pr-4 font-semibold">10m</th>
@@ -511,8 +580,8 @@
               <div class="mt-6">
                 <div class="text-xs font-semibold uppercase tracking-wide text-gray-500">Turns</div>
 
-                <div class="mt-2 overflow-x-auto">
-                  <table class="min-w-full text-sm">
+                <div class="report-table-wrap mt-2 overflow-x-auto">
+                  <table class="report-table min-w-full text-sm">
                     <thead>
                       <tr class="border-b border-gray-200 text-left text-gray-500">
                         <th class="py-2 pr-4 font-semibold">Turn</th>
@@ -547,8 +616,8 @@
               <div class="mt-6">
                 <div class="text-xs font-semibold uppercase tracking-wide text-gray-500">Finish</div>
 
-                <div class="mt-2 overflow-x-auto">
-                  <table class="min-w-full text-sm">
+                <div class="report-table-wrap mt-2 overflow-x-auto">
+                  <table class="report-table min-w-full text-sm">
                     <thead>
                       <tr class="border-b border-gray-200 text-left text-gray-500">
                         <th class="py-2 pr-4 font-semibold">5m IN</th>
@@ -564,11 +633,11 @@
               </div>
             </div>
 
-            <div class="rounded-xl border border-gray-200 bg-white p-4 break-inside-avoid">
-              <div class="text-sm font-semibold text-gray-900">Swim free</div>
+            <div class="report-card rounded-xl border border-gray-200 bg-white p-4 break-inside-avoid">
+              <div class="report-section-title text-sm font-semibold text-gray-900">Swim free</div>
 
-              <div class="mt-4 overflow-x-auto">
-                <table class="min-w-full text-sm">
+              <div class="report-table-wrap mt-4 overflow-x-auto">
+                <table class="report-table min-w-full text-sm">
                   <thead>
                     <tr class="border-b border-gray-200 text-left text-gray-500">
                       <th class="py-2 pr-4 font-semibold">Segment</th>
@@ -615,12 +684,12 @@
               </div>
             </div>
 
-            <div class="rounded-xl border border-gray-200 bg-white p-4 break-inside-avoid chart-print-page">
-              <div class="text-sm font-semibold text-gray-900">Comparison chart</div>
+            <div class="report-card report-chart-card rounded-xl border border-gray-200 bg-white p-4 break-inside-avoid">
+              <div class="report-section-title text-sm font-semibold text-gray-900">Comparison chart</div>
 
               <div class="mt-4">
                 <ClientOnly>
-                  <div v-if="hasMetricChartData" class="h-[320px] print-chart-height">
+                  <div v-if="hasMetricChartData" class="h-[320px] report-chart-height">
                     <Line :data="metricChartData" :options="metricChartOptions" />
                   </div>
 
@@ -631,8 +700,8 @@
               </div>
             </div>
 
-            <div v-if="session.notes" class="rounded-xl border border-gray-200 bg-white p-4 break-inside-avoid">
-              <div class="text-sm font-semibold text-gray-900">Notes</div>
+            <div v-if="session.notes" class="report-card rounded-xl border border-gray-200 bg-white p-4 break-inside-avoid">
+              <div class="report-section-title text-sm font-semibold text-gray-900">Notes</div>
               <div class="mt-3 text-sm text-gray-700 whitespace-pre-wrap">
                 {{ session.notes }}
               </div>
@@ -647,13 +716,109 @@
 <style scoped>
 @page {
   size: A4 portrait;
-  margin: 12mm;
+  margin: 10mm;
 }
 
 @media print {
+  html,
+  body {
+    background: #fff !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
   :global(header),
   :global(nav) {
     display: none !important;
+  }
+
+  .report-wrap {
+    max-width: none !important;
+    width: 100% !important;
+    padding: 0 !important;
+  }
+
+  .report-grid {
+    display: block !important;
+  }
+
+  .report-grid > * + * {
+    margin-top: 12px !important;
+  }
+
+  .report-card {
+    border: 1px solid #d1d5db !important;
+    border-radius: 10px !important;
+    box-shadow: none !important;
+    background: #fff !important;
+    padding: 14px !important;
+  }
+
+  .report-header {
+    display: block !important;
+  }
+
+  .report-meta-block {
+    margin-top: 14px !important;
+  }
+
+  .report-section-title {
+    font-size: 15px !important;
+    line-height: 1.3 !important;
+  }
+
+  .report-print-root .text-2xl {
+    font-size: 26px !important;
+    line-height: 1.15 !important;
+  }
+
+  .report-print-root .text-lg {
+    font-size: 18px !important;
+    line-height: 1.3 !important;
+  }
+
+  .report-print-root .text-sm {
+    font-size: 12.5px !important;
+    line-height: 1.45 !important;
+  }
+
+  .report-print-root .text-xs {
+    font-size: 11px !important;
+    line-height: 1.45 !important;
+  }
+
+  .report-print-root .space-y-6 > * + * {
+    margin-top: 12px !important;
+  }
+
+  .report-print-root .space-y-3 > * + * {
+    margin-top: 10px !important;
+  }
+
+  .report-table-wrap {
+    overflow: visible !important;
+  }
+
+  .report-table {
+    width: 100% !important;
+    table-layout: auto !important;
+    font-size: 12px !important;
+    line-height: 1.4 !important;
+  }
+
+  .report-table th {
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    padding-top: 8px !important;
+    padding-bottom: 8px !important;
+    white-space: nowrap;
+  }
+
+  .report-table td {
+    font-size: 12px !important;
+    padding-top: 8px !important;
+    padding-bottom: 8px !important;
+    vertical-align: top !important;
   }
 
   .break-inside-avoid {
@@ -661,13 +826,17 @@
     page-break-inside: avoid;
   }
 
-  .chart-print-page {
+  .report-chart-card {
     break-before: page;
     page-break-before: always;
   }
 
-  .print-chart-height {
-    height: 220px !important;
+  .report-chart-height {
+    height: 460px !important;
+  }
+
+  canvas {
+    max-width: 100% !important;
   }
 }
 </style>

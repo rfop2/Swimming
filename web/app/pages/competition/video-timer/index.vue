@@ -97,6 +97,10 @@
     size: number
     durationMs?: number | null
     sessionId?: string | null
+    compressionStatusId?: number | null
+    compressionStatusCode?: string | null
+    compressionStatusName?: string | null
+    isCompressionReady?: boolean
   }
 
   const createEmptyDraft = (): VideoTimerDraft => ( {
@@ -351,6 +355,10 @@
         throw new Error( "This video is already linked to a session." )
       }
 
+      if ( !video.isCompressionReady ) {
+        throw new Error( "This video is still being processed." )
+      }
+
       uploadedVideo.value = {
         id: video.id,
         playbackUrl: video.playbackUrl,
@@ -434,6 +442,7 @@
     new Promise<{ ok: true; id: string; playbackUrl: string } | { ok: false; message: string }>( ( resolve ) => {
       const form = new FormData()
       form.append( "video", file )
+      form.append( "source", "session" )
 
       const xhr = new XMLHttpRequest()
       xhrRef.value = xhr
