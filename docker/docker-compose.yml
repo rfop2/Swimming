@@ -3,6 +3,7 @@ services:
     image: "nuxt-node"
     hostname: "node"
     build: .
+    command: ["node", "--import", "./server/sentry.server.config.mjs", "./server/index.mjs"]
     environment:
       NODE_ENV: production
       MARIADB_HOST: ${MARIADB_HOST}
