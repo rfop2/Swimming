@@ -1,10 +1,13 @@
 FROM node:lts
 
-# Args
 ARG UID=1001
 ARG GID=999
 
 RUN groupmod -g $GID node && usermod -u $UID -g $GID node
+
+RUN apt-get update \
+  && apt-get install -y ffmpeg \
+  && rm -rf /var/lib/apt/lists/*
 
 USER node
 
