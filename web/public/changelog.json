@@ -1,14 +1,50 @@
 [
   {
-    "isoDate": "2026-03-24",
-    "niceDate": "24 March 2026",
-    "diff": "14.26.0..",
-    "href": "https://bitbucket.org/swimracing/swimming/compare/14.27.0..14.26.0",
+    "isoDate": "2026-03-27",
+    "niceDate": "27 March 2026",
+    "diff": "14.27.0..",
+    "href": "https://bitbucket.org/swimracing/swimming/compare/14.28.0..14.27.0",
     "major": false,
     "minor": false,
     "tag": null,
+    "title": "14.28.0",
+    "date": "2026-03-27T18:13:04.853Z",
+    "summary": null,
+    "commits": [],
+    "merges": [
+      {
+        "id": "30",
+        "message": "video compression and fix report layout",
+        "href": "https://bitbucket.org/swimracing/swimming/pull-requests/30",
+        "author": "Rodrigo Ferreira",
+        "commit": {
+          "hash": "7b70381e0f4b623f0fdbfc563ddcb35200b3642b",
+          "shorthash": "7b70381",
+          "author": "Rodrigo Ferreira",
+          "email": "rf.oliveirapaula@gmail.com",
+          "date": "2026-03-27T18:07:01.000Z",
+          "niceDate": "27 March 2026",
+          "subject": "Merged in KAN-91-Changes (pull request #30)",
+          "message": "Merged in KAN-91-Changes (pull request #30)\n\nvideo compression and fix report layout",
+          "fixes": null,
+          "href": "https://bitbucket.org/swimracing/swimming/commits/7b70381e0f4b623f0fdbfc563ddcb35200b3642b",
+          "breaking": false
+        }
+      }
+    ],
+    "fixes": []
+  },
+  {
+    "isoDate": "2026-03-24",
+    "niceDate": "24 March 2026",
+    "diff": "14.26.0..14.27.0",
+    "href": "https://bitbucket.org/swimracing/swimming/compare/14.27.0..14.26.0",
+    "major": false,
+    "minor": true,
+    "tag": "14.27.0",
+    "date": "2026-03-24",
     "title": "14.27.0",
-    "date": "2026-03-24T14:47:05.993Z",
+    "version": "14.27.0",
     "summary": null,
     "commits": [
       {
@@ -2073,40 +2109,6 @@
         "files": 3,
         "insertions": 3,
         "deletions": 3,
-        "merge": null
-      }
-    ],
-    "merges": [],
-    "fixes": []
-  },
-  {
-    "isoDate": "2026-02-09",
-    "niceDate": "9 February 2026",
-    "diff": "14.8.0..14.8.1",
-    "href": "https://bitbucket.org/swimracing/swimming/compare/14.8.1..14.8.0",
-    "major": false,
-    "minor": false,
-    "tag": "14.8.1",
-    "date": "2026-02-09",
-    "title": "14.8.1",
-    "version": "14.8.1",
-    "summary": null,
-    "commits": [
-      {
-        "hash": "258abb2eb114da84bdcc4f7372c67ee1bd94f650",
-        "shorthash": "258abb2",
-        "author": "Philip Coombes",
-        "email": "phil@web2wire.com",
-        "date": "2026-02-09T10:34:04.000Z",
-        "niceDate": "9 February 2026",
-        "subject": "Allow .env override of DB host",
-        "message": "Allow .env override of DB host",
-        "fixes": null,
-        "href": "https://bitbucket.org/swimracing/swimming/commits/258abb2eb114da84bdcc4f7372c67ee1bd94f650",
-        "breaking": false,
-        "files": 6,
-        "insertions": 7,
-        "deletions": 2,
         "merge": null
       }
     ],
