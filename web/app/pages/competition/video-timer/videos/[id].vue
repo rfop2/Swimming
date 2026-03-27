@@ -125,11 +125,6 @@
     return "bg-amber-100 text-amber-700"
   } )
 
-  const createSessionDisabled = computed( () => {
-    if ( !data.value ) return true
-    if ( data.value.sessionId ) return true
-    return !data.value.canCreateSession
-  } )
 
   const createSessionDisabledText = computed( () => {
     if ( !data.value || data.value.sessionId ) return ""
@@ -167,7 +162,7 @@
   }
 
   let refreshTimer: ReturnType<typeof window.setInterval> | null = null
-  let stopCompressionWatch: (() => void) | null = null
+  let stopCompressionWatch: ( () => void ) | null = null
 
   const stopRefreshTimer = () => {
     if ( refreshTimer !== null ) {

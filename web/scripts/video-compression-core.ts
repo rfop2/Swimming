@@ -3,8 +3,8 @@ import mysql from "mysql2/promise"
 import { randomUUID } from "node:crypto"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
-import { createReadStream, createWriteStream } from "node:fs"
-import { promises as fs } from "node:fs"
+import { createReadStream, createWriteStream, promises as fs  } from "node:fs"
+
 import { spawn } from "node:child_process"
 import { pipeline } from "node:stream/promises"
 import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3"
@@ -296,7 +296,9 @@ export const processVideo = async ( videoId: string ) => {
   } finally {
     try {
       await fs.rm( tempBase, { recursive: true, force: true } )
-    } catch {}
+    } catch {
+      // Ignore cleanup errors
+    }
 
     conn.release()
   }
