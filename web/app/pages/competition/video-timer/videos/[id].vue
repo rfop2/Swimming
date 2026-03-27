@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { computed, ref } from "vue"
+  import { computed, ref, watch, onMounted, onBeforeUnmount } from "vue"
 
   definePageMeta( {
     layout: "secure",
@@ -33,6 +33,10 @@
     officialFinishMs?: number | null
     startOffsetMs?: number | null
     markersCount?: number | null
+    compressionStatusId?: number | null
+    compressionStatusCode?: string | null
+    compressionStatusName?: string | null
+    isCompressionReady?: boolean
   }
 
   const route = useRoute()
@@ -101,6 +105,39 @@
     return data.value.sessionId ? "Linked to session" : "Available"
   } )
 
+  const compressionLabel = computed( () => {
+    const code = String( data.value?.compressionStatusCode || "" ).trim()
+    if ( !code ) return "Compression unknown"
+    return `Compression: ${code}`
+  } )
+
+  const compressionBadgeClass = computed( () => {
+    const code = String( data.value?.compressionStatusCode || "" ).trim()
+
+    if ( code === "completed" || code === "none" ) {
+      return "bg-green-100 text-green-700"
+    }
+
+    if ( code === "failed" ) {
+      return "bg-red-100 text-red-700"
+    }
+
+    return "bg-amber-100 text-amber-700"
+  } )
+
+  const createSessionDisabled = computed( () => {
+    if ( !data.value ) return true
+    if ( data.value.sessionId ) return true
+    return !data.value.canCreateSession
+  } )
+
+  const createSessionDisabledText = computed( () => {
+    if ( !data.value || data.value.sessionId ) return ""
+    if ( data.value.canCreateSession ) return ""
+    if ( data.value.compressionStatusCode === "failed" ) return "This video failed compression and cannot be used yet."
+    return "This video is still being processed and cannot be used yet."
+  } )
+
   const deleting = ref( false )
   const deleteError = ref( "" )
 
@@ -128,6 +165,37 @@
       deleting.value = false
     }
   }
+
+  let refreshTimer: ReturnType<typeof window.setInterval> | null = null
+  let stopCompressionWatch: (() => void) | null = null
+
+  const stopRefreshTimer = () => {
+    if ( refreshTimer !== null ) {
+      window.clearInterval( refreshTimer )
+      refreshTimer = null
+    }
+  }
+
+  onMounted( () => {
+    stopCompressionWatch = watch(
+      () => data.value?.isCompressionReady,
+      ( isReady ) => {
+        stopRefreshTimer()
+
+        if ( isReady === false ) {
+          refreshTimer = window.setInterval( () => {
+            void refresh()
+          }, 5000 )
+        }
+      },
+      { immediate: true }
+    )
+  } )
+
+  onBeforeUnmount( () => {
+    stopCompressionWatch?.()
+    stopRefreshTimer()
+  } )
 </script>
 
 <template>
@@ -170,6 +238,20 @@
             {{ deleteError }}
           </div>
 
+          <div
+            v-if="data.compressionStatusCode === 'failed'"
+            class="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700"
+          >
+            This video failed compression and cannot be used until it is reprocessed.
+          </div>
+
+          <div
+            v-else-if="!data.isCompressionReady"
+            class="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800"
+          >
+            {{ createSessionDisabledText || "This video is still being processed." }}
+          </div>
+
           <div class="rounded-xl border border-gray-200 bg-white overflow-hidden">
             <video
               class="w-full bg-black"
@@ -194,6 +276,13 @@
                   >
                     {{ linkedLabel }}
                   </span>
+
+                  <span
+                    class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
+                    :class="compressionBadgeClass"
+                  >
+                    {{ compressionLabel }}
+                  </span>
                 </div>
 
                 <div class="mt-2 text-sm text-gray-500">
@@ -210,8 +299,17 @@
                   Create session
                 </NuxtLink>
 
+                <button
+                  v-else-if="!data.sessionId"
+                  class="h-10 px-4 rounded-md bg-gray-200 text-gray-500 cursor-not-allowed"
+                  type="button"
+                  disabled
+                >
+                  Processing video
+                </button>
+
                 <NuxtLink
-                  v-else-if="data.sessionId"
+                  v-if="data.sessionId"
                   class="h-10 px-4 rounded-md bg-gray-900 text-white flex items-center"
                   :to="`/competition/video-timer/sessions/${data.sessionId}`"
                 >

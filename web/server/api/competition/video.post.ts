@@ -7,6 +7,17 @@ import { DeleteObjectCommand, S3Client } from "@aws-sdk/client-s3"
 import { Upload } from "@aws-sdk/lib-storage"
 import { getPool, isMySql2Error, prepareStatement } from "lib"
 
+const VIDEO_COMPRESSION_STATUS_IDS = {
+  none: 1,
+  pending: 2,
+  queued: 3,
+  processing: 4,
+  completed: 5,
+  failed: 6,
+} as const
+
+type UploadSource = "session" | "library"
+
 const getRequiredEnv = ( name: string ) => {
   const value = process.env[name]?.trim()
   if ( !value ) {
@@ -57,6 +68,8 @@ export default defineEventHandler( async ( event ) => {
   const maxBytes = 700 * 1024 * 1024
   const id = randomUUID()
 
+  let source: UploadSource = "session"
+
   const result = await new Promise<UploadResult>( ( resolve, reject ) => {
     const bb = Busboy( {
       headers: req.headers,
@@ -80,6 +93,12 @@ export default defineEventHandler( async ( event ) => {
       }
       reject( createError( { statusCode, statusMessage } ) )
     }
+
+    bb.on( "field", ( field, value ) => {
+      if ( field === "source" && ( value === "session" || value === "library" ) ) {
+        source = value
+      }
+    } )
 
     bb.on( "file", ( field, file, info: { filename: string; mimeType: string } ) => {
       if ( field !== "video" ) {
@@ -166,31 +185,54 @@ export default defineEventHandler( async ( event ) => {
         id,
         userId,
         playbackUrl,
+        uploadKey,
+        originalPlaybackUrl,
+        originalUploadKey,
         originalName,
         mimeType,
         size,
-        durationMs
+        originalSize,
+        durationMs,
+        compressionStatusId,
+        compressionQueuedAt
       )
       VALUES (
         :id,
         :userId,
         :playbackUrl,
+        :uploadKey,
+        :originalPlaybackUrl,
+        :originalUploadKey,
         :originalName,
         :mimeType,
         :size,
-        :durationMs
+        :originalSize,
+        :durationMs,
+        :compressionStatusId,
+        :compressionQueuedAt
       )
       `
     )
+
+    const compressionStatusId =
+      source === "library"
+        ? VIDEO_COMPRESSION_STATUS_IDS.queued
+        : VIDEO_COMPRESSION_STATUS_IDS.pending
 
     await insertVideo.run( {
       id: result.id,
       userId,
       playbackUrl: result.playbackUrl,
+      uploadKey: result.uploadKey,
+      originalPlaybackUrl: result.playbackUrl,
+      originalUploadKey: result.uploadKey,
       originalName: result.originalName,
       mimeType: result.mimeType,
       size: result.size,
+      originalSize: result.size,
       durationMs: result.durationMs,
+      compressionStatusId,
+      compressionQueuedAt: source === "library" ? new Date() : null,
     } )
 
     return {
@@ -200,6 +242,7 @@ export default defineEventHandler( async ( event ) => {
       mimeType: result.mimeType,
       size: result.size,
       durationMs: result.durationMs,
+      compressionStatusId,
     }
   } catch ( error ) {
     try {

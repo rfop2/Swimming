@@ -13,11 +13,18 @@
   type VideoListItem = {
     id: string
     createdAt: string
+    updatedAt?: string | null
     originalName: string
     mimeType: string
     size: number
     durationMs?: number | null
     playbackUrl: string
+    sessionId?: string | null
+    compressionStatusId?: number | null
+    compressionStatusCode?: string | null
+    compressionStatusName?: string | null
+    isCompressionReady?: boolean
+    canCreateSession?: boolean
   }
 
   const search = ref( "" )
@@ -206,6 +213,13 @@
                     <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-green-100 text-green-700">
                       Available
                     </span>
+
+                    <span
+                      class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
+                      :class="video.isCompressionReady ? 'bg-green-100 text-green-700' : video.compressionStatusCode === 'failed' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'"
+                    >
+                      Compression: {{ video.compressionStatusCode || "unknown" }}
+                    </span>
                   </div>
 
                   <div class="mt-1 text-xs text-gray-500">
@@ -217,18 +231,21 @@
 
                 <div class="shrink-0 flex gap-2">
                   <NuxtLink
-                    class="h-10 px-4 rounded-md bg-gray-200 text-gray-900 flex items-center"
-                    :to="`/competition/video-timer/videos/${video.id}`"
-                  >
-                    Open
-                  </NuxtLink>
-
-                  <NuxtLink
+                    v-if="video.canCreateSession"
                     class="h-10 px-4 rounded-md bg-blue-600 text-white flex items-center"
                     :to="`/competition/video-timer?videoId=${video.id}`"
                   >
                     Create session
                   </NuxtLink>
+
+                  <button
+                    v-else
+                    class="h-10 px-4 rounded-md bg-gray-200 text-gray-500 cursor-not-allowed"
+                    type="button"
+                    disabled
+                  >
+                    {{ video.compressionStatusCode === "failed" ? "Compression failed" : "Processing video" }}
+                  </button>
 
                   <button
                     class="h-10 px-4 rounded-md bg-red-600 text-white disabled:bg-red-300"
