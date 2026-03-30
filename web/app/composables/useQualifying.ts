@@ -15,36 +15,40 @@ export const useQualifying = () => {
   const loadingTimes = useState( "timesLoading", () => false )
 
   const fetchQualifyingTimes = async () => {
-    if ( loadingTimes.value ) return
+    if ( loadedTimes.value || loadingTimes.value ) return
     loadingTimes.value = true
 
     try {
       qualifyingTimes.value = await $fetch<QualifyingRow[]>( "/api/qualifying/times" )
       loadedTimes.value = true
+    } catch {
+      // silently fail — caller has no session or endpoint unavailable
     } finally {
       loadingTimes.value = false
     }
   }
 
-  fetchQualifyingTimes()
+  fetchQualifyingTimes().catch( () => {} )
 
   const qualifyingPeriods = useState<ExtQualifyingPeriod[]>( "qualifyingPeriods", () => [] )
   const loadedPeriods = useState( "periodsLoaded", () => false )
   const loadingPeriods = useState( "periodsLoading", () => false )
 
   const fetchQualifyingPeriods = async () => {
-    if ( loadingPeriods.value ) return
+    if ( loadedPeriods.value || loadingPeriods.value ) return
     loadingPeriods.value = true
 
     try {
       qualifyingPeriods.value = await $fetch<ExtQualifyingPeriod[]>( "/api/qualifying/dates" )
       loadedPeriods.value = true
+    } catch {
+      // silently fail — caller has no session or endpoint unavailable
     } finally {
       loadingPeriods.value = false
     }
   }
 
-  fetchQualifyingPeriods()
+  fetchQualifyingPeriods().catch( () => {} )
 
   const buildQualifyingInfo = ( qualifyingPeriods: ExtQualifyingPeriod[], qualifyingTimes: QualifyingRow[] ) => {
     const qualifyingInfo = qualifyingPeriods.map( qp => ( {
