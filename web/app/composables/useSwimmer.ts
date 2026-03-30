@@ -20,7 +20,7 @@ export const useSwimmer = () => {
    */
   const ensureValidSwimmerId = () => {
     const list = swimmers.value
-    if ( !list.length ) return
+    if ( !list?.length ) return
 
     const id = swimmerId.value
 
@@ -47,7 +47,7 @@ export const useSwimmer = () => {
    * Canonical swimmer from persisted id
    */
   const swimmer = computed<Swimmer | undefined>( () => {
-    if ( !swimmers.value.length ) return undefined
+    if ( !swimmers.value?.length ) return undefined
     if ( !swimmerId.value ) return undefined
     return swimmers.value.find( s => s.id === swimmerId.value )
   } )
@@ -63,7 +63,7 @@ export const useSwimmer = () => {
   const swimmerModel = computed<Swimmer | undefined>( {
     get: () => {
       const list = swimmers.value
-      if ( !list.length ) return undefined
+      if ( !list?.length ) return undefined
       return swimmer.value ?? list[0]
     },
     set: ( newSwimmer ) => {

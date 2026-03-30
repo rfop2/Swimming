@@ -20,7 +20,7 @@ const adapter = new Mysql2Adapter( pool, {
 export const lucia = new Lucia( adapter, {
   sessionCookie: {
     attributes: {
-      secure: !import.meta.dev
+      secure: process.env.SITE_URL?.startsWith( "https" ) ?? false
     }
   },
   getUserAttributes: ( attributes ) => {
