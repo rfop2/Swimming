@@ -1,15 +1,6 @@
-export default defineEventHandler( async ( event ) => {
-  const { user, isImpersonating } = event.context
-
-  if ( !user ) {
-    throw createError( {
-      status: 401,
-      message: "Not authenticated"
-    } )
-  }
-
+export default defineEventHandler( ( event ) => {
   return {
-    user,
-    impersonating: isImpersonating
+    user: event.context.user ?? null,
+    impersonating: event.context.isImpersonating ?? false,
   }
 } )
