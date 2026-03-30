@@ -371,6 +371,105 @@
     },
   } ) )
 
+  const lapTimeChartLabels = computed( () => {
+    const laps = computedAnalysis.value?.laps ?? []
+    return laps.map( row => row.label )
+  } )
+
+  const lapTimeChartData = computed<ChartData<"line", ( number | null )[], string>>( () => {
+    const laps = computedAnalysis.value?.laps ?? []
+    const averageLapTime = average( laps.map( row => row.splitMs ) )
+
+    return {
+      labels: lapTimeChartLabels.value,
+      datasets: [
+        {
+          label: "Time per length",
+          data: laps.map( row => row.splitMs ),
+          borderColor: "#10b981",
+          backgroundColor: "#10b981",
+          yAxisID: "y",
+          tension: 0.25,
+          pointRadius: 3,
+          pointHoverRadius: 4,
+          spanGaps: true,
+          pointHitRadius: 0,
+        },
+        {
+          label: "Avg time per length",
+          data: repeatValue( averageLapTime, laps.length ),
+          borderColor: "#10b981",
+          backgroundColor: "#10b981",
+          yAxisID: "y",
+          tension: 0,
+          pointRadius: 0,
+          pointHoverRadius: 0,
+          borderDash: [ 6, 6 ],
+          spanGaps: true,
+          pointHitRadius: 0,
+        },
+      ],
+    }
+  } )
+
+  const hasLapTimeChartData = computed( () =>
+    lapTimeChartData.value.datasets.some( dataset =>
+      ( dataset.data ?? [] ).some( value => isFiniteNumber( value ) )
+    )
+  )
+
+  const lapTimeChartOptions = computed<ChartOptions<"line">>( () => ( {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: {
+      mode: "index",
+      intersect: false,
+    },
+    plugins: {
+      legend: {
+        display: true,
+        position: "bottom",
+        labels: {
+          filter: item => !String( item.text || "" ).startsWith( "Avg " ),
+        },
+      },
+      tooltip: {
+        filter: ( context ) => !String( context.dataset.label || "" ).startsWith( "Avg " ),
+        callbacks: {
+          label: ( context: TooltipItem<"line"> ) => {
+            const label = context.dataset.label || ""
+            const value = Number( context.parsed.y )
+
+            if ( !Number.isFinite( value ) ) return `${label}: —`
+            return `${label}: ${formatRaceMs( value )}`
+          },
+        },
+      },
+    },
+    scales: {
+      x: {
+        title: {
+          display: true,
+          text: "Length",
+        },
+        grid: {
+          display: false,
+        },
+      },
+      y: {
+        type: "linear",
+        position: "left",
+        title: {
+          display: true,
+          text: "Time",
+        },
+        ticks: {
+          callback: value => formatRaceMs( Number( value ) ),
+        },
+      },
+    },
+  } ) )
+
   const tabClass = ( key: TabKey ) =>
     activeTab.value === key
       ? "border-blue-600 text-blue-700"
@@ -811,6 +910,21 @@
 
                       <div v-else class="text-sm text-gray-500">
                         No chart data available.
+                      </div>
+                    </ClientOnly>
+                  </div>
+                </div>
+                <div class="rounded-xl border border-gray-200 bg-white p-4">
+                  <div class="text-sm font-semibold text-gray-900">Time per length</div>
+
+                  <div class="mt-4">
+                    <ClientOnly>
+                      <div v-if="hasLapTimeChartData" class="h-[320px]">
+                        <Line :data="lapTimeChartData" :options="lapTimeChartOptions" />
+                      </div>
+
+                      <div v-else class="text-sm text-gray-500">
+                        No lap time data available.
                       </div>
                     </ClientOnly>
                   </div>
