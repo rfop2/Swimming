@@ -15,4 +15,4 @@ EXPOSE 3000
 
 WORKDIR /home/node/app
 
-CMD ["node","--import", "server/sentry.server.config.mjs", ".server/index.mjs"]
+CMD ["node","--import", "server/sentry.server.config.mjs", "./server/index.mjs"]
