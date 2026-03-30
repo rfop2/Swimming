@@ -12,6 +12,9 @@ echo "Building cli"
 cd $REPO_ROOT/cli
 npm ci && npm run build
 
+echo "Running database migrations"
+npm run migrate
+
 echo "Building web"
 
 cd $REPO_ROOT/web
