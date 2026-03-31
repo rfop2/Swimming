@@ -131,8 +131,8 @@
     { name: "Qualifications", children: [
       { name: "Cut-off Dates", href: "/qualifying/dates" },
       { name: "Times", href: "/qualifying/times" },
-      { name: "Matrix", href: "/qualifying/matrix", condition: () => !!Number( user.value.admin ) },
-      { name: "Import", href: "/qualifying/import", condition: () => !!Number( user.value.admin ) },
+      { name: "Matrix", href: "/qualifying/matrix", condition: () => !!Number( user.value?.admin ) },
+      { name: "Import", href: "/qualifying/import", condition: () => !!Number( user.value?.admin ) },
     ] },
   ] )
 
