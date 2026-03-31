@@ -15,7 +15,7 @@ export const useQualifying = () => {
   const loadingTimes = useState( "timesLoading", () => false )
 
   const fetchQualifyingTimes = async () => {
-    if ( loadedTimes.value || loadingTimes.value ) return
+    if ( loadedTimes.value || loadedTimes.value ) return
     loadingTimes.value = true
 
     try {
@@ -35,7 +35,7 @@ export const useQualifying = () => {
   const loadingPeriods = useState( "periodsLoading", () => false )
 
   const fetchQualifyingPeriods = async () => {
-    if ( loadedPeriods.value || loadingPeriods.value ) return
+    if ( loadingPeriods.value || loadedPeriods.value ) return
     loadingPeriods.value = true
 
     try {
