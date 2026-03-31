@@ -27,7 +27,7 @@
 <template>
   <div class="bg-white">
     <!-- Header -->
-    <header class="absolute inset-x-0 top-0 z-50">
+    <header class="border-b border-gray-100">
       <nav class="mx-auto flex max-w-7xl items-center justify-between px-6 py-5 lg:px-8">
         <div class="flex items-center gap-x-4">
           <img
@@ -57,7 +57,7 @@
     </header>
 
     <!-- Hero -->
-    <div class="relative isolate px-6 pt-14 lg:px-8">
+    <div class="relative isolate px-6 lg:px-8">
       <div class="mx-auto max-w-2xl py-32 sm:py-48">
         <div class="text-center">
           <div class="flex justify-center mb-10">
