@@ -4,7 +4,7 @@
   import type { Swimmer, ExtQualifyingPeriod, QualifyingRow } from "lib"
 
   definePageMeta( {
-    layout: "default",
+    layout: "share",
   } )
 
   const route = useRoute()
@@ -66,9 +66,7 @@
 </script>
 
 <template>
-  <div class="px-4 py-4 sm:px-6 lg:px-8">
-    <div class="mx-auto max-w-7xl">
-      <template v-if="swimmer">
+  <template v-if="swimmer">
         <div class="sm:flex sm:items-center mb-4">
           <div class="sm:flex-auto">
             <h1 class="text-base font-semibold leading-6 text-gray-900">
@@ -98,9 +96,7 @@
             :show-links="false"
           />
         </div>
-      </template>
-    </div>
-  </div>
+  </template>
 </template>
 
 <style scoped>
