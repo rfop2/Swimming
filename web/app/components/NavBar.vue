@@ -4,6 +4,7 @@
   import { notificationTypes, type NotificationType, type Notification } from "lib"
 
   const user = useAuthenticatedUser()
+  const { canAccess } = useSubscription()
 
   // ──────────────────────────────────────────────────────────────
   // Type guards
@@ -109,13 +110,13 @@
   const navigation = computed<MainNavOption[]>( () => [
     { name: "Performance", children: [
       { name: "Personal Bests", href: "/performance" },
-      { name: "Results", href: "/results" },
-      { name: "Compare", href: "/compare" },
+      { name: "Results", href: "/results", condition: () => canAccess( "results" ) },
+      { name: "Compare", href: "/compare", condition: () => canAccess( "compare" ) },
     ] },
     { name: "Training", children: [
-      { name: "Times", href: "/training/times" },
+      { name: "Times", href: "/training/times", condition: () => canAccess( "trainingTimes" ) },
       // { name: "Training", href: "/training/targets" },
-      { name: "Speedcharts", href: "/training/speedchart" },
+      { name: "Speedcharts", href: "/training/speedchart", condition: () => canAccess( "speedcharts" ) },
     ] },
     { name: "Competition", children: [
       { name: "Meets", href: "/competition/meets" },
@@ -130,9 +131,9 @@
     ] },
     { name: "Qualifications", children: [
       { name: "Cut-off Dates", href: "/qualifying/dates" },
-      { name: "Times", href: "/qualifying/times" },
+      { name: "Times", href: "/qualifying/times", condition: () => canAccess( "qualifyingView" ) },
       { name: "Matrix", href: "/qualifying/matrix", condition: () => !!Number( user.value.admin ) },
-      { name: "Import", href: "/qualifying/import", condition: () => !!Number( user.value.admin ) },
+      { name: "Import", href: "/qualifying/import", condition: () => !!Number( user.value.admin ) || canAccess( "qualifyingImport" ) },
     ] },
   ] )
 
@@ -158,6 +159,7 @@
 
   const userNavigation = computed<UserNavOption[]>( () => [
     { name: "Account", href: "/account" },
+    { name: "Pricing", href: "/pricing" },
     { name: "Updates", href: "/updates" },
     { name: "Tasks", href: "/tasks" },
     { name: "Users", href: "/users", condition: () => !!Number( user.value.admin ) },
