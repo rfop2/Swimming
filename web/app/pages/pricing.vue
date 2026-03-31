@@ -1,5 +1,6 @@
 <script setup lang="ts">
   import { CheckIcon } from "@heroicons/vue/20/solid"
+  import type { TierInfo } from "~/composables/useTiers"
 
   useHead( {
     title: "Pricing",
@@ -10,37 +11,25 @@
   const loading = ref<string | null>( null )
   const error = ref<string | null>( null )
 
-  interface Tier {
-    name: string
-    id: string
-    price: string
-    description: string
+  const { tiers: dbTiers, formatPrice } = useTiers()
+
+  interface TierUi {
     features: string[]
-    featured: boolean
     cta: string
     ctaHref?: string
   }
 
-  const tiers: Tier[] = [
-    {
-      name:        "Free",
-      id:          "free",
-      price:       "£0",
-      description: "Get started tracking personal bests with no commitment.",
+  const TIER_UI: Record<string, TierUi> = {
+    "free": {
       features: [
         "Personal bests",
         "1 swimmer in your account",
         "Add your club",
       ],
-      featured: false,
-      cta:      "Get started free",
-      ctaHref:  "/register",
+      cta:     "Get started free",
+      ctaHref: "/register",
     },
-    {
-      name:        "Parent",
-      id:          "parent",
-      price:       "£6",
-      description: "Everything you need to follow your swimmers through the season.",
+    "parent": {
       features: [
         "All Free features",
         "Race results",
@@ -49,28 +38,18 @@
         "Select club",
         "Initiate swimmer updates",
       ],
-      featured: false,
-      cta:      "Subscribe",
+      cta: "Subscribe",
     },
-    {
-      name:        "Trainer",
-      id:          "trainer",
-      price:       "£12",
-      description: "Tools for coaches managing athletes across multiple events.",
+    "trainer": {
       features: [
         "All Parent features",
         "Performance comparison",
         "Competition timer & video timer",
         "Up to 15 swimmers",
       ],
-      featured: true,
-      cta:      "Subscribe",
+      cta: "Subscribe",
     },
-    {
-      name:        "Club (small)",
-      id:          "club-small",
-      price:       "£25",
-      description: "Full club management for smaller swim clubs.",
+    "club-small": {
       features: [
         "All Trainer features",
         "Training times & speedcharts",
@@ -79,25 +58,33 @@
         "Claim club ownership",
         "15–34 swimmers",
       ],
-      featured: false,
-      cta:      "Subscribe",
+      cta: "Subscribe",
     },
-    {
-      name:        "Club (large)",
-      id:          "club-large",
-      price:       "£35",
-      description: "Unlimited scale for large clubs with big squads.",
+    "club-large": {
       features: [
         "All Club (small) features",
         "35+ swimmers",
         "Priority support",
       ],
-      featured: false,
-      cta:      "Subscribe",
+      cta: "Subscribe",
     },
-  ]
+  }
 
-  async function handleCta( tier: Tier ) {
+  interface Tier extends Omit<TierInfo, "featured">, TierUi {
+    price: string
+    featured: boolean
+  }
+
+  const tiers = computed<Tier[]>( () =>
+    ( dbTiers.value ?? [] ).map( t => ( {
+      ...t,
+      price:    formatPrice( t ),
+      featured: !!t.featured,
+      ...( TIER_UI[t.id] ?? { features: [], cta: "Subscribe" } ),
+    } ) )
+  )
+
+  const handleCta = async ( tier: Tier ) => {
     if ( tier.ctaHref ) {
       navigateTo( tier.ctaHref )
       return

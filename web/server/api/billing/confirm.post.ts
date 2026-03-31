@@ -1,6 +1,12 @@
-import { getGCClient, TIER_AMOUNTS, TIER_NAMES, type PaidTier } from "~~/server/utils/gocardless"
+import { getGCClient, SubscriptionIntervalUnit } from "~~/server/utils/gocardless"
 import { getPool, prepareStatement } from "lib"
-import { SubscriptionIntervalUnit } from "gocardless-nodejs/types/Types"
+
+interface PendingRecord {
+  tier:     string
+  amount:   number
+  name:     string
+  currency: string
+}
 
 export default defineEventHandler( async ( event ) => {
   const { user } = await validateRequest( event )
@@ -24,36 +30,36 @@ export default defineEventHandler( async ( event ) => {
   const mandateId = billingRequest.links?.mandate_request_mandate
   if ( !mandateId ) throw createError( { statusCode: 422, message: "Mandate not found on billing request" } )
 
-  // Retrieve the pending tier from our DB
-  const getRecord = prepareStatement(
+  // Retrieve the pending tier + its commercial details from DB in one join
+  const pending = await prepareStatement<{ userId: string }, PendingRecord>(
     await getPool(),
-    "SELECT tier FROM UserSubscription WHERE userId = :userId LIMIT 1"
-  )
-  const record = await getRecord.get<{ tier: PaidTier }>( { userId: user.id } )
-  const tier = record?.tier as PaidTier | undefined
+    `SELECT us.tier, st.amount, st.name, st.currency
+     FROM UserSubscription us
+     JOIN SubscriptionTiers st ON st.id = us.tier
+     WHERE us.userId = :userId LIMIT 1`
+  ).get( { userId: user.id } )
 
-  if ( !tier || !TIER_AMOUNTS[tier] ) {
+  if ( !pending || pending.amount === 0 ) {
     throw createError( { statusCode: 422, message: "No pending subscription found for this account" } )
   }
 
   // Create the GoCardless subscription against the mandate
   const subscription = await gc.subscriptions.create( {
-    amount:        String( TIER_AMOUNTS[tier] ),
-    currency:      "GBP",
+    amount:        String( pending.amount ),
+    currency:      pending.currency,
     interval_unit: SubscriptionIntervalUnit.Monthly,
-    name:          `Swim Racing – ${TIER_NAMES[tier]}`,
-    metadata:      { user_id: user.id, tier },
+    name:          `Swim Racing – ${pending.name}`,
+    metadata:      { user_id: user.id, tier: pending.tier },
     links:         { mandate: mandateId },
   } )
 
   // Persist the active subscription
-  const update = prepareStatement(
+  await prepareStatement<{ mandateId: string, subscriptionId: string, userId: string }>(
     await getPool(),
     `UPDATE UserSubscription
      SET gcMandateId = :mandateId, gcSubscriptionId = :subscriptionId, status = 'active'
      WHERE userId = :userId`
-  )
-  await update.run( { mandateId, subscriptionId: subscription.id, userId: user.id } )
+  ).run( { mandateId, subscriptionId: subscription.id, userId: user.id } )
 
-  return { success: true, tier }
+  return { success: true, tier: pending.tier }
 } )

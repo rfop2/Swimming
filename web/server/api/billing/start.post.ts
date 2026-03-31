@@ -1,13 +1,25 @@
-import { getGCClient, VALID_TIERS, TIER_NAMES, type PaidTier } from "~~/server/utils/gocardless"
+import { getGCClient } from "~~/server/utils/gocardless"
 import { getPool, prepareStatement } from "lib"
-import { SubscriptionIntervalUnit } from "gocardless-nodejs/types/Types"
+
+interface TierRecord {
+  id:       string
+  amount:   number
+  currency: string
+}
 
 export default defineEventHandler( async ( event ) => {
   const { user } = await validateRequest( event )
   if ( !user ) throw createError( { statusCode: 401, message: "Not authenticated" } )
 
   const { tier } = await readBody<{ tier: string }>( event )
-  if ( !VALID_TIERS.includes( tier as PaidTier ) ) {
+
+  // Validate tier against DB — rejects unknown IDs and the free tier (amount = 0)
+  const tierRecord = await prepareStatement<{ tier: string }, TierRecord>(
+    await getPool(),
+    "SELECT id, amount, currency FROM SubscriptionTiers WHERE id = :tier AND active = 1 AND amount > 0 LIMIT 1"
+  ).get( { tier } )
+
+  if ( !tierRecord ) {
     throw createError( { statusCode: 400, message: "Invalid tier" } )
   }
 
@@ -16,11 +28,10 @@ export default defineEventHandler( async ( event ) => {
   const siteUrl = config.public.siteUrl as string
 
   // Look up or create a GC customer for this user
-  const getExisting = prepareStatement(
+  const existing = await prepareStatement<{ userId: string }, { gcCustomerId: string | null }>(
     await getPool(),
     "SELECT gcCustomerId FROM UserSubscription WHERE userId = :userId LIMIT 1"
-  )
-  const existing = await getExisting.get<{ gcCustomerId: string | null }>( { userId: user.id } )
+  ).get( { userId: user.id } )
 
   let customerId: string | undefined = existing?.gcCustomerId ?? undefined
 
@@ -33,24 +44,23 @@ export default defineEventHandler( async ( event ) => {
     customerId = customer.id
   }
 
-  // Create billing request (mandate + subscription in one flow)
+  // Create billing request (mandate only — subscription is created on confirm)
   const billingRequest = await gc.billingRequests.create( {
     mandate_request: {
-      currency: "GBP",
+      currency: tierRecord.currency,
       scheme:   "bacs",
-      metadata: { tier, user_id: user.id },
+      metadata: { tier: tierRecord.id, user_id: user.id },
     },
     links: { customer: customerId },
   } )
 
   // Store pending record so we know the tier when the user returns
-  const upsert = prepareStatement(
+  await prepareStatement<{ userId: string, gcCustomerId: string, tier: string }>(
     await getPool(),
     `INSERT INTO UserSubscription (userId, gcCustomerId, tier, status)
      VALUES (:userId, :gcCustomerId, :tier, 'pending')
      ON DUPLICATE KEY UPDATE gcCustomerId = :gcCustomerId, tier = :tier, status = 'pending'`
-  )
-  await upsert.run( { userId: user.id, gcCustomerId: customerId, tier } )
+  ).run( { userId: user.id, gcCustomerId: customerId, tier: tierRecord.id } )
 
   // Create the hosted flow the user will be redirected to
   const flow = await gc.billingRequestFlows.create( {

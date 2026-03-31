@@ -1,27 +1,21 @@
 <script setup lang="ts">
   const { tier, isPaid, refresh } = useSubscription()
+  const { getTier, formatPrice } = useTiers()
 
-  const TIER_LABELS: Record<string, string> = {
-    "free":       "Free",
-    "parent":     "Parent",
-    "trainer":    "Trainer",
-    "club-small": "Club (small)",
-    "club-large": "Club (large)",
-  }
-
-  const TIER_PRICES: Record<string, string> = {
-    "free":       "£0 / month",
-    "parent":     "£6 / month",
-    "trainer":    "£12 / month",
-    "club-small": "£25 / month",
-    "club-large": "£35 / month",
-  }
+  const tierInfo = computed( () => getTier( tier.value ) )
+  const tierLabel = computed( () => tierInfo.value?.name ?? tier.value )
+  const tierPrice = computed( () => {
+    if ( !tierInfo.value ) return "—"
+    return tierInfo.value.amount === 0
+      ? "£0 / month"
+      : `${formatPrice( tierInfo.value )} / month`
+  } )
 
   const cancelling = ref( false )
   const cancelError = ref<string | null>( null )
   const showConfirm = ref( false )
 
-  async function confirmCancel() {
+  const confirmCancel = async () => {
     cancelling.value = true
     cancelError.value = null
     try {
@@ -53,7 +47,7 @@
             Current plan
           </dt>
           <dd class="mt-1 flex items-center gap-2">
-            <span class="text-sm font-semibold text-gray-900">{{ TIER_LABELS[tier] ?? tier }}</span>
+            <span class="text-sm font-semibold text-gray-900">{{ tierLabel }}</span>
             <span
               v-if="isPaid"
               class="inline-flex items-center rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-700 ring-1 ring-inset ring-indigo-600/20"
@@ -69,7 +63,7 @@
             Price
           </dt>
           <dd class="mt-1 text-sm text-gray-900">
-            {{ TIER_PRICES[tier] ?? '—' }}
+            {{ tierPrice }}
           </dd>
         </div>
       </dl>
