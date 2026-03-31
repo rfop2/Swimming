@@ -1,7 +1,7 @@
 <script setup lang="ts">
   import type { InternalApi } from "nitropack"
   import { FetchError } from "ofetch"
-  import type { Swimmer } from "lib"
+  import type { Swimmer, ExtQualifyingPeriod, QualifyingRow } from "lib"
 
   definePageMeta( {
     layout: "default",
@@ -43,6 +43,22 @@
       } )
     }
   )
+
+  // Pre-populate useQualifying state so it doesn't attempt auth-protected fetches
+  const { data: qualifying } = await useAsyncData(
+    `share-qualifying-${token}`,
+    () => $fetch<{ periods: ExtQualifyingPeriod[], times: QualifyingRow[] }>( `/api/share/${token}/qualifying` )
+  )
+  if ( qualifying.value ) {
+    const qualifyingPeriods = useState<ExtQualifyingPeriod[]>( "qualifyingPeriods", () => [] )
+    const qualifyingTimes = useState<QualifyingRow[]>( "qualifyingTimes", () => [] )
+    const loadedPeriods = useState( "periodsLoaded", () => false )
+    const loadedTimes = useState( "timesLoaded", () => false )
+    qualifyingPeriods.value = qualifying.value.periods
+    qualifyingTimes.value = qualifying.value.times
+    loadedPeriods.value = true
+    loadedTimes.value = true
+  }
 
   useHead( {
     title: swimmer.value ? `${swimmer.value.firstName} ${swimmer.value.lastName} – Performance` : "Performance",
