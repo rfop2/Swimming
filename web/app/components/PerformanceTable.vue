@@ -7,11 +7,14 @@
   type RelativeApiResponse = InternalApi["/api/relative/:id"]["get"]
   type PersonalApiResponse = InternalApi["/api/personal/:id"]["get"]
 
-  const props = defineProps<{
+  const props = withDefaults( defineProps<{
     swimmer: Swimmer
     relativeRecords: RelativeApiResponse
     personalRecords: PersonalApiResponse
-  }>()
+    showLinks?: boolean
+  }>(), {
+    showLinks: true,
+  } )
 
   const {
     findSwimQualifyingEntry,
@@ -357,6 +360,7 @@
           </td>
           <td class="whitespace-nowrap px-2 py-2 text-sm text-gray-900">
             <nuxt-link
+              v-if="showLinks"
               :href="`/results/${row.course}/${row.stroke}/${row.distance}`"
             >
               <LinkIcon class="size-3 text-gray-900" />
@@ -378,7 +382,7 @@
             <span class="inline-flex items-baseline">
               {{ row.qualifying.county.rank }}
               <a
-                v-if="row.qualifying.county.url"
+                v-if="showLinks && row.qualifying.county.url"
                 target="_blank"
                 rel="noreferrer,nofollow"
                 :href="row.qualifying.county.url.toString()"
@@ -412,7 +416,7 @@
             <span class="inline-flex items-baseline">
               {{ row.qualifying.regional.rank }}
               <a
-                v-if="row.qualifying.regional.url"
+                v-if="showLinks && row.qualifying.regional.url"
                 target="_blank"
                 rel="noreferrer,nofollow"
                 :href="row.qualifying.regional.url.toString()"

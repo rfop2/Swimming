@@ -79,6 +79,7 @@
             :swimmer="swimmer"
             :relative-records="relativeRecords ?? []"
             :personal-records="personalRecords ?? []"
+            :show-links="false"
           />
         </div>
       </template>
