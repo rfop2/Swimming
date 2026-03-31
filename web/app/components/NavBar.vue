@@ -153,12 +153,7 @@
     await $fetch( "/api/user/logout", {
       method: "POST"
     } )
-    // clear Nuxt state after current tick
-    await nextTick( () => {
-      clearNuxtState()
-      clearNuxtData()
-    } )
-    router.push( "/login" )
+    window.location.href = "/"
   }
 
   const userNavigation = computed<UserNavOption[]>( () => [

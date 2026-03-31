@@ -40,7 +40,7 @@
 <template>
   <div class="min-w-64">
     <UI-Listbox
-      v-if="swimmers.length"
+      v-if="swimmers?.length"
       v-model="selectedSwimmerId"
       :options="swimmerOptions"
       :label="props.showLabel ? 'Swimmer' : undefined"
