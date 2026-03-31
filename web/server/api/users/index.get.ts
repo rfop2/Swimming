@@ -6,6 +6,8 @@ interface ExtUser extends User {
   lastLogin: Date
   loginCount: number
   swimmerCount: number
+  subscriptionTier: string
+  subscriptionStatus: string
 }
 
 export default defineEventHandler( async ( event ) => {
@@ -48,6 +50,8 @@ export default defineEventHandler( async ( event ) => {
       st.lastLogin,
       st.loginCount,
       sw.swimmerCount,
+      COALESCE( stier.name, 'Free' ) AS subscriptionTier,
+      COALESCE( usub.status, 'active' ) AS subscriptionStatus,
       u.admin,
       u.created,
       u.updated
@@ -77,6 +81,8 @@ export default defineEventHandler( async ( event ) => {
       ) AS sw ON sw.userId = u.id
       LEFT JOIN UserClubs uc ON u.id = uc.userId
       LEFT JOIN Clubs c ON uc.clubId = c.clubId
+      LEFT JOIN UserSubscription usub ON usub.userId = u.id
+      LEFT JOIN SubscriptionTiers stier ON stier.id = usub.tier
     GROUP BY
       u.id`
   )
