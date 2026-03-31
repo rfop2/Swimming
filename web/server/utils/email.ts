@@ -28,7 +28,16 @@ export const sendEmail = async ( user: User, subject: string, body: string, acti
     }
   )
 
+  if ( !tokenResponse.ok ) {
+    throw new Error( `Failed to obtain Azure access token: ${await tokenResponse.text()}` )
+  }
+
   const response = ( await tokenResponse.json() ) as TokenResponse
+
+  if ( !response.access_token ) {
+    throw new Error( `Azure token response missing access_token: ${JSON.stringify( response )}` )
+  }
+
   const { access_token } = response
 
   const { html, text: _text } = createEmailTemplate( {

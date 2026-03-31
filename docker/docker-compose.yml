@@ -4,22 +4,10 @@ services:
     hostname: "node"
     build: .
     command: ["node", "--import", "./server/sentry.server.config.mjs", "./server/index.mjs"]
+    env_file:
+      - .env
     environment:
       NODE_ENV: production
-      MARIADB_HOST: ${MARIADB_HOST}
-      MARIADB_PORT: ${MARIADB_PORT:-3306}
-      MARIADB_DATABASE: ${MARIADB_DATABASE}
-      MARIADB_USER: ${MARIADB_USER}
-      MARIADB_PASSWORD: ${MARIADB_PASSWORD}
-      IGNORE_IPS: ${IGNORE_IPS}
-      TURNSTILE_SITE_KEY: ${TURNSTILE_SITE_KEY}
-      TURNSTILE_SECRET_KEY: ${TURNSTILE_SECRET_KEY}
-      DISABLE_REGISTRATION: ${DISABLE_REGISTRATION:-false}
-      AWS_REGION: ${AWS_REGION}
-      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
-      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
-      AWS_S3_BUCKET: ${AWS_S3_BUCKET}
-      AWS_CLOUDFRONT_URL: ${AWS_CLOUDFRONT_URL}
     volumes:
       - ../web/.output/:/home/node/app
     #ports:
