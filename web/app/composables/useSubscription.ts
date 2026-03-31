@@ -27,18 +27,21 @@ interface SubscriptionStatus {
 }
 
 export const useSubscription = () => {
+  const user = useUser()
+
   const { data, refresh } = useAsyncData<SubscriptionStatus>(
     "subscription",
     () => $fetch( "/api/billing/status" ),
     { default: () => ( { tier: "free" as SubscriptionTier, status: "active", gcSubscriptionId: null } ) }
   )
 
+  const isAdmin = computed( () => !!Number( user.value?.admin ) )
   const tier = computed( () => data.value?.tier ?? "free" )
   const isActive = computed( () => data.value?.status === "active" )
   const isPaid = computed( () => tier.value !== "free" )
 
   const canAccess = ( feature: SubscriptionFeature ): boolean =>
-    ( FEATURE_GATES[feature] as readonly string[] ).includes( tier.value )
+    isAdmin.value || ( FEATURE_GATES[feature] as readonly string[] ).includes( tier.value )
 
-  return { tier, isActive, isPaid, canAccess, refresh }
+  return { tier, isAdmin, isActive, isPaid, canAccess, refresh }
 }
