@@ -57,9 +57,12 @@ const applyMigration = async ( filename: string ): Promise<void> => {
   const conn = await pool.getConnection()
   try {
     const statements = sql
+      .split( "\n" )
+      .filter( line => !line.trim().startsWith( "--" ) )
+      .join( "\n" )
       .split( ";" )
       .map( s => s.trim() )
-      .filter( s => s.length > 0 && !s.startsWith( "--" ) )
+      .filter( s => s.length > 0 )
 
     for ( const statement of statements ) {
       await conn.query( statement )
