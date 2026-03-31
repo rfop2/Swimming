@@ -1,6 +1,6 @@
-import { GoCardlessClient } from "gocardless-nodejs/client"
-import { Environments } from "gocardless-nodejs/constants"
-import { SubscriptionIntervalUnit } from "gocardless-nodejs/types/Types"
+import { GoCardlessClient } from "gocardless-nodejs/client.js"
+import { Environments } from "gocardless-nodejs/constants.js"
+import { SubscriptionIntervalUnit } from "gocardless-nodejs/types/Types.js"
 
 export type PaidTier = "parent" | "trainer" | "club-small" | "club-large"
 export type SubscriptionTier = "free" | PaidTier
