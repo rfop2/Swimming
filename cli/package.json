@@ -6,6 +6,7 @@
   "scripts": {
     "build": "npx tsc",
     "watch": "npx tsc --watch",
+    "migrate": "node ./build/migrate.mjs",
     "fetch": "node ./build/fetch.mjs",
     "add": "node ./build/addUser.mjs",
     "import": "node ./build/clubImport.mjs",
