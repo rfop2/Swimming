@@ -18,6 +18,7 @@ export default defineNuxtPlugin( () => {
 
   const { refresh } = useSessionUser()
   const resetAppState = useAppReset()
+  let handlingUnauth = false
 
   // 3) Wrap using the same args as Nuxt/Nitro expects
   const wrapped = ( async ( ...args: FetchArgs ): ReturnType<NuxtFetch> => {
@@ -60,10 +61,12 @@ export default defineNuxtPlugin( () => {
       if ( isApiRequest && import.meta.client ) {
         const isMeRequest = typeof request === "string" && request.startsWith( "/api/auth/me" )
         if ( !isMeRequest ) {
-          if ( status === 401 ) {
+          if ( status === 401 && !handlingUnauth ) {
+            handlingUnauth = true
             await resetAppState()
             await refresh()
-            navigateTo( "/login" )
+            await navigateTo( "/login" )
+            handlingUnauth = false
           } else if ( status === 403 ) {
             showAlert( "Access denied. You do not have permission to view this resource.", "error" )
           }
