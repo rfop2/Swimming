@@ -54,13 +54,17 @@ export default defineEventHandler( async ( event ) => {
     links: { customer: customerId },
   } )
 
-  // Store pending record so we know the tier when the user returns
-  await prepareStatement<{ userId: string, gcCustomerId: string, tier: string }>(
+  // Store pending record so we know the tier and billing request when the user returns
+  await prepareStatement<{ userId: string, gcCustomerId: string, gcBillingRequestId: string, tier: string }>(
     await getPool(),
-    `INSERT INTO UserSubscription (userId, gcCustomerId, tier, status)
-     VALUES (:userId, :gcCustomerId, :tier, 'pending')
-     ON DUPLICATE KEY UPDATE gcCustomerId = :gcCustomerId, tier = :tier, status = 'pending'`
-  ).run( { userId: user.id, gcCustomerId: customerId, tier: tierRecord.id } )
+    `INSERT INTO UserSubscription (userId, gcCustomerId, gcBillingRequestId, tier, status)
+     VALUES (:userId, :gcCustomerId, :gcBillingRequestId, :tier, 'pending')
+     ON DUPLICATE KEY UPDATE
+       gcCustomerId       = :gcCustomerId,
+       gcBillingRequestId = :gcBillingRequestId,
+       tier               = :tier,
+       status             = 'pending'`
+  ).run( { userId: user.id, gcCustomerId: customerId, gcBillingRequestId: billingRequest.id, tier: tierRecord.id } )
 
   // Create the hosted flow the user will be redirected to
   const flow = await gc.billingRequestFlows.create( {

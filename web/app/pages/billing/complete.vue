@@ -6,7 +6,6 @@
 
   useHead( { title: "Subscription confirmed" } )
 
-  const route = useRoute()
   const { refresh } = useSubscription()
 
   type State = "confirming" | "success" | "error"
@@ -14,19 +13,8 @@
   const errorMessage = ref( "" )
 
   onMounted( async () => {
-    const billingRequestId = route.query.billing_request as string | undefined
-
-    if ( !billingRequestId ) {
-      errorMessage.value = "No billing reference found in the return URL."
-      state.value = "error"
-      return
-    }
-
     try {
-      await $fetch( "/api/billing/confirm", {
-        method: "POST",
-        body:   { billingRequestId },
-      } )
+      await $fetch( "/api/billing/confirm", { method: "POST" } )
       await refresh()
       state.value = "success"
       // Redirect to account after a short pause so the user sees the confirmation
