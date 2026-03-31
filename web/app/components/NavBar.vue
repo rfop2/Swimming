@@ -158,7 +158,7 @@
       clearNuxtState()
       clearNuxtData()
     } )
-    router.push( "/login" )
+    router.push( "/" )
   }
 
   const userNavigation = computed<UserNavOption[]>( () => [
