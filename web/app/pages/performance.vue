@@ -112,13 +112,24 @@
   }
 
   const copyShareUrl = async ( token: string ) => {
-    if ( import.meta.client ) {
-      await navigator.clipboard.writeText( shareUrl( token ) )
-      shareCopied.value = true
-      setTimeout( () => {
-        shareCopied.value = false
-      }, 2000 )
+    if ( !import.meta.client ) return
+    const url = shareUrl( token )
+    if ( navigator.clipboard ) {
+      await navigator.clipboard.writeText( url )
+    } else {
+      const el = document.createElement( "textarea" )
+      el.value = url
+      el.style.position = "fixed"
+      el.style.opacity = "0"
+      document.body.appendChild( el )
+      el.select()
+      document.execCommand( "copy" )
+      document.body.removeChild( el )
     }
+    shareCopied.value = true
+    setTimeout( () => {
+      shareCopied.value = false
+    }, 2000 )
   }
 </script>
 
