@@ -117,13 +117,14 @@
   }
 
   const { data: tiers } = await useFetch( "/api/billing/tiers" )
+  const paidTiers = computed( () => tiers.value?.filter( t => t.id !== "free" ) ?? [] )
 
   const grantingSubscription = ref<number | null>( null )
   const grantTier = ref( "" )
   const grantMonths = ref( 12 )
 
   const openGrantSubscription = ( userIndex: number ) => {
-    grantTier.value = tiers.value?.[0]?.id ?? ""
+    grantTier.value = paidTiers.value[0]?.id ?? ""
     grantMonths.value = 12
     grantingSubscription.value = userIndex
   }
@@ -418,7 +419,7 @@
                       class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                     >
                       <option
-                        v-for="tier in tiers"
+                        v-for="tier in paidTiers"
                         :key="tier.id"
                         :value="tier.id"
                       >
