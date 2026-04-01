@@ -17,26 +17,39 @@ export default defineEventHandler( async ( event ) => {
   }
 
   for ( const ev of events ) {
-    const resourceType = ev.resource_type // "subscriptions" | "mandates" | "payments" etc.
-    const action = ev.action             // "cancelled" | "failed" | "paid_out" etc.
+    const resourceType = ev.resource_type
+    const action = ev.action
+    const links = ev.links as Record<string, string>
 
     if (
       ( resourceType === "subscriptions" && action === "cancelled" ) ||
       ( resourceType === "mandates"      && action === "cancelled" )
     ) {
-      // Find subscription by GC ID and downgrade to free
       const idField = resourceType === "subscriptions" ? "gcSubscriptionId" : "gcMandateId"
-      const gcId: string = ( ev.links as Record<string, string> )[
-        resourceType === "subscriptions" ? "subscription" : "mandate"
-      ]
+      const gcId = links[ resourceType === "subscriptions" ? "subscription" : "mandate" ]
 
       if ( gcId ) {
-        const update = prepareStatement(
+        await prepareStatement(
           await getPool(),
           `UPDATE UserSubscription SET status = 'cancelled', tier = 'free'
            WHERE ${idField} = :gcId`
-        )
-        await update.run( { gcId } )
+        ).run( { gcId } )
+      }
+    }
+
+    if ( resourceType === "payments" && action === "confirmed" ) {
+      // A payment has cleared — extend the current period by 1 month
+      const gcSubscriptionId = links["subscription"]
+      if ( gcSubscriptionId ) {
+        const periodEnd = new Date()
+        periodEnd.setMonth( periodEnd.getMonth() + 1 )
+
+        await prepareStatement<{ periodEnd: Date, gcSubscriptionId: string }>(
+          await getPool(),
+          `UPDATE UserSubscription
+           SET currentPeriodEnd = :periodEnd, status = 'active'
+           WHERE gcSubscriptionId = :gcSubscriptionId`
+        ).run( { periodEnd, gcSubscriptionId } )
       }
     }
   }

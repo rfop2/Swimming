@@ -6,11 +6,11 @@
   "scripts": {
     "build": "npx tsc",
     "watch": "npx tsc --watch",
-    "migrate": "node ./build/migrate.mjs",
     "fetch": "node ./build/fetch.mjs",
     "add": "node ./build/addUser.mjs",
     "import": "node ./build/clubImport.mjs",
-    "migrate": "node ./build/migrate.js"
+    "migrate": "node ./build/migrate.js",
+    "expire-subscriptions": "node ./build/expireSubscriptions.mjs"
   },
   "dependencies": {
     "@node-rs/argon2": "^2.0.2",

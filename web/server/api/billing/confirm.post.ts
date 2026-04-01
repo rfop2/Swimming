@@ -55,13 +55,17 @@ export default defineEventHandler( async ( event ) => {
     links:         { mandate: mandateId },
   } )
 
-  // Persist the active subscription
-  await prepareStatement<{ mandateId: string, subscriptionId: string, userId: string }>(
+  // Persist the active subscription, setting currentPeriodEnd to 1 month from now
+  const periodEnd = new Date()
+  periodEnd.setMonth( periodEnd.getMonth() + 1 )
+
+  await prepareStatement<{ mandateId: string, subscriptionId: string, periodEnd: Date, userId: string }>(
     await getPool(),
     `UPDATE UserSubscription
-     SET gcMandateId = :mandateId, gcSubscriptionId = :subscriptionId, status = 'active'
+     SET gcMandateId = :mandateId, gcSubscriptionId = :subscriptionId,
+         status = 'active', currentPeriodEnd = :periodEnd
      WHERE userId = :userId`
-  ).run( { mandateId, subscriptionId: subscription.id, userId: user.id } )
+  ).run( { mandateId, subscriptionId: subscription.id, periodEnd, userId: user.id } )
 
   return { success: true, tier: pending.tier }
 } )
