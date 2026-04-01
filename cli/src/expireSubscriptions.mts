@@ -18,7 +18,7 @@ async function main() {
     `SELECT userId, tier FROM UserSubscription
      WHERE status = 'active'
        AND currentPeriodEnd IS NOT NULL
-       AND currentPeriodEnd < NOW()`
+       AND currentPeriodEnd < DATE_SUB( NOW(), INTERVAL 7 DAY )`
   ).all()
 
   if ( !expired.length ) {
