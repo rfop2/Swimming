@@ -29,7 +29,17 @@ export default defineEventHandler( async ( event ) => {
     throw createError( { statusCode: 400, message: "Invalid tier" } )
   }
 
-  const periodEnd = new Date()
+  // Extend from the current period end if it's in the future, otherwise extend from now
+  const existing = await prepareStatement<{ userId: string }, { currentPeriodEnd: string | null }>(
+    pool,
+    "SELECT currentPeriodEnd FROM UserSubscription WHERE userId = :userId"
+  ).get( { userId: body.userId } )
+
+  const base = existing?.currentPeriodEnd && new Date( existing.currentPeriodEnd ) > new Date()
+    ? new Date( existing.currentPeriodEnd )
+    : new Date()
+
+  const periodEnd = new Date( base )
   periodEnd.setMonth( periodEnd.getMonth() + body.months )
 
   // Upsert the subscription record
