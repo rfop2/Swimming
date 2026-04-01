@@ -8,6 +8,8 @@ interface ExtUser extends User {
   swimmerCount: number
   subscriptionTier: string
   subscriptionStatus: string
+  subscriptionSource: string | null
+  subscriptionPeriodEnd: string | null
 }
 
 export default defineEventHandler( async ( event ) => {
@@ -52,6 +54,8 @@ export default defineEventHandler( async ( event ) => {
       sw.swimmerCount,
       COALESCE( stier.name, 'Free' ) AS subscriptionTier,
       COALESCE( usub.status, 'active' ) AS subscriptionStatus,
+      usub.source AS subscriptionSource,
+      usub.currentPeriodEnd AS subscriptionPeriodEnd,
       u.admin,
       u.created,
       u.updated

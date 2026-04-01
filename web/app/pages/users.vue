@@ -1,8 +1,8 @@
 <script setup lang="ts">
   import type { InternalApi } from "nitropack"
   import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from "@headlessui/vue"
-  import { ArrowRightEndOnRectangleIcon, GiftIcon, PencilSquareIcon, TrashIcon, UserPlusIcon } from "@heroicons/vue/24/outline"
-  import { format } from "date-fns"
+  import { ArrowRightEndOnRectangleIcon, CreditCardIcon, GiftIcon, PencilSquareIcon, TrashIcon, UserPlusIcon } from "@heroicons/vue/24/outline"
+  import { format, differenceInDays } from "date-fns"
   import type { User } from "lucia"
   import { ucFirst } from "lib"
 
@@ -273,7 +273,25 @@
                 {{ ucFirst( user.type ) }}
               </td>
               <td class="px-1 py-2 text-sm whitespace-nowrap text-gray-500">
-                {{ user.subscriptionTier }}
+                <span class="inline-flex items-center gap-1">
+                  <CreditCardIcon
+                    v-if="user.subscriptionSource === 'gocardless'"
+                    class="size-4 text-indigo-500 shrink-0"
+                    title="Paid subscription"
+                  />
+                  <GiftIcon
+                    v-else-if="user.subscriptionSource === 'manual'"
+                    class="size-4 text-green-600 shrink-0"
+                    title="Manual / gifted subscription"
+                  />
+                  {{ user.subscriptionTier }}
+                  <span
+                    v-if="user.subscriptionPeriodEnd"
+                    class="text-xs text-gray-400"
+                  >
+                    ({{ differenceInDays( new Date( user.subscriptionPeriodEnd as string ), new Date() ) }}d)
+                  </span>
+                </span>
               </td>
               <td class="px-1 py-2 text-sm whitespace-nowrap max-w-36 overflow-hidden text-ellipsis text-gray-500" :title="user.clubs">
                 {{ user.clubs }}
