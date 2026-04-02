@@ -224,8 +224,8 @@
               <td class="px-1 py-2 text-sm whitespace-nowrap text-gray-500">
                 {{ user.lastName }}
               </td>
-              <td class="px-1 py-2 text-sm whitespace-nowrap text-gray-500">
-                {{ user.role === "admin" ? "*" : "" }}{{ user.username }}
+              <td class="px-1 py-2 text-sm whitespace-nowrap text-gray-500" :class="`role-${user.role}`">
+                {{ user.username }}
               </td>
               <td class="px-1 py-2 text-sm whitespace-nowrap text-gray-500">
                 {{ user.phone }}
@@ -422,3 +422,14 @@
     </TransitionRoot>
   </StandardPage>
 </template>
+
+<style lang="scss" scoped>
+  td {
+    &.role-admin {
+      font-style: italic;
+    }
+    &.role-system {
+      font-weight: bold;
+    }
+  }
+</style>
