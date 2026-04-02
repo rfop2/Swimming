@@ -40,7 +40,27 @@
     }
   )
 
-  const filteredUsers = computed( () => users.value ?? [] )
+  const tierOptions = computed( () =>
+    Array.from( new Set( ( users.value ?? [] ).map( u => u.subscriptionTier ) ) )
+      .sort()
+      .map( t => ( { label: t, value: t } ) )
+  )
+
+  const { state: selections } = usePersisted( "users-selection", {
+    tiers: [] as string[],      // empty = all tiers
+    usersOnly: true,
+  }, "reactive" )
+
+  const selectedTiers = computed( {
+    get: () => tierOptions.value.map( o => o.value ).filter( v => selections.tiers.includes( v ) ),
+    set: ( newTiers ) => selections.tiers = newTiers
+  } )
+
+  const filteredUsers = computed( () => ( users.value ?? [] ).filter( user => {
+    if ( selections.usersOnly && user.role !== "user" ) return false
+    if ( selections.tiers.length > 0 && !selections.tiers.includes( user.subscriptionTier ) ) return false
+    return true
+  } ) )
 
   const { impersonate } = useImpersonation()
 
@@ -129,6 +149,27 @@
   >
     <template #description>
       Registered site users.
+    </template>
+    <template #controls>
+      <div class="flex items-center gap-4">
+        <div class="min-w-48">
+          <UI-Listbox
+            v-model="selectedTiers"
+            :options="tierOptions"
+            label="Subscription Tier"
+            placeholder="All Tiers"
+            multiple
+          />
+        </div>
+        <label class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer whitespace-nowrap">
+          <input
+            v-model="selections.usersOnly"
+            type="checkbox"
+            class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+          >
+          Users only
+        </label>
+      </div>
     </template>
     <div class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
       <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
