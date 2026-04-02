@@ -27,7 +27,7 @@ export default defineEventHandler( async ( event ) => {
     } )
   }
 
-  if ( task.creatorId !== event.context.user.id && !Number( event.context.user.admin ) ) {
+  if ( task.creatorId !== event.context.user.id && event.context.user.role !== "admin" ) {
     throw createError( {
       status: 403
     } )

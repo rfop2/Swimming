@@ -4,7 +4,6 @@
   import { ArrowRightEndOnRectangleIcon, CreditCardIcon, GiftIcon, PencilSquareIcon, TrashIcon, UserPlusIcon } from "@heroicons/vue/24/outline"
   import { format, differenceInDays } from "date-fns"
   import type { User } from "lucia"
-  import { ucFirst } from "lib"
 
   definePageMeta( {
     layout: "secure",
@@ -28,7 +27,7 @@
       key: "user-data",
       transform( data: UsersApiResponse ): UsersApiResponse {
         data.sort( ( a, b ) => {
-          const typeDiff = a.type.localeCompare( b.type )
+          const typeDiff = a.subscriptionTier.localeCompare( b.subscriptionTier )
           if ( typeDiff ) return typeDiff
           const lastNameDiff = a.lastName.localeCompare( b.lastName )
           if ( lastNameDiff ) return lastNameDiff
@@ -41,26 +40,7 @@
     }
   )
 
-  const userTypes = computed( () => ( users.value ?? [] ).reduce( ( types, user ) => {
-    types.add( user.type )
-    return types
-  }, new Set<string>() ) )
-  const typeOptions = computed( () => Array.from( userTypes.value ).sort().map( type => ( { label: ucFirst( type ), value: type } ) ) )
-
-  const { state: selections } = usePersisted( "users-selection", {
-    type: typeOptions.value.filter( option => option.value !== "other" ).map( ( { value } ) => ( value ) ),
-  }, "reactive" )
-
-  const selectedTypes = computed( {
-    get: () => typeOptions.value.map( o => o.value ).filter( v => selections.type.includes( v ) ),
-    set: ( newTypes ) => selections.type = newTypes
-  } )
-
-  const filteredUsers = computed( () => ( users.value ?? [] ).filter( user => {
-    if ( selections.type.length === 0 || !selections.type.includes( user.type ) )
-      return false
-    return true
-  } ) )
+  const filteredUsers = computed( () => users.value ?? [] )
 
   const { impersonate } = useImpersonation()
 
@@ -150,17 +130,6 @@
     <template #description>
       Registered site users.
     </template>
-    <template #controls>
-      <div class="min-w-64">
-        <UI-Listbox
-          v-model="selectedTypes"
-          :options="typeOptions"
-          label="User Types"
-          placeholder="All Types"
-          multiple
-        />
-      </div>
-    </template>
     <div class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
       <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
         <table class="relative min-w-full divide-y divide-gray-300">
@@ -194,12 +163,6 @@
                 class="px-1 py-3.5 text-left text-sm font-semibold text-gray-900"
               >
                 Location
-              </th>
-              <th
-                scope="col"
-                class="px-1 py-3.5 text-left text-sm font-semibold text-gray-900"
-              >
-                Type
               </th>
               <th
                 scope="col"
@@ -262,16 +225,13 @@
                 {{ user.lastName }}
               </td>
               <td class="px-1 py-2 text-sm whitespace-nowrap text-gray-500">
-                {{ !!Number( user.admin ) ? "*" : "" }}{{ user.username }}
+                {{ user.role === "admin" ? "*" : "" }}{{ user.username }}
               </td>
               <td class="px-1 py-2 text-sm whitespace-nowrap text-gray-500">
                 {{ user.phone }}
               </td>
               <td class="px-1 py-2 text-sm whitespace-nowrap max-w-36 overflow-hidden text-ellipsis text-gray-500" :title="user.location">
                 {{ user.location }}
-              </td>
-              <td class="px-1 py-2 text-sm whitespace-nowrap text-gray-500">
-                {{ ucFirst( user.type ) }}
               </td>
               <td class="px-1 py-2 text-sm whitespace-nowrap text-gray-500">
                 <span class="inline-flex items-center gap-1">

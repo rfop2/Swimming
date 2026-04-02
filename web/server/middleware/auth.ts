@@ -47,7 +47,7 @@ export default defineEventHandler( async ( event ) => {
   if ( adminSessionId ) {
     const { session: adminSession, user: admin } = await lucia.validateSession( adminSessionId )
 
-    if ( adminSession && admin && Number( admin.admin ) ) {
+    if ( adminSession && admin && admin.role === "admin" ) {
       adminUser = admin
       isImpersonating = true
     }

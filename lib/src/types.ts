@@ -7,8 +7,7 @@ export interface DatabaseUser {
   phone: string
   location: string
   locationId?: number
-  type: string
-  admin: boolean
+  role: "system" | "admin" | "user"
   created?: string
 }
 

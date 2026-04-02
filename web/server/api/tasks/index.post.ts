@@ -17,7 +17,7 @@ export default defineEventHandler( async ( event ) => {
       } )
     }
 
-    if ( userId !== event.context.user.id && !Number( event.context.user.admin ) ) {
+    if ( userId !== event.context.user.id && event.context.user.role !== "admin" ) {
       throw createError( {
         status: 403
       } )
@@ -32,7 +32,7 @@ export default defineEventHandler( async ( event ) => {
 
     const tasks = Array.isArray( taskData ) ? taskData : [ taskData ]
     for ( const task of tasks ) {
-      if ( task.targetType === "user" && ( task.targetId !== userId && !Number( event.context.user.admin ) ) ) {
+      if ( task.targetType === "user" && ( task.targetId !== userId && event.context.user.role !== "admin" ) ) {
         throw createError( {
           status: 403,
           message: "Task target is not current user",

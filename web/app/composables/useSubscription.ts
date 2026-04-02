@@ -35,7 +35,7 @@ export const useSubscription = () => {
     { default: () => ( { tier: "free" as SubscriptionTier, status: "active", gcSubscriptionId: null } ) }
   )
 
-  const isAdmin = computed( () => !!Number( user.value?.admin ) )
+  const isAdmin = computed( () => user.value?.role === "admin" )
   const tier = computed( () => data.value?.tier ?? "free" )
   const isActive = computed( () => data.value?.status === "active" )
   const isPaid = computed( () => tier.value !== "free" )

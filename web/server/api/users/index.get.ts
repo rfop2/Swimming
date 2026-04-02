@@ -10,6 +10,7 @@ interface ExtUser extends User {
   subscriptionStatus: string
   subscriptionSource: string | null
   subscriptionPeriodEnd: string | null
+  role: string
 }
 
 export default defineEventHandler( async ( event ) => {
@@ -20,7 +21,7 @@ export default defineEventHandler( async ( event ) => {
   }
 
   const userId = getRouterParam( event, "id" )
-  if ( userId && !Number( event.context.user.admin ) ) {
+  if ( userId && event.context.user.role !== "admin" ) {
     throw createError( {
       status: 403
     } )
@@ -45,7 +46,7 @@ export default defineEventHandler( async ( event ) => {
       u.lastName,
       u.phone,
       u.location,
-      u.type,
+      u.role,
       GROUP_CONCAT(
           CONCAT(IF(uc.ClubOwner, '*', ''), c.ClubName) SEPARATOR ','
       ) AS clubs,
@@ -56,7 +57,6 @@ export default defineEventHandler( async ( event ) => {
       COALESCE( usub.status, 'active' ) AS subscriptionStatus,
       usub.source AS subscriptionSource,
       usub.currentPeriodEnd AS subscriptionPeriodEnd,
-      u.admin,
       u.created,
       u.updated
     FROM

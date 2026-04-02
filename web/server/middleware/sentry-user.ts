@@ -8,7 +8,7 @@ export default defineEventHandler( ( event ) => {
       id: user.id,
       username: user.username,
       name: `${user.firstName} ${user.lastName}`.trim(),
-      admin: user.admin,
+      role: user.role,
     } )
   } else {
     Sentry.setUser( null )

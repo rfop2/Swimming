@@ -15,7 +15,7 @@ export default defineEventHandler( async ( event ) => {
     } )
   }
 
-  const isAdmin = Number( event.context.user.admin )
+  const isAdmin = event.context.user.role === "admin"
   if ( userId !== event.context.user.id && !isAdmin ) {
     throw createError( {
       status: 403
@@ -26,6 +26,6 @@ export default defineEventHandler( async ( event ) => {
     await getPool(),
     "SELECT Tasks.*, CONCAT_WS( ' ', User.firstName, User.lastName ) as creatorName FROM Tasks LEFT JOIN User ON (Tasks.creatorId = User.id) WHERE (creatorId = :userId OR :isAdmin = 1) AND Tasks.created >= NOW() - INTERVAL 3 DAY"
   )
-  const tasks = await selectRecords.all( { userId, isAdmin } )
+  const tasks = await selectRecords.all( { userId, isAdmin: Number( isAdmin ) } )
   return tasks
 } )

@@ -8,7 +8,7 @@ interface GrantSubscriptionBody {
 
 export default defineEventHandler( async ( event ) => {
   const { user } = await validateRequest( event )
-  if ( !user || !Number( user.admin ) ) {
+  if ( !user || user.role !== "admin" ) {
     throw createError( { statusCode: 403, message: "Admin access required" } )
   }
 
