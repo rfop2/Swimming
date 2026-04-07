@@ -41,14 +41,14 @@
   }, "reactive" )
 
   const selectedTiers = computed( {
-    get: () => tierOptions.value.map( o => o.value ).filter( v => selections.tiers.includes( v ) ),
+    get: () => tierOptions.value.map( o => o.value ).filter( v => selections.tiers?.includes( v ) ),
     set: ( newTiers ) => selections.tiers = newTiers
   } )
 
   const filteredUsers = computed( () => sortRecords(
     ( users.value ?? [] ).filter( user => {
       if ( selections.usersOnly && user.role !== "user" ) return false
-      if ( selections.tiers.length > 0 && !selections.tiers.includes( user.subscriptionTier ) ) return false
+      if ( selections.tiers?.length > 0 && !selections.tiers.includes( user.subscriptionTier ) ) return false
       return true
     } )
   ) )
