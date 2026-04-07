@@ -1,25 +1,23 @@
-import type { UnwrapRef } from "vue"
-
 interface SortMeta<K> {
   field: keyof K
-  order: number
+  order: 1 | -1
 }
 
 export const useMultiSort = <T>() => {
-  // const multiSortMeta = useState<Array<SortMeta<T>>>( 'multiSort', () => [] )
-  const multiSortMeta = ref<Array<SortMeta<T>>>( [] )
-  // const records = ref<Array<T>>( [] )
+  const multiSortMeta = shallowRef<Array<SortMeta<T>>>( [] )
 
   const updateSort = ( field: keyof T ) => {
-    const existingSortMeta = multiSortMeta.value.find( meta => meta.field === field )
-    if ( existingSortMeta ) {
-      if ( existingSortMeta.order === 1 ) {
-        existingSortMeta.order = -1
+    const existing = multiSortMeta.value.find( meta => meta.field === field )
+    if ( existing ) {
+      if ( existing.order === 1 ) {
+        multiSortMeta.value = multiSortMeta.value.map( meta =>
+          meta.field === field ? { ...meta, order: -1 as const } : meta
+        )
       } else {
         multiSortMeta.value = multiSortMeta.value.filter( meta => meta.field !== field )
       }
     } else {
-      multiSortMeta.value.push( { field: field as UnwrapRef<keyof T>, order: 1 } )
+      multiSortMeta.value = [ ...multiSortMeta.value, { field, order: 1 } ]
     }
   }
 
@@ -31,19 +29,23 @@ export const useMultiSort = <T>() => {
     return "pi pi-sort"
   }
 
-  const sortRecords = ( records: Array<T> ) => {
-    if ( multiSortMeta.value.length === 0 ) {
-      return records
+  const compareValues = ( a: unknown, b: unknown ): number => {
+    if ( a == null && b == null ) return 0
+    if ( a == null ) return 1   // nulls sort last
+    if ( b == null ) return -1
+    if ( typeof a === "string" && typeof b === "string" ) {
+      return a.localeCompare( b )
     }
-    return [ ...records || [] ].sort( ( a, b ) => {
+    return a > b ? 1 : a < b ? -1 : 0
+  }
+
+  const sortRecords = ( records: Array<T> ) => {
+    const copy = [ ...( records ?? [] ) ]
+    if ( multiSortMeta.value.length === 0 ) return copy
+    return copy.sort( ( a, b ) => {
       for ( const meta of multiSortMeta.value ) {
-        const field = meta.field as keyof T
-        const valueA = a[field]
-        const valueB = b[field]
-        const result = valueA > valueB ? 1 : valueA < valueB ? -1 : 0
-        if ( result !== 0 ) {
-          return meta.order * result
-        }
+        const result = compareValues( a[meta.field], b[meta.field] )
+        if ( result !== 0 ) return meta.order * result
       }
       return 0
     } )
