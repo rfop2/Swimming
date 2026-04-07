@@ -24,7 +24,10 @@
 
   const { data: users, refresh: refreshUsers } = await useFetch( "/api/users", { key: "user-data" } )
 
-  const { updateSort, getSortIcon, sortRecords } = useMultiSort<UserRow>()
+  const { updateSort, getSortIcon, sortRecords, resetSort } = useMultiSort<UserRow>( [
+    { field: "lastName", order: 1 },
+    { field: "clubs", order: 1 },
+  ] )
 
   const tierOptions = computed( () =>
     Array.from( new Set( ( users.value ?? [] ).map( u => u.subscriptionTier ) ) )
