@@ -131,8 +131,8 @@
     { name: "Qualifications", children: [
       { name: "Cut-off Dates", href: "/qualifying/dates" },
       { name: "Times", href: "/qualifying/times" },
-      { name: "Matrix", href: "/qualifying/matrix", condition: () => !!Number( user.value.admin ) },
-      { name: "Import", href: "/qualifying/import", condition: () => !!Number( user.value.admin ) },
+      { name: "Matrix", href: "/qualifying/matrix", condition: () => !!Number( user.value?.admin ) },
+      { name: "Import", href: "/qualifying/import", condition: () => !!Number( user.value?.admin ) },
     ] },
   ] )
 
@@ -216,11 +216,13 @@
         <div class="flex">
           <!-- Logo -->
           <div class="flex flex-shrink-0 items-center">
-            <img
-              src="/images/SwimRacingLogo.svg"
-              :title="config.public.siteName"
-              class="w-20"
-            >
+            <nuxt-link to="/">
+              <img
+                src="/images/SwimRacingLogo.svg"
+                :title="config.public.siteName"
+                class="w-20"
+              >
+            </nuxt-link>
           </div>
 
           <!-- Desktop navigation -->

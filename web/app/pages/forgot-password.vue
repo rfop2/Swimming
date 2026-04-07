@@ -11,7 +11,7 @@
 
   const user = useUser()
   if ( user.value ) {
-    await navigateTo( "/account" )
+    await navigateTo( "/" )
   }
 
   const email = ref( "" )
