@@ -3,8 +3,8 @@ interface SortMeta<K> {
   order: 1 | -1
 }
 
-export const useMultiSort = <T>() => {
-  const multiSortMeta = shallowRef<Array<SortMeta<T>>>( [] )
+export const useMultiSort = <T>( initialSort: Array<SortMeta<T>> = [] ) => {
+  const multiSortMeta = shallowRef<Array<SortMeta<T>>>( initialSort )
 
   const updateSort = ( field: keyof T ) => {
     const existing = multiSortMeta.value.find( meta => meta.field === field )
