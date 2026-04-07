@@ -292,7 +292,7 @@
                     class="size-4 text-green-600 shrink-0"
                     title="Manual / gifted subscription"
                   />
-                  {{ user.subscriptionTier }}
+                  {{ user.subscriptionTier.replace( ' Tier', '' ) }}
                   <span
                     v-if="user.subscriptionPeriodEnd"
                     class="text-xs text-gray-400"
