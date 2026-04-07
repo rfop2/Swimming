@@ -29,11 +29,12 @@
     { field: "clubs", order: 1 },
   ] )
 
-  const tierOptions = computed( () =>
-    Array.from( new Set( ( users.value ?? [] ).map( u => u.subscriptionTier ) ) )
-      .sort()
-      .map( t => ( { label: t, value: t } ) )
-  )
+  const tierOptions = computed( () => {
+    const usedTiers = new Set( ( users.value ?? [] ).map( u => u.subscriptionTier ) )
+    return ( tiers.value ?? [] )
+      .filter( t => usedTiers.has( t.name ) )
+      .map( t => ( { label: t.name.replace( " Tier", "" ), value: t.name } ) )
+  } )
 
   const { state: selections } = usePersisted( "users-selection", {
     tiers: [] as string[],      // empty = all tiers
