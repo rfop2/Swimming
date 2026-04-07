@@ -59,16 +59,19 @@ async function main() {
 
     console.log( "migrations ok" )
   } ) )
-
-  try {
-    await closePool()
-  } catch {
-    void 0
-  }
 }
 
-( async () => {
-  await main()
-} )().catch( ( error ) => {
-  console.error( "Uncaught error...", error )
-} )
+void ( async () => {
+  try {
+    await main()
+  } catch ( error ) {
+    console.error( "Uncaught error...", error )
+    process.exitCode = 1
+  } finally {
+    try {
+      await closePool()
+    } catch {
+      void 0
+    }
+  }
+} )()
