@@ -20,25 +20,11 @@
   const currentUser = useAuthenticatedUser()
 
   type UsersApiResponse = InternalApi["/api/users"]["get"]
+  type UserRow = UsersApiResponse[number]
 
-  const { data: users, refresh: refreshUsers } = await useFetch(
-    "/api/users",
-    {
-      key: "user-data",
-      transform( data: UsersApiResponse ): UsersApiResponse {
-        data.sort( ( a, b ) => {
-          const typeDiff = a.subscriptionTier.localeCompare( b.subscriptionTier )
-          if ( typeDiff ) return typeDiff
-          const lastNameDiff = a.lastName.localeCompare( b.lastName )
-          if ( lastNameDiff ) return lastNameDiff
-          const firstNameDiff = a.firstName.localeCompare( b.firstName )
-          if ( firstNameDiff ) return firstNameDiff
-          return 0
-        } )
-        return data
-      }
-    }
-  )
+  const { data: users, refresh: refreshUsers } = await useFetch( "/api/users", { key: "user-data" } )
+
+  const { updateSort, getSortIcon, sortRecords } = useMultiSort<UserRow>()
 
   const tierOptions = computed( () =>
     Array.from( new Set( ( users.value ?? [] ).map( u => u.subscriptionTier ) ) )
@@ -56,11 +42,13 @@
     set: ( newTiers ) => selections.tiers = newTiers
   } )
 
-  const filteredUsers = computed( () => ( users.value ?? [] ).filter( user => {
-    if ( selections.usersOnly && user.role !== "user" ) return false
-    if ( selections.tiers.length > 0 && !selections.tiers.includes( user.subscriptionTier ) ) return false
-    return true
-  } ) )
+  const filteredUsers = computed( () => sortRecords(
+    ( users.value ?? [] ).filter( user => {
+      if ( selections.usersOnly && user.role !== "user" ) return false
+      if ( selections.tiers.length > 0 && !selections.tiers.includes( user.subscriptionTier ) ) return false
+      return true
+    } )
+  ) )
 
   const { impersonate } = useImpersonation()
 
@@ -183,9 +171,10 @@
               </th>
               <th
                 scope="col"
-                class="px-1 py-3.5 text-left text-sm font-semibold text-gray-900"
+                class="sortable px-1 py-3.5 text-left text-sm font-semibold text-gray-900"
+                @click="updateSort( 'lastName' )"
               >
-                Last Name
+                Last Name <i :class="getSortIcon( 'lastName' )" />
               </th>
               <th
                 scope="col"
@@ -207,15 +196,17 @@
               </th>
               <th
                 scope="col"
-                class="px-1 py-3.5 text-left text-sm font-semibold text-gray-900"
+                class="sortable px-1 py-3.5 text-left text-sm font-semibold text-gray-900"
+                @click="updateSort( 'subscriptionTier' )"
               >
-                Subscription
+                Subscription <i :class="getSortIcon( 'subscriptionTier' )" />
               </th>
               <th
                 scope="col"
-                class="px-1 py-3.5 text-left text-sm font-semibold text-gray-900"
+                class="sortable px-1 py-3.5 text-left text-sm font-semibold text-gray-900"
+                @click="updateSort( 'clubs' )"
               >
-                Club (*owner)
+                Club (*owner) <i :class="getSortIcon( 'clubs' )" />
               </th>
               <th
                 scope="col"
@@ -231,9 +222,10 @@
               </th>
               <th
                 scope="col"
-                class="px-1 py-3.5 text-left text-sm font-semibold text-gray-900"
+                class="sortable px-1 py-3.5 text-left text-sm font-semibold text-gray-900"
+                @click="updateSort( 'lastLogin' )"
               >
-                Last Login
+                Last Login <i :class="getSortIcon( 'lastLogin' )" />
               </th>
               <th
                 scope="col"
