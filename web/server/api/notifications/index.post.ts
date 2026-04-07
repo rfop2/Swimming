@@ -17,7 +17,7 @@ export default defineEventHandler( async ( event ) => {
       } )
     }
 
-    if ( userId !== event.context.user.id && !Number( event.context.user.admin ) ) {
+    if ( userId !== event.context.user.id && event.context.user.role !== "admin" ) {
       throw createError( {
         status: 403
       } )
@@ -27,7 +27,7 @@ export default defineEventHandler( async ( event ) => {
 
     const notifications = Array.isArray( notificationData ) ? notificationData : [ notificationData ]
     for ( const notification of notifications ) {
-      if ( ( notification.notificationTargetId && ( notification.notificationTargetId !== userId ) && !Number( event.context.user.admin ) ) ) {
+      if ( ( notification.notificationTargetId && ( notification.notificationTargetId !== userId ) && event.context.user.role !== "admin" ) ) {
         throw createError( {
           status: 403,
           message: "Notification target is not current user",

@@ -9,7 +9,7 @@ export default defineEventHandler( async ( event ) => {
   }
 
   const userId = getRouterParam( event, "id" )
-  if ( !userId || !Number( event.context.user.admin ) ) {
+  if ( !userId || event.context.user.role !== "admin" ) {
     throw createError( {
       status: 403
     } )
@@ -17,7 +17,7 @@ export default defineEventHandler( async ( event ) => {
 
   const selectUser = prepareStatement<{ userId: string }, User>(
     await getPool(),
-    "SELECT id, username, firstName, lastName, phone, location, locationId, type, admin, created, updated FROM User WHERE id = :userId"
+    "SELECT id, username, firstName, lastName, phone, location, locationId, role, created, updated FROM User WHERE id = :userId"
   )
   const data = await selectUser.get( { userId } )
   return data

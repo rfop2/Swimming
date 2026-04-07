@@ -19,7 +19,7 @@ export default defineEventHandler( async ( event ) => {
       message: "Invalid session"
     } )
   }
-  if ( !Number( user.admin ) ) {
+  if ( user.role !== "admin" ) {
     throw createError( {
       status: 403,
       message: "Not authorised"

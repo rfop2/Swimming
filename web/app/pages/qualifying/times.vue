@@ -114,7 +114,7 @@
     },
   ] as const
 
-  const ageOptions = ref<Array<{ value: string }>>( user.value.admin ? AGES.map( age => ( { value: age } ) ) : [] )
+  const ageOptions = ref<Array<{ value: string }>>( user.value.role === 'admin' ? AGES.map( age => ( { value: age } ) ) : [] )
 
   const courseOptions = [
     {
@@ -427,7 +427,7 @@
       width: 120,
     },
     {
-      editable: () => !!user.value.admin,
+      editable: () => user.value.role === 'admin',
       headerName: "Time (m:ss.SS)",
       cellEditor: "agTextCellEditor",
       cellEditorParams: { maxLength: 8 },
@@ -462,7 +462,7 @@
   const updateFilters = ( swimmer: Swimmer ) => {
     const compAge = getCompetitionAge( parseISO( swimmer.birthday ) )
     const qualifyingAge = compAge < Number( AGES[0] ) ? String( AGES[0] ) : ( compAge > Number( AGES[AGES.length - 2] ) ? "Open" : String( compAge ) )
-    if ( !user.value.admin ) {
+    if ( user.value.role !== 'admin' ) {
       const ageIndex = AGES.findIndex( age => age === String( qualifyingAge ) )
       ageOptions.value = AGES.slice( Math.max( ageIndex - 1, 0 ), Math.min( ageIndex + 2, AGES.length ) ).map( age => ( { value: age } ) )
       console.log( "AV", AGES, compAge, qualifyingAge, ageIndex, ageOptions.value )
@@ -508,7 +508,7 @@
       <div class="sm:flex sm:justify-between">
         <div>County and regional qualifying times for each event.</div>
         <div
-          v-if="user.admin"
+          v-if="user.role === 'admin'"
           class="sm:flex sm:items-end"
         >
           <div
@@ -658,7 +658,7 @@
         />
       </div>
       <div
-        v-if="user.admin"
+        v-if="user.role === 'admin'"
         class="min-w-48"
       >
         <UI-Listbox
@@ -700,7 +700,7 @@
         />
       </div>
       <div
-        v-if="user.admin"
+        v-if="user.role === 'admin'"
         class="min-w-28"
       >
         <UI-Listbox

@@ -9,7 +9,7 @@ export default defineNuxtPlugin( () => {
         id: val.id,
         username: val.username,
         name: `${val.firstName} ${val.lastName}`.trim(),
-        admin: val.admin,
+        role: val.role,
       } )
     } else {
       Sentry.setUser( null )
