@@ -234,17 +234,28 @@
                 scope="col"
                 class="py-1.5 pr-2 pl-1 sm:pr-0"
               >
-                <button
-                  type="button"
-                  class="inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                  @click="addUser"
-                >
-                  <UserPlusIcon
-                    class="-ml-0.5 size-5"
-                    aria-hidden="true"
-                  />
-                  Add
-                </button>
+                <div class="flex gap-2 justify-end">
+                  <button
+                    type="button"
+                    class="inline-flex items-center gap-x-1.5 rounded-md bg-gray-100 px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-200"
+                    title="Reset sort"
+                    @click="resetSort"
+                  >
+                    <i class="pi pi-sort-alt-slash" />
+                    <span class="sr-only">Reset sort</span>
+                  </button>
+                  <button
+                    type="button"
+                    class="inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                    @click="addUser"
+                  >
+                    <UserPlusIcon
+                      class="-ml-0.5 size-5"
+                      aria-hidden="true"
+                    />
+                    Add
+                  </button>
+                </div>
                 <span class="sr-only">Actions</span>
               </th>
             </tr>
