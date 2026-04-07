@@ -127,7 +127,7 @@
         />
       </div>
       <div
-        v-if="!!user.admin"
+        v-if="user.role === 'admin'"
         class="min-w-24"
       >
         <UI-Input
@@ -148,7 +148,7 @@
               Task
             </th>
             <th
-              v-if="!!user.admin"
+              v-if="user.role === 'admin'"
               scope="col"
               class="whitespace-nowrap align-bottom px-2 py-3.5 text-left text-sm font-semibold text-gray-900"
             >
@@ -191,7 +191,7 @@
               Finished
             </th>
             <th
-              v-if="!!user.admin"
+              v-if="user.role === 'admin'"
               scope="col"
               class="whitespace-nowrap align-bottom pl-2 pr-4 py-3.5 text-left text-sm font-semibold text-gray-900"
             >
@@ -227,7 +227,7 @@
               {{ task.taskId }}
             </td>
             <td
-              v-if="!!user.admin"
+              v-if="user.role === 'admin'"
               class="whitespace-nowrap px-2 py-2 text-left text-sm text-gray-900"
             >
               {{ task.creatorName }}
@@ -243,7 +243,7 @@
             >
               {{ ucFirst( task.targetType ) }}
               <span v-if="task.taskOptions && JSON.parse( task.taskOptions ).updateType"> / {{ ucFirst( JSON.parse( task.taskOptions ).updateType ) }}</span>
-              <span v-if="!!user.admin && task.taskOptions && JSON.parse( task.taskOptions ).force"> (Forced)</span>
+              <span v-if="user.role === 'admin' && task.taskOptions && JSON.parse( task.taskOptions ).force"> (Forced)</span>
             </td>
             <td
               class="whitespace-nowrap px-2 py-2 text-left text-sm text-gray-900"
@@ -266,7 +266,7 @@
               {{ task.endTime ? formatDateTime( task.endTime ) : "" }}
             </td>
             <td
-              v-if="!!user.admin"
+              v-if="user.role === 'admin'"
               class="whitespace-nowrap px-4 py-2 text-left text-sm text-gray-900"
             >
               {{ task.taskResult }}

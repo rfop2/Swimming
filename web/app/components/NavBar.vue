@@ -132,8 +132,8 @@
     { name: "Qualifications", children: [
       { name: "Cut-off Dates", href: "/qualifying/dates" },
       { name: "Times", href: "/qualifying/times", condition: () => canAccess( "qualifyingView" ) },
-      { name: "Matrix", href: "/qualifying/matrix", condition: () => !!Number( user.value.admin ) },
-      { name: "Import", href: "/qualifying/import", condition: () => !!Number( user.value.admin ) || canAccess( "qualifyingImport" ) },
+      { name: "Matrix", href: "/qualifying/matrix", condition: () => user.value.role === "admin" },
+      { name: "Import", href: "/qualifying/import", condition: () => user.value.role === "admin" || canAccess( "qualifyingImport" ) },
     ] },
   ] )
 
@@ -145,8 +145,6 @@
     await revert()
     navigateTo( "/users" )
   }
-
-  const router = useRouter()
 
   const config = useRuntimeConfig()
 
@@ -162,7 +160,7 @@
     { name: "Pricing", href: "/pricing" },
     { name: "Updates", href: "/updates" },
     { name: "Tasks", href: "/tasks" },
-    { name: "Users", href: "/users", condition: () => !!Number( user.value.admin ) },
+    { name: "Users", href: "/users", condition: () => user.value.role === "admin" },
     // { name: "Settings", href: "#" },
     { name: "Revert user", click: revertUser, condition: () => !!impersonating.value },
     { name: "Sign out", click: logout },
@@ -297,7 +295,7 @@
         <div class="hidden sm:ml-6 sm:flex sm:items-center pt-2">
           <p class="mr-2 text-sm text-gray-700">
             <nuxt-link
-              v-if="user.admin"
+              v-if="user.role === 'admin'"
               to="/changelog"
             >
               v{{ config.public.appVersion }}
