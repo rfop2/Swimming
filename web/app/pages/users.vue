@@ -152,13 +152,13 @@
             multiple
           />
         </div>
-        <label class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer whitespace-nowrap">
+        <label class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer whitespace-nowrap pt-7">
           <input
             v-model="selections.usersOnly"
             type="checkbox"
             class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
           >
-          Users only
+          Subscribers only
         </label>
       </div>
     </template>
