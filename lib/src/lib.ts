@@ -1,13 +1,16 @@
 import { addMilliseconds, differenceInYears, endOfYear, format, parseISO } from "date-fns"
 import type { ScopeType, Swimmer } from "./types.js"
 
-const debugEnabled = !!( process.env?.DEBUG === "true" ) || false
+const debugEnabled = process.env?.DEBUG === "true" || process.env?.NODE_ENV !== "production"
 
-export const debug = ( ...args: unknown[] ) => {
-  if ( debugEnabled ) {
-    console.log( ...args )
-  }
+export const logger = {
+  log:   ( ...args: unknown[] ) => { if ( debugEnabled ) console.log( ...args ) },
+  warn:  ( ...args: unknown[] ) => { if ( debugEnabled ) console.warn( ...args ) },
+  error: ( ...args: unknown[] ) => { console.error( ...args ) },
 }
+
+/** @deprecated use logger.log */
+export const debug = ( ...args: unknown[] ) => logger.log( ...args )
 
 export const ucFirst = ( s: string ) => s.charAt( 0 ).toLocaleUpperCase() + s.slice( 1 )
 
