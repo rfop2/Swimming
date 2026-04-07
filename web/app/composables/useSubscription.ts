@@ -31,7 +31,7 @@ export const useSubscription = () => {
 
   const { data, refresh } = useAsyncData<SubscriptionStatus>(
     "subscription",
-    () => $fetch( "/api/billing/status" ),
+    () => $fetch<SubscriptionStatus>( "/api/billing/status" ),
     { default: () => ( { tier: "free" as SubscriptionTier, status: "active", gcSubscriptionId: null } ) }
   )
 
