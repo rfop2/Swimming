@@ -9,7 +9,8 @@
     "fetch": "node ./build/fetch.mjs",
     "add": "node ./build/addUser.mjs",
     "import": "node ./build/clubImport.mjs",
-    "migrate": "node ./build/migrate.js"
+    "migrate": "node ./build/migrate.js",
+    "expire-subscriptions": "node ./build/expireSubscriptions.mjs"
   },
   "dependencies": {
     "@node-rs/argon2": "^2.0.2",
@@ -24,7 +25,6 @@
   },
   "devDependencies": {
     "@stylistic/eslint-plugin": "^5.6.1",
-    "@types/commander": "^2.12.5",
     "@types/node": "^22.19.3",
     "eslint": "^9.39.2",
     "typescript": "^5.9.3",

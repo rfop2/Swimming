@@ -119,7 +119,6 @@ export default defineNuxtConfig( {
   ],
 
   routeRules: {
-    "/": { redirect: "/performance" },
     // Hashed assets can be cached forever (filenames change on rebuild)
     "/_nuxt/**": { headers: { "cache-control": "public, max-age=31536000, immutable" } },
     // HTML pages must always revalidate so users never load stale entry points

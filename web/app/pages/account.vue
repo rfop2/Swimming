@@ -32,10 +32,15 @@
 </script>
 
 <template>
-  <UserForm
-    :user="user!"
-    :clubs="userClubs"
-    :swimmers="swimmers"
-    :save-fn="saveUser"
-  />
+  <div>
+    <UserForm
+      :user="user!"
+      :clubs="userClubs"
+      :swimmers="swimmers"
+      :save-fn="saveUser"
+    />
+    <div class="mx-auto max-w-3xl px-4 py-4 sm:px-6 lg:px-8">
+      <SubscriptionPanel />
+    </div>
+  </div>
 </template>

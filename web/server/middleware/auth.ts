@@ -2,7 +2,7 @@ import { verifyRequestOrigin } from "lucia"
 import type { User, Session } from "lucia"
 
 export default defineEventHandler( async ( event ) => {
-  if ( event.node.req.method !== "GET" ) {
+  if ( event.node.req.method !== "GET" && event.path !== "/api/billing/webhook" ) {
     const originHeader = getHeader( event, "Origin" ) ?? null
     const hostHeader = getHeader( event, "Host" ) ?? null
     if ( !originHeader || !hostHeader || !verifyRequestOrigin( originHeader, [ hostHeader ] ) ) {
@@ -47,7 +47,7 @@ export default defineEventHandler( async ( event ) => {
   if ( adminSessionId ) {
     const { session: adminSession, user: admin } = await lucia.validateSession( adminSessionId )
 
-    if ( adminSession && admin && Number( admin.admin ) ) {
+    if ( adminSession && admin && admin.role === "admin" ) {
       adminUser = admin
       isImpersonating = true
     }

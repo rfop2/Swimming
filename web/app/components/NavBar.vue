@@ -4,6 +4,7 @@
   import { notificationTypes, type NotificationType, type Notification } from "lib"
 
   const user = useAuthenticatedUser()
+  const { canAccess } = useSubscription()
 
   // ──────────────────────────────────────────────────────────────
   // Type guards
@@ -109,13 +110,13 @@
   const navigation = computed<MainNavOption[]>( () => [
     { name: "Performance", children: [
       { name: "Personal Bests", href: "/performance" },
-      { name: "Results", href: "/results" },
-      { name: "Compare", href: "/compare" },
+      { name: "Results", href: "/results", condition: () => canAccess( "results" ) },
+      { name: "Compare", href: "/compare", condition: () => canAccess( "compare" ) },
     ] },
     { name: "Training", children: [
-      { name: "Times", href: "/training/times" },
+      { name: "Times", href: "/training/times", condition: () => canAccess( "trainingTimes" ) },
       // { name: "Training", href: "/training/targets" },
-      { name: "Speedcharts", href: "/training/speedchart" },
+      { name: "Speedcharts", href: "/training/speedchart", condition: () => canAccess( "speedcharts" ) },
     ] },
     { name: "Competition", children: [
       { name: "Meets", href: "/competition/meets" },
@@ -130,9 +131,9 @@
     ] },
     { name: "Qualifications", children: [
       { name: "Cut-off Dates", href: "/qualifying/dates" },
-      { name: "Times", href: "/qualifying/times" },
-      { name: "Matrix", href: "/qualifying/matrix", condition: () => !!Number( user.value.admin ) },
-      { name: "Import", href: "/qualifying/import", condition: () => !!Number( user.value.admin ) },
+      { name: "Times", href: "/qualifying/times", condition: () => canAccess( "qualifyingView" ) },
+      { name: "Matrix", href: "/qualifying/matrix", condition: () => user.value.role === "admin" },
+      { name: "Import", href: "/qualifying/import", condition: () => user.value.role === "admin" || canAccess( "qualifyingImport" ) },
     ] },
   ] )
 
@@ -145,8 +146,6 @@
     navigateTo( "/users" )
   }
 
-  const router = useRouter()
-
   const config = useRuntimeConfig()
 
   async function logout() {
@@ -158,9 +157,10 @@
 
   const userNavigation = computed<UserNavOption[]>( () => [
     { name: "Account", href: "/account" },
+    { name: "Pricing", href: "/pricing" },
     { name: "Updates", href: "/updates" },
     { name: "Tasks", href: "/tasks" },
-    { name: "Users", href: "/users", condition: () => !!Number( user.value.admin ) },
+    { name: "Users", href: "/users", condition: () => user.value.role === "admin" },
     // { name: "Settings", href: "#" },
     { name: "Revert user", click: revertUser, condition: () => !!impersonating.value },
     { name: "Sign out", click: logout },
@@ -216,11 +216,13 @@
         <div class="flex">
           <!-- Logo -->
           <div class="flex flex-shrink-0 items-center">
-            <img
-              src="/images/SwimRacingLogo.svg"
-              :title="config.public.siteName"
-              class="w-20"
-            >
+            <nuxt-link to="/">
+              <img
+                src="/images/SwimRacingLogo.svg"
+                :title="config.public.siteName"
+                class="w-20"
+              >
+            </nuxt-link>
           </div>
 
           <!-- Desktop navigation -->
@@ -295,7 +297,7 @@
         <div class="hidden sm:ml-6 sm:flex sm:items-center pt-2">
           <p class="mr-2 text-sm text-gray-700">
             <nuxt-link
-              v-if="user.admin"
+              v-if="user.role === 'admin'"
               to="/changelog"
             >
               v{{ config.public.appVersion }}

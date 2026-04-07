@@ -17,32 +17,12 @@
     saveFn: ( values: any ) => Promise<void>
   }>()
 
-  // Should come from DB
-  const userTypes = [
-    {
-      label: "Parent",
-      value: "parent"
-    },
-    {
-      label: "Trainer",
-      value: "trainer"
-    },
-    {
-      label: "Club",
-      value: "club"
-    },
-    {
-      label: "Other",
-      value: "other"
-    },
-  ]
-
   const config = useRuntimeConfig()
 
   const { createNotification } = useNotifications()
 
   const currentUser = useUser()
-  const isAdmin = !!Number( currentUser.value?.admin )
+  const isAdmin = currentUser.value?.role === "admin"
   const editingSelf = computed( () => !currentUser.value || ( currentUser.value.id === props.user.id ) )
 
   const locations = ref<{ place_id: number, name: string, display_name: string }[]>( [] )
@@ -76,7 +56,6 @@
     phone: props.user.phone,
     location: props.user.location,
     locationId: props.user.locationId,
-    type: props.user.type,
     clubs: props.clubs.map( ( { clubId, clubOwner } ) => ( { clubId, clubOwner } ) ), // Filter out the other fields
     swimmers: props.swimmers,
   } ) )
@@ -134,11 +113,6 @@
         phone: yup.string().label( "Phone / Mobile" ),
         location: yup.string().label( "Town / City" ).optional(),
         locationId: yup.number().label( "Town / City" ).required(),
-        type: yup.string().label( "Type" ).when( [], ( /* _values, _schema */ ) => {
-          return isAdmin
-            ? yup.string().required()
-            : yup.string().notRequired()
-        } ),
         clubs: yup.array( yup.object( {
           clubId: yup.string().required(),
           clubOwner: yup.number().required(),
@@ -167,7 +141,6 @@
   const [ phone, phoneAttrs ] = defineField( "phone" )
   // const [ location ] = defineField( "location" )
   const [ locationId, locationIdAttrs ] = defineField( "locationId" )
-  const [ type, typeAttrs ] = defineField( "type" )
   const { replace: replaceUserClub } = useFieldArray<UserClub>( "clubs" )
   const { remove: removeSwimmer, push: pushSwimmer, update: updateSwimmer, fields: userSwimmers } = useFieldArray<ExtSwimmer>( "swimmers" )
 
@@ -527,18 +500,6 @@
                   }
                 }"
 
-              />
-            </div>
-            <div
-              v-if="isAdmin"
-              class="sm:col-span-1"
-            >
-              <UI-Select
-                id="type"
-                v-model="type"
-                label="Type"
-                v-bind="typeAttrs"
-                :options="userTypes"
               />
             </div>
             <div

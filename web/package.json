@@ -1,6 +1,6 @@
 {
   "name": "swimming-app",
-  "version": "14.36.1",
+  "version": "15.0.0",
   "description": "Swimming performance and qualification monitoring",
   "private": true,
   "type": "module",
@@ -39,6 +39,7 @@
     "chartjs-plugin-annotation": "^3.1.0",
     "classnames": "^2.5.1",
     "date-fns": "^4.1.0",
+    "gocardless-nodejs": "^7.1.0",
     "lib": "file:../lib",
     "localforage": "^1.10.0",
     "lucia": "^3.2.2",

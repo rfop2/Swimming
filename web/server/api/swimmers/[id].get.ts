@@ -15,7 +15,7 @@ export default defineEventHandler( async ( event ) => {
     } )
   }
 
-  const isAdmin = Number( event.context.user.admin )
+  const isAdmin = event.context.user.role === "admin"
   if ( userId !== event.context.user.id && !isAdmin ) {
     throw createError( {
       status: 403

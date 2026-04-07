@@ -8,7 +8,7 @@ export default defineEventHandler( async ( event ) => {
   }
 
   const userId = getRouterParam( event, "id" )
-  if ( !userId || !Number( event.context.user.admin ) ) {
+  if ( !userId || event.context.user.role !== "admin" ) {
     throw createError( {
       status: 403
     } )

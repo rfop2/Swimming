@@ -192,7 +192,7 @@
     },
     {
       field: "qualifyingStart",
-      editable: () => !!user.value.admin,
+      editable: () => user.value.role === "admin",
       headerName: "Qualifying Start",
       cellEditor: "agDateStringCellEditor",
       cellEditorParams: {
@@ -210,7 +210,7 @@
     },
     {
       field: "qualifyingEnd",
-      editable: () => !!user.value.admin,
+      editable: () => user.value.role === "admin",
       headerName: "Qualifying End",
       cellEditor: "agDateStringCellEditor",
       cellEditorParams: {
@@ -228,7 +228,7 @@
     },
     {
       field: "eligibilityStart",
-      editable: () => !!user.value.admin,
+      editable: () => user.value.role === "admin",
       headerName: "Eligibility Start",
       cellEditor: "agDateStringCellEditor",
       cellEditorParams: {
@@ -246,7 +246,7 @@
     },
     {
       field: "eligibilityEnd",
-      editable: () => !!user.value.admin,
+      editable: () => user.value.role === "admin",
       headerName: "Eligibility End",
       cellEditor: "agDateStringCellEditor",
       cellEditorParams: {
@@ -279,7 +279,7 @@
       <div class="sm:flex sm:justify-between">
         <div>{{ description }}</div>
         <div
-          v-if="user.admin"
+          v-if="user.role === 'admin'"
           class="sm:flex sm:items-end"
         >
           <div class="mt-4 sm:ml-4 sm:mt-0 sm:flex-none">

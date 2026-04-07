@@ -7,7 +7,7 @@ export default defineEventHandler( async ( event ) => {
   }
 
   const { session, user } = await lucia.validateSession( adminSessionId )
-  if ( !session || !user || !Number( user.admin ) ) {
+  if ( !session || !user || user.role !== "admin" ) {
     throw createError( { statusCode: 403, message: "Invalid admin session" } )
   }
 

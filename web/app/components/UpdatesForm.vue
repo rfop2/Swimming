@@ -365,7 +365,7 @@
         </div>
         <div class="w-full sm:max-w-xs pl-4">
           <UI-input
-            v-if="!!user.admin"
+            v-if="user.role === 'admin'"
             v-model="force"
             type="checkbox"
             label="Force update"
