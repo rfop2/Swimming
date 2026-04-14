@@ -1,3 +1,4 @@
+import { Temporal } from "temporal-polyfill"
 import type { Temporal as TemporalType } from "temporal-polyfill"
 
 export const useTemporal = () => {

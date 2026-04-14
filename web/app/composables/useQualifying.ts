@@ -1,14 +1,14 @@
 import type { Swimmer, ExtQualifyingPeriod, QualifyingRow, IndividualStats, ScopeType, QualifyingType } from "lib"
 import { getSwimmerAge } from "lib"
+import { Temporal } from "temporal-polyfill"
 // import { FetchError } from "ofetch"
 
 export interface QualifyingInfo extends ExtQualifyingPeriod {
   times: QualifyingRow[]
 }
 
-const today = Temporal.Now.plainDateISO()
-
 export const useQualifying = () => {
+  const today = Temporal.Now.plainDateISO()
 
   const qualifyingTimes = useState<QualifyingRow[]>( "qualifyingTimes", () => [] )
   const loadedTimes = useState( "timesLoaded", () => false )
