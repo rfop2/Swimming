@@ -60,6 +60,9 @@ VALUES (
   :locationAlias
 );`
 
+let lastNominatimRequest = 0
+const NOMINATIM_MIN_INTERVAL_MS = 1100 // Nominatim policy: max 1 req/sec
+
 export const geocodeLocation = async ( locationName: string ): Promise<Location | undefined> => {
   const getLocation = prepareStatement<{ locationName: string },Location>(
     await getPool(),
@@ -70,6 +73,11 @@ export const geocodeLocation = async ( locationName: string ): Promise<Location 
   let location = await getLocation.get( { locationName } )
   if ( location === undefined ) {
     console.log( `Geocoding '${locationName}'` )
+    const elapsed = Date.now() - lastNominatimRequest
+    if ( elapsed < NOMINATIM_MIN_INTERVAL_MS ) {
+      await new Promise( resolve => setTimeout( resolve, NOMINATIM_MIN_INTERVAL_MS - elapsed ) )
+    }
+    lastNominatimRequest = Date.now()
     const response = await fetch(
       `https://nominatim.openstreetmap.org/search?format=json&city=${encodeURIComponent( locationName )}&countrycodes=gb&layer=address&addressdetails=1`,
       { headers: { "User-Agent": "SwimmingResultsApp/1.0 (contact@swim.racing)" } }
