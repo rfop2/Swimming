@@ -60,8 +60,23 @@ VALUES (
   :locationAlias
 );`
 
-let lastNominatimRequest = 0
-const NOMINATIM_MIN_INTERVAL_MS = 1100 // Nominatim policy: max 1 req/sec
+// Slot-based throttle: each call atomically claims the next available slot so
+// concurrent calls queue up rather than racing past the interval check.
+let nextNominatimSlot = 0
+const NOMINATIM_MIN_INTERVAL_MS = 1200 // Nominatim policy: max 1 req/sec; a little headroom
+
+const nominatimFetch = async ( locationName: string ): Promise<Response> => {
+  const now = Date.now()
+  const slot = Math.max( now, nextNominatimSlot )
+  nextNominatimSlot = slot + NOMINATIM_MIN_INTERVAL_MS
+  const delay = slot - now
+  if ( delay > 0 ) await new Promise( resolve => setTimeout( resolve, delay ) )
+
+  return fetch(
+    `https://nominatim.openstreetmap.org/search?format=json&city=${encodeURIComponent( locationName )}&countrycodes=gb&layer=address&addressdetails=1`,
+    { headers: { "User-Agent": "SwimmingResultsApp/1.0 (contact@swim.racing)" } }
+  )
+}
 
 export const geocodeLocation = async ( locationName: string ): Promise<Location | undefined> => {
   const getLocation = prepareStatement<{ locationName: string },Location>(
@@ -73,25 +88,31 @@ export const geocodeLocation = async ( locationName: string ): Promise<Location 
   let location = await getLocation.get( { locationName } )
   if ( location === undefined ) {
     console.log( `Geocoding '${locationName}'` )
-    const elapsed = Date.now() - lastNominatimRequest
-    if ( elapsed < NOMINATIM_MIN_INTERVAL_MS ) {
-      await new Promise( resolve => setTimeout( resolve, NOMINATIM_MIN_INTERVAL_MS - elapsed ) )
+
+    let response: Response | undefined
+    for ( let attempt = 1; attempt <= 3; attempt++ ) {
+      response = await nominatimFetch( locationName )
+      if ( response.ok ) break
+      if ( response.status === 429 ) {
+        const retryAfter = Number( response.headers.get( "retry-after" ) ?? "0" )
+        const backoff = Math.max( retryAfter * 1000, attempt * 2000 )
+        console.warn( `Nominatim 429 for '${locationName}' (attempt ${attempt}/3), retrying after ${backoff}ms` )
+        await new Promise( resolve => setTimeout( resolve, backoff ) )
+        continue
+      }
+      break // non-retryable error
     }
-    lastNominatimRequest = Date.now()
-    const response = await fetch(
-      `https://nominatim.openstreetmap.org/search?format=json&city=${encodeURIComponent( locationName )}&countrycodes=gb&layer=address&addressdetails=1`,
-      { headers: { "User-Agent": "SwimmingResultsApp/1.0 (contact@swim.racing)" } }
-    )
-    if ( !response.ok ) {
-      const text = await response.text()
+
+    if ( !response!.ok ) {
+      const text = await response!.text()
       const headers: Record<string, string> = {}
-      response.headers.forEach( ( value, key ) => { headers[key] = value } )
-      console.error( `Nominatim request failed for '${locationName}': ${response.status} ${response.statusText}` )
+      response!.headers.forEach( ( value, key ) => { headers[key] = value } )
+      console.error( `Nominatim request failed for '${locationName}': ${response!.status} ${response!.statusText}` )
       console.error( "Response headers:", headers )
       console.error( "Response body:", text )
       return undefined
     }
-    const osmLocations = await response.json()
+    const osmLocations = await response!.json()
     if ( osmLocations && osmLocations.length > 0 ) {
       osmLocations.sort( ( a: { importance: number }, b: { importance: number } ) => Number( b.importance ) - Number( a.importance ) )
       const osmLocation = osmLocations[0]
