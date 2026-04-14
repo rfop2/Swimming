@@ -9,7 +9,7 @@ export default defineEventHandler( async ( event ) => {
     } )
   }
 
-  const selectRecords = prepareStatement<unknown, QualifyingPeriodRow>(
+  const selectRecords = prepareStatement<Record<string, never>, QualifyingPeriodRow>(
     await getPool(),
     "SELECT * FROM QualifyingPeriods"
   )
