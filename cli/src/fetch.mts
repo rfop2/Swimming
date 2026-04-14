@@ -1164,6 +1164,7 @@ const updateMeetsResults = async ( options: MeetsResultsOptions ) => {
     await program.parseAsync( process.argv )
   } catch ( error ) {
     console.error( "Error in script", error )
+    Sentry.captureException( error )
   } finally {
     await closeBrowser()
     await closePool()
