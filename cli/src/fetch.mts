@@ -726,20 +726,22 @@ const updateMeets = async ( force: boolean ) => {
         }
       }
 
-      const clubMatch = resolveClubMatch( meet as Meet, clubs )
-      if ( clubMatch.status === "unique" ) {
-        clubId = clubMatch.club.clubId
-        console.warn( `Assigned meet '${meet.name} to club '${clubMatch.club.clubName}'` )
-      } else if ( clubMatch.status === "ambiguous" ) {
-        console.warn( `Multiple club meet matches for '${meet.name}`, clubMatch.clubs )
-      } else {
-        console.log( `No club matches for '${meet.name}` )
-      }
-      if ( clubId && ( !dbMeet || dbMeet?.clubId !== clubId ) ) {
-        try {
-          await saveClubMeet.run( { meetId: meet.id, clubId } )
-        } catch ( error ) {
-          console.error( `Unable to update club id '${clubId}' for meet '${meet.name}'`, error )
+      if ( dbMeet && !dbMeet.clubId ) {
+        const clubMatch = resolveClubMatch( meet as Meet, clubs )
+        if ( clubMatch.status === "unique" ) {
+          clubId = clubMatch.club.clubId
+          console.warn( `Assigned meet '${meet.name} to club '${clubMatch.club.clubName}'` )
+        } else if ( clubMatch.status === "ambiguous" ) {
+          console.warn( `Multiple club meet matches for '${meet.name}`, clubMatch.clubs )
+        } else {
+          console.log( `No club matches for '${meet.name}` )
+        }
+        if ( clubId && ( !dbMeet || dbMeet?.clubId !== clubId ) ) {
+          try {
+            await saveClubMeet.run( { meetId: meet.id, clubId } )
+          } catch ( error ) {
+            console.error( `Unable to update club id '${clubId}' for meet '${meet.name}'`, error )
+          }
         }
       }
     }
