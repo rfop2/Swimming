@@ -17,7 +17,6 @@
 
   const user = useAuthenticatedUser()
 
-  const { formatTemporal } = useTemporal()
   const { createNotification } = useNotifications()
 
   const statusOptions = [
@@ -59,7 +58,9 @@
   } )
 
   const formatDateTime = ( dt: string ) => {
-    return formatTemporal( Temporal.PlainDateTime.from( dt ), { options: { dateStyle: "short", timeStyle: "short" } } )
+    // DB timestamps are UTC strings ("YYYY-MM-DD HH:MM:SS"); treat as UTC and display in local tz
+    return new Intl.DateTimeFormat( "en-GB", { dateStyle: "short", timeStyle: "short" } )
+      .format( new Date( dt.replace( " ", "T" ) + "Z" ) )
   }
 
   const taskToUpdate = ref<Task | null>( null )
