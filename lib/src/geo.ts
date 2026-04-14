@@ -73,6 +73,15 @@ export const geocodeLocation = async ( locationName: string ): Promise<Location 
     const response = await fetch(
       `https://nominatim.openstreetmap.org/search?format=json&city=${encodeURIComponent( locationName )}&countrycodes=gb&layer=address&addressdetails=1`
     )
+    if ( !response.ok ) {
+      const text = await response.text()
+      const headers: Record<string, string> = {}
+      response.headers.forEach( ( value, key ) => { headers[key] = value } )
+      console.error( `Nominatim request failed for '${locationName}': ${response.status} ${response.statusText}` )
+      console.error( "Response headers:", headers )
+      console.error( "Response body:", text )
+      return undefined
+    }
     const osmLocations = await response.json()
     if ( osmLocations && osmLocations.length > 0 ) {
       osmLocations.sort( ( a: { importance: number }, b: { importance: number } ) => Number( b.importance ) - Number( a.importance ) )
