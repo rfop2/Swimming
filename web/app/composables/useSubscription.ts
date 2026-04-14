@@ -1,4 +1,4 @@
-import type { SubscriptionTier } from "~~/server/utils/gocardless"
+import type { SubscriptionTier } from "lib"
 
 // Feature → which tiers can access it
 const FEATURE_GATES = {
