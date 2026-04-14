@@ -890,7 +890,7 @@ const updateMeetsResults = async ( options: MeetsResultsOptions ) => {
     console.log( `Got ${resultsSwimmers.size} swimmer ids to check and update` )
   }
   await runTransaction( pool, async ( conn: PoolConnection ) => {
-    const getSystemUser = prepareStatement<void>( conn, "SELECT * FROM User WHERE type = 'system'" )
+    const getSystemUser = prepareStatement<void>( conn, "SELECT * FROM User WHERE role = 'system'" )
     const systemUser = await getSystemUser.get()
     if ( !systemUser ) {
       throw new Error( "Can't find system user in database" )
@@ -999,7 +999,7 @@ const updateMeetsResults = async ( options: MeetsResultsOptions ) => {
     .addOption( new Option( "-m, --mode <mode>", "fetching strategy versus caching" ).choices( [ "force", "lazy" ] ).default( "lazy" ) )
     .action( async ( options ) => {
       const pool = await getPool()
-      const getSystemUser = prepareStatement<void>( pool, "SELECT * FROM User WHERE type = 'system'" )
+      const getSystemUser = prepareStatement<void>( pool, "SELECT * FROM User WHERE role = 'system'" )
       const systemUser = await getSystemUser.get()
       if ( !systemUser ) {
         throw new Error( "Can't find system user in database" )
@@ -1018,7 +1018,7 @@ const updateMeetsResults = async ( options: MeetsResultsOptions ) => {
     .addOption( new Option( "-c, --count <tasks>", "only process a maximum of <count> queued tasks on this run" ).default( "100" ) )
     .action( async ( options ) => {
       const pool = await getPool()
-      const getSystemUser = prepareStatement<void>( pool, "SELECT * FROM User WHERE type = 'system'" )
+      const getSystemUser = prepareStatement<void>( pool, "SELECT * FROM User WHERE role = 'system'" )
       const systemUser = await getSystemUser.get()
       if ( !systemUser ) {
         throw new Error( "Can't find system user in database" )
