@@ -79,6 +79,7 @@ export default defineNuxtConfig( {
             || id.startsWith( "@puppeteer/" )
             || id.startsWith( "proxy-chain" )
             || id.startsWith( "node-fetch" )
+            || id.startsWith( "node:" )
             || builtinModules.includes( id )
           ) {
             return { id, external: true }
