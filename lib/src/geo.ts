@@ -65,6 +65,11 @@ VALUES (
 let nextNominatimSlot = 0
 const NOMINATIM_MIN_INTERVAL_MS = 1200 // Nominatim policy: max 1 req/sec; a little headroom
 
+// Callers that patch globalThis.fetch (e.g. via a VPN proxy) should pass the
+// original fetch here so geocoding goes via the real IP, not a shared VPN node.
+let _geocodeFetch: typeof fetch = globalThis.fetch
+export const setGeocodeFetch = ( fn: typeof fetch ) => { _geocodeFetch = fn }
+
 const nominatimFetch = async ( locationName: string ): Promise<Response> => {
   const now = Date.now()
   const slot = Math.max( now, nextNominatimSlot )
@@ -72,7 +77,7 @@ const nominatimFetch = async ( locationName: string ): Promise<Response> => {
   const delay = slot - now
   if ( delay > 0 ) await new Promise( resolve => setTimeout( resolve, delay ) )
 
-  return fetch(
+  return _geocodeFetch(
     `https://nominatim.openstreetmap.org/search?format=json&city=${encodeURIComponent( locationName )}&countrycodes=gb&layer=address&addressdetails=1`,
     { headers: { "User-Agent": "SwimmingResultsApp/1.0 (contact@swim.racing)" } }
   )
