@@ -54,19 +54,21 @@ export const isMySql2Error = ( err: unknown ): err is MySql2Error => {
   )
 }
 
-type Statement<Params, Result = RowDataPacket> = {
-  get: ( params: Params ) => Promise<( Result ) | undefined>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Statement<Params extends Record<string, any> = Record<string, any>, Result = RowDataPacket> = {
+  get: ( params?: Params ) => Promise<( Result ) | undefined>;
   all: ( params?: Params ) => Promise<( Result )[]>;
   run: ( params?: Params ) => Promise<RunResult>;
 }
 
 // Helper to create a typed statement
-export const prepareStatement = <Params, Result = RowDataPacket>(
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const prepareStatement = <Params extends Record<string, any> = Record<string, any>, Result = RowDataPacket>(
   executor: Pool | PoolConnection,
   sql: string
 ): Statement<Params, Result> => {
   return {
-    async get( params: Params ) {
+    async get( params?: Params ) {
       const [ rows ] = await executor.execute<RowDataPacket[]>( sql, params )
       return rows[0] as Result | undefined
     },

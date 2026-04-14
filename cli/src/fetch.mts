@@ -655,9 +655,9 @@ const updateMeets = async ( force: boolean ) => {
   console.log( "Updating meets" )
 
   const pool = await getPool()
-  const selectClubs = prepareStatement<void,Club>( pool, "SELECT * FROM Clubs" )
+  const selectClubs = prepareStatement<Record<string, never>,Club>( pool, "SELECT * FROM Clubs" )
   const clubs = await selectClubs.all()
-  const selectMeets = prepareStatement<unknown[],ClubMeet>( pool, "SELECT Meets.*, ClubMeets.clubId FROM Meets LEFT JOIN ClubMeets ON(Meets.id = ClubMeets.meetId) WHERE date >= DATE_FORMAT(CURDATE(), '%Y-%m-01')" )
+  const selectMeets = prepareStatement<Record<string, never>,ClubMeet>( pool, "SELECT Meets.*, ClubMeets.clubId FROM Meets LEFT JOIN ClubMeets ON(Meets.id = ClubMeets.meetId) WHERE date >= DATE_FORMAT(CURDATE(), '%Y-%m-01')" )
   const meets = await selectMeets.all()
   const meetsMap = new Map<ClubMeet["id"],ClubMeet>( meets.map( m => ( [ m.id, m ] ) ) )
   const fetchedMeets = new Set<Meet["id"]>()
@@ -838,7 +838,7 @@ const updateMeetsResults = async ( options: MeetsResultsOptions ) => {
   const MAX_MEETS_RESULTS = 100
 
   const pool = await getPool()
-  const selectLastResultsUpdate = prepareStatement<void,{value: string}>( pool, "SELECT value FROM System WHERE name = 'lastResultsUpdate'" )
+  const selectLastResultsUpdate = prepareStatement<Record<string, never>,{value: string}>( pool, "SELECT value FROM System WHERE name = 'lastResultsUpdate'" )
   const lastResultsUpdate = await selectLastResultsUpdate.get()
 
   const resultsSwimmers = new Set<Swimmer["id"]>()
@@ -890,7 +890,7 @@ const updateMeetsResults = async ( options: MeetsResultsOptions ) => {
     console.log( `Got ${resultsSwimmers.size} swimmer ids to check and update` )
   }
   await runTransaction( pool, async ( conn: PoolConnection ) => {
-    const getSystemUser = prepareStatement<void>( conn, "SELECT * FROM User WHERE role = 'system'" )
+    const getSystemUser = prepareStatement( conn, "SELECT * FROM User WHERE role = 'system'" )
     const systemUser = await getSystemUser.get()
     if ( !systemUser ) {
       throw new Error( "Can't find system user in database" )
@@ -951,7 +951,7 @@ const updateMeetsResults = async ( options: MeetsResultsOptions ) => {
     .addOption( new Option( "-u, --update <update>", "what level of swimmer data to update" ).choices( [ "individual", "results", "rankings" ] ) )
     .addOption( new Option( "-m, --mode <mode>", "fetching strategy versus caching" ).choices( [ "force", "smart", "lazy" ] ).default( "lazy" ) )
     .action( async ( options ) => {
-      const getSwimmers = prepareStatement<void,Swimmer>(
+      const getSwimmers = prepareStatement<Record<string, never>,Swimmer>(
         await getPool(),
         "SELECT * FROM Swimmers WHERE active = 1"
       )
@@ -999,7 +999,7 @@ const updateMeetsResults = async ( options: MeetsResultsOptions ) => {
     .addOption( new Option( "-m, --mode <mode>", "fetching strategy versus caching" ).choices( [ "force", "lazy" ] ).default( "lazy" ) )
     .action( async ( options ) => {
       const pool = await getPool()
-      const getSystemUser = prepareStatement<void>( pool, "SELECT * FROM User WHERE role = 'system'" )
+      const getSystemUser = prepareStatement( pool, "SELECT * FROM User WHERE role = 'system'" )
       const systemUser = await getSystemUser.get()
       if ( !systemUser ) {
         throw new Error( "Can't find system user in database" )
@@ -1018,7 +1018,7 @@ const updateMeetsResults = async ( options: MeetsResultsOptions ) => {
     .addOption( new Option( "-c, --count <tasks>", "only process a maximum of <count> queued tasks on this run" ).default( "100" ) )
     .action( async ( options ) => {
       const pool = await getPool()
-      const getSystemUser = prepareStatement<void>( pool, "SELECT * FROM User WHERE role = 'system'" )
+      const getSystemUser = prepareStatement( pool, "SELECT * FROM User WHERE role = 'system'" )
       const systemUser = await getSystemUser.get()
       if ( !systemUser ) {
         throw new Error( "Can't find system user in database" )

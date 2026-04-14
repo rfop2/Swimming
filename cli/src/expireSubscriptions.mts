@@ -13,7 +13,7 @@ async function main() {
   const pool = await getPool()
 
   // Find all active subscriptions whose period has lapsed
-  const expired = await prepareStatement<unknown, { userId: string, tier: string }>(
+  const expired = await prepareStatement<Record<string, never>, { userId: string, tier: string }>(
     pool,
     `SELECT userId, tier FROM UserSubscription
      WHERE status = 'active'
