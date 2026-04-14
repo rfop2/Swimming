@@ -71,7 +71,8 @@ export const geocodeLocation = async ( locationName: string ): Promise<Location 
   if ( location === undefined ) {
     console.log( `Geocoding '${locationName}'` )
     const response = await fetch(
-      `https://nominatim.openstreetmap.org/search?format=json&city=${encodeURIComponent( locationName )}&countrycodes=gb&layer=address&addressdetails=1`
+      `https://nominatim.openstreetmap.org/search?format=json&city=${encodeURIComponent( locationName )}&countrycodes=gb&layer=address&addressdetails=1`,
+      { headers: { "User-Agent": "SwimmingResultsApp/1.0 (contact@swim.racing)" } }
     )
     if ( !response.ok ) {
       const text = await response.text()
