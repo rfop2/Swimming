@@ -7,7 +7,8 @@
 
   definePageMeta( {
     layout: "secure",
-    middleware: [ "admin" ]
+    middleware: [ "admin" ],
+    maxWidth: "max-w-screen-2xl",
   } )
 
   useHead( {

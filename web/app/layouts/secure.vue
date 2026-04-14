@@ -13,7 +13,7 @@
         v-if="!$route.meta.fullBleed"
         class="h-full overflow-auto px-4 py-4 sm:px-6 lg:px-8"
       >
-        <div class="mx-auto max-w-7xl">
+        <div class="mx-auto" :class="($route.meta.maxWidth as string) ?? 'max-w-7xl'">
           <slot />
         </div>
       </div>

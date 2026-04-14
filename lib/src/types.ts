@@ -41,6 +41,9 @@ export type ScopeType = typeof scopeTypes[number]
 export const courseTypes = [ "lc", "sc" ] as const
 export type CourseType = typeof courseTypes[number]
 
+export type PaidTier = "parent" | "trainer" | "club-small" | "club-large"
+export type SubscriptionTier = "free" | PaidTier
+
 export const strokeTypes = [ "freestyle", "breaststroke", "butterfly", "backstroke", "individual_medley" ] as const
 export type StrokeType = typeof strokeTypes[number]
 

@@ -1,5 +1,5 @@
 import { getPool, prepareStatement } from "lib"
-import type { SubscriptionTier } from "~~/server/utils/gocardless"
+import type { SubscriptionTier } from "lib"
 
 interface SubscriptionRow {
   tier:             SubscriptionTier

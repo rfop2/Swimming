@@ -13,7 +13,7 @@ async function main() {
   const pool = await getPool()
 
   // Find all active subscriptions whose period has lapsed
-  const expired = await prepareStatement<unknown, { userId: string, tier: string }>(
+  const expired = await prepareStatement<Record<string, never>, { userId: string, tier: string }>(
     pool,
     `SELECT userId, tier FROM UserSubscription
      WHERE status = 'active'
@@ -42,10 +42,11 @@ async function main() {
 
 ( async () => {
   await main()
-} )().catch( ( error ) => {
-  Sentry.captureException( error )
+} )().catch( async ( error ) => {
   console.error( "Uncaught error...", error )
+  Sentry.captureException( error )
   process.exitCode = 1
 } ).finally( async () => {
+  await Sentry.flush( 2000 )
   try { await closePool() } catch { void 0 }
 } )

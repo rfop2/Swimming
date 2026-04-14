@@ -23,7 +23,7 @@ export const addNotification = async ( conn: Pool | PoolConnection, creatorId: s
 }
 
 export const addSystemNotification = async ( conn: Pool | PoolConnection, targetId: string, type: NotificationType, text: string ) => {
-  const getSystemUser = prepareStatement<void>( conn, "SELECT * FROM User WHERE role = 'system'" )
+  const getSystemUser = prepareStatement( conn, "SELECT * FROM User WHERE role = 'system'" )
   const systemUser = await getSystemUser.get()
   if ( !systemUser ) {
     throw new Error( "Can't find system user in database" )

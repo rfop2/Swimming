@@ -13,6 +13,9 @@ export const useQualifying = () => {
   const qualifyingTimes = useState<QualifyingRow[]>( "qualifyingTimes", () => [] )
   const loadedTimes = useState( "timesLoaded", () => false )
   const loadingTimes = useState( "timesLoading", () => false )
+  // Loading flags are transient — reset on client so a fetch started (but not completed)
+  // during SSR doesn't permanently block the client-side fetch.
+  if ( import.meta.client ) loadingTimes.value = false
 
   const fetchQualifyingTimes = async () => {
     if ( loadedTimes.value || loadingTimes.value ) return
@@ -33,6 +36,7 @@ export const useQualifying = () => {
   const qualifyingPeriods = useState<ExtQualifyingPeriod[]>( "qualifyingPeriods", () => [] )
   const loadedPeriods = useState( "periodsLoaded", () => false )
   const loadingPeriods = useState( "periodsLoading", () => false )
+  if ( import.meta.client ) loadingPeriods.value = false
 
   const fetchQualifyingPeriods = async () => {
     if ( loadedPeriods.value || loadingPeriods.value ) return
