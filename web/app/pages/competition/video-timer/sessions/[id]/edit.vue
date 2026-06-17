@@ -3,6 +3,7 @@
     Swimmer,
     VideoTimerDraft,
     VideoTimerMarkerRecord,
+    VideoTimerBreathCountRecord,
     VideoTimerStrokeCountRecord,
     VideoTimerTurnAnalysisRecord,
   } from "lib"
@@ -60,6 +61,7 @@
       breakoutStartM: number | null
     } | null
     strokeCounts: VideoTimerStrokeCountRecord[]
+    breathCounts: VideoTimerBreathCountRecord[]
     turns: VideoTimerTurnAnalysisRecord[]
     computed: {
       finishTimeMs: number | null
@@ -80,6 +82,7 @@
     surfaceSlots: [],
     splitSlots: [],
     strokeCountSlots: [],
+    breathCountSlots: [],
     turns: [],
     selectedSlotId: null,
     markers: [],
@@ -139,6 +142,14 @@
         fromM: slot.fromM,
         toM: slot.toM,
         label: `${slot.fromM}-${slot.toM}m`,
+        count: slot.count,
+      } ) ),
+      breathCountSlots: session.breathCounts.map( ( slot, index ) => ( {
+        id: `breath-${slot.lengthIndex}-${slot.fromM}-${slot.toM}-${index}`,
+        lengthIndex: slot.lengthIndex,
+        fromM: slot.fromM,
+        toM: slot.toM,
+        label: `Breaths ${slot.fromM}-${slot.toM}m`,
         count: slot.count,
       } ) ),
       turns: session.turns.map( turn => ( {

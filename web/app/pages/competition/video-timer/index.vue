@@ -109,6 +109,7 @@
     surfaceSlots: [],
     splitSlots: [],
     strokeCountSlots: [],
+    breathCountSlots: [],
     turns: [],
     selectedSlotId: null,
     markers: [],
