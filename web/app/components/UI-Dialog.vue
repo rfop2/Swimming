@@ -7,31 +7,26 @@
     title: string
     confirmLabel?: string
     confirmEnabled?: () => boolean
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    action: ( ...arg: any[] ) => void
     cancelLabel?: string
-    cancelAction?: () => void
   }>(), {
     confirmLabel: "Ok",
     confirmEnabled: () => true,
     cancelLabel: "Cancel",
-    cancelAction: () => {},
   } )
 
-  const confirmAction = ( event: Event ) => {
-    props.action( event )
+  const emit = defineEmits<{
+    confirm: []
+    cancel: []
+  }>()
+
+  const confirmAction = () => {
+    emit( "confirm" )
     model.value = false
-    // emit( "update:modelValue", false )
   }
 
-  /* const emit = defineEmits<{
-    ( e: "update:modelValue", value: boolean ): void
-  }>() */
-
   const close = () => {
-    props.cancelAction()
+    emit( "cancel" )
     model.value = false
-    // emit( "update:modelValue", false )
   }
 </script>
 
