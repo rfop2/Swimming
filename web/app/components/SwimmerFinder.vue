@@ -137,8 +137,8 @@
     v-model="model"
     title="Find a swimmer"
     confirm-label="Select"
-    :action="() => action( selectedSwimmer )"
     :confirm-enabled="() => !!selectedSwimmer.id"
+    @confirm="() => action( selectedSwimmer )"
   >
     <div class="px-3 py-5 sm:p-3">
       <div class="mt-2 max-w-xl text-sm text-gray-500">

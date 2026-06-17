@@ -224,6 +224,12 @@
 
   const editing = ref<number | null>( null )
   const deleting = ref<number | null>( null )
+  const showDeleteConfirm = computed( {
+    get: () => deleting.value !== null,
+    set: ( v ) => {
+      if ( !v ) deleting.value = null
+    },
+  } )
 
   const submitErrors = reactive<Array<string>>( [] )
 
@@ -815,12 +821,11 @@
   </form>
 
   <UI-Confirm
-    v-if="deleting !== null"
+    v-model="showDeleteConfirm"
     title="Delete swimmer"
-    :text="`Are you sure you want to delete swimmer '${userSwimmers[deleting!]!.value.fullName}' from your account?`"
+    :text="`Are you sure you want to delete swimmer '${userSwimmers[deleting ?? -1]?.value.fullName}' from your account?`"
     confirm-label="Delete"
-    :action="deleteSwimmer"
-    :cancel-action="() => { deleting = null }"
+    @confirm="deleteSwimmer"
   />
 
   <SwimmerFinder
@@ -834,8 +839,8 @@
     title="Edit Swimmer"
     confirm-label="Update"
     :confirm-enabled="() => !swimmerErrors(editing!)"
-    :action="() => { editing = null }"
-    :cancel-action="() => resetSwimmer()"
+    @confirm="() => { editing = null }"
+    @cancel="() => resetSwimmer()"
   >
     <div class="px-3 py-5 sm:p-4">
       <form

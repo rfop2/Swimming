@@ -64,6 +64,12 @@
   }
 
   const taskToUpdate = ref<Task | null>( null )
+  const showUpdateConfirm = computed( {
+    get: () => taskToUpdate.value !== null,
+    set: ( v ) => {
+      if ( !v ) taskToUpdate.value = null
+    },
+  } )
   const updateSuccess = ref( false )
   const updateFailed = ref( false )
   const updateSelectedTask = async () => {
@@ -87,6 +93,12 @@
   }
 
   const taskToCancel = ref<Task | null>( null )
+  const showCancelConfirm = computed( {
+    get: () => taskToCancel.value !== null,
+    set: ( v ) => {
+      if ( !v ) taskToCancel.value = null
+    },
+  } )
   const cancelSuccess = ref( false )
   const cancelFailed = ref( false )
   const cancelSelectedTask = async () => {
@@ -309,12 +321,11 @@
       </table>
     </div>
     <UI-Confirm
-      v-if="taskToUpdate !== null"
+      v-model="showUpdateConfirm"
       title="Update Task"
-      :text="`Are you sure you want to resubmit task '${taskToUpdate.taskId}'?`"
+      :text="`Are you sure you want to resubmit task '${taskToUpdate?.taskId}'?`"
       confirm-label="Resubmit"
-      :action="updateSelectedTask"
-      :cancel-action="() => taskToUpdate = null"
+      @confirm="updateSelectedTask"
     />
     <UI-SuccessNotification
       v-model="updateSuccess"
@@ -327,12 +338,11 @@
       text="The requested task could not be resubmitted to the queue."
     />
     <UI-Confirm
-      v-if="taskToCancel !== null"
+      v-model="showCancelConfirm"
       title="Cancel Task"
-      :text="`Are you sure you want to cancel task '${taskToCancel.taskId}'?`"
+      :text="`Are you sure you want to cancel task '${taskToCancel?.taskId}'?`"
       confirm-label="Delete"
-      :action="cancelSelectedTask"
-      :cancel-action="() => taskToCancel = null"
+      @confirm="cancelSelectedTask"
     />
     <UI-SuccessNotification
       v-model="cancelSuccess"

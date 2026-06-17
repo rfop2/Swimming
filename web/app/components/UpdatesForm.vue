@@ -343,10 +343,10 @@
     title="Choose update type"
     confirm-label="Select"
     :confirm-enabled="() => !!updateType"
-    :action="async () => {
+    @confirm="async () => {
       await queueUpdates()
     }"
-    :cancel-action="() => {
+    @cancel="() => {
       selectedForUpdate = null
     }"
   >

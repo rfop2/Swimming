@@ -89,6 +89,12 @@
   }
 
   const deleting = ref<number | null>( null )
+  const showDeleteConfirm = computed( {
+    get: () => deleting.value !== null,
+    set: ( v ) => {
+      if ( !v ) deleting.value = null
+    },
+  } )
 
   const deleteUser = async () => {
     if ( !users.value )
@@ -372,11 +378,11 @@
       </div>
     </div>
     <UI-Confirm
-      v-if="deleting !== null"
+      v-model="showDeleteConfirm"
       title="Delete user"
-      :text="`Are you sure you want to delete user '${(filteredUsers as User[])[deleting]?.username}' from the site?`"
+      :text="`Are you sure you want to delete user '${(filteredUsers as User[])[deleting ?? -1]?.username}' from the site?`"
       confirm-label="Delete"
-      :action="deleteUser"
+      @confirm="deleteUser"
     />
     <TransitionRoot
       as="template"
