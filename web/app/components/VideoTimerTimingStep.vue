@@ -1049,16 +1049,7 @@
 
                     <div class="grid grid-cols-1 gap-3">
                       <div>
-                        <label class="block text-xs font-semibold text-gray-700 mb-1">
-                          Official finish time
-                        </label>
-
-                        <input
-                          v-model="officialFinishText"
-                          type="text"
-                          placeholder="e.g. 1:14.58"
-                          class="w-full h-10 rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-900"
-                        >
+                        <VideoTimerOfficialTimeInput v-model="officialFinishText" label="Official finish time" />
 
                         <div
                           v-if="officialFinishText.trim() && officialFinishMs === null"
@@ -1112,16 +1103,7 @@
 
                     <div class="grid grid-cols-1 gap-3">
                       <div>
-                        <label class="block text-xs font-semibold text-gray-700 mb-1">
-                          Official finish time
-                        </label>
-
-                        <input
-                          v-model="officialFinishText"
-                          type="text"
-                          placeholder="e.g. 1:14.58"
-                          class="w-full h-10 rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-900"
-                        >
+                        <VideoTimerOfficialTimeInput v-model="officialFinishText" label="Official finish time" />
 
                         <div
                           v-if="officialFinishText.trim() && officialFinishMs === null"

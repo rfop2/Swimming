@@ -660,14 +660,8 @@
                 <UI-Listbox v-model="selections.distance" :options="distanceOptions" label="Distance" placeholder="Choose Distance" />
               </div>
 
-              <div class="w-full sm:w-32">
-                <label class="block text-xs font-medium text-gray-700 mb-1">Official time</label>
-                <input
-                  v-model="resultOfficialFinishTime"
-                  type="text"
-                  placeholder="e.g. 39.49"
-                  class="w-full h-10 rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-900"
-                >
+              <div class="w-full sm:w-48">
+                <VideoTimerOfficialTimeInput v-model="resultOfficialFinishTime" />
               </div>
             </div>
           

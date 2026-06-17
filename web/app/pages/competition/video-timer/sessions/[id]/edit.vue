@@ -111,7 +111,15 @@
 
   const formatOfficialFinishTimeInput = ( ms: number | null | undefined ) => {
     if ( ms === null || ms === undefined || !Number.isFinite( ms ) ) return ""
-    return ( ms / 1000 ).toFixed( 2 )
+    const totalHundredths = Math.round( ms / 10 )
+    const totalSeconds = Math.floor( totalHundredths / 100 )
+    const hundredths = totalHundredths % 100
+    const minutes = Math.floor( totalSeconds / 60 )
+    const seconds = totalSeconds % 60
+    const fraction = String( hundredths ).padStart( 2, "0" )
+
+    if ( minutes > 0 ) return `${minutes}:${String( seconds ).padStart( 2, "0" )}.${fraction}`
+    return `${seconds}.${fraction}`
   }
 
   const buildEditDraft = ( session: SessionDetail ): VideoTimerDraft => {
