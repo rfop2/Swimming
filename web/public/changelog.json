@@ -1,14 +1,102 @@
 [
   {
-    "isoDate": "2026-04-14",
-    "niceDate": "14 April 2026",
-    "diff": "15.2.0..",
-    "href": "https://bitbucket.org/swimracing/swimming/compare/15.2.1..15.2.0",
+    "isoDate": "2026-06-18",
+    "niceDate": "18 June 2026",
+    "diff": "15.2.1..",
+    "href": "https://bitbucket.org/swimracing/swimming/compare/15.3.0..15.2.1",
     "major": false,
     "minor": false,
     "tag": null,
+    "title": "15.3.0",
+    "date": "2026-06-18T16:28:22.077Z",
+    "summary": null,
+    "commits": [
+      {
+        "hash": "11115b85860388f8b071a6a67bc4dd838510214e",
+        "shorthash": "11115b8",
+        "author": "rodrigo ferreira",
+        "email": "rf.oliveirapaula@gmail.com",
+        "date": "2026-06-17T19:15:44.000Z",
+        "niceDate": "17 June 2026",
+        "subject": "add breath count tracking to video timer + Video controls card on top of Controls with steps",
+        "message": "add breath count tracking to video timer + Video controls card on top of Controls with steps",
+        "fixes": null,
+        "href": "https://bitbucket.org/swimracing/swimming/commits/11115b85860388f8b071a6a67bc4dd838510214e",
+        "breaking": false,
+        "files": 12,
+        "insertions": 769,
+        "deletions": 26,
+        "merge": null
+      },
+      {
+        "hash": "da9b5d0dbb7c3ac53f5ed731eb91b759dcfc3a19",
+        "shorthash": "da9b5d0",
+        "author": "rodrigo ferreira",
+        "email": "rf.oliveirapaula@gmail.com",
+        "date": "2026-06-17T19:37:10.000Z",
+        "niceDate": "17 June 2026",
+        "subject": "feature compare swimmer",
+        "message": "feature compare swimmer",
+        "fixes": null,
+        "href": "https://bitbucket.org/swimracing/swimming/commits/da9b5d0dbb7c3ac53f5ed731eb91b759dcfc3a19",
+        "breaking": false,
+        "files": 2,
+        "insertions": 774,
+        "deletions": 0,
+        "merge": null
+      },
+      {
+        "hash": "5df53631f4ed56a2cbef7111817b492662202016",
+        "shorthash": "5df5363",
+        "author": "rodrigo ferreira",
+        "email": "rf.oliveirapaula@gmail.com",
+        "date": "2026-06-17T17:16:38.000Z",
+        "niceDate": "17 June 2026",
+        "subject": "Split video timer official time input",
+        "message": "Split video timer official time input",
+        "fixes": null,
+        "href": "https://bitbucket.org/swimracing/swimming/commits/5df53631f4ed56a2cbef7111817b492662202016",
+        "breaking": false,
+        "files": 4,
+        "insertions": 162,
+        "deletions": 32,
+        "merge": null
+      }
+    ],
+    "merges": [
+      {
+        "id": "38",
+        "message": "Improv video timer feature",
+        "href": "https://bitbucket.org/swimracing/swimming/pull-requests/38",
+        "author": "Rodrigo Ferreira",
+        "commit": {
+          "hash": "25f157fec94c19063d64e4698c9b9df2ed8b0d9e",
+          "shorthash": "25f157f",
+          "author": "Rodrigo Ferreira",
+          "email": "rf.oliveirapaula@gmail.com",
+          "date": "2026-06-18T13:02:00.000Z",
+          "niceDate": "18 June 2026",
+          "subject": "Merged in Improv-video-timer-feature (pull request #38)",
+          "message": "Merged in Improv-video-timer-feature (pull request #38)\n\nImprov video timer feature",
+          "fixes": null,
+          "href": "https://bitbucket.org/swimracing/swimming/commits/25f157fec94c19063d64e4698c9b9df2ed8b0d9e",
+          "breaking": false
+        }
+      }
+    ],
+    "fixes": []
+  },
+  {
+    "isoDate": "2026-04-14",
+    "niceDate": "14 April 2026",
+    "diff": "15.2.0..15.2.1",
+    "href": "https://bitbucket.org/swimracing/swimming/compare/15.2.1..15.2.0",
+    "major": false,
+    "minor": false,
+    "tag": "15.2.1",
+    "date": "2026-04-14",
     "title": "15.2.1",
-    "date": "2026-04-14T17:27:30.614Z",
+    "version": "15.2.1",
     "summary": null,
     "commits": [
       {
@@ -2268,42 +2356,6 @@
           "message": "Merged in KAN-91-Changes (pull request #23)\n\nrefactor video timer sessions to use results instead of meets",
           "fixes": null,
           "href": "https://bitbucket.org/swimracing/swimming/commits/4fcd1de8c694e1cbb6d8e3979bdef21b6814fe59",
-          "breaking": false
-        }
-      }
-    ],
-    "fixes": []
-  },
-  {
-    "isoDate": "2026-03-17",
-    "niceDate": "17 March 2026",
-    "diff": "14.18.1..14.19.0",
-    "href": "https://bitbucket.org/swimracing/swimming/compare/14.19.0..14.18.1",
-    "major": false,
-    "minor": true,
-    "tag": "14.19.0",
-    "date": "2026-03-17",
-    "title": "14.19.0",
-    "version": "14.19.0",
-    "summary": null,
-    "commits": [],
-    "merges": [
-      {
-        "id": "22",
-        "message": "Improve meet matching and date display in Video Timer session setup",
-        "href": "https://bitbucket.org/swimracing/swimming/pull-requests/22",
-        "author": "Rodrigo Ferreira",
-        "commit": {
-          "hash": "4be2d2095ea1eb7b9bae6f1bec5f81d9ff902e9e",
-          "shorthash": "4be2d20",
-          "author": "Rodrigo Ferreira",
-          "email": "rf.oliveirapaula@gmail.com",
-          "date": "2026-03-17T13:33:27.000Z",
-          "niceDate": "17 March 2026",
-          "subject": "Merged in KAN-91-Changes (pull request #22)",
-          "message": "Merged in KAN-91-Changes (pull request #22)\n\nImprove meet matching and date display in Video Timer session setup",
-          "fixes": null,
-          "href": "https://bitbucket.org/swimracing/swimming/commits/4be2d2095ea1eb7b9bae6f1bec5f81d9ff902e9e",
           "breaking": false
         }
       }

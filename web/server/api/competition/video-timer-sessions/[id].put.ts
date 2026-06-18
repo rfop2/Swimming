@@ -35,6 +35,12 @@ type Body = {
     toM: number
     count?: number | null
   }>
+  breathCounts?: Array<{
+    lengthIndex: number
+    fromM: number
+    toM: number
+    count?: number | null
+  }>
   turns?: Array<{
     turnIndex: number
     breakoutM?: number | null
@@ -170,6 +176,56 @@ export default defineEventHandler( async ( event ) => {
       count: number | null
     }>
 
+  const strokeCountIndexSet = new Set<number>()
+  for ( const item of strokeCounts ) {
+    if ( item.lengthIndex < 1 || item.lengthIndex > lengthCount ) {
+      throw createError( { status: 400, message: `Invalid stroke count lengthIndex: ${item.lengthIndex}` } )
+    }
+    if ( !( item.fromM >= 0 ) || !( item.toM > item.fromM ) || item.toM > distanceM ) {
+      throw createError( { status: 400, message: `Invalid stroke count range for lengthIndex: ${item.lengthIndex}` } )
+    }
+    if ( strokeCountIndexSet.has( item.lengthIndex ) ) {
+      throw createError( { status: 400, message: `Duplicate stroke count lengthIndex: ${item.lengthIndex}` } )
+    }
+    strokeCountIndexSet.add( item.lengthIndex )
+  }
+
+  if ( strokeCountIndexSet.size !== lengthCount || strokeCounts.some( item => item.count === null || item.count <= 0 ) ) {
+    throw createError( { status: 400, message: "Stroke counts are required for every length" } )
+  }
+
+  const breathCounts = ( Array.isArray( body?.breathCounts ) ? body.breathCounts : [] )
+    .map( item => ( {
+      lengthIndex: asPositiveIntOrNull( item?.lengthIndex ),
+      fromM: asDecimalOrNull( item?.fromM ),
+      toM: asDecimalOrNull( item?.toM ),
+      count: asUnsignedIntOrNull( item?.count ),
+    } ) )
+    .filter( item => item.lengthIndex !== null && item.fromM !== null && item.toM !== null ) as Array<{
+      lengthIndex: number
+      fromM: number
+      toM: number
+      count: number | null
+    }>
+
+  const breathCountIndexSet = new Set<number>()
+  for ( const item of breathCounts ) {
+    if ( item.lengthIndex < 1 || item.lengthIndex > lengthCount ) {
+      throw createError( { status: 400, message: `Invalid breath count lengthIndex: ${item.lengthIndex}` } )
+    }
+    if ( !( item.fromM >= 0 ) || !( item.toM > item.fromM ) || item.toM > distanceM ) {
+      throw createError( { status: 400, message: `Invalid breath count range for lengthIndex: ${item.lengthIndex}` } )
+    }
+    if ( breathCountIndexSet.has( item.lengthIndex ) ) {
+      throw createError( { status: 400, message: `Duplicate breath count lengthIndex: ${item.lengthIndex}` } )
+    }
+    breathCountIndexSet.add( item.lengthIndex )
+  }
+
+  if ( breathCountIndexSet.size !== lengthCount || breathCounts.some( item => item.count === null || item.count <= 0 ) ) {
+    throw createError( { status: 400, message: "Breath counts are required for every length" } )
+  }
+
   const turns = ( Array.isArray( body?.turns ) ? body.turns : [] )
     .map( item => ( {
       turnIndex: asPositiveIntOrNull( item?.turnIndex ),
@@ -262,6 +318,12 @@ export default defineEventHandler( async ( event ) => {
     )
     await deleteStrokeCounts.run( { sessionId } )
 
+    const deleteBreathCounts = prepareStatement(
+      conn,
+      "DELETE FROM VideoTimerSessionBreathCounts WHERE sessionId = :sessionId"
+    )
+    await deleteBreathCounts.run( { sessionId } )
+
     const deleteTurns = prepareStatement(
       conn,
       "DELETE FROM VideoTimerSessionTurns WHERE sessionId = :sessionId"
@@ -352,6 +414,38 @@ export default defineEventHandler( async ( event ) => {
 
       for ( const item of strokeCounts ) {
         await insertStrokeCount.run( {
+          sessionId,
+          lengthIndex: item.lengthIndex,
+          fromM: item.fromM,
+          toM: item.toM,
+          count: item.count,
+        } )
+      }
+    }
+
+    if ( breathCounts.length ) {
+      const insertBreathCount = prepareStatement(
+        conn,
+        `
+        INSERT INTO VideoTimerSessionBreathCounts (
+          sessionId,
+          lengthIndex,
+          fromM,
+          toM,
+          count
+        )
+        VALUES (
+          :sessionId,
+          :lengthIndex,
+          :fromM,
+          :toM,
+          :count
+        )
+        `
+      )
+
+      for ( const item of breathCounts ) {
+        await insertBreathCount.run( {
           sessionId,
           lengthIndex: item.lengthIndex,
           fromM: item.fromM,

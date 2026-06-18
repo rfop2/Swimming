@@ -28,6 +28,7 @@
 
   type MarkerSlot = VideoTimerDraft["surfaceSlots"][number]
   type StrokeCountSlot = VideoTimerDraft["strokeCountSlots"][number]
+  type BreathCountSlot = VideoTimerDraft["breathCountSlots"][number]
 
   type TurnPlanItem = ReturnType<typeof buildTurnPlan>[number]
 
@@ -80,6 +81,14 @@
       missed: slot.missed,
     } ) ),
     strokeCountSlots: props.draft.strokeCountSlots.map( slot => ( {
+      id: slot.id,
+      lengthIndex: slot.lengthIndex,
+      fromM: slot.fromM,
+      toM: slot.toM,
+      label: slot.label,
+      count: slot.count,
+    } ) ),
+    breathCountSlots: props.draft.breathCountSlots.map( slot => ( {
       id: slot.id,
       lengthIndex: slot.lengthIndex,
       fromM: slot.fromM,
@@ -177,6 +186,20 @@
       }
     } )
 
+  const makeBreathCountDraftSlots = ( items: PlanStrokeCountSlot[], currentSlots: BreathCountSlot[] ): BreathCountSlot[] =>
+    items.map( item => {
+      const existing = currentSlots.find( slot => strokePlanKey( slot ) === strokePlanKey( item ) )
+
+      return {
+        id: existing?.id ?? makeId(),
+        lengthIndex: item.lengthIndex,
+        fromM: item.fromM,
+        toM: item.toM,
+        label: item.label.replace( /^Count /, "Breaths " ),
+        count: existing?.count ?? null,
+      }
+    } )
+
   const makeTurnDraftRows = ( items: TurnPlanItem[], currentRows: VideoTimerDraft["turns"] ): VideoTimerTurnAnalysisRecord[] =>
     items.map( item => {
       const existing = currentRows.find( row => row.turnIndex === item.turnIndex )
@@ -191,6 +214,7 @@
     surfaceKeys: props.draft.surfaceSlots.map( slot => markerPlanKey( slot ) ),
     splitKeys: props.draft.splitSlots.map( slot => markerPlanKey( slot ) ),
     strokeCountKeys: props.draft.strokeCountSlots.map( slot => strokePlanKey( slot ) ),
+    breathCountKeys: props.draft.breathCountSlots.map( slot => strokePlanKey( slot ) ),
     turnKeys: props.draft.turns.map( row => row.turnIndex ),
   } )
 
@@ -208,6 +232,7 @@
       surfaceKeys: surface.map( item => markerPlanKey( item ) ),
       splitKeys: split.map( item => markerPlanKey( item ) ),
       strokeCountKeys: strokeCounts.map( item => strokePlanKey( item ) ),
+      breathCountKeys: strokeCounts.map( item => strokePlanKey( item ) ),
       turnKeys: turns.map( item => item.turnIndex ),
     }
   }
@@ -226,6 +251,7 @@
       sameStringArray( current.surfaceKeys, expected.surfaceKeys ) &&
       sameStringArray( current.splitKeys, expected.splitKeys ) &&
       sameStringArray( current.strokeCountKeys, expected.strokeCountKeys ) &&
+      sameStringArray( current.breathCountKeys, expected.breathCountKeys ) &&
       sameNumberArray( current.turnKeys, expected.turnKeys )
 
     const savedMarkerKeys = new Set( props.draft.markers.map( marker => markerRecordKey( marker ) ) )
@@ -261,6 +287,7 @@
     const nextSurfaceSlots = makeMarkerSlotsFromPlan( expected.surface, props.draft.surfaceSlots, props.draft.markers )
     const nextSplitSlots = makeMarkerSlotsFromPlan( expected.split, props.draft.splitSlots, props.draft.markers )
     const nextStrokeCountSlots = makeStrokeCountDraftSlots( expected.strokeCounts, props.draft.strokeCountSlots )
+    const nextBreathCountSlots = makeBreathCountDraftSlots( expected.strokeCounts, props.draft.breathCountSlots )
     const nextTurns = makeTurnDraftRows( expected.turns, props.draft.turns )
 
     const allNextSlots = [ ...nextSurfaceSlots, ...nextSplitSlots ]
@@ -279,6 +306,7 @@
         next.surfaceSlots = nextSurfaceSlots
         next.splitSlots = nextSplitSlots
         next.strokeCountSlots = nextStrokeCountSlots
+        next.breathCountSlots = nextBreathCountSlots
         next.turns = nextTurns
         next.selectedSlotId = nextSelectedSlotId
         next.markers = props.draft.markers.map( marker => ( {
@@ -304,6 +332,7 @@
       next.surfaceSlots = nextSurfaceSlots.map( slot => ( { ...slot, videoMs: null, missed: false } ) )
       next.splitSlots = nextSplitSlots.map( slot => ( { ...slot, videoMs: null, missed: false } ) )
       next.strokeCountSlots = nextStrokeCountSlots
+      next.breathCountSlots = nextBreathCountSlots
       next.turns = nextTurns
       next.selectedSlotId = firstId
       next.markers = []
@@ -775,13 +804,19 @@
     props.draft.strokeCountSlots.every( slot => slot.count !== null && slot.count > 0 )
   )
 
+  const breathCountsComplete = computed( () =>
+    props.draft.breathCountSlots.length > 0 &&
+    props.draft.breathCountSlots.every( slot => slot.count !== null && slot.count > 0 )
+  )
+
   const canStop = computed( () =>
     ( props.mode === "edit" || isReady.value ) &&
     props.draft.startOffsetMs !== null &&
     props.draft.startOffsetMs >= 0 &&
     props.draft.finishVideoMs !== null &&
     allMarkersPlaced.value &&
-    strokeCountsComplete.value
+    strokeCountsComplete.value &&
+    breathCountsComplete.value
   )
 
   const emitStop = () => {
@@ -817,6 +852,14 @@
   const updateStrokeCountValue = ( id: string, raw: string ) => {
     updateDraft( next => {
       const slot = next.strokeCountSlots.find( item => item.id === id ) ?? null
+      if ( !slot ) return
+      slot.count = parseCountValue( raw )
+    } )
+  }
+
+  const updateBreathCountValue = ( id: string, raw: string ) => {
+    updateDraft( next => {
+      const slot = next.breathCountSlots.find( item => item.id === id ) ?? null
       if ( !slot ) return
       slot.count = parseCountValue( raw )
     } )
@@ -932,7 +975,7 @@
                   />
                 </div>
 
-                <div class="px-3 pb-3">
+                <div v-if="false" class="px-3 pb-3">
                   <div class="mt-4 flex items-center justify-between gap-4">
                     <div class="min-w-0 text-xs tabular-nums text-gray-500 truncate">
                       View: {{ formatVideoMsPrecise(visibleStartMs) }} → {{ formatVideoMsPrecise(visibleEndMs) }}
@@ -1040,6 +1083,109 @@
             <div class="w-full">
               <div class="text-sm font-semibold text-gray-800 mb-2">Controls</div>
 
+              <div class="mb-4 w-full rounded-xl border border-gray-200 bg-white p-3">
+                <div class="flex items-center justify-between gap-4">
+                  <div class="min-w-0 text-xs tabular-nums text-gray-500 truncate">
+                    View: {{ formatVideoMsPrecise(visibleStartMs) }} -> {{ formatVideoMsPrecise(visibleEndMs) }}
+                  </div>
+
+                  <div class="shrink-0 flex items-center gap-2">
+                    <button
+                      class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-gray-300 bg-white text-sm font-semibold text-gray-700 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
+                      type="button"
+                      :disabled="!canZoomOut"
+                      @click="zoomOut"
+                    >
+                      -
+                    </button>
+
+                    <div class="min-w-[3rem] text-center text-xs font-semibold tabular-nums text-gray-700">
+                      x{{ timelineZoom }}
+                    </div>
+
+                    <button
+                      class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-gray-300 bg-white text-sm font-semibold text-gray-700 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
+                      type="button"
+                      :disabled="!canZoomIn"
+                      @click="zoomIn"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+
+                <div class="mt-2 flex items-center justify-between gap-3 text-xs tabular-nums text-gray-500">
+                  <div class="shrink-0 font-semibold text-gray-700 ml-auto">
+                    Cursor: {{ formatVideoMsPrecise(currentVideoMs) }}
+                  </div>
+                </div>
+
+                <div v-if="timelineTicks.length" class="relative mt-4 h-9 overflow-hidden rounded-md border border-gray-200 bg-white px-1">
+                  <div
+                    v-for="timelineTick in timelineTicks"
+                    :key="`tick-${timelineTick.ms}`"
+                    class="absolute top-0 bottom-0"
+                    :style="{ left: `${pctFromVisibleMs(timelineTick.ms)}%` }"
+                  >
+                    <div class="w-px" :class="timelineTick.showLabel ? 'h-4 bg-gray-500' : 'h-2 bg-gray-300'" />
+                    <div
+                      v-if="timelineTick.showLabel"
+                      class="mt-0.5 -translate-x-1/2 text-xs font-medium tabular-nums text-gray-700 whitespace-nowrap bg-white/90 px-1 rounded"
+                    >
+                      {{ formatTickLabel(timelineTick.ms) }}
+                    </div>
+                  </div>
+                </div>
+
+                <div
+                  ref="timelineEl"
+                  :class="[
+                    'relative mt-4 h-10 rounded-md overflow-hidden cursor-pointer select-none',
+                    !hasFinishMarked ? 'bg-amber-100 ring-2 ring-amber-300' : 'bg-gray-200'
+                  ]"
+                  @pointerdown="onTimelinePointerDown"
+                >
+                  <div class="absolute inset-y-0 w-0.5 bg-gray-700" :style="{ left: `${pctFromVisibleMs(currentVideoMs)}%` }" />
+
+                  <div
+                    v-if="startPinMs !== null && durationMs && isMsVisibleInTimeline(startPinMs)"
+                    class="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 h-7 w-3 rounded bg-green-700"
+                    :style="{ left: `${pctFromVisibleMs(startPinMs)}%` }"
+                    @pointerdown="(e) => onPinPointerDown('start', undefined, e)"
+                    @pointermove="onPinPointerMove"
+                    @pointerup="onPinPointerUp"
+                  />
+
+                  <div
+                    v-if="finishPinMs !== null && durationMs && isMsVisibleInTimeline(finishPinMs)"
+                    class="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 h-7 w-3 rounded bg-red-700"
+                    :style="{ left: `${pctFromVisibleMs(finishPinMs)}%` }"
+                    @pointerdown="(e) => onPinPointerDown('finish', undefined, e)"
+                    @pointermove="onPinPointerMove"
+                    @pointerup="onPinPointerUp"
+                  />
+
+                  <div
+                    v-for="s in allMarkerSlots"
+                    v-show="s.videoMs !== null && isMsVisibleInTimeline(s.videoMs)"
+                    :key="s.id"
+                    class="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 h-6 w-2 rounded transition-shadow"
+                    :class="markerPinClass(s)"
+                    :style="{ left: `${pctFromVisibleMs(s.videoMs!)}%` }"
+                    @pointerdown="(e) => onPinPointerDown('marker', s.id, e)"
+                    @pointermove="onPinPointerMove"
+                    @pointerup="onPinPointerUp"
+                  />
+                </div>
+
+                <div class="mt-3 flex flex-wrap gap-2 text-xs text-gray-600">
+                  <div class="flex items-center gap-1"><span class="inline-block h-3 w-3 rounded bg-green-700" /> Start</div>
+                  <div class="flex items-center gap-1"><span class="inline-block h-3 w-3 rounded bg-red-700" /> Finish</div>
+                  <div class="flex items-center gap-1"><span class="inline-block h-3 w-3 rounded bg-cyan-600" /> Surfacing</div>
+                  <div class="flex items-center gap-1"><span class="inline-block h-3 w-3 rounded bg-blue-600" /> Split</div>
+                </div>
+              </div>
+
               <div class="w-full rounded-xl border border-gray-200 bg-white p-4">
                 <template v-if="!hasFinishMarked">
                   <div class="mt-2">
@@ -1049,16 +1195,7 @@
 
                     <div class="grid grid-cols-1 gap-3">
                       <div>
-                        <label class="block text-xs font-semibold text-gray-700 mb-1">
-                          Official finish time
-                        </label>
-
-                        <input
-                          v-model="officialFinishText"
-                          type="text"
-                          placeholder="e.g. 1:14.58"
-                          class="w-full h-10 rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-900"
-                        >
+                        <VideoTimerOfficialTimeInput v-model="officialFinishText" label="Official finish time" />
 
                         <div
                           v-if="officialFinishText.trim() && officialFinishMs === null"
@@ -1112,16 +1249,7 @@
 
                     <div class="grid grid-cols-1 gap-3">
                       <div>
-                        <label class="block text-xs font-semibold text-gray-700 mb-1">
-                          Official finish time
-                        </label>
-
-                        <input
-                          v-model="officialFinishText"
-                          type="text"
-                          placeholder="e.g. 1:14.58"
-                          class="w-full h-10 rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-900"
-                        >
+                        <VideoTimerOfficialTimeInput v-model="officialFinishText" label="Official finish time" />
 
                         <div
                           v-if="officialFinishText.trim() && officialFinishMs === null"
@@ -1317,6 +1445,35 @@
 
                     <div v-else class="text-xs text-gray-500">
                       No stroke count segments available for this race plan.
+                    </div>
+                  </div>
+
+                  <div class="mt-4 rounded-md border border-gray-200 bg-white p-3">
+                    <div class="text-xs font-semibold text-gray-700 mb-2">Breath counts</div>
+
+                    <div v-if="props.draft.breathCountSlots.length" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div
+                        v-for="slot in props.draft.breathCountSlots"
+                        :key="slot.id"
+                      >
+                        <label class="block text-xs font-semibold text-gray-700 mb-1">
+                          {{ slot.label }}
+                        </label>
+
+                        <input
+                          :value="slot.count ?? ''"
+                          class="w-full h-10 rounded-md border border-gray-300 px-3 text-sm"
+                          type="number"
+                          min="1"
+                          step="1"
+                          inputmode="numeric"
+                          @input="(event) => updateBreathCountValue(slot.id, (event.target as HTMLInputElement).value)"
+                        >
+                      </div>
+                    </div>
+
+                    <div v-else class="text-xs text-gray-500">
+                      No breath count segments available for this race plan.
                     </div>
                   </div>
 

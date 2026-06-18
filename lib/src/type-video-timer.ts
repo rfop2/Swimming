@@ -8,6 +8,7 @@ import type {
   TurnAnalysisRow,
   VideoTimerComputedAnalysis,
   VideoTimerMarkerRecord,
+  VideoTimerBreathCountRecord,
   VideoTimerSessionComputationInput,
   VideoTimerStrokeCountRecord,
   VideoTimerTurnAnalysisRecord,
@@ -27,12 +28,18 @@ export type VideoTimerDraftStrokeCountSlot = PlanStrokeCountSlot & {
   count: number | null
 }
 
+export type VideoTimerDraftBreathCountSlot = PlanStrokeCountSlot & {
+  id: string
+  count: number | null
+}
+
 export type VideoTimerDraft = {
   finishVideoMs: number | null
   startOffsetMs: number | null
   surfaceSlots: VideoTimerDraftMarkerSlot[]
   splitSlots: VideoTimerDraftMarkerSlot[]
   strokeCountSlots: VideoTimerDraftStrokeCountSlot[]
+  breathCountSlots: VideoTimerDraftBreathCountSlot[]
   turns: VideoTimerTurnAnalysisRecord[]
   selectedSlotId: string | null
   markers: VideoTimerMarkerRecord[]
@@ -100,6 +107,9 @@ const findMarker = (
 const mapStrokeCountsByLength = ( rows: VideoTimerStrokeCountRecord[] ) =>
   new Map<number, VideoTimerStrokeCountRecord>( rows.map( row => [ row.lengthIndex, row ] ) )
 
+const mapBreathCountsByLength = ( rows: VideoTimerBreathCountRecord[] ) =>
+  new Map<number, VideoTimerBreathCountRecord>( rows.map( row => [ row.lengthIndex, row ] ) )
+
 const mapTurnsByIndex = ( rows: VideoTimerTurnAnalysisRecord[] ) =>
   new Map<number, VideoTimerTurnAnalysisRecord>( rows.map( row => [ row.turnIndex, row ] ) )
 
@@ -112,6 +122,7 @@ export const buildVideoTimerComputedAnalysis = (
   const strokePlan = buildStrokeCountSlots( input.course, input.distance )
 
   const strokeCountMap = mapStrokeCountsByLength( input.strokeCounts )
+  const breathCountMap = mapBreathCountsByLength( input.breathCounts )
   const turnMap = mapTurnsByIndex( input.turns )
 
   const finishTimeMs = toRaceMs( findMarker( input.markers, "finish_time" )?.tMs ?? null, input.startOffsetMs )
@@ -221,7 +232,9 @@ export const buildVideoTimerComputedAnalysis = (
     const timeMs = deltaMs( endMs, startMs )
     const distanceM = Number( ( slot.toM - slot.fromM ).toFixed( 2 ) )
     const savedStroke = strokeCountMap.get( slot.lengthIndex ) ?? null
+    const savedBreath = breathCountMap.get( slot.lengthIndex ) ?? null
     const count = savedStroke?.count ?? null
+    const breathCount = savedBreath?.count ?? null
 
     return {
       lengthIndex: slot.lengthIndex,
@@ -231,6 +244,7 @@ export const buildVideoTimerComputedAnalysis = (
       distanceM,
       timeMs,
       count,
+      breathCount,
       dps: calcDps( distanceM, count ),
       sr: calcSr( count, timeMs ),
       speed: calcSpeed( distanceM, timeMs ),
@@ -241,10 +255,12 @@ export const buildVideoTimerComputedAnalysis = (
     rows: swimFreeRows,
     averageTimeMs: average( swimFreeRows.map( row => row.timeMs ) ),
     averageStrokeCount: average( swimFreeRows.map( row => row.count ) ),
+    averageBreathCount: average( swimFreeRows.map( row => row.breathCount ) ),
     averageDps: average( swimFreeRows.map( row => row.dps ) ),
     averageSr: average( swimFreeRows.map( row => row.sr ) ),
     averageSpeed: average( swimFreeRows.map( row => row.speed ) ),
     totalStrokeCount: total( swimFreeRows.map( row => row.count ) ),
+    totalBreathCount: total( swimFreeRows.map( row => row.breathCount ) ),
   }
 
   return {

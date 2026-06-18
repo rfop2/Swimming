@@ -3,6 +3,7 @@
     Swimmer,
     VideoTimerDraft,
     VideoTimerMarkerRecord,
+    VideoTimerBreathCountRecord,
     VideoTimerStrokeCountRecord,
     VideoTimerTurnAnalysisRecord,
   } from "lib"
@@ -60,6 +61,7 @@
       breakoutStartM: number | null
     } | null
     strokeCounts: VideoTimerStrokeCountRecord[]
+    breathCounts: VideoTimerBreathCountRecord[]
     turns: VideoTimerTurnAnalysisRecord[]
     computed: {
       finishTimeMs: number | null
@@ -80,6 +82,7 @@
     surfaceSlots: [],
     splitSlots: [],
     strokeCountSlots: [],
+    breathCountSlots: [],
     turns: [],
     selectedSlotId: null,
     markers: [],
@@ -111,7 +114,15 @@
 
   const formatOfficialFinishTimeInput = ( ms: number | null | undefined ) => {
     if ( ms === null || ms === undefined || !Number.isFinite( ms ) ) return ""
-    return ( ms / 1000 ).toFixed( 2 )
+    const totalHundredths = Math.round( ms / 10 )
+    const totalSeconds = Math.floor( totalHundredths / 100 )
+    const hundredths = totalHundredths % 100
+    const minutes = Math.floor( totalSeconds / 60 )
+    const seconds = totalSeconds % 60
+    const fraction = String( hundredths ).padStart( 2, "0" )
+
+    if ( minutes > 0 ) return `${minutes}:${String( seconds ).padStart( 2, "0" )}.${fraction}`
+    return `${seconds}.${fraction}`
   }
 
   const buildEditDraft = ( session: SessionDetail ): VideoTimerDraft => {
@@ -131,6 +142,14 @@
         fromM: slot.fromM,
         toM: slot.toM,
         label: `${slot.fromM}-${slot.toM}m`,
+        count: slot.count,
+      } ) ),
+      breathCountSlots: session.breathCounts.map( ( slot, index ) => ( {
+        id: `breath-${slot.lengthIndex}-${slot.fromM}-${slot.toM}-${index}`,
+        lengthIndex: slot.lengthIndex,
+        fromM: slot.fromM,
+        toM: slot.toM,
+        label: `Breaths ${slot.fromM}-${slot.toM}m`,
         count: slot.count,
       } ) ),
       turns: session.turns.map( turn => ( {
