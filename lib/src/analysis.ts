@@ -22,6 +22,13 @@ export type VideoTimerStrokeCountRecord = {
   count: number | null
 }
 
+export type VideoTimerBreathCountRecord = {
+  lengthIndex: number
+  fromM: number
+  toM: number
+  count: number | null
+}
+
 export type VideoTimerTurnAnalysisRecord = {
   turnIndex: number
   breakoutM: number | null
@@ -34,6 +41,7 @@ export type VideoTimerSessionComputationInput = {
   markers: VideoTimerMarkerRecord[]
   analysis: VideoTimerSessionAnalysisRecord | null
   strokeCounts: VideoTimerStrokeCountRecord[]
+  breathCounts: VideoTimerBreathCountRecord[]
   turns: VideoTimerTurnAnalysisRecord[]
 }
 
@@ -75,6 +83,7 @@ export type SwimFreeAnalysisRow = {
   distanceM: number
   timeMs: number | null
   count: number | null
+  breathCount: number | null
   dps: number | null
   sr: number | null
   speed: number | null
@@ -84,10 +93,12 @@ export type SwimFreeSummary = {
   rows: SwimFreeAnalysisRow[]
   averageTimeMs: number | null
   averageStrokeCount: number | null
+  averageBreathCount: number | null
   averageDps: number | null
   averageSr: number | null
   averageSpeed: number | null
   totalStrokeCount: number | null
+  totalBreathCount: number | null
 }
 
 export type VideoTimerComputedAnalysis = {

@@ -3,6 +3,7 @@
     Swimmer,
     VideoTimerDraft,
     VideoTimerMarkerRecord,
+    VideoTimerBreathCountRecord,
     VideoTimerStrokeCountRecord,
   } from "lib"
   import {
@@ -81,6 +82,14 @@
       missed: slot.missed,
     } ) ),
     strokeCountSlots: props.draft.strokeCountSlots.map( slot => ( {
+      id: slot.id,
+      lengthIndex: slot.lengthIndex,
+      fromM: slot.fromM,
+      toM: slot.toM,
+      label: slot.label,
+      count: slot.count,
+    } ) ),
+    breathCountSlots: props.draft.breathCountSlots.map( slot => ( {
       id: slot.id,
       lengthIndex: slot.lengthIndex,
       fromM: slot.fromM,
@@ -173,6 +182,24 @@
       }
     } )
 
+    const nextBreathCountSlots = strokeCountPlan.value.map( slot => {
+      const existing = props.draft.breathCountSlots.find(
+        item =>
+          item.lengthIndex === slot.lengthIndex &&
+          item.fromM === slot.fromM &&
+          item.toM === slot.toM
+      )
+
+      return {
+        id: existing?.id ?? makeId(),
+        lengthIndex: slot.lengthIndex,
+        fromM: slot.fromM,
+        toM: slot.toM,
+        label: slot.label.replace( /^Count /, "Breaths " ),
+        count: existing?.count ?? null,
+      }
+    } )
+
     const nextTurns = turnPlan.value.map( turn => {
       const existing = props.draft.turns.find( item => item.turnIndex === turn.turnIndex )
 
@@ -192,6 +219,16 @@
           slot.toM === next.toM
       } )
 
+    const sameBreathShape =
+      props.draft.breathCountSlots.length === nextBreathCountSlots.length &&
+      props.draft.breathCountSlots.every( ( slot, index ) => {
+        const next = nextBreathCountSlots[index]
+        return !!next &&
+          slot.lengthIndex === next.lengthIndex &&
+          slot.fromM === next.fromM &&
+          slot.toM === next.toM
+      } )
+
     const sameTurnShape =
       props.draft.turns.length === nextTurns.length &&
       props.draft.turns.every( ( row, index ) => {
@@ -199,10 +236,11 @@
         return !!next && row.turnIndex === next.turnIndex
       } )
 
-    if ( sameStrokeShape && sameTurnShape && props.draft.breakoutStartM === FIXED_BREAKOUT_M ) return
+    if ( sameStrokeShape && sameBreathShape && sameTurnShape && props.draft.breakoutStartM === FIXED_BREAKOUT_M ) return
 
     updateDraft( next => {
       next.strokeCountSlots = nextStrokeCountSlots
+      next.breathCountSlots = nextBreathCountSlots
       next.turns = nextTurns
       next.breakoutStartM = FIXED_BREAKOUT_M
     } )
@@ -225,6 +263,15 @@
     } ) )
   )
 
+  const breathCountRecords = computed<VideoTimerBreathCountRecord[]>( () =>
+    props.draft.breathCountSlots.map( slot => ( {
+      lengthIndex: slot.lengthIndex,
+      fromM: slot.fromM,
+      toM: slot.toM,
+      count: slot.count,
+    } ) )
+  )
+
   const computedAnalysis = computed( () =>
     buildVideoTimerComputedAnalysis( {
       course: props.selections.course,
@@ -235,11 +282,13 @@
         breakoutStartM: props.draft.breakoutStartM,
       },
       strokeCounts: strokeCountRecords.value,
+      breathCounts: breathCountRecords.value,
       turns: props.draft.turns,
     } )
   )
 
   const totalStrokeCount = computed( () => computedAnalysis.value.swimFree.totalStrokeCount )
+  const totalBreathCount = computed( () => computedAnalysis.value.swimFree.totalBreathCount )
 
   const averageTurnMetrics = computed( () => {
     const rows = computedAnalysis.value.turns
@@ -317,6 +366,7 @@
           breakoutStartM: props.draft.breakoutStartM,
         },
         strokeCounts: strokeCountRecords.value,
+        breathCounts: breathCountRecords.value,
         turns: props.draft.turns,
         computed: computedAnalysis.value,
       }
@@ -517,7 +567,8 @@
                         <th class="py-2 pr-3 text-left font-semibold text-gray-700">DPS</th>
                         <th class="py-2 pr-3 text-left font-semibold text-gray-700">SR</th>
                         <th class="py-2 pr-3 text-left font-semibold text-gray-700">Speed</th>
-                        <th class="py-2 text-left font-semibold text-gray-700">Count</th>
+                        <th class="py-2 pr-3 text-left font-semibold text-gray-700">Stroke count</th>
+                        <th class="py-2 text-left font-semibold text-gray-700">Breath count</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -527,8 +578,11 @@
                         <td class="py-2 pr-3 text-gray-900">{{ formatNumber(row.dps) }}</td>
                         <td class="py-2 pr-3 text-gray-900">{{ formatNumber(row.sr, 1) }}</td>
                         <td class="py-2 pr-3 text-gray-900">{{ formatNumber(row.speed) }}</td>
-                        <td class="py-2 text-gray-900">
+                        <td class="py-2 pr-3 text-gray-900">
                           {{ props.draft.strokeCountSlots.find(slot => slot.lengthIndex === row.lengthIndex)?.count ?? "—" }}
+                        </td>
+                        <td class="py-2 text-gray-900">
+                          {{ props.draft.breathCountSlots.find(slot => slot.lengthIndex === row.lengthIndex)?.count ?? "-" }}
                         </td>
                       </tr>
 
@@ -538,7 +592,8 @@
                         <td class="py-2 pr-3 text-gray-900">{{ formatNumber(computedAnalysis.swimFree.averageDps) }}</td>
                         <td class="py-2 pr-3 text-gray-900">{{ formatNumber(computedAnalysis.swimFree.averageSr, 1) }}</td>
                         <td class="py-2 pr-3 text-gray-900">{{ formatNumber(computedAnalysis.swimFree.averageSpeed) }}</td>
-                        <td class="py-2 text-gray-900">{{ formatNumber(computedAnalysis.swimFree.averageStrokeCount, 1) }}</td>
+                        <td class="py-2 pr-3 text-gray-900">{{ formatNumber(computedAnalysis.swimFree.averageStrokeCount, 1) }}</td>
+                        <td class="py-2 text-gray-900">{{ formatNumber(computedAnalysis.swimFree.averageBreathCount, 1) }}</td>
                       </tr>
 
                       <tr>
@@ -547,7 +602,8 @@
                         <td class="py-2 pr-3 text-gray-900">—</td>
                         <td class="py-2 pr-3 text-gray-900">—</td>
                         <td class="py-2 pr-3 text-gray-900">—</td>
-                        <td class="py-2 text-gray-900">{{ totalStrokeCount ?? "—" }}</td>
+                        <td class="py-2 pr-3 text-gray-900">{{ totalStrokeCount ?? "—" }}</td>
+                        <td class="py-2 text-gray-900">{{ totalBreathCount ?? "-" }}</td>
                       </tr>
                     </tbody>
                   </table>

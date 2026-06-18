@@ -15,10 +15,12 @@
   } from "chart.js"
   import type {
     VideoTimerComputedAnalysis,
+    VideoTimerBreathCountRecord,
     VideoTimerMarkerRecord,
     VideoTimerStrokeCountRecord,
     VideoTimerTurnAnalysisRecord,
   } from "lib"
+  import { buildVideoTimerComputedAnalysis } from "lib"
 
   definePageMeta( {
     layout: "secure",
@@ -68,6 +70,7 @@
       breakoutStartM: number | null
     } | null
     strokeCounts: VideoTimerStrokeCountRecord[]
+    breathCounts?: VideoTimerBreathCountRecord[]
     turns: VideoTimerTurnAnalysisRecord[]
     computed: VideoTimerComputedAnalysis
   }
@@ -96,7 +99,21 @@
   )
 
   const session = computed( () => data.value ?? null )
-  const computedAnalysis = computed( () => session.value?.computed ?? null )
+  const computedAnalysis = computed( () => {
+    const current = session.value
+    if ( !current ) return null
+
+    return buildVideoTimerComputedAnalysis( {
+      course: current.selections.course,
+      distance: current.selections.distance,
+      startOffsetMs: current.startOffsetMs,
+      markers: current.markers,
+      analysis: current.analysis,
+      strokeCounts: current.strokeCounts,
+      breathCounts: current.breathCounts ?? [],
+      turns: current.turns,
+    } )
+  } )
 
   const resultDateFormatter = new Intl.DateTimeFormat( "en-GB", {
     timeZone: "Europe/London",
@@ -167,7 +184,9 @@
 
   const averageFreeSwimTimeMs = computed( () => computedAnalysis.value?.swimFree.averageTimeMs ?? null )
   const averageStrokeCount = computed( () => computedAnalysis.value?.swimFree.averageStrokeCount ?? null )
+  const averageBreathCount = computed( () => computedAnalysis.value?.swimFree.averageBreathCount ?? null )
   const totalStrokeCount = computed( () => computedAnalysis.value?.swimFree.totalStrokeCount ?? null )
+  const totalBreathCount = computed( () => computedAnalysis.value?.swimFree.totalBreathCount ?? null )
 
   const isFiniteNumber = ( value: unknown ): value is number =>
     typeof value === "number" && Number.isFinite( value )
@@ -275,6 +294,83 @@
       ( dataset.data ?? [] ).some( value => isFiniteNumber( value ) )
     )
   )
+
+  const breathCountChartData = computed<ChartData<"line", ( number | null )[], string>>( () => {
+    const rows = computedAnalysis.value?.swimFree.rows ?? []
+
+    return {
+      labels: metricChartLabels.value,
+      datasets: [
+        {
+          label: "Breath count",
+          data: rows.map( row => row.breathCount ),
+          borderColor: "#06b6d4",
+          backgroundColor: "#06b6d4",
+          yAxisID: "y",
+          tension: 0.25,
+          pointRadius: 4,
+          pointHoverRadius: 5,
+          spanGaps: true,
+          pointHitRadius: 6,
+        },
+      ],
+    }
+  } )
+
+  const hasBreathCountChartData = computed( () =>
+    breathCountChartData.value.datasets.some( dataset =>
+      ( dataset.data ?? [] ).some( value => isFiniteNumber( value ) )
+    )
+  )
+
+  const breathCountChartOptions = computed<ChartOptions<"line">>( () => ( {
+    responsive: true,
+    maintainAspectRatio: false,
+    animation: false,
+    interaction: {
+      mode: "index",
+      intersect: false,
+    },
+    plugins: {
+      legend: {
+        display: true,
+        position: "bottom",
+      },
+      tooltip: {
+        callbacks: {
+          label: ( context: TooltipItem<"line"> ) => {
+            const label = context.dataset.label || ""
+            const value = Number( context.parsed.y )
+
+            if ( !Number.isFinite( value ) ) return `${label}: -`
+            return `${label}: ${value.toFixed( 0 )}`
+          },
+        },
+      },
+    },
+    scales: {
+      x: {
+        title: {
+          display: true,
+          text: "Length",
+        },
+        grid: {
+          display: false,
+        },
+      },
+      y: {
+        type: "linear",
+        position: "left",
+        title: {
+          display: true,
+          text: "Breaths",
+        },
+        ticks: {
+          precision: 0,
+        },
+      },
+    },
+  } ) )
 
   const metricChartOptions = computed<ChartOptions<"line">>( () => ( {
     responsive: true,
@@ -519,6 +615,11 @@
                   <div class="text-gray-500">Total stroke count</div>
                   <div class="text-right text-gray-900 font-medium">{{ totalStrokeCount ?? "—" }}</div>
                 </div>
+
+                <div class="flex items-start justify-between gap-4">
+                  <div class="text-gray-500">Total breath count</div>
+                  <div class="text-right text-gray-900 font-medium">{{ totalBreathCount ?? "-" }}</div>
+                </div>
               </div>
             </div>
 
@@ -645,7 +746,8 @@
                       <th class="py-2 pr-4 font-semibold">DPS (m/stroke)</th>
                       <th class="py-2 pr-4 font-semibold">SR (strokes/min)</th>
                       <th class="py-2 pr-4 font-semibold">Speed (m/s)</th>
-                      <th class="py-2 font-semibold">Count</th>
+                      <th class="py-2 pr-4 font-semibold">Stroke count</th>
+                      <th class="py-2 font-semibold">Breath count</th>
                     </tr>
                   </thead>
                   <tbody class="text-gray-900">
@@ -659,7 +761,8 @@
                       <td class="py-2 pr-4 tabular-nums">{{ formatNumber(row.dps) }}</td>
                       <td class="py-2 pr-4 tabular-nums">{{ formatNumber(row.sr, 1) }}</td>
                       <td class="py-2 pr-4 tabular-nums">{{ formatNumber(row.speed) }}</td>
-                      <td class="py-2 tabular-nums">{{ row.count ?? "—" }}</td>
+                      <td class="py-2 pr-4 tabular-nums">{{ row.count ?? "—" }}</td>
+                      <td class="py-2 tabular-nums">{{ row.breathCount ?? "-" }}</td>
                     </tr>
 
                     <tr class="border-b border-gray-100">
@@ -668,7 +771,8 @@
                       <td class="py-2 pr-4 tabular-nums">{{ formatNumber(computedAnalysis.swimFree.averageDps) }}</td>
                       <td class="py-2 pr-4 tabular-nums">{{ formatNumber(computedAnalysis.swimFree.averageSr, 1) }}</td>
                       <td class="py-2 pr-4 tabular-nums">{{ formatNumber(computedAnalysis.swimFree.averageSpeed) }}</td>
-                      <td class="py-2 tabular-nums">{{ formatNumber(averageStrokeCount, 1) }}</td>
+                      <td class="py-2 pr-4 tabular-nums">{{ formatNumber(averageStrokeCount, 1) }}</td>
+                      <td class="py-2 tabular-nums">{{ formatNumber(averageBreathCount, 1) }}</td>
                     </tr>
 
                     <tr>
@@ -677,7 +781,8 @@
                       <td class="py-2 pr-4 tabular-nums">—</td>
                       <td class="py-2 pr-4 tabular-nums">—</td>
                       <td class="py-2 pr-4 tabular-nums">—</td>
-                      <td class="py-2 tabular-nums">{{ totalStrokeCount ?? "—" }}</td>
+                      <td class="py-2 pr-4 tabular-nums">{{ totalStrokeCount ?? "—" }}</td>
+                      <td class="py-2 tabular-nums">{{ totalBreathCount ?? "-" }}</td>
                     </tr>
                   </tbody>
                 </table>
@@ -695,6 +800,22 @@
 
                   <div v-else class="text-sm text-gray-500">
                     No chart data available.
+                  </div>
+                </ClientOnly>
+              </div>
+            </div>
+
+            <div class="report-card report-chart-card rounded-xl border border-gray-200 bg-white p-4 break-inside-avoid">
+              <div class="report-section-title text-sm font-semibold text-gray-900">Breath per length</div>
+
+              <div class="mt-4">
+                <ClientOnly>
+                  <div v-if="hasBreathCountChartData" class="h-[320px] report-chart-height">
+                    <Line :data="breathCountChartData" :options="breathCountChartOptions" />
+                  </div>
+
+                  <div v-else class="text-sm text-gray-500">
+                    No breath count data available.
                   </div>
                 </ClientOnly>
               </div>
