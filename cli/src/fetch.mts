@@ -195,7 +195,7 @@ const insertPerformanceSql =
 );`
 
 const insertResultsSql =
-  `REPLACE INTO Results (
+  `INSERT INTO Results (
   swimmer,
   course,
   stroke,
@@ -223,7 +223,16 @@ const insertResultsSql =
   :venue,
   :club_swam_under,
   :level
-);`
+) ON DUPLICATE KEY UPDATE
+  time = :time,
+  wa_pts = :wa_pts,
+  round = :round,
+  date = :date,
+  meet = :meet,
+  venue = :venue,
+  club_swam_under = :club_swam_under,
+  level = :level
+;`
 
 const insertMeetsSql =
   `INSERT INTO Meets (
