@@ -195,7 +195,7 @@ const insertPerformanceSql =
 );`
 
 const insertResultsSql =
-  `INSERT INTO Results (
+  `REPLACE INTO Results (
   swimmer,
   course,
   stroke,
@@ -367,12 +367,12 @@ const updateResultsBatch = async ( swimmer: Swimmer, individualData: Array<Indiv
       }
       pages.set( page.url.toString(), page )
     }
-    const responses = await fetchPages( pages, force ? 0 : undefined )
-    const deleteResults = prepareStatement<{id: string}>(
+    const saveResults = prepareStatement( conn, insertResultsSql )
+    const deleteResults = prepareStatement<{swimmer: string, course: string, stroke: string, distance: string, maxSeq: number}>(
       conn,
-      "DELETE FROM Results WHERE swimmer = :id"
+      "DELETE FROM Results WHERE swimmer = :swimmer AND  `course` = :course AND `stroke` = :stroke AND `distance` = :distance AND `seq` > :maxSeq"
     )
-    await deleteResults.run( swimmer )
+    const responses = await fetchPages( pages, force ? 0 : undefined )
     for ( const [ url, { content } ] of responses.entries() ) {
     // console.log( inspect( pageData, { depth: 5 } ) )
       const page = pages.get( url )
@@ -383,10 +383,12 @@ const updateResultsBatch = async ( swimmer: Swimmer, individualData: Array<Indiv
 
       const resultsData = parseResults( page as PageInfo, $ )
 
-      const saveResults = prepareStatement( conn, insertResultsSql )
+      let maxSeq = 0
       for ( const [ index, result ] of resultsData.entries() ) {
-        await saveResults.run( { swimmer: swimmer.id, course: event.course, stroke: event.stroke, distance: event.distance, seq: index + 1, ...result } )
+        maxSeq = index + 1
+        await saveResults.run( { swimmer: swimmer.id, course: event.course, stroke: event.stroke, distance: event.distance, seq: maxSeq, ...result } )
       }
+      await deleteResults.run( { swimmer: swimmer.id, course: event.course, stroke: event.stroke, distance: event.distance, maxSeq } )
     }
   }, individualData )
 }
