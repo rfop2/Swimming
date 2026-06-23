@@ -110,6 +110,7 @@
     splitSlots: [],
     strokeCountSlots: [],
     breathCountSlots: [],
+    breathMarkers: [],
     turns: [],
     selectedSlotId: null,
     markers: [],
