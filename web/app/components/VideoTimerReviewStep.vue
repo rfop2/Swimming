@@ -3,7 +3,6 @@
     Swimmer,
     VideoTimerDraft,
     VideoTimerMarkerRecord,
-    VideoTimerBreathCountRecord,
     VideoTimerStrokeCountRecord,
   } from "lib"
   import {
@@ -96,6 +95,10 @@
       toM: slot.toM,
       label: slot.label,
       count: slot.count,
+    } ) ),
+    breathMarkers: props.draft.breathMarkers.map( marker => ( {
+      id: marker.id,
+      tMs: marker.tMs,
     } ) ),
     turns: props.draft.turns.map( turn => ( {
       turnIndex: turn.turnIndex,
@@ -263,13 +266,42 @@
     } ) )
   )
 
-  const breathCountRecords = computed<VideoTimerBreathCountRecord[]>( () =>
-    props.draft.breathCountSlots.map( slot => ( {
-      lengthIndex: slot.lengthIndex,
-      fromM: slot.fromM,
-      toM: slot.toM,
-      count: slot.count,
-    } ) )
+  const findMarkerTime = ( code: string, turnIndex: number | null = null ) =>
+    sortedMarkers.value.find( marker =>
+      marker.code === code &&
+      ( turnIndex === null ? true : marker.turnIndex === turnIndex )
+    )?.tMs ?? null
+
+  const breathMarkerRecords = computed( () =>
+    props.draft.breathMarkers
+      .slice()
+      .sort( ( a, b ) => a.tMs - b.tMs )
+      .map( marker => {
+        const segment = props.draft.strokeCountSlots.find( ( slot, index ) => {
+          const startMs =
+            slot.lengthIndex === 1
+              ? props.startOffsetMs
+              : findMarkerTime( "hit_pad", slot.lengthIndex - 1 )
+
+          const endMs =
+            slot.lengthIndex < props.draft.strokeCountSlots.length
+              ? findMarkerTime( "hit_pad", slot.lengthIndex )
+              : findMarkerTime( "finish_time" ) ?? findMarkerTime( "finish" )
+
+          if ( startMs === null || endMs === null ) return false
+          const isLast = index === props.draft.strokeCountSlots.length - 1
+          return marker.tMs >= startMs && ( isLast ? marker.tMs <= endMs : marker.tMs < endMs )
+        } ) ?? null
+
+        return {
+          id: marker.id,
+          lengthIndex: segment?.lengthIndex ?? 0,
+          fromM: segment?.fromM ?? 0,
+          toM: segment?.toM ?? 0,
+          tMs: marker.tMs,
+        }
+      } )
+      .filter( marker => marker.lengthIndex > 0 )
   )
 
   const computedAnalysis = computed( () =>
@@ -282,7 +314,8 @@
         breakoutStartM: props.draft.breakoutStartM,
       },
       strokeCounts: strokeCountRecords.value,
-      breathCounts: breathCountRecords.value,
+      breathCounts: [],
+      breathMarkers: breathMarkerRecords.value,
       turns: props.draft.turns,
     } )
   )
@@ -366,7 +399,12 @@
           breakoutStartM: props.draft.breakoutStartM,
         },
         strokeCounts: strokeCountRecords.value,
-        breathCounts: breathCountRecords.value,
+        breathMarkers: props.draft.breathMarkers
+          .slice()
+          .sort( ( a, b ) => a.tMs - b.tMs )
+          .map( marker => ( {
+            tMs: marker.tMs,
+          } ) ),
         turns: props.draft.turns,
         computed: computedAnalysis.value,
       }
@@ -582,7 +620,7 @@
                           {{ props.draft.strokeCountSlots.find(slot => slot.lengthIndex === row.lengthIndex)?.count ?? "—" }}
                         </td>
                         <td class="py-2 text-gray-900">
-                          {{ props.draft.breathCountSlots.find(slot => slot.lengthIndex === row.lengthIndex)?.count ?? "-" }}
+                          {{ row.breathCount ?? "-" }}
                         </td>
                       </tr>
 

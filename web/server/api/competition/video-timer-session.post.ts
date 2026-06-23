@@ -1,6 +1,6 @@
 import type { PoolConnection } from "lib"
 import { createError, defineEventHandler, readBody } from "h3"
-import { getPool, isMySql2Error, prepareStatement } from "lib"
+import { buildSplitMarkerPlan, getPool, isMySql2Error, prepareStatement } from "lib"
 import { randomUUID } from "node:crypto"
 
 type MarkerType = "surfacing" | "split"
@@ -70,6 +70,9 @@ type Body = {
     toM: number
     count?: number | null
   }>
+  breathMarkers?: Array<{
+    tMs: number
+  }>
   turns?: Array<{
     turnIndex: number
     breakoutM?: number | null
@@ -126,6 +129,19 @@ const parseDistanceM = ( value: string | null ) => {
 }
 
 const normaliseCourse = ( value: string | null ) => String( value || "" ).trim().toLowerCase()
+
+const findMarkerTime = (
+  markers: Array<{ code: string; turnIndex: number | null; tMs: number }>,
+  code: string,
+  turnIndex: number | null = null
+) =>
+  markers.find( marker =>
+    marker.code === code &&
+    ( turnIndex === null ? true : marker.turnIndex === turnIndex )
+  )?.tMs ?? null
+
+const markerKey = ( marker: { code: string; lengthIndex: number | null; turnIndex: number | null } ) =>
+  `${marker.code}:${marker.lengthIndex ?? "x"}:${marker.turnIndex ?? "x"}`
 
 export default defineEventHandler( async ( event ) => {
   if ( !event.context.session || !event.context.user ) throw createError( { status: 401 } )
@@ -310,9 +326,67 @@ export default defineEventHandler( async ( event ) => {
     breathCountIndexSet.add( item.lengthIndex )
   }
 
-  if ( breathCountIndexSet.size !== lengthCount || breathCounts.some( item => item.count === null || item.count <= 0 ) ) {
-    throw createError( { status: 400, message: "Breath counts are required for every length" } )
+  const breathMarkersIn = Array.isArray( body?.breathMarkers ) ? body.breathMarkers : []
+  const breathMarkersRaw = breathMarkersIn
+    .map( marker => ( {
+      tMs: asUnsignedIntOrNull( marker?.tMs ),
+    } ) )
+    .filter( marker => marker.tMs !== null ) as Array<{ tMs: number }>
+
+  const sortedStrokeCounts = [ ...strokeCounts ].sort( ( a, b ) => a.lengthIndex - b.lengthIndex )
+  const finishMarkerTime = findMarkerTime( markers, "finish_time" ) ?? findMarkerTime( markers, "finish" )
+  const savedSplitMarkerKeys = new Set(
+    markers
+      .filter( marker => marker.type === "split" && marker.code !== "finish_time" )
+      .map( marker => markerKey( marker ) )
+  )
+  const requiredSplitMarkersPlaced = buildSplitMarkerPlan( course, distance )
+    .filter( marker => marker.code !== "finish" && marker.code !== "finish_time" )
+    .every( marker => savedSplitMarkerKeys.has( markerKey( marker ) ) )
+
+  const lengthSegments = sortedStrokeCounts.map( item => {
+    const startMs =
+      item.lengthIndex === 1
+        ? startOffsetMs
+        : findMarkerTime( markers, "hit_pad", item.lengthIndex - 1 )
+
+    const endMs =
+      item.lengthIndex < lengthCount
+        ? findMarkerTime( markers, "hit_pad", item.lengthIndex )
+        : finishMarkerTime
+
+    return {
+      lengthIndex: item.lengthIndex,
+      fromM: item.fromM,
+      toM: item.toM,
+      startMs,
+      endMs,
+    }
+  } )
+
+  if ( breathMarkersRaw.length && ( !requiredSplitMarkersPlaced || lengthSegments.some( segment => segment.startMs === null || segment.endMs === null ) ) ) {
+    throw createError( { status: 400, message: "Complete split markers and finish time before saving breath markers" } )
   }
+
+  const breathMarkers = breathMarkersRaw.map( ( marker, index ) => {
+    const segment = lengthSegments.find( ( item, segmentIndex ) => {
+      if ( item.startMs === null || item.endMs === null ) return false
+      const isLast = segmentIndex === lengthSegments.length - 1
+      return marker.tMs >= item.startMs && ( isLast ? marker.tMs <= item.endMs : marker.tMs < item.endMs )
+    } )
+
+    if ( !segment ) {
+      throw createError( { status: 400, message: `Breath marker ${index + 1} is outside the race lengths` } )
+    }
+
+    return {
+      seq: index + 1,
+      lengthIndex: segment.lengthIndex,
+      fromM: segment.fromM,
+      toM: segment.toM,
+      tMs: marker.tMs,
+    }
+  } )
 
   const turnsIn =
     Array.isArray( body?.turns )
@@ -582,6 +656,41 @@ export default defineEventHandler( async ( event ) => {
           fromM: item.fromM,
           toM: item.toM,
           count: item.count,
+        } )
+      }
+    }
+
+    if ( breathMarkers.length ) {
+      const insertBreathMarker = prepareStatement(
+        conn,
+        `
+        INSERT INTO VideoTimerSessionBreathMarkers (
+          sessionId,
+          seq,
+          lengthIndex,
+          fromM,
+          toM,
+          tMs
+        )
+        VALUES (
+          :sessionId,
+          :seq,
+          :lengthIndex,
+          :fromM,
+          :toM,
+          :tMs
+        )
+        `
+      )
+
+      for ( const marker of breathMarkers ) {
+        await insertBreathMarker.run( {
+          sessionId,
+          seq: marker.seq,
+          lengthIndex: marker.lengthIndex,
+          fromM: marker.fromM,
+          toM: marker.toM,
+          tMs: marker.tMs,
         } )
       }
     }

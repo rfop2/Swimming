@@ -1,11 +1,12 @@
 <script setup lang="ts">
-  import { Line } from "vue-chartjs"
+  import { Line, Scatter } from "vue-chartjs"
   import {
     Chart as ChartJS,
     CategoryScale,
     LinearScale,
     PointElement,
     LineElement,
+    ScatterController,
     Title,
     Tooltip,
     Legend,
@@ -18,6 +19,7 @@
   import type {
     VideoTimerComputedAnalysis,
     VideoTimerBreathCountRecord,
+    VideoTimerBreathMarkerRecord,
     VideoTimerMarkerRecord,
     VideoTimerStrokeCountRecord,
     VideoTimerTurnAnalysisRecord,
@@ -73,6 +75,7 @@
     } | null
     strokeCounts: VideoTimerStrokeCountRecord[]
     breathCounts?: VideoTimerBreathCountRecord[]
+    breathMarkers?: VideoTimerBreathMarkerRecord[]
     turns: VideoTimerTurnAnalysisRecord[]
     computed: VideoTimerComputedAnalysis
   }
@@ -84,6 +87,7 @@
     LinearScale,
     PointElement,
     LineElement,
+    ScatterController,
     Title,
     Tooltip,
     Legend
@@ -130,6 +134,7 @@
       analysis: current.analysis,
       strokeCounts: current.strokeCounts,
       breathCounts: current.breathCounts ?? [],
+      breathMarkers: current.breathMarkers ?? [],
       turns: current.turns,
     } )
   } )
@@ -507,6 +512,98 @@
         },
         ticks: {
           precision: 0,
+        },
+      },
+    },
+  } ) )
+
+  const markerTime = ( code: string, turnIndex: number | null = null ) =>
+    session.value?.markers.find( marker =>
+      marker.code === code &&
+      ( turnIndex === null ? true : marker.turnIndex === turnIndex )
+    )?.tMs ?? null
+
+  const breathTakenRows = computed( () =>
+    ( session.value?.breathMarkers ?? [] )
+      .map( marker => {
+        const startMs =
+          marker.lengthIndex === 1
+            ? session.value?.startOffsetMs ?? null
+            : markerTime( "hit_pad", marker.lengthIndex - 1 )
+
+        const endMs =
+          marker.lengthIndex < ( computedAnalysis.value?.swimFree.rows.length ?? 0 )
+            ? markerTime( "hit_pad", marker.lengthIndex )
+            : markerTime( "finish_time" ) ?? markerTime( "finish" )
+
+        return {
+          ...marker,
+          startMs,
+          endMs,
+          timeIntoLengthMs: startMs !== null ? Math.max( 0, marker.tMs - startMs ) : null,
+          label: `${marker.fromM} - ${marker.toM} m`,
+        }
+      } )
+      .filter( row => row.timeIntoLengthMs !== null )
+  )
+
+  const hasBreathTakenChartData = computed( () => breathTakenRows.value.length > 0 )
+
+  const breathTakenChartData = computed<ChartData<"scatter", { x: number; y: number }[], unknown>>( () => ( {
+    datasets: [
+      {
+        label: "Breath taken",
+        data: breathTakenRows.value.map( row => ( {
+          x: row.timeIntoLengthMs ?? 0,
+          y: row.lengthIndex,
+        } ) ),
+        borderColor: "#f59e0b",
+        backgroundColor: "#f59e0b",
+        pointRadius: 5,
+        pointHoverRadius: 7,
+      },
+    ],
+  } ) )
+
+  const breathTakenChartOptions = computed<ChartOptions<"scatter">>( () => ( {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        display: true,
+        position: "bottom",
+      },
+      tooltip: {
+        callbacks: {
+          label: ( context: TooltipItem<"scatter"> ) => {
+            const row = breathTakenRows.value[context.dataIndex]
+            if ( !row ) return "Breath"
+            return `${row.label}: ${formatRaceMs( row.timeIntoLengthMs )} into length (${formatRaceMs( raceMsFromVideoMs( row.tMs ) )} race time)`
+          },
+        },
+      },
+    },
+    scales: {
+      x: {
+        type: "linear",
+        title: {
+          display: true,
+          text: "Time into length",
+        },
+        ticks: {
+          callback: value => formatRaceMs( Number( value ) ),
+        },
+      },
+      y: {
+        type: "linear",
+        title: {
+          display: true,
+          text: "Length",
+        },
+        ticks: {
+          precision: 0,
+          stepSize: 1,
+          callback: value => `Length ${Number( value )}`,
         },
       },
     },
@@ -1044,6 +1141,22 @@
 
                       <div v-else class="text-sm text-gray-500">
                         No breath count data available.
+                      </div>
+                    </ClientOnly>
+                  </div>
+                </div>
+
+                <div class="rounded-xl border border-gray-200 bg-white p-4">
+                  <div class="text-sm font-semibold text-gray-900">Breath taken</div>
+
+                  <div class="mt-4">
+                    <ClientOnly>
+                      <div v-if="hasBreathTakenChartData" class="h-[320px]">
+                        <Scatter :data="breathTakenChartData" :options="breathTakenChartOptions" />
+                      </div>
+
+                      <div v-else class="text-sm text-gray-500">
+                        No breath marker data available.
                       </div>
                     </ClientOnly>
                   </div>

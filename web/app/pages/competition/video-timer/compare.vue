@@ -16,6 +16,7 @@
   import {
     buildVideoTimerComputedAnalysis,
     type VideoTimerBreathCountRecord,
+    type VideoTimerBreathMarkerRecord,
     type VideoTimerComputedAnalysis,
     type VideoTimerMarkerRecord,
     type VideoTimerStrokeCountRecord,
@@ -69,6 +70,7 @@
     } | null
     strokeCounts: VideoTimerStrokeCountRecord[]
     breathCounts?: VideoTimerBreathCountRecord[]
+    breathMarkers?: VideoTimerBreathMarkerRecord[]
     turns: VideoTimerTurnAnalysisRecord[]
     computed: VideoTimerComputedAnalysis
   }
@@ -305,6 +307,7 @@
       analysis: session.analysis,
       strokeCounts: session.strokeCounts,
       breathCounts: session.breathCounts ?? [],
+      breathMarkers: session.breathMarkers ?? [],
       turns: session.turns,
     } )
   }

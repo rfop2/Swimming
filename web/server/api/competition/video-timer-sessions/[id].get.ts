@@ -1,6 +1,7 @@
 import type {
   PoolConnection,
   VideoTimerBreathCountRecord,
+  VideoTimerBreathMarkerRecord,
   VideoTimerMarkerRecord,
   VideoTimerStrokeCountRecord,
   VideoTimerTurnAnalysisRecord,
@@ -59,6 +60,15 @@ type BreathCountRow = {
   fromM: number
   toM: number
   count: number | null
+}
+
+type BreathMarkerRow = {
+  id: number
+  seq: number
+  lengthIndex: number
+  fromM: number
+  toM: number
+  tMs: number
 }
 
 type TurnRow = {
@@ -211,6 +221,33 @@ export default defineEventHandler( async ( event ) => {
       count: row.count !== null ? Number( row.count ) : null,
     } ) )
 
+    const getBreathMarkers = prepareStatement(
+      conn,
+      `
+      SELECT
+        bm.id as id,
+        bm.seq as seq,
+        bm.lengthIndex as lengthIndex,
+        bm.fromM as fromM,
+        bm.toM as toM,
+        bm.tMs as tMs
+      FROM VideoTimerSessionBreathMarkers bm
+      WHERE bm.sessionId = :sessionId
+      ORDER BY bm.seq ASC
+      `
+    )
+
+    const breathMarkerRows = ( await getBreathMarkers.all( { sessionId: id } ) ) as BreathMarkerRow[]
+
+    const breathMarkers: VideoTimerBreathMarkerRecord[] = breathMarkerRows.map( row => ( {
+      id: `${id}-breath-${row.id}`,
+      seq: Number( row.seq ) || 0,
+      lengthIndex: Number( row.lengthIndex ) || 0,
+      fromM: Number( row.fromM ) || 0,
+      toM: Number( row.toM ) || 0,
+      tMs: Number( row.tMs ) || 0,
+    } ) )
+
     const getTurns = prepareStatement(
       conn,
       `
@@ -245,6 +282,7 @@ export default defineEventHandler( async ( event ) => {
       analysis,
       strokeCounts,
       breathCounts,
+      breathMarkers,
       turns,
     } )
 
@@ -281,6 +319,7 @@ export default defineEventHandler( async ( event ) => {
       analysis,
       strokeCounts,
       breathCounts,
+      breathMarkers,
       turns,
       computed,
     }
