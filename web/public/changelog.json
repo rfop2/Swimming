@@ -1,14 +1,85 @@
 [
   {
-    "isoDate": "2026-06-22",
-    "niceDate": "22 June 2026",
-    "diff": "15.3.0..",
-    "href": "https://bitbucket.org/swimracing/swimming/compare/15.4.0..15.3.0",
+    "isoDate": "2026-06-23",
+    "niceDate": "23 June 2026",
+    "diff": "15.4.0..",
+    "href": "https://bitbucket.org/swimracing/swimming/compare/15.5.0..15.4.0",
     "major": false,
     "minor": false,
     "tag": null,
+    "title": "15.5.0",
+    "date": "2026-06-23T12:52:48.883Z",
+    "summary": null,
+    "commits": [
+      {
+        "hash": "3c5e50296596094061a0a64ff8ef4c04df28d6a5",
+        "shorthash": "3c5e502",
+        "author": "rodrigo ferreira",
+        "email": "rf.oliveirapaula@gmail.com",
+        "date": "2026-06-23T12:45:46.000Z",
+        "niceDate": "23 June 2026",
+        "subject": "Add breath markers and improve video timer workflow",
+        "message": "Add breath markers and improve video timer workflow",
+        "fixes": null,
+        "href": "https://bitbucket.org/swimracing/swimming/commits/3c5e50296596094061a0a64ff8ef4c04df28d6a5",
+        "breaking": false,
+        "files": 13,
+        "insertions": 1188,
+        "deletions": 398,
+        "merge": null
+      },
+      {
+        "hash": "3ef88972ec2f38a522e1fe61acc2891e5abc8c4a",
+        "shorthash": "3ef8897",
+        "author": "rodrigo ferreira",
+        "email": "rf.oliveirapaula@gmail.com",
+        "date": "2026-06-23T12:44:55.000Z",
+        "niceDate": "23 June 2026",
+        "subject": "Improve official time input and session ordering",
+        "message": "Improve official time input and session ordering",
+        "fixes": null,
+        "href": "https://bitbucket.org/swimracing/swimming/commits/3ef88972ec2f38a522e1fe61acc2891e5abc8c4a",
+        "breaking": false,
+        "files": 3,
+        "insertions": 57,
+        "deletions": 20,
+        "merge": null
+      }
+    ],
+    "merges": [
+      {
+        "id": "39",
+        "message": "Improve video timer timing workflow and breath markers",
+        "href": "https://bitbucket.org/swimracing/swimming/pull-requests/39",
+        "author": "Rodrigo Ferreira",
+        "commit": {
+          "hash": "9a5f6fc540af5b313001384a7565b0ae8f655eaf",
+          "shorthash": "9a5f6fc",
+          "author": "Rodrigo Ferreira",
+          "email": "rf.oliveirapaula@gmail.com",
+          "date": "2026-06-23T12:48:55.000Z",
+          "niceDate": "23 June 2026",
+          "subject": "Merged in Improve-video-timer-timing-workflow-and-breath-markers (pull request #39)",
+          "message": "Merged in Improve-video-timer-timing-workflow-and-breath-markers (pull request #39)\n\nImprove video timer timing workflow and breath markers",
+          "fixes": null,
+          "href": "https://bitbucket.org/swimracing/swimming/commits/9a5f6fc540af5b313001384a7565b0ae8f655eaf",
+          "breaking": false
+        }
+      }
+    ],
+    "fixes": []
+  },
+  {
+    "isoDate": "2026-06-22",
+    "niceDate": "22 June 2026",
+    "diff": "15.3.0..15.4.0",
+    "href": "https://bitbucket.org/swimracing/swimming/compare/15.4.0..15.3.0",
+    "major": false,
+    "minor": true,
+    "tag": "15.4.0",
+    "date": "2026-06-22",
     "title": "15.4.0",
-    "date": "2026-06-22T13:11:41.924Z",
+    "version": "15.4.0",
     "summary": null,
     "commits": [
       {
