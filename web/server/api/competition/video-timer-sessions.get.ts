@@ -56,7 +56,10 @@ export default defineEventHandler( async ( event ) => {
         AND r.distance = s.resultDistance
         AND r.seq = s.resultSeq
       WHERE s.userId = :userId
-      ORDER BY COALESCE(r.date, DATE(s.created)) DESC, s.created DESC
+      ORDER BY
+        r.date IS NULL ASC,
+        r.date DESC,
+        s.created DESC
       LIMIT 200
       `
     )
