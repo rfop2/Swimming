@@ -62,6 +62,14 @@
     } | null
     strokeCounts: VideoTimerStrokeCountRecord[]
     breathCounts: VideoTimerBreathCountRecord[]
+    breathMarkers?: Array<{
+      id?: string
+      seq?: number
+      lengthIndex: number
+      fromM: number
+      toM: number
+      tMs: number
+    }>
     turns: VideoTimerTurnAnalysisRecord[]
     computed: {
       finishTimeMs: number | null
@@ -83,6 +91,7 @@
     splitSlots: [],
     strokeCountSlots: [],
     breathCountSlots: [],
+    breathMarkers: [],
     turns: [],
     selectedSlotId: null,
     markers: [],
@@ -151,6 +160,10 @@
         toM: slot.toM,
         label: `Breaths ${slot.fromM}-${slot.toM}m`,
         count: slot.count,
+      } ) ),
+      breathMarkers: ( session.breathMarkers ?? [] ).map( ( marker, index ) => ( {
+        id: marker.id ?? `breath-marker-${index}`,
+        tMs: marker.tMs,
       } ) ),
       turns: session.turns.map( turn => ( {
         turnIndex: turn.turnIndex,

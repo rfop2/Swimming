@@ -13,7 +13,6 @@
     type StrokeCountSlot as PlanStrokeCountSlot,
   } from "lib"
 
-  type NextActionKind = "surfacing" | "split" | null
 
   type UploadedVideo = {
     id?: string
@@ -29,6 +28,8 @@
   type MarkerSlot = VideoTimerDraft["surfaceSlots"][number]
   type StrokeCountSlot = VideoTimerDraft["strokeCountSlots"][number]
   type BreathCountSlot = VideoTimerDraft["breathCountSlots"][number]
+  type TimingPanelTab = "markers" | "counts"
+  type MarkerPanelTab = "surfacing" | "split" | "breath"
 
   type TurnPlanItem = ReturnType<typeof buildTurnPlan>[number]
 
@@ -95,6 +96,10 @@
       toM: slot.toM,
       label: slot.label,
       count: slot.count,
+    } ) ),
+    breathMarkers: props.draft.breathMarkers.map( marker => ( {
+      id: marker.id,
+      tMs: marker.tMs,
     } ) ),
     turns: props.draft.turns.map( turn => ( {
       turnIndex: turn.turnIndex,
@@ -359,34 +364,8 @@
     return allMarkerSlots.value.find( s => s.id === id ) ?? null
   }
 
-  const selectedSlot = computed( () => findSlotById( props.draft.selectedSlotId ) )
-
   const nextSurfaceSlot = computed( () => props.draft.surfaceSlots.find( s => !s.missed && s.videoMs === null ) ?? null )
   const nextSplitSlot = computed( () => props.draft.splitSlots.find( s => s.code !== "finish_time" && !s.missed && s.videoMs === null ) ?? null )
-
-  const isSurfacingSelected = computed( () => {
-    if ( !selectedSlot.value ) return true
-    return selectedSlot.value.type === "surfacing"
-  } )
-
-  const isSplitSelected = computed( () => {
-    if ( !selectedSlot.value ) return false
-    return selectedSlot.value.type === "split"
-  } )
-
-  const primaryNextAction = computed<NextActionKind>( () => {
-    if ( selectedSlot.value?.type === "surfacing" && nextSurfaceSlot.value ) return "surfacing"
-    if ( selectedSlot.value?.type === "split" && nextSplitSlot.value ) return "split"
-    if ( nextSurfaceSlot.value ) return "surfacing"
-    if ( nextSplitSlot.value ) return "split"
-    return null
-  } )
-
-  const secondaryNextAction = computed<NextActionKind>( () => {
-    if ( primaryNextAction.value === "surfacing" && nextSplitSlot.value ) return "split"
-    if ( primaryNextAction.value === "split" && nextSurfaceSlot.value ) return "surfacing"
-    return null
-  } )
 
   const parseOfficialTimeMs = ( raw: string ): number | null => {
     const s = String( raw || "" ).trim().replace( ",", "." )
@@ -674,10 +653,11 @@
   }
 
   const selectMarker = ( id: string ) => {
+    const selected = findSlotById( id )
+    if ( selected ) activeMarkerTab.value = selected.type
     updateDraft( next => {
       next.selectedSlotId = id
     } )
-    const selected = findSlotById( id )
     if ( selected?.videoMs !== null ) {
       seekToMs( selected.videoMs )
     }
@@ -685,6 +665,7 @@
 
   const placeMarkerAtCursor = ( type: MarkerType ) => {
     if ( !isReady.value ) return
+    activeMarkerTab.value = type
 
     const nowMs = getLiveVideoMs()
 
@@ -709,6 +690,37 @@
       slot.videoMs = nowMs
       slot.missed = false
       draft.selectedSlotId = slot.id
+    } )
+  }
+
+  const placeBreathMarkerAtCursor = () => {
+    if ( !isReady.value || !breathMarkersEnabled.value ) return
+
+    const nowMs = getLiveVideoMs()
+
+    updateDraft( draft => {
+      draft.breathMarkers.push( {
+        id: makeId(),
+        tMs: nowMs,
+      } )
+      draft.breathMarkers.sort( ( a, b ) => a.tMs - b.tMs )
+    } )
+  }
+
+  const placeActiveMarkerAtCursor = () => {
+    const tab = activeMarkerTab.value
+
+    if ( tab === "breath" ) {
+      placeBreathMarkerAtCursor()
+      return
+    }
+
+    placeMarkerAtCursor( tab )
+  }
+
+  const clearBreathMarker = ( id: string ) => {
+    updateDraft( draft => {
+      draft.breathMarkers = draft.breathMarkers.filter( marker => marker.id !== id )
     } )
   }
 
@@ -804,10 +816,111 @@
     props.draft.strokeCountSlots.every( slot => slot.count !== null && slot.count > 0 )
   )
 
-  const breathCountsComplete = computed( () =>
-    props.draft.breathCountSlots.length > 0 &&
-    props.draft.breathCountSlots.every( slot => slot.count !== null && slot.count > 0 )
+  const requiredSplitMarkersPlaced = computed( () =>
+    props.draft.splitSlots
+      .filter( slot => slot.code !== "finish_time" )
+      .every( slot => slot.videoMs !== null )
   )
+
+  const countRows = computed( () =>
+    props.draft.strokeCountSlots.map( stroke => ( {
+      id: stroke.id,
+      label: stroke.label,
+      stroke,
+    } ) )
+  )
+
+  const activePanelTab = ref<TimingPanelTab>( "markers" )
+  const activeMarkerTab = ref<MarkerPanelTab>( "surfacing" )
+
+  const activeNextMarker = computed( () =>
+    activeMarkerTab.value === "surfacing"
+      ? nextSurfaceSlot.value
+      : activeMarkerTab.value === "split"
+        ? nextSplitSlot.value
+        : null
+  )
+
+  const lengthSegments = computed( () =>
+    props.draft.strokeCountSlots.map( slot => {
+      const startMs =
+        slot.lengthIndex === 1
+          ? props.draft.startOffsetMs
+          : props.draft.splitSlots.find( marker => marker.code === "hit_pad" && marker.turnIndex === slot.lengthIndex - 1 )?.videoMs ?? null
+
+      const endMs =
+        slot.lengthIndex < props.draft.strokeCountSlots.length
+          ? props.draft.splitSlots.find( marker => marker.code === "hit_pad" && marker.turnIndex === slot.lengthIndex )?.videoMs ?? null
+          : props.draft.finishVideoMs
+
+      return {
+        lengthIndex: slot.lengthIndex,
+        fromM: slot.fromM,
+        toM: slot.toM,
+        label: `${slot.fromM} - ${slot.toM}m`,
+        startMs,
+        endMs,
+      }
+    } )
+  )
+
+  const breathMarkersEnabled = computed( () =>
+    props.draft.startOffsetMs !== null &&
+    props.draft.finishVideoMs !== null &&
+    requiredSplitMarkersPlaced.value &&
+    lengthSegments.value.length > 0 &&
+    lengthSegments.value.every( segment => segment.startMs !== null && segment.endMs !== null )
+  )
+
+  const findBreathSegment = ( tMs: number ) =>
+    lengthSegments.value.find( ( segment, index ) => {
+      if ( segment.startMs === null || segment.endMs === null ) return false
+      const isLast = index === lengthSegments.value.length - 1
+      return tMs >= segment.startMs && ( isLast ? tMs <= segment.endMs : tMs < segment.endMs )
+    } ) ?? null
+
+  const breathMarkerRows = computed( () =>
+    [ ...props.draft.breathMarkers ]
+      .sort( ( a, b ) => a.tMs - b.tMs )
+      .map( marker => ( {
+        ...marker,
+        segment: findBreathSegment( marker.tMs ),
+      } ) )
+  )
+
+  const markerProgress = computed( () => {
+    const slots = allMarkerSlots.value.filter( slot => slot.code !== "finish_time" )
+    return {
+      complete: slots.filter( slot => slot.videoMs !== null ).length,
+      total: slots.length,
+    }
+  } )
+
+  const surfacingProgress = computed( () => ( {
+    complete: props.draft.surfaceSlots.filter( slot => slot.videoMs !== null ).length,
+    total: props.draft.surfaceSlots.length,
+  } ) )
+
+  const splitProgress = computed( () => {
+    const slots = props.draft.splitSlots.filter( slot => slot.code !== "finish_time" )
+    return {
+      complete: slots.filter( slot => slot.videoMs !== null ).length,
+      total: slots.length,
+    }
+  } )
+
+  const breathMarkerProgress = computed( () => ( {
+    complete: breathMarkerRows.value.length,
+    total: breathMarkerRows.value.length,
+  } ) )
+
+  const countProgress = computed( () => {
+    const slots = props.draft.strokeCountSlots
+    return {
+      complete: slots.filter( slot => slot.count !== null && slot.count > 0 ).length,
+      total: slots.length,
+    }
+  } )
 
   const canStop = computed( () =>
     ( props.mode === "edit" || isReady.value ) &&
@@ -815,8 +928,7 @@
     props.draft.startOffsetMs >= 0 &&
     props.draft.finishVideoMs !== null &&
     allMarkersPlaced.value &&
-    strokeCountsComplete.value &&
-    breathCountsComplete.value
+    strokeCountsComplete.value
   )
 
   const emitStop = () => {
@@ -852,14 +964,6 @@
   const updateStrokeCountValue = ( id: string, raw: string ) => {
     updateDraft( next => {
       const slot = next.strokeCountSlots.find( item => item.id === id ) ?? null
-      if ( !slot ) return
-      slot.count = parseCountValue( raw )
-    } )
-  }
-
-  const updateBreathCountValue = ( id: string, raw: string ) => {
-    updateDraft( next => {
-      const slot = next.breathCountSlots.find( item => item.id === id ) ?? null
       if ( !slot ) return
       slot.count = parseCountValue( raw )
     } )
@@ -938,7 +1042,7 @@
   <div class="flex-1 flex flex-col overflow-hidden">
     <div class="flex-1 overflow-y-auto">
       <div class="flex flex-col items-center px-6 py-6">
-        <div class="w-full max-w-5xl">
+        <div class="w-full max-w-7xl">
           <div class="flex items-center justify-between gap-3">
             <div class="text-sm font-semibold text-gray-800">Timing mode</div>
             <button class="h-10 px-4 rounded-md bg-gray-200 text-gray-900" type="button" @click="onBack">
@@ -946,8 +1050,8 @@
             </button>
           </div>
 
-          <div class="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-            <div class="w-full">
+          <div class="mt-4 grid grid-cols-1 xl:grid-cols-[minmax(0,1.15fr)_minmax(440px,0.85fr)] gap-4 items-start">
+            <div class="w-full xl:sticky xl:top-4">
               <div class="text-sm font-semibold text-gray-800 mb-2">Video</div>
 
               <div class="w-full rounded-xl bg-gray-50 border border-gray-200 overflow-hidden">
@@ -959,7 +1063,7 @@
 
                 <div
                   class="bg-black flex items-center justify-center overflow-hidden"
-                  :class="isPortrait ? 'h-[75vh] max-h-[720px]' : 'aspect-video max-h-[520px]'"
+                  :class="isPortrait ? 'h-[62vh] min-h-[360px] max-h-[640px]' : 'aspect-video max-h-[520px]'"
                 >
                   <video
                     ref="videoEl"
@@ -1068,6 +1172,15 @@
                       @pointermove="onPinPointerMove"
                       @pointerup="onPinPointerUp"
                     />
+
+                    <div
+                      v-for="marker in breathMarkerRows"
+                      v-show="isMsVisibleInTimeline(marker.tMs)"
+                      :key="marker.id"
+                      class="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 h-5 w-2 rounded bg-amber-500 ring-1 ring-white"
+                      :style="{ left: `${pctFromVisibleMs(marker.tMs)}%` }"
+                      :title="`Breath ${formatVideoMsPrecise(marker.tMs)}`"
+                    />
                   </div>
 
                   <div class="mt-3 flex flex-wrap gap-2 text-xs text-gray-600">
@@ -1075,6 +1188,7 @@
                     <div class="flex items-center gap-1"><span class="inline-block h-3 w-3 rounded bg-red-700" /> Finish</div>
                     <div class="flex items-center gap-1"><span class="inline-block h-3 w-3 rounded bg-cyan-600" /> Surfacing</div>
                     <div class="flex items-center gap-1"><span class="inline-block h-3 w-3 rounded bg-blue-600" /> Split</div>
+                    <div class="flex items-center gap-1"><span class="inline-block h-3 w-3 rounded bg-amber-500" /> Breath</div>
                   </div>
                 </div>
               </div>
@@ -1083,409 +1197,493 @@
             <div class="w-full">
               <div class="text-sm font-semibold text-gray-800 mb-2">Controls</div>
 
-              <div class="mb-4 w-full rounded-xl border border-gray-200 bg-white p-3">
-                <div class="flex items-center justify-between gap-4">
-                  <div class="min-w-0 text-xs tabular-nums text-gray-500 truncate">
-                    View: {{ formatVideoMsPrecise(visibleStartMs) }} -> {{ formatVideoMsPrecise(visibleEndMs) }}
-                  </div>
-
-                  <div class="shrink-0 flex items-center gap-2">
-                    <button
-                      class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-gray-300 bg-white text-sm font-semibold text-gray-700 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
-                      type="button"
-                      :disabled="!canZoomOut"
-                      @click="zoomOut"
-                    >
-                      -
-                    </button>
-
-                    <div class="min-w-[3rem] text-center text-xs font-semibold tabular-nums text-gray-700">
-                      x{{ timelineZoom }}
+              <div class="space-y-3 xl:sticky xl:top-4 xl:max-h-[calc(100vh-13rem)] xl:overflow-y-auto xl:pr-1">
+                <div class="w-full rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
+                  <div class="flex items-center justify-between gap-4">
+                    <div class="min-w-0 text-xs tabular-nums text-gray-500 truncate">
+                      View: {{ formatVideoMsPrecise(visibleStartMs) }} -> {{ formatVideoMsPrecise(visibleEndMs) }}
                     </div>
 
-                    <button
-                      class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-gray-300 bg-white text-sm font-semibold text-gray-700 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
-                      type="button"
-                      :disabled="!canZoomIn"
-                      @click="zoomIn"
-                    >
-                      +
-                    </button>
-                  </div>
-                </div>
+                    <div class="shrink-0 flex items-center gap-2">
+                      <button
+                        class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-gray-300 bg-white text-sm font-semibold text-gray-700 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
+                        type="button"
+                        :disabled="!canZoomOut"
+                        @click="zoomOut"
+                      >
+                        -
+                      </button>
 
-                <div class="mt-2 flex items-center justify-between gap-3 text-xs tabular-nums text-gray-500">
-                  <div class="shrink-0 font-semibold text-gray-700 ml-auto">
-                    Cursor: {{ formatVideoMsPrecise(currentVideoMs) }}
-                  </div>
-                </div>
-
-                <div v-if="timelineTicks.length" class="relative mt-4 h-9 overflow-hidden rounded-md border border-gray-200 bg-white px-1">
-                  <div
-                    v-for="timelineTick in timelineTicks"
-                    :key="`tick-${timelineTick.ms}`"
-                    class="absolute top-0 bottom-0"
-                    :style="{ left: `${pctFromVisibleMs(timelineTick.ms)}%` }"
-                  >
-                    <div class="w-px" :class="timelineTick.showLabel ? 'h-4 bg-gray-500' : 'h-2 bg-gray-300'" />
-                    <div
-                      v-if="timelineTick.showLabel"
-                      class="mt-0.5 -translate-x-1/2 text-xs font-medium tabular-nums text-gray-700 whitespace-nowrap bg-white/90 px-1 rounded"
-                    >
-                      {{ formatTickLabel(timelineTick.ms) }}
-                    </div>
-                  </div>
-                </div>
-
-                <div
-                  ref="timelineEl"
-                  :class="[
-                    'relative mt-4 h-10 rounded-md overflow-hidden cursor-pointer select-none',
-                    !hasFinishMarked ? 'bg-amber-100 ring-2 ring-amber-300' : 'bg-gray-200'
-                  ]"
-                  @pointerdown="onTimelinePointerDown"
-                >
-                  <div class="absolute inset-y-0 w-0.5 bg-gray-700" :style="{ left: `${pctFromVisibleMs(currentVideoMs)}%` }" />
-
-                  <div
-                    v-if="startPinMs !== null && durationMs && isMsVisibleInTimeline(startPinMs)"
-                    class="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 h-7 w-3 rounded bg-green-700"
-                    :style="{ left: `${pctFromVisibleMs(startPinMs)}%` }"
-                    @pointerdown="(e) => onPinPointerDown('start', undefined, e)"
-                    @pointermove="onPinPointerMove"
-                    @pointerup="onPinPointerUp"
-                  />
-
-                  <div
-                    v-if="finishPinMs !== null && durationMs && isMsVisibleInTimeline(finishPinMs)"
-                    class="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 h-7 w-3 rounded bg-red-700"
-                    :style="{ left: `${pctFromVisibleMs(finishPinMs)}%` }"
-                    @pointerdown="(e) => onPinPointerDown('finish', undefined, e)"
-                    @pointermove="onPinPointerMove"
-                    @pointerup="onPinPointerUp"
-                  />
-
-                  <div
-                    v-for="s in allMarkerSlots"
-                    v-show="s.videoMs !== null && isMsVisibleInTimeline(s.videoMs)"
-                    :key="s.id"
-                    class="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 h-6 w-2 rounded transition-shadow"
-                    :class="markerPinClass(s)"
-                    :style="{ left: `${pctFromVisibleMs(s.videoMs!)}%` }"
-                    @pointerdown="(e) => onPinPointerDown('marker', s.id, e)"
-                    @pointermove="onPinPointerMove"
-                    @pointerup="onPinPointerUp"
-                  />
-                </div>
-
-                <div class="mt-3 flex flex-wrap gap-2 text-xs text-gray-600">
-                  <div class="flex items-center gap-1"><span class="inline-block h-3 w-3 rounded bg-green-700" /> Start</div>
-                  <div class="flex items-center gap-1"><span class="inline-block h-3 w-3 rounded bg-red-700" /> Finish</div>
-                  <div class="flex items-center gap-1"><span class="inline-block h-3 w-3 rounded bg-cyan-600" /> Surfacing</div>
-                  <div class="flex items-center gap-1"><span class="inline-block h-3 w-3 rounded bg-blue-600" /> Split</div>
-                </div>
-              </div>
-
-              <div class="w-full rounded-xl border border-gray-200 bg-white p-4">
-                <template v-if="!hasFinishMarked">
-                  <div class="mt-2">
-                    <div class="text-xs font-semibold text-gray-700 mb-2">
-                      Step 1: Find the exact finish moment
-                    </div>
-
-                    <div class="grid grid-cols-1 gap-3">
-                      <div>
-                        <VideoTimerOfficialTimeInput v-model="officialFinishText" label="Official finish time" />
-
-                        <div
-                          v-if="officialFinishText.trim() && officialFinishMs === null"
-                          class="mt-1 text-[11px] text-red-600"
-                        >
-                          Invalid time format.
-                        </div>
-
-                        <div
-                          v-else-if="finishSetupError"
-                          class="mt-1 text-[11px] text-red-600"
-                        >
-                          {{ finishSetupError }}
-                        </div>
+                      <div class="min-w-[3rem] text-center text-xs font-semibold tabular-nums text-gray-700">
+                        x{{ timelineZoom }}
                       </div>
 
                       <button
-                        class="h-10 px-3 rounded-md bg-red-600 text-white disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
+                        class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-gray-300 bg-white text-sm font-semibold text-gray-700 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
                         type="button"
-                        :disabled="!isReady || officialFinishMs === null"
-                        @click="setFinishHere"
+                        :disabled="!canZoomIn"
+                        @click="zoomIn"
                       >
-                        Set finish and calculate race start
+                        +
                       </button>
                     </div>
                   </div>
-                </template>
 
-                <template v-else>
-                  <div class="mb-3 flex items-center justify-between gap-3">
-                    <div class="text-xs font-semibold text-gray-700">
-                      Step 2: Place markers
+                  <div class="mt-2 flex items-center justify-between gap-3 text-xs tabular-nums text-gray-500">
+                    <div class="shrink-0 font-semibold text-gray-700 ml-auto">
+                      Cursor: {{ formatVideoMsPrecise(currentVideoMs) }}
                     </div>
+                  </div>
 
-                    <button
-                      class="text-xs font-semibold text-blue-600 hover:text-blue-700"
-                      type="button"
-                      @click="showFinishEditor = !showFinishEditor"
+                  <div v-if="timelineTicks.length" class="relative mt-4 h-9 overflow-hidden rounded-md border border-gray-200 bg-white px-1">
+                    <div
+                      v-for="timelineTick in timelineTicks"
+                      :key="`tick-${timelineTick.ms}`"
+                      class="absolute top-0 bottom-0"
+                      :style="{ left: `${pctFromVisibleMs(timelineTick.ms)}%` }"
                     >
-                      {{ showFinishEditor ? "Hide finish editor" : "Edit finish / start" }}
-                    </button>
+                      <div class="w-px" :class="timelineTick.showLabel ? 'h-4 bg-gray-500' : 'h-2 bg-gray-300'" />
+                      <div
+                        v-if="timelineTick.showLabel"
+                        class="mt-0.5 -translate-x-1/2 text-xs font-medium tabular-nums text-gray-700 whitespace-nowrap bg-white/90 px-1 rounded"
+                      >
+                        {{ formatTickLabel(timelineTick.ms) }}
+                      </div>
+                    </div>
                   </div>
 
                   <div
-                    v-if="showFinishEditor"
-                    class="mb-3 rounded-md border border-amber-200 bg-amber-50 p-3"
+                    ref="timelineEl"
+                    :class="[
+                      'relative mt-4 h-10 rounded-md overflow-hidden cursor-pointer select-none',
+                      !hasFinishMarked ? 'bg-amber-100 ring-2 ring-amber-300' : 'bg-gray-200'
+                    ]"
+                    @pointerdown="onTimelinePointerDown"
                   >
-                    <div class="text-xs font-semibold text-gray-700 mb-2">
-                      Edit finish / race start
-                    </div>
+                    <div class="absolute inset-y-0 w-0.5 bg-gray-700" :style="{ left: `${pctFromVisibleMs(currentVideoMs)}%` }" />
 
-                    <div class="grid grid-cols-1 gap-3">
-                      <div>
-                        <VideoTimerOfficialTimeInput v-model="officialFinishText" label="Official finish time" />
+                    <div
+                      v-if="startPinMs !== null && durationMs && isMsVisibleInTimeline(startPinMs)"
+                      class="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 h-7 w-3 rounded bg-green-700"
+                      :style="{ left: `${pctFromVisibleMs(startPinMs)}%` }"
+                      @pointerdown="(e) => onPinPointerDown('start', undefined, e)"
+                      @pointermove="onPinPointerMove"
+                      @pointerup="onPinPointerUp"
+                    />
 
-                        <div
-                          v-if="officialFinishText.trim() && officialFinishMs === null"
-                          class="mt-1 text-[11px] text-red-600"
-                        >
-                          Invalid time format.
-                        </div>
+                    <div
+                      v-if="finishPinMs !== null && durationMs && isMsVisibleInTimeline(finishPinMs)"
+                      class="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 h-7 w-3 rounded bg-red-700"
+                      :style="{ left: `${pctFromVisibleMs(finishPinMs)}%` }"
+                      @pointerdown="(e) => onPinPointerDown('finish', undefined, e)"
+                      @pointermove="onPinPointerMove"
+                      @pointerup="onPinPointerUp"
+                    />
 
-                        <div
-                          v-else-if="finishSetupError"
-                          class="mt-1 text-[11px] text-red-600"
-                        >
-                          {{ finishSetupError }}
-                        </div>
+                    <div
+                      v-for="s in allMarkerSlots"
+                      v-show="s.videoMs !== null && isMsVisibleInTimeline(s.videoMs)"
+                      :key="s.id"
+                      class="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 h-6 w-2 rounded transition-shadow"
+                      :class="markerPinClass(s)"
+                      :style="{ left: `${pctFromVisibleMs(s.videoMs!)}%` }"
+                      @pointerdown="(e) => onPinPointerDown('marker', s.id, e)"
+                      @pointermove="onPinPointerMove"
+                      @pointerup="onPinPointerUp"
+                    />
+
+                    <div
+                      v-for="marker in breathMarkerRows"
+                      v-show="isMsVisibleInTimeline(marker.tMs)"
+                      :key="marker.id"
+                      class="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 h-5 w-2 rounded bg-amber-500 ring-1 ring-white"
+                      :style="{ left: `${pctFromVisibleMs(marker.tMs)}%` }"
+                      :title="`Breath ${formatVideoMsPrecise(marker.tMs)}`"
+                    />
+                  </div>
+
+                  <div class="mt-3 flex flex-wrap gap-2 text-xs text-gray-600">
+                    <div class="flex items-center gap-1"><span class="inline-block h-3 w-3 rounded bg-green-700" /> Start</div>
+                    <div class="flex items-center gap-1"><span class="inline-block h-3 w-3 rounded bg-red-700" /> Finish</div>
+                    <div class="flex items-center gap-1"><span class="inline-block h-3 w-3 rounded bg-cyan-600" /> Surfacing</div>
+                    <div class="flex items-center gap-1"><span class="inline-block h-3 w-3 rounded bg-blue-600" /> Split</div>
+                    <div class="flex items-center gap-1"><span class="inline-block h-3 w-3 rounded bg-amber-500" /> Breath</div>
+                  </div>
+                </div>
+
+                <div class="w-full rounded-xl border border-gray-200 bg-white p-4">
+                  <template v-if="!hasFinishMarked">
+                    <div class="mt-2">
+                      <div class="text-xs font-semibold text-gray-700 mb-2">
+                        Step 1: Find the exact finish moment
                       </div>
 
-                      <div class="grid grid-cols-1 gap-2">
-                        <button
-                          class="min-h-[40px] px-3 py-2 rounded-md bg-gray-900 text-white disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed whitespace-normal leading-5"
-                          type="button"
-                          :disabled="props.draft.finishVideoMs === null || officialFinishMs === null"
-                          @click="recalculateStartFromCurrentFinish"
-                        >
-                          Recalculate start from current finish
-                        </button>
+                      <div class="grid grid-cols-1 gap-3">
+                        <div>
+                          <VideoTimerOfficialTimeInput v-model="officialFinishText" label="Official finish time" />
+
+                          <div
+                            v-if="officialFinishText.trim() && officialFinishMs === null"
+                            class="mt-1 text-[11px] text-red-600"
+                          >
+                            Invalid time format.
+                          </div>
+
+                          <div
+                            v-else-if="finishSetupError"
+                            class="mt-1 text-[11px] text-red-600"
+                          >
+                            {{ finishSetupError }}
+                          </div>
+                        </div>
 
                         <button
-                          class="min-h-[40px] px-3 py-2 rounded-md bg-red-600 text-white disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed whitespace-normal leading-5"
+                          class="h-10 px-3 rounded-md bg-red-600 text-white disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
                           type="button"
                           :disabled="!isReady || officialFinishMs === null"
-                          @click="setFinishHereAndCloseEditor"
+                          @click="setFinishHere"
                         >
-                          Set finish here and recalculate
+                          Set finish and calculate race start
+                        </button>
+                      </div>
+                    </div>
+                  </template>
+
+                  <template v-else>
+                    <div class="mb-3 flex items-center justify-between gap-3">
+                      <div class="text-xs font-semibold text-gray-700">
+                        Step 2: Place markers
+                      </div>
+
+                      <button
+                        class="text-xs font-semibold text-blue-600 hover:text-blue-700"
+                        type="button"
+                        @click="showFinishEditor = !showFinishEditor"
+                      >
+                        {{ showFinishEditor ? "Hide finish editor" : "Edit finish / start" }}
+                      </button>
+                    </div>
+
+                    <div
+                      v-if="showFinishEditor"
+                      class="mb-3 rounded-md border border-amber-200 bg-amber-50 p-3"
+                    >
+                      <div class="text-xs font-semibold text-gray-700 mb-2">
+                        Edit finish / race start
+                      </div>
+
+                      <div class="grid grid-cols-1 gap-3">
+                        <div>
+                          <VideoTimerOfficialTimeInput v-model="officialFinishText" label="Official finish time" />
+
+                          <div
+                            v-if="officialFinishText.trim() && officialFinishMs === null"
+                            class="mt-1 text-[11px] text-red-600"
+                          >
+                            Invalid time format.
+                          </div>
+
+                          <div
+                            v-else-if="finishSetupError"
+                            class="mt-1 text-[11px] text-red-600"
+                          >
+                            {{ finishSetupError }}
+                          </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 gap-2">
+                          <button
+                            class="min-h-[40px] px-3 py-2 rounded-md bg-gray-900 text-white disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed whitespace-normal leading-5"
+                            type="button"
+                            :disabled="props.draft.finishVideoMs === null || officialFinishMs === null"
+                            @click="recalculateStartFromCurrentFinish"
+                          >
+                            Recalculate start from current finish
+                          </button>
+
+                          <button
+                            class="min-h-[40px] px-3 py-2 rounded-md bg-red-600 text-white disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed whitespace-normal leading-5"
+                            type="button"
+                            :disabled="!isReady || officialFinishMs === null"
+                            @click="setFinishHereAndCloseEditor"
+                          >
+                            Set finish here and recalculate
+                          </button>
+                        </div>
+
+                        <div class="text-[11px] text-gray-600">
+                          Use the first button if only the official time changed. Use the second if you also want to move the finish marker to the current cursor position.
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="flex border-b border-gray-200" role="tablist" aria-label="Timing data">
+                      <button
+                        class="flex-1 border-b-2 px-3 py-2 text-xs font-semibold transition-colors"
+                        :class="activePanelTab === 'markers' ? 'border-blue-600 text-blue-700' : 'border-transparent text-gray-500 hover:text-gray-700'"
+                        type="button"
+                        role="tab"
+                        :aria-selected="activePanelTab === 'markers'"
+                        @click="activePanelTab = 'markers'"
+                      >
+                        Markers {{ markerProgress.complete }}/{{ markerProgress.total }}
+                      </button>
+
+                      <button
+                        class="flex-1 border-b-2 px-3 py-2 text-xs font-semibold transition-colors"
+                        :class="activePanelTab === 'counts' ? 'border-blue-600 text-blue-700' : 'border-transparent text-gray-500 hover:text-gray-700'"
+                        type="button"
+                        role="tab"
+                        :aria-selected="activePanelTab === 'counts'"
+                        @click="activePanelTab = 'counts'"
+                      >
+                        Counts {{ countProgress.complete }}/{{ countProgress.total }}
+                      </button>
+                    </div>
+
+                    <div
+                      v-show="activePanelTab === 'markers'"
+                      class="mt-3 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-md border border-gray-200 bg-gray-50 p-2.5"
+                      role="tabpanel"
+                    >
+                      <div class="min-w-0">
+                        <div class="text-[11px] font-medium text-gray-500">
+                          <span v-if="activeMarkerTab === 'breath'">Breath taken</span>
+                          <span v-else>Next {{ activeMarkerTab === "surfacing" ? "surfacing" : "split" }} marker</span>
+                        </div>
+                        <div class="truncate text-xs font-semibold text-gray-800">
+                          <span v-if="activeMarkerTab === 'breath'">
+                            {{ breathMarkersEnabled ? "Add a breath marker at the current cursor" : "Complete splits first" }}
+                          </span>
+                          <span v-else>
+                            {{ activeNextMarker?.label || `All ${activeMarkerTab === "surfacing" ? "surfacing" : "split"} markers placed` }}
+                          </span>
+                        </div>
+                      </div>
+
+                      <button
+                        class="h-10 min-w-[132px] rounded-md px-3 text-xs font-semibold text-white disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed"
+                        :class="activeMarkerTab === 'surfacing' ? 'bg-cyan-600 hover:bg-cyan-700' : activeMarkerTab === 'breath' ? 'bg-amber-500 hover:bg-amber-600' : 'bg-blue-600 hover:bg-blue-700'"
+                        type="button"
+                        :disabled="activeMarkerTab === 'breath' ? !isReady || !breathMarkersEnabled : !isReady || !activeNextMarker"
+                        @click="placeActiveMarkerAtCursor"
+                      >
+                        <span v-if="activeMarkerTab === 'breath'">Add at {{ formatVideoMsPrecise(currentVideoMs) }}</span>
+                        <span v-else-if="activeNextMarker">Place at {{ formatVideoMsPrecise(currentVideoMs) }}</span>
+                        <span v-else>Complete</span>
+                      </button>
+                    </div>
+
+                    <div
+                      v-show="activePanelTab === 'counts'"
+                      class="mt-3 rounded-md border border-gray-200 bg-white p-3"
+                      role="tabpanel"
+                    >
+                      <div class="mb-2 flex items-center justify-between gap-3">
+                        <div class="text-xs font-semibold text-gray-700">Stroke count per length</div>
+                        <div class="text-[11px] text-gray-500">Required</div>
+                      </div>
+
+                      <div v-if="countRows.length" class="overflow-x-auto pb-2">
+                        <table class="min-w-max border-separate border-spacing-0 overflow-hidden rounded-md border border-gray-200 text-xs">
+                          <thead>
+                            <tr class="bg-gray-50 text-gray-600">
+                              <th
+                                v-for="row in countRows"
+                                :key="`heading-${row.id}`"
+                                class="min-w-[140px] border-b border-gray-200 px-3 py-2 text-center font-semibold"
+                              >
+                                {{ row.label }}
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr>
+                              <td v-for="row in countRows" :key="`stroke-${row.id}`" class="border-l border-gray-100 p-2">
+                                <input
+                                  :value="row.stroke.count ?? ''"
+                                  class="h-9 w-full rounded-md border border-gray-300 px-2 text-center text-sm"
+                                  type="number"
+                                  min="1"
+                                  step="1"
+                                  inputmode="numeric"
+                                  :aria-label="`Stroke count ${row.label}`"
+                                  @input="(event) => updateStrokeCountValue(row.stroke.id, (event.target as HTMLInputElement).value)"
+                                >
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+
+                      <div v-else class="text-xs text-gray-500">
+                        No count segments available for this race plan.
+                      </div>
+                    </div>
+
+                    <div
+                      v-show="activePanelTab === 'markers'"
+                      class="mt-3"
+                    >
+                      <div class="mb-3 grid grid-cols-3 rounded-md bg-gray-100 p-1" role="tablist" aria-label="Marker type">
+                        <button
+                          class="rounded px-3 py-2 text-xs font-semibold transition-colors"
+                          :class="activeMarkerTab === 'surfacing' ? 'bg-white text-cyan-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'"
+                          type="button"
+                          role="tab"
+                          :aria-selected="activeMarkerTab === 'surfacing'"
+                          @click="activeMarkerTab = 'surfacing'"
+                        >
+                          Surfacing {{ surfacingProgress.complete }}/{{ surfacingProgress.total }}
+                        </button>
+
+                        <button
+                          class="rounded px-3 py-2 text-xs font-semibold transition-colors"
+                          :class="activeMarkerTab === 'split' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'"
+                          type="button"
+                          role="tab"
+                          :aria-selected="activeMarkerTab === 'split'"
+                          @click="activeMarkerTab = 'split'"
+                        >
+                          Splits {{ splitProgress.complete }}/{{ splitProgress.total }}
+                        </button>
+
+                        <button
+                          class="rounded px-3 py-2 text-xs font-semibold transition-colors"
+                          :class="activeMarkerTab === 'breath' ? 'bg-white text-amber-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'"
+                          type="button"
+                          role="tab"
+                          :aria-selected="activeMarkerTab === 'breath'"
+                          @click="activeMarkerTab = 'breath'"
+                        >
+                          Breaths {{ breathMarkerProgress.complete }}
                         </button>
                       </div>
 
-                      <div class="text-[11px] text-gray-600">
-                        Use the first button if only the official time changed. Use the second if you also want to move the finish marker to the current cursor position.
-                      </div>
-                    </div>
-                  </div>
+                      <div v-show="activeMarkerTab === 'surfacing'" class="overflow-hidden border rounded-md bg-white" role="tabpanel">
+                        <div class="px-3 py-2 text-xs font-semibold bg-gray-50">
+                          Surfacing markers
+                        </div>
 
-                  <div class="rounded-md border border-gray-200 bg-gray-50 p-3">
-                    <div class="flex items-center justify-between gap-3">
-                      <div class="text-xs font-semibold text-gray-700">Current action</div>
-                      <div class="text-[11px] font-medium text-gray-500 text-right">
-                        <span v-if="primaryNextAction === 'surfacing' && nextSurfaceSlot">
-                          Next: Surfacing ({{ nextSurfaceSlot.label }})
-                        </span>
-                        <span v-else-if="primaryNextAction === 'split' && nextSplitSlot">
-                          Next: Split ({{ nextSplitSlot.label }})
-                        </span>
-                        <span v-else>
-                          No pending markers
-                        </span>
-                        <span
-                          v-if="secondaryNextAction === 'surfacing' && nextSurfaceSlot"
-                          class="block text-gray-400"
-                        >
-                          Alt: Surfacing ({{ nextSurfaceSlot.label }})
-                        </span>
-                        <span
-                          v-else-if="secondaryNextAction === 'split' && nextSplitSlot"
-                          class="block text-gray-400"
-                        >
-                          Alt: Split ({{ nextSplitSlot.label }})
-                        </span>
-                      </div>
-                    </div>
-
-                    <div class="mt-2 grid grid-cols-1 gap-2">
-                      <button
-                        class="h-10 px-3 rounded-md text-left border disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-200 disabled:cursor-not-allowed"
-                        :class="isSurfacingSelected ? 'bg-cyan-600 text-white border-cyan-600' : 'bg-white text-cyan-700 border-cyan-300'"
-                        type="button"
-                        :disabled="!isReady || !nextSurfaceSlot"
-                        @click="placeMarkerAtCursor('surfacing')"
-                      >
-                        <span v-if="nextSurfaceSlot">Place next surfacing: {{ nextSurfaceSlot.label }}</span>
-                        <span v-else>No pending surfacing markers</span>
-                      </button>
-
-                      <button
-                        class="h-10 px-3 rounded-md text-left border disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-200 disabled:cursor-not-allowed"
-                        :class="isSplitSelected ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-blue-700 border-blue-300'"
-                        type="button"
-                        :disabled="!isReady || !nextSplitSlot"
-                        @click="placeMarkerAtCursor('split')"
-                      >
-                        <span v-if="nextSplitSlot">Place next split: {{ nextSplitSlot.label }}</span>
-                        <span v-else>No pending split markers</span>
-                      </button>
-                    </div>
-                  </div>
-
-                  <div class="mt-3 space-y-3">
-                    <details class="border rounded-md bg-white" open>
-                      <summary class="px-3 py-2 text-xs font-semibold bg-gray-50 cursor-pointer select-none">
-                        Surfacing markers
-                      </summary>
-
-                      <div class="max-h-40 overflow-y-auto border-t">
-                        <div
-                          v-for="s in props.draft.surfaceSlots"
-                          :key="s.id"
-                          class="w-full px-3 py-2 text-xs border-b last:border-b-0 flex items-center justify-between gap-3"
-                          :class="s.id === props.draft.selectedSlotId ? 'bg-cyan-50' : 'bg-white'"
-                        >
-                          <button
-                            type="button"
-                            class="flex-1 min-w-0 flex items-center justify-between text-left"
-                            @click="selectMarker(s.id)"
+                        <div class="flex overflow-x-auto border-t">
+                          <div
+                            v-for="s in props.draft.surfaceSlots"
+                            :key="s.id"
+                            class="min-w-[220px] px-3 py-2 text-xs border-r last:border-r-0 flex items-center justify-between gap-3"
+                            :class="s.id === props.draft.selectedSlotId ? 'bg-cyan-50' : 'bg-white'"
                           >
-                            <span class="font-semibold">{{ s.label }}</span>
-                            <span class="tabular-nums text-gray-700">
-                              <span v-if="s.videoMs !== null && props.draft.startOffsetMs !== null">{{ formatRaceMs(toRaceMs(s.videoMs)) }}</span>
-                              <span v-else-if="s.videoMs !== null">{{ formatRaceMs(s.videoMs) }}</span>
-                            </span>
-                          </button>
+                            <button
+                              type="button"
+                              class="flex-1 min-w-0 flex items-center justify-between text-left"
+                              @click="selectMarker(s.id)"
+                            >
+                              <span class="font-semibold">{{ s.label }}</span>
+                              <span class="tabular-nums text-gray-700">
+                                <span v-if="s.videoMs !== null && props.draft.startOffsetMs !== null">{{ formatRaceMs(toRaceMs(s.videoMs)) }}</span>
+                                <span v-else-if="s.videoMs !== null">{{ formatRaceMs(s.videoMs) }}</span>
+                              </span>
+                            </button>
 
-                          <button
-                            v-if="s.videoMs !== null"
-                            type="button"
-                            class="shrink-0 text-red-600 hover:text-red-700 font-semibold text-sm leading-none px-1"
-                            @click.stop="clearMarker(s.id)"
-                          >
-                            ✕
-                          </button>
+                            <button
+                              v-if="s.videoMs !== null"
+                              type="button"
+                              class="shrink-0 text-red-600 hover:text-red-700 font-semibold text-sm leading-none px-1"
+                              @click.stop="clearMarker(s.id)"
+                            >
+                              ✕
+                            </button>
+                          </div>
                         </div>
                       </div>
-                    </details>
 
-                    <details class="border rounded-md bg-white" open>
-                      <summary class="px-3 py-2 text-xs font-semibold bg-gray-50 cursor-pointer select-none">
-                        Split markers
-                      </summary>
+                      <div v-show="activeMarkerTab === 'split'" class="overflow-hidden border rounded-md bg-white" role="tabpanel">
+                        <div class="px-3 py-2 text-xs font-semibold bg-gray-50">
+                          Split markers
+                        </div>
 
-                      <div class="max-h-56 overflow-y-auto border-t">
-                        <div
-                          v-for="s in props.draft.splitSlots"
-                          :key="s.id"
-                          class="w-full px-3 py-2 text-xs border-b last:border-b-0 flex items-center justify-between gap-3"
-                          :class="s.id === props.draft.selectedSlotId ? 'bg-blue-50' : 'bg-white'"
-                        >
-                          <button
-                            type="button"
-                            class="flex-1 min-w-0 flex items-center justify-between text-left"
-                            @click="selectMarker(s.id)"
+                        <div class="flex overflow-x-auto border-t">
+                          <div
+                            v-for="s in props.draft.splitSlots"
+                            :key="s.id"
+                            class="min-w-[220px] px-3 py-2 text-xs border-r last:border-r-0 flex items-center justify-between gap-3"
+                            :class="s.id === props.draft.selectedSlotId ? 'bg-blue-50' : 'bg-white'"
                           >
-                            <span class="font-semibold">{{ s.label }}</span>
-                            <span class="tabular-nums text-gray-700">
-                              <span v-if="s.videoMs !== null && props.draft.startOffsetMs !== null">{{ formatRaceMs(toRaceMs(s.videoMs)) }}</span>
-                              <span v-else-if="s.videoMs !== null">{{ formatRaceMs(s.videoMs) }}</span>
-                            </span>
-                          </button>
+                            <button
+                              type="button"
+                              class="flex-1 min-w-0 flex items-center justify-between text-left"
+                              @click="selectMarker(s.id)"
+                            >
+                              <span class="font-semibold">{{ s.label }}</span>
+                              <span class="tabular-nums text-gray-700">
+                                <span v-if="s.videoMs !== null && props.draft.startOffsetMs !== null">{{ formatRaceMs(toRaceMs(s.videoMs)) }}</span>
+                                <span v-else-if="s.videoMs !== null">{{ formatRaceMs(s.videoMs) }}</span>
+                              </span>
+                            </button>
 
-                          <button
-                            v-if="s.videoMs !== null && s.code !== 'finish_time'"
-                            type="button"
-                            class="shrink-0 text-red-600 hover:text-red-700 font-semibold text-sm leading-none px-1"
-                            @click.stop="clearMarker(s.id)"
-                          >
-                            ✕
-                          </button>
+                            <button
+                              v-if="s.videoMs !== null && s.code !== 'finish_time'"
+                              type="button"
+                              class="shrink-0 text-red-600 hover:text-red-700 font-semibold text-sm leading-none px-1"
+                              @click.stop="clearMarker(s.id)"
+                            >
+                              ✕
+                            </button>
+                          </div>
                         </div>
                       </div>
-                    </details>
-                  </div>
 
-                  <div class="mt-4 rounded-md border border-gray-200 bg-white p-3">
-                    <div class="text-xs font-semibold text-gray-700 mb-2">Stroke counts</div>
+                      <div v-show="activeMarkerTab === 'breath'" class="overflow-hidden border rounded-md bg-white" role="tabpanel">
+                        <div class="px-3 py-2 text-xs font-semibold bg-gray-50">
+                          Breath markers
+                        </div>
 
-                    <div v-if="props.draft.strokeCountSlots.length" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div
-                        v-for="slot in props.draft.strokeCountSlots"
-                        :key="slot.id"
-                      >
-                        <label class="block text-xs font-semibold text-gray-700 mb-1">
-                          {{ slot.label }}
-                        </label>
+                        <div v-if="!breathMarkersEnabled" class="border-t px-3 py-3 text-xs text-gray-500">
+                          Complete split markers first so breaths can be assigned to the correct lengths.
+                        </div>
 
-                        <input
-                          :value="slot.count ?? ''"
-                          class="w-full h-10 rounded-md border border-gray-300 px-3 text-sm"
-                          type="number"
-                          min="1"
-                          step="1"
-                          inputmode="numeric"
-                          @input="(event) => updateStrokeCountValue(slot.id, (event.target as HTMLInputElement).value)"
-                        >
+                        <div v-else-if="breathMarkerRows.length" class="flex overflow-x-auto border-t">
+                          <div
+                            v-for="marker in breathMarkerRows"
+                            :key="marker.id"
+                            class="min-w-[180px] px-3 py-2 text-xs border-r last:border-r-0 flex items-center justify-between gap-3 bg-white"
+                          >
+                            <button
+                              type="button"
+                              class="flex-1 min-w-0 text-left"
+                              @click="seekToMs(marker.tMs)"
+                            >
+                              <span class="block font-semibold">{{ marker.segment?.label ?? "Outside lengths" }}</span>
+                              <span class="block tabular-nums text-gray-700">
+                                {{ props.draft.startOffsetMs !== null ? formatRaceMs(toRaceMs(marker.tMs)) : formatVideoMsPrecise(marker.tMs) }}
+                              </span>
+                            </button>
+
+                            <button
+                              type="button"
+                              class="shrink-0 text-red-600 hover:text-red-700 font-semibold text-sm leading-none px-1"
+                              @click.stop="clearBreathMarker(marker.id)"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        </div>
+
+                        <div v-else class="border-t px-3 py-3 text-xs text-gray-500">
+                          No breath markers added yet.
+                        </div>
                       </div>
                     </div>
 
-                    <div v-else class="text-xs text-gray-500">
-                      No stroke count segments available for this race plan.
-                    </div>
-                  </div>
-
-                  <div class="mt-4 rounded-md border border-gray-200 bg-white p-3">
-                    <div class="text-xs font-semibold text-gray-700 mb-2">Breath counts</div>
-
-                    <div v-if="props.draft.breathCountSlots.length" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div
-                        v-for="slot in props.draft.breathCountSlots"
-                        :key="slot.id"
-                      >
-                        <label class="block text-xs font-semibold text-gray-700 mb-1">
-                          {{ slot.label }}
-                        </label>
-
-                        <input
-                          :value="slot.count ?? ''"
-                          class="w-full h-10 rounded-md border border-gray-300 px-3 text-sm"
-                          type="number"
-                          min="1"
-                          step="1"
-                          inputmode="numeric"
-                          @input="(event) => updateBreathCountValue(slot.id, (event.target as HTMLInputElement).value)"
-                        >
-                      </div>
-                    </div>
-
-                    <div v-else class="text-xs text-gray-500">
-                      No breath count segments available for this race plan.
-                    </div>
-                  </div>
-
-                  <button
-                    class="mt-4 w-full h-12 rounded-md bg-green-600 text-white hover:bg-green-700 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
-                    type="button"
-                    :disabled="!canStop"
-                    @click="emitStop"
-                  >
-                    Save &amp; continue
-                  </button>
-                </template>
+                    <button
+                      class="mt-4 w-full h-12 rounded-md bg-green-600 text-white hover:bg-green-700 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
+                      type="button"
+                      :disabled="!canStop"
+                      @click="emitStop"
+                    >
+                      Save &amp; continue
+                    </button>
+                  </template>
+                </div>
               </div>
             </div>
           </div>
@@ -1494,7 +1692,7 @@
     </div>
 
     <div class="border-t bg-white px-6 py-4">
-      <div class="w-full max-w-5xl mx-auto flex items-center justify-between gap-3">
+      <div class="w-full max-w-7xl mx-auto flex items-center justify-between gap-3">
         <div class="text-xs text-gray-600 truncate">
           Video: <span class="font-semibold">{{ props.video.originalName }}</span>
         </div>

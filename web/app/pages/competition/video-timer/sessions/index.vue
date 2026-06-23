@@ -139,9 +139,17 @@
     }
 
     return [ ...items ].sort( ( a, b ) => {
-      const aTime = new Date( a.resultDate || a.createdAt ).getTime()
-      const bTime = new Date( b.resultDate || b.createdAt ).getTime()
-      return bTime - aTime
+      const aMeetingTime = a.resultDate ? new Date( a.resultDate ).getTime() : Number.NaN
+      const bMeetingTime = b.resultDate ? new Date( b.resultDate ).getTime() : Number.NaN
+      const aHasMeetingDate = Number.isFinite( aMeetingTime )
+      const bHasMeetingDate = Number.isFinite( bMeetingTime )
+
+      if ( aHasMeetingDate !== bHasMeetingDate ) return aHasMeetingDate ? -1 : 1
+      if ( aHasMeetingDate && bHasMeetingDate && aMeetingTime !== bMeetingTime ) {
+        return bMeetingTime - aMeetingTime
+      }
+
+      return new Date( b.createdAt ).getTime() - new Date( a.createdAt ).getTime()
     } )
   } )
 
