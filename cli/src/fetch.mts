@@ -1360,9 +1360,9 @@ const updateMeetsResults = async ( options: MeetsResultsOptions ) => {
       const poolfinder = new URL( "https://www.swimming.org/poolfinder/" )
 
       for ( const loc of FINDER_LOCATIONS ) {
-        const searchUrl = new URL( "https://www.swimming.org/poolfinder/search" )
-        searchUrl.searchParams.set( "page", "1" )
-        searchUrl.searchParams.set( "per_page", "200" )
+        const searchUrl = new URL( poolfinder.toString() + "search" )
+        searchUrl.searchParams.set( "page", "10" )
+        searchUrl.searchParams.set( "per_page", "20" )
         searchUrl.searchParams.set( "location", loc.name )
         searchUrl.searchParams.set( "latitude", String( loc.lat ) )
         searchUrl.searchParams.set( "longitude", String( loc.lon ) )
@@ -1469,12 +1469,12 @@ const updateMeetsResults = async ( options: MeetsResultsOptions ) => {
     .action( async ( options ) => {
       const force = options.mode === "force"
       const allClubs = new Map<number, ClubFinderClub>()
-      const clubfinder = new URL( "https://www.swimming.org/clubfinder/" )
+      const clubfinder = new URL( "https://www.swimming.org/poolfinder/clubs/" )
 
       for ( const loc of FINDER_LOCATIONS ) {
-        const searchUrl = new URL( "https://www.swimming.org/clubfinder/search" )
-        searchUrl.searchParams.set( "page", "1" )
-        searchUrl.searchParams.set( "per_page", "200" )
+        const searchUrl = new URL( clubfinder.toString() + "search" )
+        searchUrl.searchParams.set( "page", "10" )
+        searchUrl.searchParams.set( "per_page", "10" )
         searchUrl.searchParams.set( "location", loc.name )
         searchUrl.searchParams.set( "latitude", String( loc.lat ) )
         searchUrl.searchParams.set( "longitude", String( loc.lon ) )
