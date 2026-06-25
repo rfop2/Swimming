@@ -201,7 +201,7 @@ export interface PageInfo {
   label: string
   url: URL
   referrer?: URL,
-  type: "individual" | "ranking" | "results" | "meets" | "meet" | "meetsResults" | "meetResults"
+  type: "individual" | "ranking" | "results" | "meets" | "meet" | "meetsResults" | "meetResults" | "pools"
   data?: unknown
 }
 

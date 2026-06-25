@@ -1167,6 +1167,242 @@ const updateMeetsResults = async ( options: MeetsResultsOptions ) => {
       }
     } )
 
+  interface PoolFinderPool {
+    id: number
+    name: string
+    lat: number
+    lon: number
+    url: string
+    street: string
+    town: string
+    country: string
+    postcode: string
+  }
+
+  // Centers chosen so the 200-pool radius from each overlaps adjacent zones.
+  // Spacing: London ~13 mi, Midlands ~25 mi, North ~30 mi, Scotland ~50 mi.
+  const POOL_FINDER_LOCATIONS = [
+    // London — dense (7-mile radius for 200 pools)
+    { name: "london-central",  lat: 51.507, lon: -0.128 },
+    { name: "london-nw",       lat: 51.607, lon: -0.303 },
+    { name: "london-ne",       lat: 51.607, lon:  0.047 },
+    { name: "london-sw",       lat: 51.407, lon: -0.303 },
+    { name: "london-se",       lat: 51.407, lon:  0.047 },
+    { name: "london-west",     lat: 51.507, lon: -0.458 },
+    { name: "london-east",     lat: 51.507, lon:  0.202 },
+    { name: "london-north",    lat: 51.657, lon: -0.178 },
+    { name: "london-south",    lat: 51.357, lon: -0.097 },
+    // South East England
+    { name: "brighton",        lat: 50.827, lon: -0.137 },
+    { name: "crawley",         lat: 51.109, lon: -0.187 },
+    { name: "guildford",       lat: 51.236, lon: -0.570 },
+    { name: "maidstone",       lat: 51.271, lon:  0.529 },
+    { name: "canterbury",      lat: 51.281, lon:  1.080 },
+    { name: "hastings",        lat: 50.854, lon:  0.573 },
+    { name: "bognor",          lat: 50.787, lon: -0.677 },
+    { name: "southampton",     lat: 50.909, lon: -1.404 },
+    { name: "portsmouth",      lat: 50.820, lon: -1.088 },
+    { name: "winchester",      lat: 51.063, lon: -1.308 },
+    { name: "reading",         lat: 51.455, lon: -0.971 },
+    { name: "oxford",          lat: 51.752, lon: -1.257 },
+    { name: "slough",          lat: 51.510, lon: -0.595 },
+    { name: "basingstoke",     lat: 51.264, lon: -1.088 },
+    { name: "colchester",      lat: 51.896, lon:  0.898 },
+    { name: "chelmsford",      lat: 51.736, lon:  0.474 },
+    // South West England
+    { name: "bristol",         lat: 51.455, lon: -2.588 },
+    { name: "bath",            lat: 51.381, lon: -2.360 },
+    { name: "swindon",         lat: 51.558, lon: -1.782 },
+    { name: "gloucester",      lat: 51.864, lon: -2.238 },
+    { name: "cheltenham",      lat: 51.900, lon: -2.078 },
+    { name: "bournemouth",     lat: 50.720, lon: -1.877 },
+    { name: "salisbury",       lat: 51.069, lon: -1.795 },
+    { name: "dorchester",      lat: 50.714, lon: -2.438 },
+    { name: "exeter",          lat: 50.726, lon: -3.527 },
+    { name: "plymouth",        lat: 50.376, lon: -4.143 },
+    { name: "taunton",         lat: 51.015, lon: -3.101 },
+    { name: "truro",           lat: 50.263, lon: -5.051 },
+    { name: "barnstaple",      lat: 51.080, lon: -4.058 },
+    // East England
+    { name: "cambridge",       lat: 52.205, lon:  0.119 },
+    { name: "peterborough",    lat: 52.574, lon: -0.241 },
+    { name: "norwich",         lat: 52.628, lon:  1.298 },
+    { name: "ipswich",         lat: 52.059, lon:  1.155 },
+    { name: "luton",           lat: 51.879, lon: -0.420 },
+    { name: "bedford",         lat: 52.136, lon: -0.466 },
+    { name: "kingslynn",       lat: 52.752, lon:  0.399 },
+    { name: "northampton",     lat: 52.237, lon: -0.895 },
+    // East Midlands
+    { name: "nottingham",      lat: 52.954, lon: -1.158 },
+    { name: "leicester",       lat: 52.636, lon: -1.133 },
+    { name: "derby",           lat: 52.922, lon: -1.477 },
+    { name: "lincoln",         lat: 53.234, lon: -0.540 },
+    { name: "mansfield",       lat: 53.146, lon: -1.196 },
+    // West Midlands
+    { name: "birmingham",      lat: 52.480, lon: -1.902 },
+    { name: "walsall",         lat: 52.586, lon: -1.980 },
+    { name: "coventry",        lat: 52.408, lon: -1.510 },
+    { name: "wolverhampton",   lat: 52.586, lon: -2.128 },
+    { name: "worcester",       lat: 52.192, lon: -2.221 },
+    { name: "stoke",           lat: 53.002, lon: -2.180 },
+    { name: "telford",         lat: 52.678, lon: -2.445 },
+    { name: "hereford",        lat: 52.054, lon: -2.716 },
+    { name: "redditch",        lat: 52.306, lon: -1.944 },
+    // Yorkshire
+    { name: "leeds",           lat: 53.800, lon: -1.549 },
+    { name: "sheffield",       lat: 53.383, lon: -1.466 },
+    { name: "bradford",        lat: 53.796, lon: -1.759 },
+    { name: "york",            lat: 53.959, lon: -1.082 },
+    { name: "hull",            lat: 53.744, lon:  0.336 },
+    { name: "doncaster",       lat: 53.523, lon: -1.128 },
+    { name: "harrogate",       lat: 54.000, lon: -1.540 },
+    { name: "scarborough",     lat: 54.281, lon: -0.403 },
+    { name: "wakefield",       lat: 53.683, lon: -1.506 },
+    // North West England
+    { name: "manchester",      lat: 53.480, lon: -2.243 },
+    { name: "liverpool",       lat: 53.408, lon: -2.991 },
+    { name: "warrington",      lat: 53.390, lon: -2.597 },
+    { name: "preston",         lat: 53.763, lon: -2.703 },
+    { name: "blackpool",       lat: 53.817, lon: -3.036 },
+    { name: "chester",         lat: 53.193, lon: -2.893 },
+    { name: "wigan",           lat: 53.543, lon: -2.631 },
+    { name: "blackburn",       lat: 53.748, lon: -2.482 },
+    { name: "bolton",          lat: 53.578, lon: -2.430 },
+    { name: "lancaster",       lat: 54.047, lon: -2.800 },
+    { name: "barrow",          lat: 54.113, lon: -3.228 },
+    // North East England
+    { name: "newcastle",       lat: 54.978, lon: -1.618 },
+    { name: "sunderland",      lat: 54.906, lon: -1.381 },
+    { name: "middlesbrough",   lat: 54.574, lon: -1.235 },
+    { name: "darlington",      lat: 54.524, lon: -1.559 },
+    { name: "carlisle",        lat: 54.895, lon: -2.934 },
+    { name: "durham",          lat: 54.778, lon: -1.577 },
+    // Wales
+    { name: "cardiff",         lat: 51.483, lon: -3.177 },
+    { name: "swansea",         lat: 51.621, lon: -3.944 },
+    { name: "newport",         lat: 51.588, lon: -2.998 },
+    { name: "wrexham",         lat: 53.043, lon: -2.993 },
+    { name: "bangor-wales",    lat: 53.228, lon: -4.128 },
+    { name: "aberystwyth",     lat: 52.415, lon: -4.083 },
+    { name: "llandudno",       lat: 53.324, lon: -3.827 },
+    { name: "carmarthen",      lat: 51.857, lon: -4.312 },
+    { name: "brecon",          lat: 51.945, lon: -3.387 },
+    { name: "pontypridd",      lat: 51.603, lon: -3.343 },
+    // Scotland
+    { name: "glasgow",         lat: 55.864, lon: -4.252 },
+    { name: "edinburgh",       lat: 55.953, lon: -3.188 },
+    { name: "aberdeen",        lat: 57.149, lon: -2.094 },
+    { name: "dundee",          lat: 56.462, lon: -2.971 },
+    { name: "perth",           lat: 56.396, lon: -3.437 },
+    { name: "stirling",        lat: 56.117, lon: -3.937 },
+    { name: "inverness",       lat: 57.477, lon: -4.224 },
+    { name: "fortwilliam",     lat: 56.820, lon: -5.105 },
+    { name: "ayr",             lat: 55.459, lon: -4.629 },
+    { name: "dumfries",        lat: 55.071, lon: -3.605 },
+    { name: "wick",            lat: 58.440, lon: -3.096 },
+    { name: "stornoway",       lat: 58.210, lon: -6.386 },
+    // Northern Ireland — 130-mile radius covers the whole region from Belfast
+    { name: "belfast",         lat: 54.597, lon: -5.930 },
+    { name: "derry",           lat: 54.997, lon: -7.309 },
+  ]
+
+  const parsePoolsFromHtml = ( html: string, centerName: string ): PoolFinderPool[] => {
+    const $ = cheerio.load( html )
+    const pools: PoolFinderPool[] = []
+    $( "li.results-item" ).each( ( _, el ) => {
+      const lat = parseFloat( $( el ).attr( "data-lat" ) ?? "" )
+      const lon = parseFloat( $( el ).attr( "data-long" ) ?? "" )
+      const anchor = $( el ).find( ".item-title a" )
+      const href = anchor.attr( "href" ) ?? ""
+      const name = anchor.text().trim()
+      const idMatch = href.match( /\/pools\/(\d+)\// )
+      if ( !idMatch ) return
+      const id = parseInt( idMatch[1], 10 )
+
+      const rawAddr = $( el ).find( ".item-address" ).text()
+      const parts = rawAddr.split( "," ).map( s => s.replace( /\s+/g, " " ).trim() ).filter( Boolean )
+      // Format: street parts..., town, country, postcode
+      const postcode = parts.at( -1 )?.match( /^[A-Z]{1,2}\d/ ) ? ( parts.pop() ?? "" ) : ""
+      const country = parts.at( -1 ) ?? ""
+      if ( country === "England" || country === "Scotland" || country === "Wales" || country === "Northern Ireland" ) {
+        parts.pop()
+      }
+      const town = parts.pop() ?? ""
+      const street = parts.join( ", " )
+
+      pools.push( { id, name, lat, lon, url: href, street, town, country, postcode } )
+    } )
+    if ( pools.length === 0 && html.includes( "results-item" ) ) {
+      console.warn( `  Warning: found results-item in HTML but parsed 0 pools for ${centerName}` )
+    }
+    return pools
+  }
+
+  const upsertSwimmingPoolSql =
+    `INSERT INTO SwimmingPools (id, name, street, town, country, postcode, lat, lon, url)
+    VALUES (:id, :name, :street, :town, :country, :postcode, :lat, :lon, :url)
+    ON DUPLICATE KEY UPDATE
+      name     = :name,
+      street   = :street,
+      town     = :town,
+      country  = :country,
+      postcode = :postcode,
+      lat      = :lat,
+      lon      = :lon,
+      url      = :url`
+
+  program.command( "pools" )
+    .description( "Fetch all UK swimming pools from swimming.org/poolfinder and save to SwimmingPools table" )
+    .addOption( new Option( "-m, --mode <mode>", "fetching strategy versus caching" ).choices( [ "force", "lazy" ] ).default( "lazy" ) )
+    .action( async ( options ) => {
+      const force = options.mode === "force"
+      const allPools = new Map<number, PoolFinderPool>()
+      const poolfinder = new URL( "https://www.swimming.org/poolfinder/" )
+
+      for ( const loc of POOL_FINDER_LOCATIONS ) {
+        const searchUrl = new URL( "https://www.swimming.org/poolfinder/search" )
+        searchUrl.searchParams.set( "page", "1" )
+        searchUrl.searchParams.set( "per_page", "200" )
+        searchUrl.searchParams.set( "location", loc.name )
+        searchUrl.searchParams.set( "latitude", String( loc.lat ) )
+        searchUrl.searchParams.set( "longitude", String( loc.lon ) )
+
+        const pageInfo = {
+          label: `pools_${loc.name}`,
+          url: searchUrl,
+          type: "pools" as const,
+          referrer: poolfinder,
+        }
+
+        let content: string
+        try {
+          const result = await fetchPage( pageInfo, force ? 0 : undefined )
+          content = result.content as string
+        } catch ( e ) {
+          console.error( `  Skipping ${loc.name}: ${e}` )
+          continue
+        }
+
+        const pools = parsePoolsFromHtml( content, loc.name )
+        let newCount = 0
+        for ( const pool of pools ) {
+          if ( !allPools.has( pool.id ) ) {
+            allPools.set( pool.id, pool )
+            newCount++
+          }
+        }
+        console.log( `  ${loc.name}: ${pools.length} pools fetched, ${newCount} new — total ${allPools.size}` )
+      }
+
+      const upsertPool = prepareStatement( await getPool(), upsertSwimmingPoolSql )
+      let saved = 0
+      for ( const pool of allPools.values() ) {
+        await upsertPool.run( pool )
+        saved++
+      }
+      console.log( `\nSaved ${saved} pools to SwimmingPools` )
+    } )
+
   try {
     // Capture native fetch before NordVPN patches globalThis.fetch, so geocoding
     // goes via the real IP rather than a shared VPN exit node (which Nominatim blocks).
