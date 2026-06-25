@@ -1181,7 +1181,7 @@ const updateMeetsResults = async ( options: MeetsResultsOptions ) => {
 
   // Centers chosen so the 200-pool radius from each overlaps adjacent zones.
   // Spacing: London ~13 mi, Midlands ~25 mi, North ~30 mi, Scotland ~50 mi.
-  const POOL_FINDER_LOCATIONS = [
+  const FINDER_LOCATIONS = [
     // London — dense (7-mile radius for 200 pools)
     { name: "london-central",  lat: 51.507, lon: -0.128 },
     { name: "london-nw",       lat: 51.607, lon: -0.303 },
@@ -1359,7 +1359,7 @@ const updateMeetsResults = async ( options: MeetsResultsOptions ) => {
       const allPools = new Map<number, PoolFinderPool>()
       const poolfinder = new URL( "https://www.swimming.org/poolfinder/" )
 
-      for ( const loc of POOL_FINDER_LOCATIONS ) {
+      for ( const loc of FINDER_LOCATIONS ) {
         const searchUrl = new URL( "https://www.swimming.org/poolfinder/search" )
         searchUrl.searchParams.set( "page", "1" )
         searchUrl.searchParams.set( "per_page", "200" )
@@ -1401,6 +1401,118 @@ const updateMeetsResults = async ( options: MeetsResultsOptions ) => {
         saved++
       }
       console.log( `\nSaved ${saved} pools to SwimmingPools` )
+    } )
+
+  interface ClubFinderClub {
+    id: number
+    name: string
+    lat: number
+    lon: number
+    url: string
+    street: string
+    town: string
+    county: string
+    country: string
+    postcode: string
+  }
+
+  const parseClubsFromHtml = ( html: string, centerName: string ): ClubFinderClub[] => {
+    const $ = cheerio.load( html )
+    const clubs: ClubFinderClub[] = []
+    $( "li.results-item" ).each( ( _, el ) => {
+      const lat = parseFloat( $( el ).attr( "data-lat" ) ?? "" )
+      const lon = parseFloat( $( el ).attr( "data-long" ) ?? "" )
+      const anchor = $( el ).find( ".item-title a" )
+      const href = anchor.attr( "href" ) ?? ""
+      const name = anchor.text().trim()
+      const idMatch = href.match( /\/clubs\/(\d+)\// )
+      if ( !idMatch ) return
+      const id = parseInt( idMatch[1], 10 )
+
+      const rawAddr = $( el ).find( ".item-address" ).text()
+      const parts = rawAddr.split( "," ).map( s => s.replace( /\s+/g, " " ).trim() ).filter( Boolean )
+      // Format: street parts..., town, county, country, postcode
+      const postcode = parts.at( -1 )?.match( /^[A-Z]{1,2}\d/ ) ? ( parts.pop() ?? "" ) : ""
+      const country = parts.at( -1 ) ?? ""
+      if ( country === "England" || country === "Scotland" || country === "Wales" || country === "Northern Ireland" ) {
+        parts.pop()
+      }
+      const county = parts.pop() ?? ""
+      const town = parts.pop() ?? ""
+      const street = parts.join( ", " )
+
+      clubs.push( { id, name, lat, lon, url: href, street, town, county, country, postcode } )
+    } )
+    if ( clubs.length === 0 && html.includes( "results-item" ) ) {
+      console.warn( `  Warning: found results-item in HTML but parsed 0 clubs for ${centerName}` )
+    }
+    return clubs
+  }
+
+  const upsertSwimmingClubSql =
+    `INSERT INTO SwimmingClubs (id, name, street, town, county, country, postcode, lat, lon, url)
+    VALUES (:id, :name, :street, :town, :county, :country, :postcode, :lat, :lon, :url)
+    ON DUPLICATE KEY UPDATE
+      name     = :name,
+      street   = :street,
+      town     = :town,
+      county   = :county,
+      country  = :country,
+      postcode = :postcode,
+      lat      = :lat,
+      lon      = :lon,
+      url      = :url`
+
+  program.command( "clubs" )
+    .description( "Fetch all UK swimming clubs from swimming.org/clubfinder and save to SwimmingClubs table" )
+    .addOption( new Option( "-m, --mode <mode>", "fetching strategy versus caching" ).choices( [ "force", "lazy" ] ).default( "lazy" ) )
+    .action( async ( options ) => {
+      const force = options.mode === "force"
+      const allClubs = new Map<number, ClubFinderClub>()
+      const clubfinder = new URL( "https://www.swimming.org/clubfinder/" )
+
+      for ( const loc of FINDER_LOCATIONS ) {
+        const searchUrl = new URL( "https://www.swimming.org/clubfinder/search" )
+        searchUrl.searchParams.set( "page", "1" )
+        searchUrl.searchParams.set( "per_page", "200" )
+        searchUrl.searchParams.set( "location", loc.name )
+        searchUrl.searchParams.set( "latitude", String( loc.lat ) )
+        searchUrl.searchParams.set( "longitude", String( loc.lon ) )
+
+        const pageInfo = {
+          label: `clubs_${loc.name}`,
+          url: searchUrl,
+          type: "clubs" as const,
+          referrer: clubfinder,
+        }
+
+        let content: string
+        try {
+          const result = await fetchPage( pageInfo, force ? 0 : undefined )
+          content = result.content as string
+        } catch ( e ) {
+          console.error( `  Skipping ${loc.name}: ${e}` )
+          continue
+        }
+
+        const clubs = parseClubsFromHtml( content, loc.name )
+        let newCount = 0
+        for ( const club of clubs ) {
+          if ( !allClubs.has( club.id ) ) {
+            allClubs.set( club.id, club )
+            newCount++
+          }
+        }
+        console.log( `  ${loc.name}: ${clubs.length} clubs fetched, ${newCount} new — total ${allClubs.size}` )
+      }
+
+      const upsertClub = prepareStatement( await getPool(), upsertSwimmingClubSql )
+      let saved = 0
+      for ( const club of allClubs.values() ) {
+        await upsertClub.run( club )
+        saved++
+      }
+      console.log( `\nSaved ${saved} clubs to SwimmingClubs` )
     } )
 
   try {
