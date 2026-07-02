@@ -3,6 +3,7 @@ import { createError, defineEventHandler, getRouterParam, readBody } from "h3"
 import { buildSplitMarkerPlan, getPool, isMySql2Error, prepareStatement } from "lib"
 
 type MarkerType = "surfacing" | "split"
+const strokesWithoutBreathMarkers = new Set( [ "backstroke", "breaststroke" ] )
 
 type Body = {
   selections: {
@@ -238,7 +239,13 @@ export default defineEventHandler( async ( event ) => {
     breathCountIndexSet.add( item.lengthIndex )
   }
 
-  const breathMarkersRaw = ( Array.isArray( body?.breathMarkers ) ? body.breathMarkers : [] )
+  const breathMarkersRaw = (
+    strokesWithoutBreathMarkers.has( stroke )
+      ? []
+      : Array.isArray( body?.breathMarkers )
+        ? body.breathMarkers
+        : []
+  )
     .map( marker => ( {
       tMs: asUnsignedIntOrNull( marker?.tMs ),
     } ) )

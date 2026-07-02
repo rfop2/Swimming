@@ -4,6 +4,7 @@ import { buildSplitMarkerPlan, getPool, isMySql2Error, prepareStatement } from "
 import { randomUUID } from "node:crypto"
 
 type MarkerType = "surfacing" | "split"
+const strokesWithoutBreathMarkers = new Set( [ "backstroke", "breaststroke" ] )
 
 type Body = {
   video: {
@@ -326,7 +327,12 @@ export default defineEventHandler( async ( event ) => {
     breathCountIndexSet.add( item.lengthIndex )
   }
 
-  const breathMarkersIn = Array.isArray( body?.breathMarkers ) ? body.breathMarkers : []
+  const breathMarkersIn =
+    strokesWithoutBreathMarkers.has( stroke )
+      ? []
+      : Array.isArray( body?.breathMarkers )
+        ? body.breathMarkers
+        : []
   const breathMarkersRaw = breathMarkersIn
     .map( marker => ( {
       tMs: asUnsignedIntOrNull( marker?.tMs ),
