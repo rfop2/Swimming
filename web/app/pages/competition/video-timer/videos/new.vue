@@ -9,6 +9,9 @@
   } )
 
   const router = useRouter()
+  const route = useRoute()
+
+  const preservedQuery = computed( () => ( { ...route.query } ) )
 
   const selectedFile = ref<File | null>( null )
   const isUploading = ref( false )
@@ -57,7 +60,10 @@
       }
 
       uploadedVideoId.value = result.id
-      await router.push( `/competition/video-timer/videos/${result.id}` )
+      await router.push( {
+        path: `/competition/video-timer/videos/${result.id}`,
+        query: preservedQuery.value,
+      } )
     } catch ( error ) {
       uploadError.value =
         error instanceof Error && error.message
@@ -84,7 +90,7 @@
 
             <NuxtLink
               class="h-10 px-4 rounded-md bg-gray-200 text-gray-900 flex items-center shrink-0"
-              to="/competition/video-timer/videos"
+              :to="{ path: '/competition/video-timer/videos', query: preservedQuery }"
             >
               Back to library
             </NuxtLink>
@@ -129,7 +135,7 @@
               <div class="flex items-center justify-end gap-2 pt-1">
                 <NuxtLink
                   class="h-10 px-4 rounded-md bg-gray-200 text-gray-900 flex items-center"
-                  to="/competition/video-timer/videos"
+                  :to="{ path: '/competition/video-timer/videos', query: preservedQuery }"
                 >
                   Cancel
                 </NuxtLink>

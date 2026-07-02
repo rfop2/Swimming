@@ -19,6 +19,7 @@
 
   const props = defineProps<{
     open: boolean
+    uploadQuery?: Record<string, string>
   }>()
 
   const emit = defineEmits<{
@@ -97,6 +98,11 @@
       }
     }
   )
+
+  const uploadNewVideoTo = computed( () => ( {
+    path: "/competition/video-timer/videos/new",
+    query: props.uploadQuery ?? {},
+  } ) )
 </script>
 
 <template>
@@ -186,7 +192,7 @@
         <div class="border-t border-gray-200 px-5 py-4 flex justify-end">
           <NuxtLink
             class="h-10 px-4 rounded-md bg-gray-200 text-gray-900 flex items-center"
-            to="/competition/video-timer/videos/new"
+            :to="uploadNewVideoTo"
           >
             Upload new video
           </NuxtLink>

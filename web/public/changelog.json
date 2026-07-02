@@ -1,14 +1,50 @@
 [
   {
-    "isoDate": "2026-06-23",
-    "niceDate": "23 June 2026",
-    "diff": "15.4.0..",
-    "href": "https://bitbucket.org/swimracing/swimming/compare/15.5.0..15.4.0",
+    "isoDate": "2026-07-02",
+    "niceDate": "2 July 2026",
+    "diff": "15.5.0..",
+    "href": "https://bitbucket.org/swimracing/swimming/compare/15.6.0..15.5.0",
     "major": false,
     "minor": false,
     "tag": null,
+    "title": "15.6.0",
+    "date": "2026-07-02T12:17:21.526Z",
+    "summary": null,
+    "commits": [],
+    "merges": [
+      {
+        "id": "40",
+        "message": "fix-breath-marker-and-result-bug",
+        "href": "https://bitbucket.org/swimracing/swimming/pull-requests/40",
+        "author": "Rodrigo Ferreira",
+        "commit": {
+          "hash": "1279bf12e49422735d31968c9175f44f08e39992",
+          "shorthash": "1279bf1",
+          "author": "Rodrigo Ferreira",
+          "email": "rf.oliveirapaula@gmail.com",
+          "date": "2026-07-02T12:11:56.000Z",
+          "niceDate": "2 July 2026",
+          "subject": "Merged in fix-breath-marker-and-result-bug (pull request #40)",
+          "message": "Merged in fix-breath-marker-and-result-bug (pull request #40)\n\nfix-breath-marker-and-result-bug",
+          "fixes": null,
+          "href": "https://bitbucket.org/swimracing/swimming/commits/1279bf12e49422735d31968c9175f44f08e39992",
+          "breaking": false
+        }
+      }
+    ],
+    "fixes": []
+  },
+  {
+    "isoDate": "2026-06-23",
+    "niceDate": "23 June 2026",
+    "diff": "15.4.0..15.5.0",
+    "href": "https://bitbucket.org/swimracing/swimming/compare/15.5.0..15.4.0",
+    "major": false,
+    "minor": true,
+    "tag": "15.5.0",
+    "date": "2026-06-23",
     "title": "15.5.0",
-    "date": "2026-06-23T12:52:48.883Z",
+    "version": "15.5.0",
     "summary": null,
     "commits": [
       {

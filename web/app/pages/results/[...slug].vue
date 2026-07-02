@@ -71,20 +71,30 @@
     meetDate?: string | null
   }
 
+  const buildVideoTimerResultQuery = ( row: ResultRow ) => ( {
+    course: String( row.course ?? "" ),
+    stroke: String( row.stroke ?? "" ),
+    distance: String( row.distance ?? "" ),
+    resultSwimmer: String( row.swimmer ?? "" ),
+    resultSeq: String( row.seq ?? "" ),
+    resultDate: String( row.date ?? "" ),
+    meetHint: String( row.meet ?? "" ),
+    officialFinishTime: row.time != null ? secondsToTime( Number( row.time ) ) : "",
+  } )
+
+  const selectedResultVideoQuery = computed( () =>
+    selectedResultForVideo.value
+      ? buildVideoTimerResultQuery( selectedResultForVideo.value )
+      : {}
+  )
+
   const selectVideoForResult = ( video: LibraryVideoListItem ) => {
     const row = selectedResultForVideo.value
     if ( !row ) return
 
     const query = {
       videoId: String( video.id ),
-      course: String( row.course ?? "" ),
-      stroke: String( row.stroke ?? "" ),
-      distance: String( row.distance ?? "" ),
-      resultSwimmer: String( row.swimmer ?? "" ),
-      resultSeq: String( row.seq ?? "" ),
-      resultDate: String( row.date ?? "" ),
-      meetHint: String( row.meet ?? "" ),
-      officialFinishTime: row.time != null ? secondsToTime( Number( row.time ) ) : "",
+      ...buildVideoTimerResultQuery( row ),
     }
 
     const href = router.resolve( {
@@ -634,6 +644,7 @@
 
     <VideoTimerVideoPickerModal
       :open="isVideoPickerOpen"
+      :upload-query="selectedResultVideoQuery"
       @close="closeVideoPicker"
       @select="selectVideoForResult"
     />
