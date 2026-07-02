@@ -42,6 +42,13 @@
   const route = useRoute()
 
   const videoId = computed( () => String( route.params.id || "" ).trim() )
+  const createSessionTo = computed( () => ( {
+    path: "/competition/video-timer",
+    query: {
+      ...route.query,
+      videoId: data.value?.id ?? videoId.value,
+    },
+  } ) )
 
   const { data, pending, error, refresh } = await useFetch<VideoLibraryItem | null>(
     () => `/api/competition/video-timer-library/${videoId.value}`,
@@ -289,7 +296,7 @@
                 <NuxtLink
                   v-if="data.canCreateSession"
                   class="h-10 px-4 rounded-md bg-blue-600 text-white flex items-center"
-                  :to="`/competition/video-timer?videoId=${data.id}`"
+                  :to="createSessionTo"
                 >
                   Create session
                 </NuxtLink>

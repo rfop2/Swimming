@@ -70,12 +70,32 @@
     if ( t ) clearTimeout( t )
   } )
 
+  const resultValueMatchesFilters = ( value: string | null | undefined ) => {
+    if ( !value ) return false
+
+    try {
+      const parsed = JSON.parse( value ) as Partial<ResultRow>
+
+      return (
+        String( parsed.swimmer ?? "" ) === String( props.swimmerId ?? "" ) &&
+        String( parsed.course ?? "" ) === String( props.course ?? "" ) &&
+        String( parsed.stroke ?? "" ) === String( props.stroke ?? "" ) &&
+        String( parsed.distance ?? "" ) === String( props.distance ?? "" )
+      )
+    } catch {
+      return false
+    }
+  }
+
   watch(
     () => [ props.swimmerId, props.course, props.stroke, props.distance ],
     () => {
-      model.value = null
       query.value = ""
       debounced.value = ""
+
+      if ( model.value && resultValueMatchesFilters( model.value ) ) return
+
+      model.value = null
     }
   )
 

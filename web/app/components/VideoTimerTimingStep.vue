@@ -33,6 +33,9 @@
 
   type TurnPlanItem = ReturnType<typeof buildTurnPlan>[number]
 
+  const strokesWithoutBreathMarkers = new Set( [ "backstroke", "breaststroke" ] )
+  const allowsBreathMarkersForStroke = ( stroke: string ) => !strokesWithoutBreathMarkers.has( stroke )
+
   const props = defineProps( {
     video: { type: Object as PropType<UploadedVideo>, required: true },
     selections: { type: Object as PropType<{ course: string; stroke: string; distance: string }>, required: true },
@@ -274,6 +277,13 @@
       getSavedFinishVideoMs() !== null
 
     if ( samePlan && !hasUnhydratedSavedMarkers && !hasMissingFinishState ) {
+      if ( !allowsBreathMarkersForStroke( props.selections.stroke ) && props.draft.breathMarkers.length ) {
+        updateDraft( next => {
+          next.breathMarkers = []
+        } )
+        return
+      }
+
       if ( !props.draft.selectedSlotId ) {
         const firstId =
           [ ...props.draft.surfaceSlots, ...props.draft.splitSlots ].find( slot => slot.videoMs === null )?.id ??
@@ -324,6 +334,12 @@
           turnIndex: marker.turnIndex,
           tMs: marker.tMs,
         } ) )
+        next.breathMarkers = allowsBreathMarkersForStroke( props.selections.stroke )
+          ? props.draft.breathMarkers.map( marker => ( {
+            id: marker.id,
+            tMs: marker.tMs,
+          } ) )
+          : []
         next.breakoutStartM = props.draft.breakoutStartM ?? 10
       } )
       return
@@ -341,12 +357,13 @@
       next.turns = nextTurns
       next.selectedSlotId = firstId
       next.markers = []
+      next.breathMarkers = []
       next.breakoutStartM = 10
     } )
   }
 
   watch(
-    () => [ props.selections.course, props.selections.distance ],
+    () => [ props.selections.course, props.selections.stroke, props.selections.distance ],
     () => {
       syncDraftPlan()
     },
@@ -694,7 +711,7 @@
   }
 
   const placeBreathMarkerAtCursor = () => {
-    if ( !isReady.value || !breathMarkersEnabled.value ) return
+    if ( !isReady.value || !supportsBreathMarkers.value || !breathMarkersEnabled.value ) return
 
     const nowMs = getLiveVideoMs()
 
@@ -832,6 +849,7 @@
 
   const activePanelTab = ref<TimingPanelTab>( "markers" )
   const activeMarkerTab = ref<MarkerPanelTab>( "surfacing" )
+  const supportsBreathMarkers = computed( () => allowsBreathMarkersForStroke( props.selections.stroke ) )
 
   const activeNextMarker = computed( () =>
     activeMarkerTab.value === "surfacing"
@@ -865,6 +883,7 @@
   )
 
   const breathMarkersEnabled = computed( () =>
+    supportsBreathMarkers.value &&
     props.draft.startOffsetMs !== null &&
     props.draft.finishVideoMs !== null &&
     requiredSplitMarkersPlaced.value &&
@@ -880,7 +899,7 @@
     } ) ?? null
 
   const breathMarkerRows = computed( () =>
-    [ ...props.draft.breathMarkers ]
+    ( supportsBreathMarkers.value ? [ ...props.draft.breathMarkers ] : [] )
       .sort( ( a, b ) => a.tMs - b.tMs )
       .map( marker => ( {
         ...marker,
@@ -913,6 +932,20 @@
     complete: breathMarkerRows.value.length,
     total: breathMarkerRows.value.length,
   } ) )
+
+  watch(
+    supportsBreathMarkers,
+    ( supported ) => {
+      if ( supported ) return
+      if ( activeMarkerTab.value === "breath" ) activeMarkerTab.value = "surfacing"
+      if ( props.draft.breathMarkers.length ) {
+        updateDraft( next => {
+          next.breathMarkers = []
+        } )
+      }
+    },
+    { immediate: true }
+  )
 
   const countProgress = computed( () => {
     const slots = props.draft.strokeCountSlots
@@ -1175,7 +1208,7 @@
 
                     <div
                       v-for="marker in breathMarkerRows"
-                      v-show="isMsVisibleInTimeline(marker.tMs)"
+                      v-show="supportsBreathMarkers && isMsVisibleInTimeline(marker.tMs)"
                       :key="marker.id"
                       class="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 h-5 w-2 rounded bg-amber-500 ring-1 ring-white"
                       :style="{ left: `${pctFromVisibleMs(marker.tMs)}%` }"
@@ -1188,7 +1221,7 @@
                     <div class="flex items-center gap-1"><span class="inline-block h-3 w-3 rounded bg-red-700" /> Finish</div>
                     <div class="flex items-center gap-1"><span class="inline-block h-3 w-3 rounded bg-cyan-600" /> Surfacing</div>
                     <div class="flex items-center gap-1"><span class="inline-block h-3 w-3 rounded bg-blue-600" /> Split</div>
-                    <div class="flex items-center gap-1"><span class="inline-block h-3 w-3 rounded bg-amber-500" /> Breath</div>
+                    <div v-if="supportsBreathMarkers" class="flex items-center gap-1"><span class="inline-block h-3 w-3 rounded bg-amber-500" /> Breath</div>
                   </div>
                 </div>
               </div>
@@ -1294,7 +1327,7 @@
 
                     <div
                       v-for="marker in breathMarkerRows"
-                      v-show="isMsVisibleInTimeline(marker.tMs)"
+                      v-show="supportsBreathMarkers && isMsVisibleInTimeline(marker.tMs)"
                       :key="marker.id"
                       class="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 h-5 w-2 rounded bg-amber-500 ring-1 ring-white"
                       :style="{ left: `${pctFromVisibleMs(marker.tMs)}%` }"
@@ -1307,7 +1340,7 @@
                     <div class="flex items-center gap-1"><span class="inline-block h-3 w-3 rounded bg-red-700" /> Finish</div>
                     <div class="flex items-center gap-1"><span class="inline-block h-3 w-3 rounded bg-cyan-600" /> Surfacing</div>
                     <div class="flex items-center gap-1"><span class="inline-block h-3 w-3 rounded bg-blue-600" /> Split</div>
-                    <div class="flex items-center gap-1"><span class="inline-block h-3 w-3 rounded bg-amber-500" /> Breath</div>
+                    <div v-if="supportsBreathMarkers" class="flex items-center gap-1"><span class="inline-block h-3 w-3 rounded bg-amber-500" /> Breath</div>
                   </div>
                 </div>
 
@@ -1525,7 +1558,12 @@
                       v-show="activePanelTab === 'markers'"
                       class="mt-3"
                     >
-                      <div class="mb-3 grid grid-cols-3 rounded-md bg-gray-100 p-1" role="tablist" aria-label="Marker type">
+                      <div
+                        class="mb-3 grid rounded-md bg-gray-100 p-1"
+                        :class="supportsBreathMarkers ? 'grid-cols-3' : 'grid-cols-2'"
+                        role="tablist"
+                        aria-label="Marker type"
+                      >
                         <button
                           class="rounded px-3 py-2 text-xs font-semibold transition-colors"
                           :class="activeMarkerTab === 'surfacing' ? 'bg-white text-cyan-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'"
@@ -1549,6 +1587,7 @@
                         </button>
 
                         <button
+                          v-if="supportsBreathMarkers"
                           class="rounded px-3 py-2 text-xs font-semibold transition-colors"
                           :class="activeMarkerTab === 'breath' ? 'bg-white text-amber-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'"
                           type="button"
