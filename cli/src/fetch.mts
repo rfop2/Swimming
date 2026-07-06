@@ -1180,18 +1180,31 @@ const updateMeetsResults = async ( options: MeetsResultsOptions ) => {
   }
 
   // Centers chosen so the 200-pool radius from each overlaps adjacent zones.
-  // Spacing: London ~13 mi, Midlands ~25 mi, North ~30 mi, Scotland ~50 mi.
+  // Spacing: London ~8 mi (4×5 grid), Midlands ~25 mi, North ~30 mi, Scotland ~50 mi.
   const FINDER_LOCATIONS = [
-    // London — dense (7-mile radius for 200 pools)
-    { name: "london-central",  lat: 51.507, lon: -0.128 },
-    { name: "london-nw",       lat: 51.607, lon: -0.303 },
-    { name: "london-ne",       lat: 51.607, lon:  0.047 },
-    { name: "london-sw",       lat: 51.407, lon: -0.303 },
-    { name: "london-se",       lat: 51.407, lon:  0.047 },
-    { name: "london-west",     lat: 51.507, lon: -0.458 },
-    { name: "london-east",     lat: 51.507, lon:  0.202 },
-    { name: "london-north",    lat: 51.657, lon: -0.178 },
-    { name: "london-south",    lat: 51.357, lon: -0.097 },
+    // London — 4 rows × 5 cols, ~8 mi spacing (0.11 lat / 0.18 lon).
+    // Finer than rest of UK because club/pool density is much higher here;
+    // the clubs API 500s if >~100 results are returned in one request.
+    { name: "london-r1c1", lat: 51.30, lon: -0.51 },
+    { name: "london-r1c2", lat: 51.30, lon: -0.33 },
+    { name: "london-r1c3", lat: 51.30, lon: -0.13 },
+    { name: "london-r1c4", lat: 51.30, lon:  0.05 },
+    { name: "london-r1c5", lat: 51.30, lon:  0.23 },
+    { name: "london-r2c1", lat: 51.41, lon: -0.51 },
+    { name: "london-r2c2", lat: 51.41, lon: -0.33 },
+    { name: "london-r2c3", lat: 51.41, lon: -0.13 },
+    { name: "london-r2c4", lat: 51.41, lon:  0.05 },
+    { name: "london-r2c5", lat: 51.41, lon:  0.23 },
+    { name: "london-r3c1", lat: 51.52, lon: -0.51 },
+    { name: "london-r3c2", lat: 51.52, lon: -0.33 },
+    { name: "london-r3c3", lat: 51.52, lon: -0.13 },
+    { name: "london-r3c4", lat: 51.52, lon:  0.05 },
+    { name: "london-r3c5", lat: 51.52, lon:  0.23 },
+    { name: "london-r4c1", lat: 51.62, lon: -0.51 },
+    { name: "london-r4c2", lat: 51.62, lon: -0.33 },
+    { name: "london-r4c3", lat: 51.62, lon: -0.13 },
+    { name: "london-r4c4", lat: 51.62, lon:  0.05 },
+    { name: "london-r4c5", lat: 51.62, lon:  0.23 },
     // South East England
     { name: "brighton",        lat: 50.827, lon: -0.137 },
     { name: "crawley",         lat: 51.109, lon: -0.187 },
@@ -1463,6 +1476,9 @@ const updateMeetsResults = async ( options: MeetsResultsOptions ) => {
       lon      = :lon,
       url      = :url`
 
+  const CLUBS_PAGE = 12
+  const CLUBS_PER_PAGE = 10
+
   program.command( "clubs" )
     .description( "Fetch all UK swimming clubs from swimming.org/clubfinder and save to SwimmingClubs table" )
     .addOption( new Option( "-m, --mode <mode>", "fetching strategy versus caching" ).choices( [ "force", "lazy" ] ).default( "lazy" ) )
@@ -1473,8 +1489,8 @@ const updateMeetsResults = async ( options: MeetsResultsOptions ) => {
 
       for ( const loc of FINDER_LOCATIONS ) {
         const searchUrl = new URL( clubfinder.toString() + "search" )
-        searchUrl.searchParams.set( "page", "10" )
-        searchUrl.searchParams.set( "per_page", "10" )
+        searchUrl.searchParams.set( "page", String( CLUBS_PAGE ) )
+        searchUrl.searchParams.set( "per_page", String( CLUBS_PER_PAGE ) )
         searchUrl.searchParams.set( "location", loc.name )
         searchUrl.searchParams.set( "latitude", String( loc.lat ) )
         searchUrl.searchParams.set( "longitude", String( loc.lon ) )
@@ -1497,13 +1513,18 @@ const updateMeetsResults = async ( options: MeetsResultsOptions ) => {
 
         const clubs = parseClubsFromHtml( content, loc.name )
         let newCount = 0
+        const uniqueInBatch = new Set<number>()
         for ( const club of clubs ) {
+          uniqueInBatch.add( club.id )
           if ( !allClubs.has( club.id ) ) {
             allClubs.set( club.id, club )
             newCount++
           }
         }
-        console.log( `  ${loc.name}: ${clubs.length} clubs fetched, ${newCount} new — total ${allClubs.size}` )
+        if ( uniqueInBatch.size >= CLUBS_PAGE * CLUBS_PER_PAGE ) {
+          console.warn( `  Warning: ${loc.name} returned ${uniqueInBatch.size} clubs (cap hit — densify grid here)` )
+        }
+        console.log( `  ${loc.name}: ${uniqueInBatch.size} clubs, ${newCount} new — total ${allClubs.size}` )
       }
 
       const upsertClub = prepareStatement( await getPool(), upsertSwimmingClubSql )
