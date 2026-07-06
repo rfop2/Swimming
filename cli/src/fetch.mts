@@ -1494,6 +1494,8 @@ const updateMeetsResults = async ( options: MeetsResultsOptions ) => {
         searchUrl.searchParams.set( "location", loc.name )
         searchUrl.searchParams.set( "latitude", String( loc.lat ) )
         searchUrl.searchParams.set( "longitude", String( loc.lon ) )
+        searchUrl.searchParams.set( "filter[discipline_swimming]", "true" )
+        // searchUrl.searchParams.set( "filter[discipline_master]", "true" )
 
         const pageInfo = {
           label: `clubs_${loc.name}`,
