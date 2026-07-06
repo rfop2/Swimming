@@ -1427,6 +1427,7 @@ const updateMeetsResults = async ( options: MeetsResultsOptions ) => {
     county: string
     country: string
     postcode: string
+    primaryPoolId: number | null
   }
 
   const parseClubsFromHtml = ( html: string, centerName: string ): ClubFinderClub[] => {
@@ -1438,9 +1439,10 @@ const updateMeetsResults = async ( options: MeetsResultsOptions ) => {
       const anchor = $( el ).find( ".item-title a" )
       const href = anchor.attr( "href" ) ?? ""
       const name = anchor.text().trim()
-      const idMatch = href.match( /\/clubs\/(\d+)\// )
+      const idMatch = href.match( /\/clubs\/(\d+)(?:\/(\d+))?/ )
       if ( !idMatch ) return
       const id = parseInt( idMatch[1], 10 )
+      const primaryPoolId = idMatch[2] ? parseInt( idMatch[2], 10 ) : null
 
       const rawAddr = $( el ).find( ".item-address" ).text()
       const parts = rawAddr.split( "," ).map( s => s.replace( /\s+/g, " " ).trim() ).filter( Boolean )
@@ -1454,7 +1456,7 @@ const updateMeetsResults = async ( options: MeetsResultsOptions ) => {
       const town = parts.pop() ?? ""
       const street = parts.join( ", " )
 
-      clubs.push( { id, name, lat, lon, url: href, street, town, county, country, postcode } )
+      clubs.push( { id, name, lat, lon, url: href, street, town, county, country, postcode, primaryPoolId } )
     } )
     if ( clubs.length === 0 && html.includes( "results-item" ) ) {
       console.warn( `  Warning: found results-item in HTML but parsed 0 clubs for ${centerName}` )
@@ -1463,18 +1465,19 @@ const updateMeetsResults = async ( options: MeetsResultsOptions ) => {
   }
 
   const upsertSwimmingClubSql =
-    `INSERT INTO SwimmingClubs (id, name, street, town, county, country, postcode, lat, lon, url)
-    VALUES (:id, :name, :street, :town, :county, :country, :postcode, :lat, :lon, :url)
+    `INSERT INTO SwimmingClubs (id, name, street, town, county, country, postcode, lat, lon, url, primaryPoolId)
+    VALUES (:id, :name, :street, :town, :county, :country, :postcode, :lat, :lon, :url, :primaryPoolId)
     ON DUPLICATE KEY UPDATE
-      name     = :name,
-      street   = :street,
-      town     = :town,
-      county   = :county,
-      country  = :country,
-      postcode = :postcode,
-      lat      = :lat,
-      lon      = :lon,
-      url      = :url`
+      name          = :name,
+      street        = :street,
+      town          = :town,
+      county        = :county,
+      country       = :country,
+      postcode      = :postcode,
+      lat           = :lat,
+      lon           = :lon,
+      url           = :url,
+      primaryPoolId = :primaryPoolId`
 
   const CLUBS_PAGE = 12
   const CLUBS_PER_PAGE = 10
