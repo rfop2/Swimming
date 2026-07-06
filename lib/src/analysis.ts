@@ -38,6 +38,15 @@ export type VideoTimerBreathMarkerRecord = {
   tMs: number
 }
 
+export type VideoTimerStrokeMarkerRecord = {
+  id?: string
+  seq?: number
+  lengthIndex: number
+  fromM: number
+  toM: number
+  tMs: number
+}
+
 export type VideoTimerTurnAnalysisRecord = {
   turnIndex: number
   breakoutM: number | null
@@ -50,6 +59,7 @@ export type VideoTimerSessionComputationInput = {
   markers: VideoTimerMarkerRecord[]
   analysis: VideoTimerSessionAnalysisRecord | null
   strokeCounts: VideoTimerStrokeCountRecord[]
+  strokeMarkers?: VideoTimerStrokeMarkerRecord[]
   breathCounts: VideoTimerBreathCountRecord[]
   breathMarkers?: VideoTimerBreathMarkerRecord[]
   turns: VideoTimerTurnAnalysisRecord[]

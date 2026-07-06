@@ -12,6 +12,7 @@ import type {
   VideoTimerBreathMarkerRecord,
   VideoTimerSessionComputationInput,
   VideoTimerStrokeCountRecord,
+  VideoTimerStrokeMarkerRecord,
   VideoTimerTurnAnalysisRecord,
 } from "./analysis.js"
 
@@ -38,12 +39,17 @@ export type VideoTimerDraftBreathMarker = Pick<VideoTimerBreathMarkerRecord, "id
   id: string
 }
 
+export type VideoTimerDraftStrokeMarker = Pick<VideoTimerStrokeMarkerRecord, "id" | "tMs"> & {
+  id: string
+}
+
 export type VideoTimerDraft = {
   finishVideoMs: number | null
   startOffsetMs: number | null
   surfaceSlots: VideoTimerDraftMarkerSlot[]
   splitSlots: VideoTimerDraftMarkerSlot[]
   strokeCountSlots: VideoTimerDraftStrokeCountSlot[]
+  strokeMarkers: VideoTimerDraftStrokeMarker[]
   breathCountSlots: VideoTimerDraftBreathCountSlot[]
   breathMarkers: VideoTimerDraftBreathMarker[]
   turns: VideoTimerTurnAnalysisRecord[]
@@ -126,6 +132,16 @@ const mapBreathMarkersByLength = ( rows: VideoTimerBreathMarkerRecord[] ) => {
   return map
 }
 
+const mapStrokeMarkersByLength = ( rows: VideoTimerStrokeMarkerRecord[] ) => {
+  const map = new Map<number, number>()
+
+  for ( const row of rows ) {
+    map.set( row.lengthIndex, ( map.get( row.lengthIndex ) ?? 0 ) + 1 )
+  }
+
+  return map
+}
+
 const mapTurnsByIndex = ( rows: VideoTimerTurnAnalysisRecord[] ) =>
   new Map<number, VideoTimerTurnAnalysisRecord>( rows.map( row => [ row.turnIndex, row ] ) )
 
@@ -138,6 +154,8 @@ export const buildVideoTimerComputedAnalysis = (
   const strokePlan = buildStrokeCountSlots( input.course, input.distance )
 
   const strokeCountMap = mapStrokeCountsByLength( input.strokeCounts )
+  const strokeMarkerCountMap = mapStrokeMarkersByLength( input.strokeMarkers ?? [] )
+  const useStrokeMarkers = ( input.strokeMarkers ?? [] ).length > 0
   const breathCountMap = mapBreathCountsByLength( input.breathCounts )
   const breathMarkerCountMap = mapBreathMarkersByLength( input.breathMarkers ?? [] )
   const useBreathMarkers = ( input.breathMarkers ?? [] ).length > 0
@@ -251,7 +269,9 @@ export const buildVideoTimerComputedAnalysis = (
     const distanceM = Number( ( slot.toM - slot.fromM ).toFixed( 2 ) )
     const savedStroke = strokeCountMap.get( slot.lengthIndex ) ?? null
     const savedBreath = breathCountMap.get( slot.lengthIndex ) ?? null
-    const count = savedStroke?.count ?? null
+    const count = useStrokeMarkers
+      ? strokeMarkerCountMap.get( slot.lengthIndex ) ?? 0
+      : savedStroke?.count ?? null
     const breathCount = useBreathMarkers
       ? breathMarkerCountMap.get( slot.lengthIndex ) ?? 0
       : savedBreath?.count ?? null

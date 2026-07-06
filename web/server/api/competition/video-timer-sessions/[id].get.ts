@@ -4,6 +4,7 @@ import type {
   VideoTimerBreathMarkerRecord,
   VideoTimerMarkerRecord,
   VideoTimerStrokeCountRecord,
+  VideoTimerStrokeMarkerRecord,
   VideoTimerTurnAnalysisRecord,
 } from "lib"
 import { buildVideoTimerComputedAnalysis, getPool, isMySql2Error, prepareStatement } from "lib"
@@ -63,6 +64,15 @@ type BreathCountRow = {
 }
 
 type BreathMarkerRow = {
+  id: number
+  seq: number
+  lengthIndex: number
+  fromM: number
+  toM: number
+  tMs: number
+}
+
+type StrokeMarkerRow = {
   id: number
   seq: number
   lengthIndex: number
@@ -198,6 +208,33 @@ export default defineEventHandler( async ( event ) => {
       count: row.count !== null ? Number( row.count ) : null,
     } ) )
 
+    const getStrokeMarkers = prepareStatement(
+      conn,
+      `
+      SELECT
+        sm.id as id,
+        sm.seq as seq,
+        sm.lengthIndex as lengthIndex,
+        sm.fromM as fromM,
+        sm.toM as toM,
+        sm.tMs as tMs
+      FROM VideoTimerSessionStrokeMarkers sm
+      WHERE sm.sessionId = :sessionId
+      ORDER BY sm.seq ASC
+      `
+    )
+
+    const strokeMarkerRows = ( await getStrokeMarkers.all( { sessionId: id } ) ) as StrokeMarkerRow[]
+
+    const strokeMarkers: VideoTimerStrokeMarkerRecord[] = strokeMarkerRows.map( row => ( {
+      id: `${id}-stroke-${row.id}`,
+      seq: Number( row.seq ) || 0,
+      lengthIndex: Number( row.lengthIndex ) || 0,
+      fromM: Number( row.fromM ) || 0,
+      toM: Number( row.toM ) || 0,
+      tMs: Number( row.tMs ) || 0,
+    } ) )
+
     const getBreathCounts = prepareStatement(
       conn,
       `
@@ -281,6 +318,7 @@ export default defineEventHandler( async ( event ) => {
       markers,
       analysis,
       strokeCounts,
+      strokeMarkers,
       breathCounts,
       breathMarkers,
       turns,
@@ -318,6 +356,7 @@ export default defineEventHandler( async ( event ) => {
       markers,
       analysis,
       strokeCounts,
+      strokeMarkers,
       breathCounts,
       breathMarkers,
       turns,
