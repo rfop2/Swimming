@@ -65,6 +65,9 @@ type Body = {
     toM: number
     count?: number | null
   }>
+  strokeMarkers?: Array<{
+    tMs: number
+  }>
   breathCounts?: Array<{
     lengthIndex: number
     fromM: number
@@ -327,6 +330,13 @@ export default defineEventHandler( async ( event ) => {
     breathCountIndexSet.add( item.lengthIndex )
   }
 
+  const strokeMarkersIn = Array.isArray( body?.strokeMarkers ) ? body.strokeMarkers : []
+  const strokeMarkersRaw = strokeMarkersIn
+    .map( marker => ( {
+      tMs: asUnsignedIntOrNull( marker?.tMs ),
+    } ) )
+    .filter( marker => marker.tMs !== null ) as Array<{ tMs: number }>
+
   const breathMarkersIn =
     strokesWithoutBreathMarkers.has( stroke )
       ? []
@@ -370,11 +380,11 @@ export default defineEventHandler( async ( event ) => {
     }
   } )
 
-  if ( breathMarkersRaw.length && ( !requiredSplitMarkersPlaced || lengthSegments.some( segment => segment.startMs === null || segment.endMs === null ) ) ) {
-    throw createError( { status: 400, message: "Complete split markers and finish time before saving breath markers" } )
+  if ( ( strokeMarkersRaw.length || breathMarkersRaw.length ) && ( !requiredSplitMarkersPlaced || lengthSegments.some( segment => segment.startMs === null || segment.endMs === null ) ) ) {
+    throw createError( { status: 400, message: "Complete split markers and finish time before saving stroke or breath markers" } )
   }
 
-  const breathMarkers = breathMarkersRaw.map( ( marker, index ) => {
+  const assignLengthMarker = ( marker: { tMs: number }, index: number, label: string ) => {
     const segment = lengthSegments.find( ( item, segmentIndex ) => {
       if ( item.startMs === null || item.endMs === null ) return false
       const isLast = segmentIndex === lengthSegments.length - 1
@@ -382,7 +392,7 @@ export default defineEventHandler( async ( event ) => {
     } )
 
     if ( !segment ) {
-      throw createError( { status: 400, message: `Breath marker ${index + 1} is outside the race lengths` } )
+      throw createError( { status: 400, message: `${label} marker ${index + 1} is outside the race lengths` } )
     }
 
     return {
@@ -392,7 +402,10 @@ export default defineEventHandler( async ( event ) => {
       toM: segment.toM,
       tMs: marker.tMs,
     }
-  } )
+  }
+
+  const strokeMarkers = strokeMarkersRaw.map( ( marker, index ) => assignLengthMarker( marker, index, "Stroke" ) )
+  const breathMarkers = breathMarkersRaw.map( ( marker, index ) => assignLengthMarker( marker, index, "Breath" ) )
 
   const turnsIn =
     Array.isArray( body?.turns )
@@ -630,6 +643,41 @@ export default defineEventHandler( async ( event ) => {
           fromM: item.fromM,
           toM: item.toM,
           count: item.count,
+        } )
+      }
+    }
+
+    if ( strokeMarkers.length ) {
+      const insertStrokeMarker = prepareStatement(
+        conn,
+        `
+        INSERT INTO VideoTimerSessionStrokeMarkers (
+          sessionId,
+          seq,
+          lengthIndex,
+          fromM,
+          toM,
+          tMs
+        )
+        VALUES (
+          :sessionId,
+          :seq,
+          :lengthIndex,
+          :fromM,
+          :toM,
+          :tMs
+        )
+        `
+      )
+
+      for ( const marker of strokeMarkers ) {
+        await insertStrokeMarker.run( {
+          sessionId,
+          seq: marker.seq,
+          lengthIndex: marker.lengthIndex,
+          fromM: marker.fromM,
+          toM: marker.toM,
+          tMs: marker.tMs,
         } )
       }
     }
