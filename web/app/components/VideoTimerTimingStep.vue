@@ -434,6 +434,7 @@
 
   const isReady = ref( false )
   const isPortrait = ref( false )
+  const isVideoPlaying = ref( false )
 
   const durationMs = ref<number>( props.video.durationMs ?? 0 )
   const currentVideoMs = ref( 0 )
@@ -486,6 +487,11 @@
     if ( !dragging.value ) timelineCenterMs.value = currentVideoMs.value
   }
 
+  const syncPlaybackState = () => {
+    const v = videoEl.value
+    isVideoPlaying.value = !!v && !v.paused && !v.ended
+  }
+
   const onLoadedMetadata = () => {
     const v = videoEl.value
     if ( !v ) return
@@ -504,6 +510,23 @@
     v.currentTime = clamped / 1000
     currentVideoMs.value = clamped
     if ( !dragging.value ) timelineCenterMs.value = clamped
+  }
+
+  const toggleVideoPlayback = async () => {
+    const v = videoEl.value
+    if ( !v ) return
+
+    if ( v.paused || v.ended ) {
+      try {
+        await v.play()
+      } catch ( error ) {
+        void error
+      }
+    } else {
+      v.pause()
+    }
+
+    syncPlaybackState()
   }
 
   const toRaceMs = ( videoMs: number ) => {
@@ -1141,7 +1164,7 @@
 <template>
   <div class="flex-1 flex flex-col overflow-hidden">
     <div class="flex-1 overflow-y-auto">
-      <div class="flex flex-col items-center px-6 py-6">
+      <div class="flex flex-col items-center px-3 py-4 sm:px-6 sm:py-6">
         <div class="w-full max-w-7xl">
           <div class="flex items-center justify-between gap-3">
             <div class="text-sm font-semibold text-gray-800">Timing mode</div>
@@ -1162,21 +1185,38 @@
                 </div>
 
                 <div
-                  class="bg-black flex items-center justify-center overflow-hidden"
-                  :class="isPortrait ? 'h-[62vh] min-h-[360px] max-h-[640px]' : 'aspect-video max-h-[520px]'"
+                  class="relative bg-black flex items-center justify-center overflow-hidden"
+                  :class="isPortrait ? 'h-[42vh] min-h-[220px] max-h-[380px] sm:h-[52vh] sm:min-h-[320px] sm:max-h-[520px] xl:h-[62vh] xl:min-h-[360px] xl:max-h-[640px]' : 'aspect-video max-h-[520px]'"
                 >
                   <video
                     ref="videoEl"
                     preload="auto"
                     :src="props.video.playbackUrl"
-                    controls
                     playsinline
                     class="object-contain max-w-full max-h-full"
                     :class="isPortrait ? 'h-full w-auto' : 'w-full h-full'"
                     @loadedmetadata="onLoadedMetadata"
                     @timeupdate="setCurrentFromVideo"
                     @seeked="setCurrentFromVideo"
+                    @play="syncPlaybackState"
+                    @pause="syncPlaybackState"
+                    @ended="syncPlaybackState"
+                    @click="toggleVideoPlayback"
                   />
+
+                  <button
+                    class="absolute bottom-3 left-3 inline-flex h-10 w-10 items-center justify-center rounded-full bg-black/70 text-white ring-1 ring-white/40 backdrop-blur-sm hover:bg-black/80"
+                    type="button"
+                    :aria-label="isVideoPlaying ? 'Pause video' : 'Play video'"
+                    :title="isVideoPlaying ? 'Pause' : 'Play'"
+                    @click.stop="toggleVideoPlayback"
+                  >
+                    <span v-if="isVideoPlaying" class="flex h-4 w-4 items-center justify-center gap-1">
+                      <span class="h-4 w-1.5 rounded-sm bg-white" />
+                      <span class="h-4 w-1.5 rounded-sm bg-white" />
+                    </span>
+                    <span v-else class="ml-0.5 h-0 w-0 border-y-[8px] border-y-transparent border-l-[12px] border-l-white" />
+                  </button>
                 </div>
 
                 <div v-if="false" class="px-3 pb-3">
