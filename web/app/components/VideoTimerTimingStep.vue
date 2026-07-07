@@ -29,7 +29,7 @@
   type StrokeCountSlot = VideoTimerDraft["strokeCountSlots"][number]
   type BreathCountSlot = VideoTimerDraft["breathCountSlots"][number]
   type TimingPanelTab = "markers" | "counts"
-  type MarkerPanelTab = "surfacing" | "split" | "breath"
+  type MarkerPanelTab = "surfacing" | "split" | "stroke" | "breath"
 
   type TurnPlanItem = ReturnType<typeof buildTurnPlan>[number]
 
@@ -91,6 +91,10 @@
       toM: slot.toM,
       label: slot.label,
       count: slot.count,
+    } ) ),
+    strokeMarkers: ( props.draft.strokeMarkers ?? [] ).map( marker => ( {
+      id: marker.id,
+      tMs: marker.tMs,
     } ) ),
     breathCountSlots: props.draft.breathCountSlots.map( slot => ( {
       id: slot.id,
@@ -340,6 +344,10 @@
             tMs: marker.tMs,
           } ) )
           : []
+        next.strokeMarkers = ( props.draft.strokeMarkers ?? [] ).map( marker => ( {
+          id: marker.id,
+          tMs: marker.tMs,
+        } ) )
         next.breakoutStartM = props.draft.breakoutStartM ?? 10
       } )
       return
@@ -357,6 +365,7 @@
       next.turns = nextTurns
       next.selectedSlotId = firstId
       next.markers = []
+      next.strokeMarkers = []
       next.breathMarkers = []
       next.breakoutStartM = 10
     } )
@@ -425,6 +434,7 @@
 
   const isReady = ref( false )
   const isPortrait = ref( false )
+  const isVideoPlaying = ref( false )
 
   const durationMs = ref<number>( props.video.durationMs ?? 0 )
   const currentVideoMs = ref( 0 )
@@ -477,6 +487,11 @@
     if ( !dragging.value ) timelineCenterMs.value = currentVideoMs.value
   }
 
+  const syncPlaybackState = () => {
+    const v = videoEl.value
+    isVideoPlaying.value = !!v && !v.paused && !v.ended
+  }
+
   const onLoadedMetadata = () => {
     const v = videoEl.value
     if ( !v ) return
@@ -495,6 +510,23 @@
     v.currentTime = clamped / 1000
     currentVideoMs.value = clamped
     if ( !dragging.value ) timelineCenterMs.value = clamped
+  }
+
+  const toggleVideoPlayback = async () => {
+    const v = videoEl.value
+    if ( !v ) return
+
+    if ( v.paused || v.ended ) {
+      try {
+        await v.play()
+      } catch ( error ) {
+        void error
+      }
+    } else {
+      v.pause()
+    }
+
+    syncPlaybackState()
   }
 
   const toRaceMs = ( videoMs: number ) => {
@@ -724,6 +756,21 @@
     } )
   }
 
+  const placeStrokeMarkerAtCursor = () => {
+    if ( !isReady.value || !strokeMarkersEnabled.value ) return
+
+    const nowMs = getLiveVideoMs()
+
+    updateDraft( draft => {
+      draft.strokeMarkers ??= []
+      draft.strokeMarkers.push( {
+        id: makeId(),
+        tMs: nowMs,
+      } )
+      draft.strokeMarkers.sort( ( a, b ) => a.tMs - b.tMs )
+    } )
+  }
+
   const placeActiveMarkerAtCursor = () => {
     const tab = activeMarkerTab.value
 
@@ -732,7 +779,18 @@
       return
     }
 
+    if ( tab === "stroke" ) {
+      placeStrokeMarkerAtCursor()
+      return
+    }
+
     placeMarkerAtCursor( tab )
+  }
+
+  const clearStrokeMarker = ( id: string ) => {
+    updateDraft( draft => {
+      draft.strokeMarkers = ( draft.strokeMarkers ?? [] ).filter( marker => marker.id !== id )
+    } )
   }
 
   const clearBreathMarker = ( id: string ) => {
@@ -828,23 +886,10 @@
       .every( s => s.videoMs !== null )
   )
 
-  const strokeCountsComplete = computed( () =>
-    props.draft.strokeCountSlots.length > 0 &&
-    props.draft.strokeCountSlots.every( slot => slot.count !== null && slot.count > 0 )
-  )
-
   const requiredSplitMarkersPlaced = computed( () =>
     props.draft.splitSlots
       .filter( slot => slot.code !== "finish_time" )
       .every( slot => slot.videoMs !== null )
-  )
-
-  const countRows = computed( () =>
-    props.draft.strokeCountSlots.map( stroke => ( {
-      id: stroke.id,
-      label: stroke.label,
-      stroke,
-    } ) )
   )
 
   const activePanelTab = ref<TimingPanelTab>( "markers" )
@@ -891,19 +936,69 @@
     lengthSegments.value.every( segment => segment.startMs !== null && segment.endMs !== null )
   )
 
-  const findBreathSegment = ( tMs: number ) =>
+  const strokeMarkersEnabled = computed( () =>
+    props.draft.startOffsetMs !== null &&
+    props.draft.finishVideoMs !== null &&
+    requiredSplitMarkersPlaced.value &&
+    lengthSegments.value.length > 0 &&
+    lengthSegments.value.every( segment => segment.startMs !== null && segment.endMs !== null )
+  )
+
+  const findLengthSegment = ( tMs: number ) =>
     lengthSegments.value.find( ( segment, index ) => {
       if ( segment.startMs === null || segment.endMs === null ) return false
       const isLast = index === lengthSegments.value.length - 1
       return tMs >= segment.startMs && ( isLast ? tMs <= segment.endMs : tMs < segment.endMs )
     } ) ?? null
 
+  const strokeMarkerRows = computed( () =>
+    [ ...( props.draft.strokeMarkers ?? [] ) ]
+      .sort( ( a, b ) => a.tMs - b.tMs )
+      .map( marker => ( {
+        ...marker,
+        segment: findLengthSegment( marker.tMs ),
+      } ) )
+  )
+
+  const strokeCountsByLength = computed( () => {
+    const counts = new Map<number, number>()
+
+    for ( const marker of strokeMarkerRows.value ) {
+      if ( !marker.segment ) continue
+      counts.set( marker.segment.lengthIndex, ( counts.get( marker.segment.lengthIndex ) ?? 0 ) + 1 )
+    }
+
+    return counts
+  } )
+
+  const usesStrokeMarkers = computed( () => strokeMarkerRows.value.length > 0 )
+
+  const strokeCountsComplete = computed( () =>
+    props.draft.strokeCountSlots.length > 0 &&
+    props.draft.strokeCountSlots.every( slot =>
+      usesStrokeMarkers.value
+        ? ( strokeCountsByLength.value.get( slot.lengthIndex ) ?? 0 ) > 0
+        : slot.count !== null && slot.count > 0
+    )
+  )
+
+  const countRows = computed( () =>
+    props.draft.strokeCountSlots.map( stroke => ( {
+      id: stroke.id,
+      label: stroke.label,
+      stroke,
+      count: usesStrokeMarkers.value
+        ? strokeCountsByLength.value.get( stroke.lengthIndex ) ?? 0
+        : stroke.count ?? 0,
+    } ) )
+  )
+
   const breathMarkerRows = computed( () =>
     ( supportsBreathMarkers.value ? [ ...props.draft.breathMarkers ] : [] )
       .sort( ( a, b ) => a.tMs - b.tMs )
       .map( marker => ( {
         ...marker,
-        segment: findBreathSegment( marker.tMs ),
+        segment: findLengthSegment( marker.tMs ),
       } ) )
   )
 
@@ -933,6 +1028,11 @@
     total: breathMarkerRows.value.length,
   } ) )
 
+  const strokeMarkerProgress = computed( () => ( {
+    complete: strokeMarkerRows.value.length,
+    total: strokeMarkerRows.value.length,
+  } ) )
+
   watch(
     supportsBreathMarkers,
     ( supported ) => {
@@ -950,7 +1050,11 @@
   const countProgress = computed( () => {
     const slots = props.draft.strokeCountSlots
     return {
-      complete: slots.filter( slot => slot.count !== null && slot.count > 0 ).length,
+      complete: slots.filter( slot =>
+        usesStrokeMarkers.value
+          ? ( strokeCountsByLength.value.get( slot.lengthIndex ) ?? 0 ) > 0
+          : slot.count !== null && slot.count > 0
+      ).length,
       total: slots.length,
     }
   } )
@@ -986,20 +1090,6 @@
     const v = videoEl.value
     if ( v ) v.pause()
     emit( "back" )
-  }
-
-  const parseCountValue = ( raw: string ) => {
-    const n = Number( raw )
-    if ( !Number.isFinite( n ) || n <= 0 ) return null
-    return Math.floor( n )
-  }
-
-  const updateStrokeCountValue = ( id: string, raw: string ) => {
-    updateDraft( next => {
-      const slot = next.strokeCountSlots.find( item => item.id === id ) ?? null
-      if ( !slot ) return
-      slot.count = parseCountValue( raw )
-    } )
   }
 
   onMounted( () => {
@@ -1074,7 +1164,7 @@
 <template>
   <div class="flex-1 flex flex-col overflow-hidden">
     <div class="flex-1 overflow-y-auto">
-      <div class="flex flex-col items-center px-6 py-6">
+      <div class="flex flex-col items-center px-3 py-4 sm:px-6 sm:py-6">
         <div class="w-full max-w-7xl">
           <div class="flex items-center justify-between gap-3">
             <div class="text-sm font-semibold text-gray-800">Timing mode</div>
@@ -1095,21 +1185,38 @@
                 </div>
 
                 <div
-                  class="bg-black flex items-center justify-center overflow-hidden"
-                  :class="isPortrait ? 'h-[62vh] min-h-[360px] max-h-[640px]' : 'aspect-video max-h-[520px]'"
+                  class="relative bg-black flex items-center justify-center overflow-hidden"
+                  :class="isPortrait ? 'h-[42vh] min-h-[220px] max-h-[380px] sm:h-[52vh] sm:min-h-[320px] sm:max-h-[520px] xl:h-[62vh] xl:min-h-[360px] xl:max-h-[640px]' : 'aspect-video max-h-[520px]'"
                 >
                   <video
                     ref="videoEl"
                     preload="auto"
                     :src="props.video.playbackUrl"
-                    controls
                     playsinline
                     class="object-contain max-w-full max-h-full"
                     :class="isPortrait ? 'h-full w-auto' : 'w-full h-full'"
                     @loadedmetadata="onLoadedMetadata"
                     @timeupdate="setCurrentFromVideo"
                     @seeked="setCurrentFromVideo"
+                    @play="syncPlaybackState"
+                    @pause="syncPlaybackState"
+                    @ended="syncPlaybackState"
+                    @click="toggleVideoPlayback"
                   />
+
+                  <button
+                    class="absolute bottom-3 left-3 inline-flex h-10 w-10 items-center justify-center rounded-full bg-black/70 text-white ring-1 ring-white/40 backdrop-blur-sm hover:bg-black/80"
+                    type="button"
+                    :aria-label="isVideoPlaying ? 'Pause video' : 'Play video'"
+                    :title="isVideoPlaying ? 'Pause' : 'Play'"
+                    @click.stop="toggleVideoPlayback"
+                  >
+                    <span v-if="isVideoPlaying" class="flex h-4 w-4 items-center justify-center gap-1">
+                      <span class="h-4 w-1.5 rounded-sm bg-white" />
+                      <span class="h-4 w-1.5 rounded-sm bg-white" />
+                    </span>
+                    <span v-else class="ml-0.5 h-0 w-0 border-y-[8px] border-y-transparent border-l-[12px] border-l-white" />
+                  </button>
                 </div>
 
                 <div v-if="false" class="px-3 pb-3">
@@ -1207,9 +1314,18 @@
                     />
 
                     <div
+                      v-for="marker in strokeMarkerRows"
+                      v-show="isMsVisibleInTimeline(marker.tMs)"
+                      :key="`stroke-${marker.id}`"
+                      class="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 h-5 w-2 rounded bg-violet-600 ring-1 ring-white"
+                      :style="{ left: `${pctFromVisibleMs(marker.tMs)}%` }"
+                      :title="`Stroke ${formatVideoMsPrecise(marker.tMs)}`"
+                    />
+
+                    <div
                       v-for="marker in breathMarkerRows"
                       v-show="supportsBreathMarkers && isMsVisibleInTimeline(marker.tMs)"
-                      :key="marker.id"
+                      :key="`breath-${marker.id}`"
                       class="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 h-5 w-2 rounded bg-amber-500 ring-1 ring-white"
                       :style="{ left: `${pctFromVisibleMs(marker.tMs)}%` }"
                       :title="`Breath ${formatVideoMsPrecise(marker.tMs)}`"
@@ -1221,6 +1337,7 @@
                     <div class="flex items-center gap-1"><span class="inline-block h-3 w-3 rounded bg-red-700" /> Finish</div>
                     <div class="flex items-center gap-1"><span class="inline-block h-3 w-3 rounded bg-cyan-600" /> Surfacing</div>
                     <div class="flex items-center gap-1"><span class="inline-block h-3 w-3 rounded bg-blue-600" /> Split</div>
+                    <div class="flex items-center gap-1"><span class="inline-block h-3 w-3 rounded bg-violet-600" /> Stroke</div>
                     <div v-if="supportsBreathMarkers" class="flex items-center gap-1"><span class="inline-block h-3 w-3 rounded bg-amber-500" /> Breath</div>
                   </div>
                 </div>
@@ -1326,9 +1443,18 @@
                     />
 
                     <div
+                      v-for="marker in strokeMarkerRows"
+                      v-show="isMsVisibleInTimeline(marker.tMs)"
+                      :key="`stroke-${marker.id}`"
+                      class="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 h-5 w-2 rounded bg-violet-600 ring-1 ring-white"
+                      :style="{ left: `${pctFromVisibleMs(marker.tMs)}%` }"
+                      :title="`Stroke ${formatVideoMsPrecise(marker.tMs)}`"
+                    />
+
+                    <div
                       v-for="marker in breathMarkerRows"
                       v-show="supportsBreathMarkers && isMsVisibleInTimeline(marker.tMs)"
-                      :key="marker.id"
+                      :key="`breath-${marker.id}`"
                       class="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 h-5 w-2 rounded bg-amber-500 ring-1 ring-white"
                       :style="{ left: `${pctFromVisibleMs(marker.tMs)}%` }"
                       :title="`Breath ${formatVideoMsPrecise(marker.tMs)}`"
@@ -1340,6 +1466,7 @@
                     <div class="flex items-center gap-1"><span class="inline-block h-3 w-3 rounded bg-red-700" /> Finish</div>
                     <div class="flex items-center gap-1"><span class="inline-block h-3 w-3 rounded bg-cyan-600" /> Surfacing</div>
                     <div class="flex items-center gap-1"><span class="inline-block h-3 w-3 rounded bg-blue-600" /> Split</div>
+                    <div class="flex items-center gap-1"><span class="inline-block h-3 w-3 rounded bg-violet-600" /> Stroke</div>
                     <div v-if="supportsBreathMarkers" class="flex items-center gap-1"><span class="inline-block h-3 w-3 rounded bg-amber-500" /> Breath</div>
                   </div>
                 </div>
@@ -1482,11 +1609,15 @@
                       <div class="min-w-0">
                         <div class="text-[11px] font-medium text-gray-500">
                           <span v-if="activeMarkerTab === 'breath'">Breath taken</span>
+                          <span v-else-if="activeMarkerTab === 'stroke'">Stroke taken</span>
                           <span v-else>Next {{ activeMarkerTab === "surfacing" ? "surfacing" : "split" }} marker</span>
                         </div>
                         <div class="truncate text-xs font-semibold text-gray-800">
                           <span v-if="activeMarkerTab === 'breath'">
                             {{ breathMarkersEnabled ? "Add a breath marker at the current cursor" : "Complete splits first" }}
+                          </span>
+                          <span v-else-if="activeMarkerTab === 'stroke'">
+                            {{ strokeMarkersEnabled ? "Add a stroke marker at the current cursor" : "Complete splits first" }}
                           </span>
                           <span v-else>
                             {{ activeNextMarker?.label || `All ${activeMarkerTab === "surfacing" ? "surfacing" : "split"} markers placed` }}
@@ -1496,12 +1627,13 @@
 
                       <button
                         class="h-10 min-w-[132px] rounded-md px-3 text-xs font-semibold text-white disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed"
-                        :class="activeMarkerTab === 'surfacing' ? 'bg-cyan-600 hover:bg-cyan-700' : activeMarkerTab === 'breath' ? 'bg-amber-500 hover:bg-amber-600' : 'bg-blue-600 hover:bg-blue-700'"
+                        :class="activeMarkerTab === 'surfacing' ? 'bg-cyan-600 hover:bg-cyan-700' : activeMarkerTab === 'breath' ? 'bg-amber-500 hover:bg-amber-600' : activeMarkerTab === 'stroke' ? 'bg-violet-600 hover:bg-violet-700' : 'bg-blue-600 hover:bg-blue-700'"
                         type="button"
-                        :disabled="activeMarkerTab === 'breath' ? !isReady || !breathMarkersEnabled : !isReady || !activeNextMarker"
+                        :disabled="activeMarkerTab === 'breath' ? !isReady || !breathMarkersEnabled : activeMarkerTab === 'stroke' ? !isReady || !strokeMarkersEnabled : !isReady || !activeNextMarker"
                         @click="placeActiveMarkerAtCursor"
                       >
                         <span v-if="activeMarkerTab === 'breath'">Add at {{ formatVideoMsPrecise(currentVideoMs) }}</span>
+                        <span v-else-if="activeMarkerTab === 'stroke'">Add at {{ formatVideoMsPrecise(currentVideoMs) }}</span>
                         <span v-else-if="activeNextMarker">Place at {{ formatVideoMsPrecise(currentVideoMs) }}</span>
                         <span v-else>Complete</span>
                       </button>
@@ -1513,8 +1645,8 @@
                       role="tabpanel"
                     >
                       <div class="mb-2 flex items-center justify-between gap-3">
-                        <div class="text-xs font-semibold text-gray-700">Stroke count per length</div>
-                        <div class="text-[11px] text-gray-500">Required</div>
+                        <div class="text-xs font-semibold text-gray-700">Stroke markers per length</div>
+                        <div class="text-[11px] text-gray-500">Calculated from stroke markers</div>
                       </div>
 
                       <div v-if="countRows.length" class="overflow-x-auto pb-2">
@@ -1533,16 +1665,9 @@
                           <tbody>
                             <tr>
                               <td v-for="row in countRows" :key="`stroke-${row.id}`" class="border-l border-gray-100 p-2">
-                                <input
-                                  :value="row.stroke.count ?? ''"
-                                  class="h-9 w-full rounded-md border border-gray-300 px-2 text-center text-sm"
-                                  type="number"
-                                  min="1"
-                                  step="1"
-                                  inputmode="numeric"
-                                  :aria-label="`Stroke count ${row.label}`"
-                                  @input="(event) => updateStrokeCountValue(row.stroke.id, (event.target as HTMLInputElement).value)"
-                                >
+                                <div class="flex h-9 items-center justify-center rounded-md border border-gray-200 bg-gray-50 text-sm font-semibold text-gray-900">
+                                  {{ row.count || "-" }}
+                                </div>
                               </td>
                             </tr>
                           </tbody>
@@ -1560,7 +1685,7 @@
                     >
                       <div
                         class="mb-3 grid rounded-md bg-gray-100 p-1"
-                        :class="supportsBreathMarkers ? 'grid-cols-3' : 'grid-cols-2'"
+                        :class="supportsBreathMarkers ? 'grid-cols-4' : 'grid-cols-3'"
                         role="tablist"
                         aria-label="Marker type"
                       >
@@ -1587,6 +1712,17 @@
                         </button>
 
                         <button
+                          class="rounded px-3 py-2 text-xs font-semibold transition-colors"
+                          :class="activeMarkerTab === 'stroke' ? 'bg-white text-violet-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'"
+                          type="button"
+                          role="tab"
+                          :aria-selected="activeMarkerTab === 'stroke'"
+                          @click="activeMarkerTab = 'stroke'"
+                        >
+                          Strokes {{ strokeMarkerProgress.complete }}
+                        </button>
+
+                        <button
                           v-if="supportsBreathMarkers"
                           class="rounded px-3 py-2 text-xs font-semibold transition-colors"
                           :class="activeMarkerTab === 'breath' ? 'bg-white text-amber-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'"
@@ -1597,6 +1733,47 @@
                         >
                           Breaths {{ breathMarkerProgress.complete }}
                         </button>
+                      </div>
+
+                      <div v-show="activeMarkerTab === 'stroke'" class="overflow-hidden border rounded-md bg-white" role="tabpanel">
+                        <div class="px-3 py-2 text-xs font-semibold bg-gray-50">
+                          Stroke markers
+                        </div>
+
+                        <div v-if="!strokeMarkersEnabled" class="border-t px-3 py-3 text-xs text-gray-500">
+                          Complete split markers first so strokes can be assigned to the correct lengths.
+                        </div>
+
+                        <div v-else-if="strokeMarkerRows.length" class="flex overflow-x-auto border-t">
+                          <div
+                            v-for="marker in strokeMarkerRows"
+                            :key="marker.id"
+                            class="min-w-[180px] px-3 py-2 text-xs border-r last:border-r-0 flex items-center justify-between gap-3 bg-white"
+                          >
+                            <button
+                              type="button"
+                              class="flex-1 min-w-0 text-left"
+                              @click="seekToMs(marker.tMs)"
+                            >
+                              <span class="block font-semibold">{{ marker.segment?.label ?? "Outside lengths" }}</span>
+                              <span class="block tabular-nums text-gray-700">
+                                {{ props.draft.startOffsetMs !== null ? formatRaceMs(toRaceMs(marker.tMs)) : formatVideoMsPrecise(marker.tMs) }}
+                              </span>
+                            </button>
+
+                            <button
+                              type="button"
+                              class="shrink-0 text-red-600 hover:text-red-700 font-semibold text-sm leading-none px-1"
+                              @click.stop="clearStrokeMarker(marker.id)"
+                            >
+                              x
+                            </button>
+                          </div>
+                        </div>
+
+                        <div v-else class="border-t px-3 py-3 text-xs text-gray-500">
+                          No stroke markers added yet.
+                        </div>
                       </div>
 
                       <div v-show="activeMarkerTab === 'surfacing'" class="overflow-hidden border rounded-md bg-white" role="tabpanel">
@@ -1629,7 +1806,7 @@
                               class="shrink-0 text-red-600 hover:text-red-700 font-semibold text-sm leading-none px-1"
                               @click.stop="clearMarker(s.id)"
                             >
-                              ✕
+                              x
                             </button>
                           </div>
                         </div>
@@ -1665,7 +1842,7 @@
                               class="shrink-0 text-red-600 hover:text-red-700 font-semibold text-sm leading-none px-1"
                               @click.stop="clearMarker(s.id)"
                             >
-                              ✕
+                              x
                             </button>
                           </div>
                         </div>
@@ -1702,7 +1879,7 @@
                               class="shrink-0 text-red-600 hover:text-red-700 font-semibold text-sm leading-none px-1"
                               @click.stop="clearBreathMarker(marker.id)"
                             >
-                              ✕
+                              x
                             </button>
                           </div>
                         </div>

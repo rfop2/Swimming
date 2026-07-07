@@ -69,6 +69,23 @@ export default defineNuxtConfig( {
   },
 
   vite: {
+    optimizeDeps: {
+      include: [
+        "@vue/devtools-core",
+        "@vue/devtools-kit",
+        "temporal-polyfill",
+        "date-fns",
+        "classnames", // CJS
+        "@headlessui/vue",
+        "seedrandom", // CJS
+        "socks-proxy-agent", // CJS
+        "mysql2/promise", // CJS
+        "vue-chartjs",
+        "chart.js",
+        "chartjs-adapter-date-fns",
+        "chartjs-plugin-annotation",
+      ]
+    },
     plugins: [
       {
         name: "externalize-packages",

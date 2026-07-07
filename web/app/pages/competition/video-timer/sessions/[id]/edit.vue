@@ -5,6 +5,7 @@
     VideoTimerMarkerRecord,
     VideoTimerBreathCountRecord,
     VideoTimerStrokeCountRecord,
+    VideoTimerStrokeMarkerRecord,
     VideoTimerTurnAnalysisRecord,
   } from "lib"
 
@@ -61,6 +62,7 @@
       breakoutStartM: number | null
     } | null
     strokeCounts: VideoTimerStrokeCountRecord[]
+    strokeMarkers?: VideoTimerStrokeMarkerRecord[]
     breathCounts: VideoTimerBreathCountRecord[]
     breathMarkers?: Array<{
       id?: string
@@ -90,6 +92,7 @@
     surfaceSlots: [],
     splitSlots: [],
     strokeCountSlots: [],
+    strokeMarkers: [],
     breathCountSlots: [],
     breathMarkers: [],
     turns: [],
@@ -152,6 +155,10 @@
         toM: slot.toM,
         label: `${slot.fromM}-${slot.toM}m`,
         count: slot.count,
+      } ) ),
+      strokeMarkers: ( session.strokeMarkers ?? [] ).map( ( marker, index ) => ( {
+        id: marker.id ?? `stroke-marker-${index}`,
+        tMs: marker.tMs,
       } ) ),
       breathCountSlots: session.breathCounts.map( ( slot, index ) => ( {
         id: `breath-${slot.lengthIndex}-${slot.fromM}-${slot.toM}-${index}`,
