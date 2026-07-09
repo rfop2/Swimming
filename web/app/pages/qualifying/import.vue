@@ -71,8 +71,7 @@
     type: QualifyingType
     qualifyingStart: string
     qualifyingEnd: string | null
-    eligibilityStart: string | null
-    eligibilityEnd: string | null
+    lastRaceDate: string | null
   }
 
   const selections = ref<Selections>( {
@@ -83,8 +82,7 @@
     type: "general",
     qualifyingStart: "",
     qualifyingEnd: null,
-    eligibilityStart: null,
-    eligibilityEnd: null,
+    lastRaceDate: null,
   } )
 
   const areas = computed( () => areasFromScope( selections.value.scope ) )
@@ -343,15 +341,8 @@
               </div>
               <div class="min-w-36">
                 <UI-Input
-                  v-model="selections.eligibilityStart"
-                  label="Eligibility Start Date"
-                  type="date"
-                />
-              </div>
-              <div class="min-w-36">
-                <UI-Input
-                  v-model="selections.eligibilityEnd"
-                  label="Eligibility End Date"
+                  v-model="selections.lastRaceDate"
+                  label="Last Race Date"
                   type="date"
                 />
               </div>

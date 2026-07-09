@@ -227,9 +227,9 @@
       },
     },
     {
-      field: "eligibilityStart",
+      field: "lastRaceDate",
       editable: () => user.value.role === "admin",
-      headerName: "Eligibility Start",
+      headerName: "Last Race Date",
       cellEditor: "agDateStringCellEditor",
       cellEditorParams: {
         includeTime: false,
@@ -237,25 +237,7 @@
       filter: false,
       valueFormatter: ( { value }: ValueFormatterParams ) => value ? format( value, "do MMM, yyyy" ) : "",
       valueSetter: ( params: ValueSetterParams ): boolean => {
-        params.data.eligibilityStart = params.newValue
-        return true
-      },
-      onCellValueChanged: ( _event: NewValueParams ) => {
-        dirty.value = true
-      },
-    },
-    {
-      field: "eligibilityEnd",
-      editable: () => user.value.role === "admin",
-      headerName: "Eligibility End",
-      cellEditor: "agDateStringCellEditor",
-      cellEditorParams: {
-        includeTime: false,
-      },
-      filter: false,
-      valueFormatter: ( { value }: ValueFormatterParams ) => value ? format( value, "do MMM, yyyy" ) : "",
-      valueSetter: ( params: ValueSetterParams ): boolean => {
-        params.data.eligibilityEnd = params.newValue
+        params.data.lastRaceDate = params.newValue
         return true
       },
       onCellValueChanged: ( _event: NewValueParams ) => {
