@@ -55,6 +55,11 @@
   const errorMsg = ref<string | null>( null )
   const savedId = ref<string | null>( null )
   const FIXED_BREAKOUT_M = 10
+  const strokesWithoutBreathData = new Set( [ "backstroke", "breaststroke" ] )
+  const normalizeStroke = ( stroke: string ) => stroke.toLowerCase().replace( /[\s_-]+/g, "" )
+  const supportsBreathData = computed( () =>
+    !strokesWithoutBreathData.has( normalizeStroke( props.selections.stroke ) )
+  )
 
   const cloneDraft = (): VideoTimerDraft => ( {
     finishVideoMs: props.draft.finishVideoMs,
@@ -645,7 +650,7 @@
                         <th class="py-2 pr-3 text-left font-semibold text-gray-700">SR</th>
                         <th class="py-2 pr-3 text-left font-semibold text-gray-700">Speed</th>
                         <th class="py-2 pr-3 text-left font-semibold text-gray-700">Stroke count</th>
-                        <th class="py-2 text-left font-semibold text-gray-700">Breath count</th>
+                        <th v-if="supportsBreathData" class="py-2 text-left font-semibold text-gray-700">Breath count</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -656,7 +661,7 @@
                         <td class="py-2 pr-3 text-gray-900">{{ formatNumber(row.sr, 1) }}</td>
                         <td class="py-2 pr-3 text-gray-900">{{ formatNumber(row.speed) }}</td>
                         <td class="py-2 pr-3 text-gray-900">{{ row.count ?? "—" }}</td>
-                        <td class="py-2 text-gray-900">
+                        <td v-if="supportsBreathData" class="py-2 text-gray-900">
                           {{ row.breathCount ?? "-" }}
                         </td>
                       </tr>
@@ -668,7 +673,7 @@
                         <td class="py-2 pr-3 text-gray-900">{{ formatNumber(computedAnalysis.swimFree.averageSr, 1) }}</td>
                         <td class="py-2 pr-3 text-gray-900">{{ formatNumber(computedAnalysis.swimFree.averageSpeed) }}</td>
                         <td class="py-2 pr-3 text-gray-900">{{ formatNumber(computedAnalysis.swimFree.averageStrokeCount, 1) }}</td>
-                        <td class="py-2 text-gray-900">{{ formatNumber(computedAnalysis.swimFree.averageBreathCount, 1) }}</td>
+                        <td v-if="supportsBreathData" class="py-2 text-gray-900">{{ formatNumber(computedAnalysis.swimFree.averageBreathCount, 1) }}</td>
                       </tr>
 
                       <tr>
@@ -678,7 +683,7 @@
                         <td class="py-2 pr-3 text-gray-900">—</td>
                         <td class="py-2 pr-3 text-gray-900">—</td>
                         <td class="py-2 pr-3 text-gray-900">{{ totalStrokeCount ?? "—" }}</td>
-                        <td class="py-2 text-gray-900">{{ totalBreathCount ?? "-" }}</td>
+                        <td v-if="supportsBreathData" class="py-2 text-gray-900">{{ totalBreathCount ?? "-" }}</td>
                       </tr>
                     </tbody>
                   </table>
