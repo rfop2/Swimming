@@ -1,14 +1,50 @@
 [
   {
-    "isoDate": "2026-07-07",
-    "niceDate": "7 July 2026",
-    "diff": "15.6.0..",
-    "href": "https://bitbucket.org/swimracing/swimming/compare/15.7.0..15.6.0",
+    "isoDate": "2026-07-17",
+    "niceDate": "17 July 2026",
+    "diff": "15.7.0..",
+    "href": "https://bitbucket.org/swimracing/swimming/compare/15.8.0..15.7.0",
     "major": false,
     "minor": false,
     "tag": null,
+    "title": "15.8.0",
+    "date": "2026-07-17T13:57:37.375Z",
+    "summary": null,
+    "commits": [],
+    "merges": [
+      {
+        "id": "42",
+        "message": "remove-graph-and-fix-breath/layout-for-video-player",
+        "href": "https://bitbucket.org/swimracing/swimming/pull-requests/42",
+        "author": "Rodrigo Ferreira",
+        "commit": {
+          "hash": "f7fd6f75814ef383221e8378227ea12013da4177",
+          "shorthash": "f7fd6f7",
+          "author": "Rodrigo Ferreira",
+          "email": "rf.oliveirapaula@gmail.com",
+          "date": "2026-07-17T13:55:40.000Z",
+          "niceDate": "17 July 2026",
+          "subject": "Merged in remove-graph-and-fix-breath/layout-for-video-player (pull request #42)",
+          "message": "Merged in remove-graph-and-fix-breath/layout-for-video-player (pull request #42)\n\nremove-graph-and-fix-breath/layout-for-video-player",
+          "fixes": null,
+          "href": "https://bitbucket.org/swimracing/swimming/commits/f7fd6f75814ef383221e8378227ea12013da4177",
+          "breaking": false
+        }
+      }
+    ],
+    "fixes": []
+  },
+  {
+    "isoDate": "2026-07-07",
+    "niceDate": "7 July 2026",
+    "diff": "15.6.0..15.7.0",
+    "href": "https://bitbucket.org/swimracing/swimming/compare/15.7.0..15.6.0",
+    "major": false,
+    "minor": true,
+    "tag": "15.7.0",
+    "date": "2026-07-07",
     "title": "15.7.0",
-    "date": "2026-07-07T15:43:18.530Z",
+    "version": "15.7.0",
     "summary": null,
     "commits": [
       {
