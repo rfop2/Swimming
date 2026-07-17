@@ -512,6 +512,16 @@
     if ( !dragging.value ) timelineCenterMs.value = clamped
   }
 
+  const onVideoProgressInput = ( event: Event ) => {
+    const input = event.target as HTMLInputElement
+    seekToMs( Number( input.value ) )
+  }
+
+  const videoProgressPercent = computed( () => {
+    if ( durationMs.value <= 0 ) return 0
+    return Math.min( 100, Math.max( 0, ( currentVideoMs.value / durationMs.value ) * 100 ) )
+  } )
+
   const toggleVideoPlayback = async () => {
     const v = videoEl.value
     if ( !v ) return
@@ -1205,7 +1215,7 @@
                   />
 
                   <button
-                    class="absolute bottom-3 left-3 inline-flex h-10 w-10 items-center justify-center rounded-full bg-black/70 text-white ring-1 ring-white/40 backdrop-blur-sm hover:bg-black/80"
+                    class="absolute bottom-5 left-3 inline-flex h-10 w-10 items-center justify-center rounded-full bg-black/70 text-white ring-1 ring-white/40 backdrop-blur-sm hover:bg-black/80"
                     type="button"
                     :aria-label="isVideoPlaying ? 'Pause video' : 'Play video'"
                     :title="isVideoPlaying ? 'Pause' : 'Play'"
@@ -1217,6 +1227,19 @@
                     </span>
                     <span v-else class="ml-0.5 h-0 w-0 border-y-[8px] border-y-transparent border-l-[12px] border-l-white" />
                   </button>
+
+                  <input
+                    class="video-progress absolute bottom-2 left-3 right-3 w-auto cursor-pointer disabled:cursor-default"
+                    type="range"
+                    min="0"
+                    :max="Math.max(durationMs, 1)"
+                    step="10"
+                    :value="currentVideoMs"
+                    :disabled="!isReady || durationMs <= 0"
+                    :style="{ '--video-progress': `${videoProgressPercent}%` }"
+                    aria-label="Video progress"
+                    @input="onVideoProgressInput"
+                  >
                 </div>
 
                 <div v-if="false" class="px-3 pb-3">
@@ -1916,3 +1939,46 @@
     </div>
   </div>
 </template>
+
+<style scoped>
+  .video-progress {
+    height: 4px;
+    appearance: none;
+    border-radius: 9999px;
+    background: linear-gradient(
+      to right,
+      rgb(255 255 255 / 95%) 0%,
+      rgb(255 255 255 / 95%) var(--video-progress),
+      rgb(255 255 255 / 45%) var(--video-progress),
+      rgb(255 255 255 / 45%) 100%
+    );
+  }
+
+  .video-progress::-webkit-slider-thumb {
+    width: 12px;
+    height: 12px;
+    appearance: none;
+    border: 0;
+    border-radius: 9999px;
+    background: white;
+    opacity: 0;
+    transition: opacity 150ms ease;
+  }
+
+  .video-progress::-moz-range-thumb {
+    width: 12px;
+    height: 12px;
+    border: 0;
+    border-radius: 9999px;
+    background: white;
+    opacity: 0;
+    transition: opacity 150ms ease;
+  }
+
+  .video-progress:hover::-webkit-slider-thumb,
+  .video-progress:focus-visible::-webkit-slider-thumb,
+  .video-progress:hover::-moz-range-thumb,
+  .video-progress:focus-visible::-moz-range-thumb {
+    opacity: 1;
+  }
+</style>
