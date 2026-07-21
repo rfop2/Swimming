@@ -1,14 +1,48 @@
 [
   {
-    "isoDate": "2026-07-17",
-    "niceDate": "17 July 2026",
-    "diff": "15.7.0..",
-    "href": "https://bitbucket.org/swimracing/swimming/compare/15.8.0..15.7.0",
+    "isoDate": "2026-07-21",
+    "niceDate": "21 July 2026",
+    "diff": "15.8.0..",
+    "href": "https://bitbucket.org/swimracing/swimming/compare/15.9.0..15.8.0",
     "major": false,
     "minor": false,
     "tag": null,
+    "title": "15.9.0",
+    "date": "2026-07-21T07:45:42.414Z",
+    "summary": null,
+    "commits": [
+      {
+        "hash": "504dc430a8abe2a97a31f1ee979d4b631a24708b",
+        "shorthash": "504dc43",
+        "author": "Philip Coombes",
+        "email": "phil@web2wire.com",
+        "date": "2026-07-09T14:33:03.000Z",
+        "niceDate": "9 July 2026",
+        "subject": "Initial changes to qualifying eligibility",
+        "message": "Initial changes to qualifying eligibility",
+        "fixes": null,
+        "href": "https://bitbucket.org/swimracing/swimming/commits/504dc430a8abe2a97a31f1ee979d4b631a24708b",
+        "breaking": false,
+        "files": 11,
+        "insertions": 32,
+        "deletions": 87,
+        "merge": null
+      }
+    ],
+    "merges": [],
+    "fixes": []
+  },
+  {
+    "isoDate": "2026-07-17",
+    "niceDate": "17 July 2026",
+    "diff": "15.7.0..15.8.0",
+    "href": "https://bitbucket.org/swimracing/swimming/compare/15.8.0..15.7.0",
+    "major": false,
+    "minor": true,
+    "tag": "15.8.0",
+    "date": "2026-07-17",
     "title": "15.8.0",
-    "date": "2026-07-17T13:57:37.375Z",
+    "version": "15.8.0",
     "summary": null,
     "commits": [],
     "merges": [
