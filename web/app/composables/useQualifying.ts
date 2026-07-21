@@ -76,7 +76,7 @@ export const useQualifying = () => {
   const filterEligibleQualifyingPeriods = <T extends ExtQualifyingPeriod>( qualifyingPeriods: T[] ): T[] => {
     const filteredQualifyingPeriods = qualifyingPeriods.filter( qp => qp.eligibilityActive )
     // Sort by start date
-    filteredQualifyingPeriods.sort( ( a, b ) => a.eligibilityStart.localeCompare( b.eligibilityStart ) )
+    filteredQualifyingPeriods.sort( ( a, b ) => a.qualifyingStart.localeCompare( b.qualifyingStart ) )
     console.log( "eqp", filteredQualifyingPeriods )
     return filteredQualifyingPeriods
   }

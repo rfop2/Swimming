@@ -231,8 +231,7 @@ export interface QualifyingPeriodRow {
   type: QualifyingType
   qualifyingStart: string
   qualifyingEnd?: string
-  eligibilityStart: string
-  eligibilityEnd?: string
+  lastRaceDate?: string
   notes?: string
 }
 
@@ -240,8 +239,6 @@ export interface ExtQualifyingPeriod extends QualifyingPeriodRow {
   qualifyingStarted: boolean
   qualifyingEnded: boolean
   qualifyingActive: boolean
-  eligibilityStarted: boolean
-  eligibilityEnded: boolean
   eligibilityActive: boolean
 }
 

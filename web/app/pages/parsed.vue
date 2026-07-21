@@ -19,15 +19,13 @@
     type: QualifyingType
     qualifyingStart?: string
     qualifyingEnd?: string | null
-    eligibilityStart?: string | null
-    eligibilityEnd?: string | null
+    lastRaceDate?: string | null
   }
 
   interface QualifyingPeriod {
     qualifyingStart: string
     qualifyingEnd: string | null
-    eligibilityStart: string | null
-    eligibilityEnd: string | null
+    lastRaceDate: string | null
   }
 
   interface StructuredRow {
@@ -146,15 +144,13 @@
       return {
         qualifyingStart: "",
         qualifyingEnd: null,
-        eligibilityStart: null,
-        eligibilityEnd: null,
+        lastRaceDate: null,
       }
     }
     return {
       qualifyingStart: s.qualifyingStart || "",
       qualifyingEnd: s.qualifyingEnd || null,
-      eligibilityStart: s.eligibilityStart || null,
-      eligibilityEnd: s.eligibilityEnd || null,
+      lastRaceDate: s.lastRaceDate || null,
     }
   } )
 
@@ -324,8 +320,7 @@
           type: selections.value.type,
           qualifyingStart: period.value.qualifyingStart || null,
           qualifyingEnd: period.value.qualifyingEnd || null,
-          eligibilityStart: period.value.eligibilityStart || null,
-          eligibilityEnd: period.value.eligibilityEnd || null,
+          lastRaceDate: period.value.lastRaceDate || null,
         } ]
 
         await $fetch( "/api/qualifying/dates", {
@@ -378,12 +373,8 @@
               – <strong>{{ period.qualifyingEnd }}</strong>
             </template>
           </span>
-          <span>
-            Eligibility:
-            <strong>{{ period.eligibilityStart || "—" }}</strong>
-            <template v-if="period.eligibilityEnd">
-              – <strong>{{ period.eligibilityEnd }}</strong>
-            </template>
+          <span v-if="period.lastRaceDate">
+            Last Race Date: <strong>{{ period.lastRaceDate }}</strong>
           </span>
         </div>
 

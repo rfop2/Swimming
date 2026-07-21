@@ -153,8 +153,7 @@
       type: selections.value.type as QualifyingType,
       qualifyingStart: "",
       qualifyingEnd: "",
-      eligibilityStart: "",
-      eligibilityEnd: ""
+      lastRaceDate: ""
     } )
   )
 
@@ -734,16 +733,8 @@
         </div>
         <div class="min-w-36">
           <UI-Input
-            v-model="period.eligibilityStart"
-            label="Eligibility Start Date"
-            type="date"
-            @update:model-value="dirty = true"
-          />
-        </div>
-        <div class="min-w-36">
-          <UI-Input
-            v-model="period.eligibilityEnd"
-            label="Eligibility End Date"
+            v-model="period.lastRaceDate"
+            label="Last Race Date"
             type="date"
             @update:model-value="dirty = true"
           />

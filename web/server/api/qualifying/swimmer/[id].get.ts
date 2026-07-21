@@ -87,16 +87,13 @@ export default defineEventHandler( async ( event ) => {
     .map( period => {
       const qualifyingStarted = !!( period.qualifyingStart && Temporal.PlainDate.compare( period.qualifyingStart, today ) <= 0 )
       const qualifyingEnded = !!( period.qualifyingEnd && Temporal.PlainDate.compare( today, period.qualifyingEnd ) > 0 )
-      const eligibilityStarted = !!( period.eligibilityStart && Temporal.PlainDate.compare( period.eligibilityStart, today ) <= 0 )
-      const eligibilityEnded = !!( period.eligibilityEnd && Temporal.PlainDate.compare( today, period.eligibilityEnd ) > 0 )
+      const lastRaceDatePassed = !!( period.lastRaceDate && Temporal.PlainDate.compare( today, period.lastRaceDate ) > 0 )
       return {
         ...period,
         qualifyingStarted,
         qualifyingEnded,
         qualifyingActive: qualifyingStarted && !qualifyingEnded,
-        eligibilityStarted,
-        eligibilityEnded,
-        eligibilityActive: eligibilityStarted && !eligibilityEnded,
+        eligibilityActive: qualifyingEnded && !!period.lastRaceDate && !lastRaceDatePassed,
       }
     } )
     .map( period => ( {
