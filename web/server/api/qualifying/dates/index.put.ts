@@ -8,8 +8,7 @@ INSERT INTO QualifyingPeriods (
   type,
   qualifyingStart,
   qualifyingEnd,
-  eligibilityStart,
-  eligibilityEnd
+  lastRaceDate
 )
 VALUES (
   :year,
@@ -18,14 +17,12 @@ VALUES (
   :type,
   :qualifyingStart,
   :qualifyingEnd,
-  :eligibilityStart,
-  :eligibilityEnd
+  :lastRaceDate
 )
 ON DUPLICATE KEY UPDATE
   qualifyingStart = :qualifyingStart,
   qualifyingEnd   = :qualifyingEnd,
-  eligibilityStart = :eligibilityStart,
-  eligibilityEnd   = :eligibilityEnd
+  lastRaceDate    = :lastRaceDate
 ;`
 
 export default defineEventHandler( async ( event ) => {
