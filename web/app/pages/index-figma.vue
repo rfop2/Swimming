@@ -27,140 +27,139 @@
 </script>
 
 <template>
-  <div class="w-[1200px] mx-auto bg-white flex flex-col justify-start items-center overflow-hidden">
-    <div class="w-[1200px] h-[798px] relative">
-      <div class="w-[1202px] h-[798px] left-0 top-0 absolute">
-        <img class="w-[1202px] h-[798px] left-0 top-0 absolute" src="/images/home/Block-A-Bg.jpg" >
-      </div>
-      <div class="w-[642px] left-[280px] top-[307px] absolute inline-flex flex-col justify-start items-center gap-[54px]">
-        <div class="self-stretch text-center justify-center text-white text-[64px] font-extrabold font-['Bricolage_Grotesque'] uppercase leading-[56px] [text-shadow:_6px_4px_12px_rgb(0_0_0_/_0.25)]">Everything your swimmer needs.       All in one place.</div>
-        <div class="size- inline-flex justify-start items-center gap-[21px]">
-          <div class="size- rounded-sm flex justify-start items-center gap-2.5">
-            <div class="size- p-5 bg-white rounded-sm flex justify-center items-center gap-2.5">
-              <div class="text-center justify-center text-cyan-600 text-[15px] font-extrabold font-['Bricolage_Grotesque'] uppercase leading-[10px] tracking-wider">Start Free Trial</div>
+  <div class="w-full md:w-[1200px] mx-auto bg-white flex flex-col justify-start items-center overflow-hidden">
+    <div class="w-full md:w-[1200px] h-[600px] md:h-[798px] relative overflow-hidden">
+      <picture>
+        <source media="(min-width: 768px)" srcset="/images/home/Block-A-Bg.jpg">
+        <img class="absolute inset-0 w-full h-full object-cover" src="/images/home/Block-A-Bg-Mobile.png" >
+      </picture>
+      <div class="w-full h-full px-5 md:px-0 flex flex-col justify-between md:block items-center">
+        <div class="relative md:absolute md:left-0 md:top-0 w-full md:px-[50px] py-5 flex justify-between items-center">
+          <div class="w-[80.42px] h-[34px] relative overflow-hidden">
+            <svg xmlns="http://www.w3.org/2000/svg" width="81" height="34" viewBox="0 0 81 34" fill="none">
+              <g clip-path="url(#clip0_23_104)">
+                <path d="M14.8321 6.93506C14.7358 7.12768 14.6395 7.12768 14.2542 7.3203C13.0985 7.89817 9.53495 9.43915 9.43864 10.306C9.05339 12.3285 11.9427 10.5949 12.1354 10.4986C13.0985 10.017 14.1579 9.34284 15.2173 9.05391C14.8321 9.63178 12.039 11.2691 10.9796 12.0396C10.4018 12.5211 10.4018 13.0027 10.8833 13.6769C11.6538 13.7732 12.039 13.4842 12.5206 13.1953C13.1948 12.8101 16.2767 10.8838 16.662 10.7875L14.8321 12.3285C14.4468 12.6174 13.0985 13.5805 13.58 14.351C13.6763 14.5437 13.58 14.5437 13.9653 14.64C15.121 14.8326 16.8546 12.9064 18.0104 11.9433C18.4919 11.6543 19.3587 10.6912 19.9366 10.5949C20.1292 11.2691 18.8772 12.9064 18.9735 13.8695C18.9735 14.5437 19.6476 14.7363 20.3218 14.5437C21.2849 14.2547 22.537 11.8469 23.2112 10.7875C23.5001 10.4023 23.789 9.92071 24.078 9.53547C24.3669 9.15022 24.8485 8.47604 24.9448 8.0908C26.871 8.0908 36.9837 7.12768 37.9468 7.41662L43.7255 11.8469C44.1107 12.1359 45.4591 13.1953 45.8443 13.2916L43.6292 14.4473C42.8587 14.9289 42.1845 15.2178 41.5103 15.6994L37.2726 18.2035C42.6661 20.0334 47.7706 21.767 53.4529 23.1154C55.1865 23.5006 57.498 24.0785 59.3279 24.2711C60.0021 23.7896 61.0615 21.767 61.4468 20.6113C62.5062 17.433 62.5062 14.1584 60.6763 11.2691C59.2316 8.9576 56.0534 7.80186 53.4529 7.03137C49.3116 5.68301 47.1927 2.88998 42.3771 0.578508C37.9468 -1.44403 27.4489 2.11949 22.7296 3.0826C19.2624 3.75678 16.5657 4.14203 13.4837 5.39408C12.8095 5.68301 10.8833 6.35719 10.4981 6.74244C10.3054 6.93506 10.1128 7.41662 10.3054 7.80186C10.8833 8.57235 13.0985 7.22399 14.8321 6.93506Z" fill="white"/>
+                <path d="M0 31.4945C0.963114 31.2055 2.40778 30.435 4.43032 29.8572C13.4836 27.0641 22.0553 27.642 31.2049 29.3756C41.125 31.3018 52.2008 34.9617 62.6987 33.8059C68.4774 33.1318 75.2192 30.9166 79.6495 27.2568C79.8421 27.1605 79.7458 27.2568 79.9384 27.0641L80.0348 26.9678C80.0348 26.8715 80.0348 26.8715 80.1311 26.8715C79.3606 27.0641 77.627 28.0273 75.7007 28.6051C74.0635 29.183 72.5225 29.5682 70.8852 29.9535C67.0327 30.724 63.3729 30.8203 59.4241 30.6277C45.0737 29.8572 32.6496 21.9596 17.2397 23.9822C13.9652 24.4637 10.209 25.4268 7.6086 26.6789C5.48975 27.7383 2.69672 29.2793 0.866802 30.724L0 31.4945Z" fill="white"/>
+                <path d="M72.0409 7.51293C67.6105 8.28344 65.01 12.136 64.1432 16.8554C63.9506 18.0111 63.758 19.1669 63.469 20.419C63.1801 21.671 62.8911 22.9231 63.8543 23.7899C65.299 24.8494 69.4405 24.4641 71.2704 24.0789C73.7746 23.501 75.5082 22.4415 77.0492 21.2858C77.2419 20.9968 77.3382 20.9005 77.5308 20.7079C78.8792 19.4558 79.8423 17.8185 80.2276 15.8922C81.287 10.7876 77.1455 6.54979 72.0409 7.51293Z" fill="white"/>
+                <path d="M0.962891 22.8264C13.0018 18.3961 23.9813 20.0334 36.2129 23.0191C45.4587 25.3305 56.8235 29.183 66.6473 27.8346C67.803 27.7383 70.1145 27.3531 70.885 26.8715C66.262 26.9678 65.9731 27.1604 60.9649 26.4863C43.2436 23.8859 26.0039 12.1359 7.89731 18.8777C6.54895 19.4555 1.63707 21.767 0.962891 22.8264Z" fill="white"/>
+              </g>
+              <defs>
+                <clipPath id="clip0_23_104">
+                  <rect width="80.42" height="33.9992" fill="white"/>
+                </clipPath>
+              </defs>
+            </svg>
+          </div>
+          <div class="hidden md:block w-[147px] justify-end text-white text-lg font-extrabold font-['Bricolage_Grotesque'] uppercase leading-[19px] tracking-wide">Swim Racing</div>
+          <div class="justify-center text-white text-sm font-bold font-['DM_Sans'] leading-[22.40px]">Sign In</div>
+          <div data-svg-wrapper>
+            <svg width="26" height="18" viewBox="0 0 26 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M1 9H25M1 1H25M1 17H25" stroke="white" stroke-width="2" stroke-linecap="square" stroke-linejoin="round"/>
+            </svg>
+          </div>
+        </div>
+        <div class="relative md:absolute md:left-[280px] md:top-[307px] md:w-[642px] flex flex-col justify-center items-center gap-10 md:gap-[54px]">
+          <div class="w-[292px] md:w-auto md:self-stretch text-center text-white text-[32px] md:text-[64px] font-extrabold font-['Bricolage_Grotesque'] uppercase leading-8 md:leading-[56px] [text-shadow:_6px_4px_12px_rgb(0_0_0_/_0.25)]">Everything your swimmer needs.       All in one place.</div>
+          <div class="flex flex-col md:flex-row justify-center items-center gap-[21px]">
+            <div class="p-5 bg-white rounded-sm flex justify-center items-center gap-2.5">
+              <div class="text-center text-cyan-600 text-[15px] font-extrabold font-['Bricolage_Grotesque'] uppercase leading-[10px] tracking-wider">Start Free Trial</div>
+            </div>
+            <div class="px-7 py-[18px] rounded-sm outline outline-2 outline-offset-[-2px] outline-white flex justify-center items-center gap-2.5">
+              <div class="text-center text-white text-[15px] font-extrabold font-['Bricolage_Grotesque'] uppercase leading-[10px] tracking-wider">View Plans</div>
             </div>
           </div>
-          <div class="size- px-7 py-[18px] rounded-sm outline outline-2 outline-offset-[-2px] outline-white flex justify-center items-center gap-2.5">
-            <div class="text-center justify-center text-white text-[15px] font-extrabold font-['Bricolage_Grotesque'] uppercase leading-[10px] tracking-wider">View Plans</div>
-          </div>
         </div>
       </div>
-      <div class="w-[1200px] h-[74px] px-[50px] py-5 left-0 top-0 absolute inline-flex justify-between items-center">
-        <div class="w-[80.42px] h-[34px] relative overflow-hidden">
-          <svg xmlns="http://www.w3.org/2000/svg" width="81" height="34" viewBox="0 0 81 34" fill="none">
-            <g clip-path="url(#clip0_23_104)">
-              <path d="M14.8321 6.93506C14.7358 7.12768 14.6395 7.12768 14.2542 7.3203C13.0985 7.89817 9.53495 9.43915 9.43864 10.306C9.05339 12.3285 11.9427 10.5949 12.1354 10.4986C13.0985 10.017 14.1579 9.34284 15.2173 9.05391C14.8321 9.63178 12.039 11.2691 10.9796 12.0396C10.4018 12.5211 10.4018 13.0027 10.8833 13.6769C11.6538 13.7732 12.039 13.4842 12.5206 13.1953C13.1948 12.8101 16.2767 10.8838 16.662 10.7875L14.8321 12.3285C14.4468 12.6174 13.0985 13.5805 13.58 14.351C13.6763 14.5437 13.58 14.5437 13.9653 14.64C15.121 14.8326 16.8546 12.9064 18.0104 11.9433C18.4919 11.6543 19.3587 10.6912 19.9366 10.5949C20.1292 11.2691 18.8772 12.9064 18.9735 13.8695C18.9735 14.5437 19.6476 14.7363 20.3218 14.5437C21.2849 14.2547 22.537 11.8469 23.2112 10.7875C23.5001 10.4023 23.789 9.92071 24.078 9.53547C24.3669 9.15022 24.8485 8.47604 24.9448 8.0908C26.871 8.0908 36.9837 7.12768 37.9468 7.41662L43.7255 11.8469C44.1107 12.1359 45.4591 13.1953 45.8443 13.2916L43.6292 14.4473C42.8587 14.9289 42.1845 15.2178 41.5103 15.6994L37.2726 18.2035C42.6661 20.0334 47.7706 21.767 53.4529 23.1154C55.1865 23.5006 57.498 24.0785 59.3279 24.2711C60.0021 23.7896 61.0615 21.767 61.4468 20.6113C62.5062 17.433 62.5062 14.1584 60.6763 11.2691C59.2316 8.9576 56.0534 7.80186 53.4529 7.03137C49.3116 5.68301 47.1927 2.88998 42.3771 0.578508C37.9468 -1.44403 27.4489 2.11949 22.7296 3.0826C19.2624 3.75678 16.5657 4.14203 13.4837 5.39408C12.8095 5.68301 10.8833 6.35719 10.4981 6.74244C10.3054 6.93506 10.1128 7.41662 10.3054 7.80186C10.8833 8.57235 13.0985 7.22399 14.8321 6.93506Z" fill="white"/>
-              <path d="M0 31.4945C0.963114 31.2055 2.40778 30.435 4.43032 29.8572C13.4836 27.0641 22.0553 27.642 31.2049 29.3756C41.125 31.3018 52.2008 34.9617 62.6987 33.8059C68.4774 33.1318 75.2192 30.9166 79.6495 27.2568C79.8421 27.1605 79.7458 27.2568 79.9384 27.0641L80.0348 26.9678C80.0348 26.8715 80.0348 26.8715 80.1311 26.8715C79.3606 27.0641 77.627 28.0273 75.7007 28.6051C74.0635 29.183 72.5225 29.5682 70.8852 29.9535C67.0327 30.724 63.3729 30.8203 59.4241 30.6277C45.0737 29.8572 32.6496 21.9596 17.2397 23.9822C13.9652 24.4637 10.209 25.4268 7.6086 26.6789C5.48975 27.7383 2.69672 29.2793 0.866802 30.724L0 31.4945Z" fill="white"/>
-              <path d="M72.0409 7.51293C67.6105 8.28344 65.01 12.136 64.1432 16.8554C63.9506 18.0111 63.758 19.1669 63.469 20.419C63.1801 21.671 62.8911 22.9231 63.8543 23.7899C65.299 24.8494 69.4405 24.4641 71.2704 24.0789C73.7746 23.501 75.5082 22.4415 77.0492 21.2858C77.2419 20.9968 77.3382 20.9005 77.5308 20.7079C78.8792 19.4558 79.8423 17.8185 80.2276 15.8922C81.287 10.7876 77.1455 6.54979 72.0409 7.51293Z" fill="white"/>
-              <path d="M0.962891 22.8264C13.0018 18.3961 23.9813 20.0334 36.2129 23.0191C45.4587 25.3305 56.8235 29.183 66.6473 27.8346C67.803 27.7383 70.1145 27.3531 70.885 26.8715C66.262 26.9678 65.9731 27.1604 60.9649 26.4863C43.2436 23.8859 26.0039 12.1359 7.89731 18.8777C6.54895 19.4555 1.63707 21.767 0.962891 22.8264Z" fill="white"/>
-            </g>
-            <defs>
-              <clipPath id="clip0_23_104">
-                <rect width="80.42" height="33.9992" fill="white"/>
-              </clipPath>
-            </defs>
-          </svg>
-        </div>
-        <div class="w-[147px] justify-end text-white text-lg font-extrabold font-['Bricolage_Grotesque'] uppercase leading-[19px] tracking-wide">Swim Racing</div>
-        <div class="justify-center text-white text-sm font-bold font-['DM_Sans'] leading-[22.40px]">Sign In</div>
-        <div data-svg-wrapper>
-          <svg width="26" height="18" viewBox="0 0 26 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M1 9H25M1 1H25M1 17H25" stroke="white" stroke-width="2" stroke-linecap="square" stroke-linejoin="round"/>
-          </svg>
-        </div>
-      </div>
-      <div class="size-8 left-[767px] top-[117px] absolute"/>
     </div>
-    <div class="w-[1200px] px-[113px] py-[13px] bg-cyan-600 inline-flex justify-center items-center gap-[54px]">
-      <div class="justify-center text-white text-xs font-bold font-['DM_Sans'] uppercase leading-5 tracking-widest">Swim Clubs</div>
-      <div class="w-px h-4 bg-white/30"/>
-      <div class="justify-center text-white text-xs font-bold font-['DM_Sans'] uppercase leading-5 tracking-widest">Coaches & Trainers</div>
-      <div class="w-px h-4 bg-white/30"/>
-      <div class="justify-center text-white text-xs font-bold font-['DM_Sans'] uppercase leading-5 tracking-widest">Parents</div>
-      <div class="w-px h-4 bg-white/30"/>
-      <div class="justify-center text-white text-xs font-bold font-['DM_Sans'] uppercase leading-5 tracking-widest">Swimmers</div>
+    <div class="w-full md:w-[1200px] px-5 md:px-[113px] py-[50px] md:py-[13px] bg-cyan-600 flex flex-col md:flex-row justify-center items-center gap-2.5 md:gap-[54px]">
+      <div class="text-white text-xs font-bold font-['DM_Sans'] uppercase leading-5 tracking-widest">Swim Clubs</div>
+      <div class="w-0 md:w-px h-4 origin-top-left -rotate-90 md:rotate-0 bg-white/30"/>
+      <div class="text-white text-xs font-bold font-['DM_Sans'] uppercase leading-5 tracking-widest">Coaches & Trainers</div>
+      <div class="w-0 md:w-px h-4 origin-top-left -rotate-90 md:rotate-0 bg-white/30"/>
+      <div class="text-white text-xs font-bold font-['DM_Sans'] uppercase leading-5 tracking-widest">Parents</div>
+      <div class="w-0 md:w-px h-4 origin-top-left -rotate-90 md:rotate-0 bg-white/30"/>
+      <div class="text-white text-xs font-bold font-['DM_Sans'] uppercase leading-5 tracking-widest">Swimmers</div>
     </div>
-    <div class="w-[1200px] p-[100px] bg-white flex flex-col justify-start items-center gap-10">
-      <div class="text-center justify-center text-red-600 text-xs font-bold font-['DM_Sans'] uppercase leading-5 tracking-widest">About</div>
-      <div class="text-center justify-center text-black text-[32px] font-extrabold font-['Bricolage_Grotesque'] uppercase leading-8">The UK's most complete hub for swimmers, parents and clubs.</div>
-      <div class="text-center justify-center text-black text-xl font-normal font-['DM_Sans'] leading-[26px]">Swim Racing is the new performance and meet hub for county and<br>regional swimmers. Designed to provide accurate statistics and<br>competition results, Swim Racing offers a more in-depth analysis of not<br>only your registered swimmer, but of their competitors too. Log videos,<br>results, and schedule meets — the most detailed and accurate platform<br>for clubs, parents and swimmers to track progress and improve results.</div>
+    <div class="w-full md:w-[1200px] px-5 md:p-[100px] py-[50px] md:py-[100px] bg-white flex flex-col justify-start items-center gap-5 md:gap-10">
+      <div class="text-center text-red-600 text-xs font-bold font-['DM_Sans'] uppercase leading-5 tracking-widest">About</div>
+      <div class="max-w-[340px] md:max-w-none text-center text-black text-[32px] font-extrabold font-['Bricolage_Grotesque'] uppercase leading-8">The UK's most complete hub for swimmers, parents and clubs.</div>
+      <div class="max-w-[340px] md:max-w-none text-center text-black text-xl font-normal font-['DM_Sans'] leading-[26px]">Swim Racing is the new performance and meet hub for county and regional swimmers. Designed to provide accurate statistics and competition results, Swim Racing offers a more in-depth analysis of not only your registered swimmer, but of their competitors too. Log videos, results, and schedule meets — the most detailed and accurate platform for clubs, parents and swimmers to track progress and improve results.</div>
     </div>
-    <div class="w-[1200px] p-[100px] inline-flex justify-center items-center gap-[57px] bg-[url('/images/home/Block-D-Performance.png')]">
-      <div class="w-[465px] p-[50px] bg-slate-900 rounded-sm inline-flex flex-col justify-start items-start gap-5">
+    <div class="w-full md:w-[1200px] px-5 md:p-[100px] py-[50px] flex flex-col md:flex-row justify-center items-center gap-5 md:gap-[57px] md:bg-[url('/images/home/Block-D-Performance.png')]">
+      <img class="order-1 md:order-2 w-full max-w-[351px] md:max-w-none md:w-[535px] h-[215px] md:h-[327px] rounded-sm object-cover" src="/images/home/Block_D_Img.png" >
+      <div class="order-2 md:order-1 w-full md:w-[465px] px-5 md:px-[50px] py-[50px] md:py-[50px] bg-slate-900 rounded-sm flex flex-col justify-start items-start gap-5">
         <div class="self-stretch h-3.5 justify-center text-white text-xs font-bold font-['DM_Sans'] uppercase leading-5 tracking-widest">Performance</div>
         <div class="self-stretch justify-center text-white text-[32px] font-extrabold font-['Bricolage_Grotesque'] uppercase leading-8">Your swimmer.       Every stroke.       Every stat. </div>
-        <div class="w-[364px] justify-center text-white text-xl font-normal font-['DM_Sans'] leading-[26px]">Statistics of your swimmer’s performance broken down. Log strokes, time and rank, and find out what’s needed to improve for the next meet. Track progress month by month with a full calendar overview, and compare against competitors. </div>
-        <div class="size- p-2.5 bg-red-600 rounded-sm inline-flex justify-center items-center gap-2.5">
+        <div class="self-stretch md:w-[364px] justify-center text-white text-xl font-normal font-['DM_Sans'] leading-[26px]">Statistics of your swimmer’s performance broken down. Log strokes, time and rank, and find out what’s needed to improve for the next meet. Track progress month by month with a full calendar overview, and compare against competitors. </div>
+        <div class="p-2.5 bg-red-600 rounded-sm flex justify-center items-center gap-2.5">
           <div class="justify-center text-white text-sm font-extrabold font-['Bricolage_Grotesque'] uppercase leading-5 tracking-widest">See What Your Swimmer's Data Can Do</div>
         </div>
       </div>
-      <img class="w-[535px] h-[327px] rounded-sm" src="/images/home/Block_D_Img.png" >
     </div>
-    <div class="w-[1200px] bg-white inline-flex justify-between items-center">
-      <div class="w-[600px] p-[100px] bg-cyan-600 inline-flex flex-col justify-start items-start gap-5">
+    <div class="w-full md:w-[1200px] bg-white flex flex-col md:flex-row justify-start md:justify-between items-center">
+      <div class="order-2 md:order-1 w-full md:w-[600px] px-5 md:p-[100px] py-[50px] bg-cyan-600 flex flex-col justify-start items-start gap-5">
         <div class="self-stretch h-3.5 justify-center text-white text-xs font-bold font-['DM_Sans'] uppercase leading-5 tracking-widest">Competition</div>
         <div class="self-stretch justify-center text-white text-[32px] font-extrabold font-['Bricolage_Grotesque'] uppercase leading-8">Every race. <br>Every level. <br>One platform.</div>
-        <div class="w-[379px] justify-center text-white text-xl font-normal font-['DM_Sans'] leading-[26px]">Track progress month by month with a full calendar overview, and compare against competitors. </div>
-        <div class="size- px-5 py-2.5 bg-slate-900 rounded-sm inline-flex justify-center items-center gap-2.5">
+        <div class="self-stretch md:w-[379px] justify-center text-white text-xl font-normal font-['DM_Sans'] leading-[26px]">Track progress month by month with a full calendar overview, and compare against competitors. </div>
+        <div class="px-5 py-2.5 bg-slate-900 rounded-sm flex justify-center items-center gap-2.5">
           <div class="justify-center text-white text-sm font-extrabold font-['Bricolage_Grotesque'] uppercase leading-5 tracking-widest">Explore Competitions</div>
         </div>
       </div>
-      <div class="w-[600px] h-[488px] bg-slate-900 inline-flex flex-col justify-center items-center gap-2.5">
-        <img class="w-[500px] h-[227px] rounded-sm" src="/images/home/Block_E_Img.png" >
+      <div class="order-1 md:order-2 w-full md:w-[600px] h-auto md:h-[488px] p-5 md:p-0 bg-slate-900 flex flex-col justify-center items-center gap-2.5">
+        <img class="w-full max-w-[350px] md:max-w-none md:w-[500px] h-[163px] md:h-[227px] rounded-sm object-cover" src="/images/home/Block_E_Img.png" >
       </div>
     </div>
-    <div class="w-[1200px] inline-flex justify-end items-center">
-      <div class="w-[603px] h-[598px] bg-slate-900 inline-flex flex-col justify-center items-center gap-2.5">
-        <img class="w-[500px] h-[367px] rounded-sm shadow-[10px_-10px_26.4px_-10px_rgba(0,0,0,0.25)]" src="/images/home/Block_F_Img.png" >
+    <div class="w-full md:w-[1200px] flex flex-col md:flex-row justify-start md:justify-end items-center">
+      <div class="w-full md:w-[603px] h-auto md:h-[598px] p-5 md:p-0 bg-slate-900 flex flex-col justify-center items-end md:items-center gap-2.5">
+        <img class="w-full max-w-[350px] md:max-w-none md:w-[500px] h-[257px] md:h-[367px] rounded-sm object-cover shadow-[10px_-10px_26.4px_-10px_rgba(0,0,0,0.25)]" src="/images/home/Block_F_Img.png" >
       </div>
-      <div class="w-[597px] p-[100px] bg-red-600 inline-flex flex-col justify-center items-start gap-5">
+      <div class="w-full md:w-[597px] px-5 md:p-[100px] py-[50px] bg-red-600 flex flex-col justify-center items-start gap-5">
         <div class="w-[181px] justify-center text-white text-xs font-bold font-['DM_Sans'] uppercase leading-5 tracking-widest">Timing & Analysis</div>
-        <div class="self-stretch justify-center text-white text-[32px] font-extrabold font-['Bricolage_Grotesque'] uppercase leading-8">From poolside       to playback. <br>Every detail captured.</div>
+        <div class="self-stretch justify-center text-white text-[32px] font-extrabold font-['Bricolage_Grotesque'] uppercase leading-8">From poolside to playback. <br>Every detail captured.</div>
         <div class="self-stretch justify-center text-white text-xl font-normal font-['DM_Sans'] leading-[26px]">Time your swimmer live with our built-in timer, adapted for mobile use. Upload videos of your swimmer and set markers throughout their race to accurately document their strategy and technique. Compare results between strokes and races.</div>
-        <div class="size- p-2.5 bg-sky-950 rounded-sm inline-flex justify-center items-center gap-2.5">
+        <div class="p-2.5 bg-sky-950 rounded-sm flex justify-center items-center gap-2.5">
           <div class="justify-center text-white text-sm font-extrabold font-['Bricolage_Grotesque'] uppercase leading-5 tracking-widest">Start Timing Your Swimmer</div>
         </div>
       </div>
     </div>
-    <div class="w-[1200px] bg-slate-900 inline-flex justify-start items-center gap-[55px]">
-      <div class="w-[600px] p-[100px] bg-cyan-600 rounded-sm inline-flex flex-col justify-start items-start gap-[30px]">
+    <div class="w-full md:w-[1200px] bg-slate-900 flex flex-col md:flex-row justify-start items-center gap-0 md:gap-[55px]">
+      <div class="order-1 md:order-2 w-full md:w-auto p-5 md:p-0 bg-slate-900 flex flex-col justify-center items-center gap-2.5">
+        <img class="w-full max-w-[361px] md:max-w-none md:w-[500px] h-[262px] md:h-[362px] rounded-sm object-cover" src="/images/home/Block_G_Img.png" >
+      </div>
+      <div class="order-2 md:order-1 w-full md:w-[600px] px-5 md:p-[100px] py-[50px] bg-cyan-600 rounded-sm flex flex-col justify-start items-start gap-5 md:gap-[30px]">
         <div class="self-stretch h-3.5 justify-center text-white text-xs font-bold font-['DM_Sans'] uppercase leading-5 tracking-widest">Qualifications</div>
         <div class="self-stretch justify-center text-white text-[32px] font-extrabold font-['Bricolage_Grotesque'] uppercase leading-8">Every cut-off.<br>Every county.<br>In one place.</div>
-        <div class="w-[379px] justify-center text-white text-xl font-normal font-['DM_Sans'] leading-[26px]">Keep up to date with qualifying periods and cut-off dates for summer, winter and general competitions.</div>
-        <div class="size- p-2.5 bg-sky-950 rounded-sm inline-flex justify-center items-center gap-2.5">
+        <div class="self-stretch md:w-[379px] justify-center text-white text-xl font-normal font-['DM_Sans'] leading-[26px]">Keep up to date with qualifying periods and cut-off dates for summer, winter and general competitions.</div>
+        <div class="p-2.5 bg-sky-950 rounded-sm flex justify-center items-center gap-2.5">
           <div class="justify-center text-white text-sm font-extrabold font-['Bricolage_Grotesque'] uppercase leading-5 tracking-widest">Find Your Swimmer's Ranking</div>
         </div>
       </div>
-      <img class="w-[500px] h-[362px] rounded-sm" src="/images/home/Block_G_Img.png" >
     </div>
-    <div class="w-[1200px] h-[333px] relative">
-      <img class="w-[1200px] h-[333px] left-0 top-0 absolute" src="/images/home/april-walker-9oB319CAOWU-unsplash 1.png" >
-    </div>
-    <div class="w-[1200px] px-[50px] py-[100px] bg-slate-900 flex flex-col justify-start items-center gap-5">
-      <div class="text-center justify-center text-white text-[32px] font-extrabold font-['Bricolage_Grotesque'] uppercase leading-8">Try Swim Racing Free     for One Month</div>
-      <div class="w-[620px] text-center justify-center text-white/80 text-[15px] font-normal font-['DM_Sans'] leading-[21px]">Experience the full platform with no commitment. See exactly how Swim Racing transforms how your club tracks, analyses and improves — then choose the plan that fits.</div>
-      <div class="text-center justify-center text-white/50 text-xs font-normal font-['DM_Sans'] leading-5">One month free · Cancel any time</div>
-      <div class="w-[456px] h-[42px] relative bg-white/10 rounded-sm outline outline-1 outline-offset-[-1px] outline-white/30 overflow-hidden">
-        <div class="w-[415.63px] h-[18px] left-[20.18px] top-[12.19px] absolute overflow-hidden">
-          <div class="left-0 top-0 absolute justify-center text-white/50 text-sm font-normal font-['DM_Sans']">Enter your email address</div>
-        </div>
+    <img class="w-full hidden md:block h-[333px] object-cover" src="/images/home/pool-lanes.png" >
+    <img class="w-full h-[333px] object-cover md:hidden" src="/images/home/pool-lanes-mobile.png" >
+    <div class="w-full md:w-[1200px] px-5 md:px-[50px] py-[50px] md:py-[100px] bg-slate-900 flex flex-col justify-start items-center gap-5">
+      <div class="text-center text-white text-[32px] font-extrabold font-['Bricolage_Grotesque'] uppercase leading-8">Try Swim Racing Free     for One Month</div>
+      <div class="max-w-[620px] text-center text-white/80 text-[15px] font-normal font-['DM_Sans'] leading-[21px]">Experience the full platform with no commitment. See exactly how Swim Racing transforms how your club tracks, analyses and improves — then choose the plan that fits.</div>
+      <div class="text-center text-white/50 text-xs font-normal font-['DM_Sans'] leading-5">One month free · Cancel any time</div>
+      <div class="w-full max-w-[456px] h-[42px] px-5 bg-white/10 rounded-sm outline outline-1 outline-offset-[-1px] outline-white/30 overflow-hidden flex items-center">
+        <div class="text-white/50 text-sm font-normal font-['DM_Sans']">Enter your email address</div>
       </div>
-      <div class="w-[456px] h-[43px] relative bg-white rounded-sm">
-        <div class="left-[159px] top-[13.19px] absolute text-center justify-center text-cyan-600 text-[15.20px] font-extrabold font-['Bricolage_Grotesque'] uppercase tracking-wider">Start Free Trial</div>
+      <div class="w-full max-w-[456px] h-[43px] bg-white rounded-sm flex items-center justify-center">
+        <div class="text-center text-cyan-600 text-[15.20px] font-extrabold font-['Bricolage_Grotesque'] uppercase tracking-wider">Start Free Trial</div>
       </div>
     </div>
-    <div class="w-[1200px] px-[50px] py-[100px] bg-white flex flex-col justify-start items-end gap-8">
-      <div class="w-[1100px] h-[42px] text-center justify-center text-sky-950 text-[40px] font-extrabold font-['Bricolage_Grotesque'] uppercase leading-[42px]">Plans for Every Swimmer</div>
-      <div class="w-[1100px] h-[42.31px] text-center justify-center text-sky-950 text-sm font-normal font-['DM_Sans'] leading-5">From tracking a single swimmer to managing a whole club squad — <br>pick the plan that fits.</div>
-      <div class="self-stretch inline-flex justify-center items-stretch gap-5">
-        <div class="w-[202px] bg-white rounded-sm outline outline-1 outline-offset-[-1px] outline-slate-200 flex flex-col">
-          <div class="px-[21px] pt-[37px] flex-1 flex flex-col">
+    <div class="w-full md:w-[1200px] px-5 md:px-[50px] py-[50px] md:py-[100px] bg-white flex flex-col justify-start items-center gap-5 md:gap-8">
+      <div class="max-w-[342px] md:max-w-none md:w-[1100px] text-center text-sky-950 text-[32px] md:text-[40px] font-extrabold font-['Bricolage_Grotesque'] uppercase leading-8 md:leading-[42px]">Plans for Every Swimmer</div>
+      <div class="max-w-[342px] md:max-w-none md:w-[1100px] text-center text-sky-950 text-sm font-normal font-['DM_Sans'] leading-5">From tracking a single swimmer to managing a whole club squad — pick the plan that fits.</div>
+      <div class="w-full flex flex-col md:flex-row justify-center items-stretch gap-5">
+        <div class="w-full md:w-[202px] p-5 md:p-0 bg-white rounded-sm outline outline-1 outline-offset-[-1px] outline-slate-200 flex flex-col">
+          <div class="md:px-[21px] md:pt-[37px] flex-1 flex flex-col">
             <div class="text-sky-950 text-[15.20px] font-extrabold font-['DM_Sans'] uppercase leading-6 tracking-wide">Parent Tier</div>
-            <div class="mt-px min-h-[52.2px] text-slate-500 text-xs font-normal font-['DM_Sans'] leading-[17.40px]">Follow your swimmers <br>through the full season.</div>
-            <div class="mt-[35px] text-sky-950 text-4xl font-black font-['DM_Sans'] leading-9">£6</div>
-            <div class="text-slate-500 text-xs font-normal font-['DM_Sans'] leading-5">per month</div>
-            <div class="w-[160.20px] h-px mt-px bg-slate-200"/>
-            <div class="w-[160.20px] mt-4 flex flex-col gap-[9.8px]">
+            <div class="mt-2.5 md:mt-px md:min-h-[52.2px] text-slate-500 text-xs font-normal font-['DM_Sans'] leading-[17.40px]">Follow your swimmers <br>through the full season.</div>
+            <div class="mt-2.5 md:mt-[35px] text-sky-950 text-4xl font-black font-['DM_Sans'] leading-9">£6</div>
+            <div class="mt-2.5 md:mt-0 text-slate-500 text-xs font-normal font-['DM_Sans'] leading-5">per month</div>
+            <div class="h-px mt-2.5 md:mt-px md:w-[160.20px] bg-slate-200"/>
+            <div class="mt-2.5 md:mt-4 md:w-[160.20px] flex flex-col gap-2.5 md:gap-[9.8px]">
               <div class="flex items-start gap-[5px]">
                 <CheckIcon class="h-3 w-4 mt-[1px] text-slate-500" aria-hidden="true" />
                 <div class="text-slate-500 text-[11px] font-normal font-['DM_Sans'] leading-[15px]">All Free features</div>
@@ -187,21 +186,21 @@
               </div>
             </div>
           </div>
-          <div class="mx-[9px] mt-6 mb-[22px] px-[54px] py-[11px] rounded-sm outline outline-1 outline-offset-[-1px] outline-slate-200 flex justify-center items-center gap-2.5">
+          <div class="mt-2.5 md:mt-6 md:mx-[9px] md:mb-[22px] px-[54px] py-[11px] rounded-sm outline outline-1 outline-offset-[-1px] outline-slate-200 flex justify-center items-center gap-2.5">
             <div class="text-center text-sky-950 text-sm font-extrabold font-['Bricolage_Grotesque'] uppercase tracking-wide">Subscribe</div>
           </div>
         </div>
-        <div class="w-[202px] bg-slate-900 rounded-sm outline outline-1 outline-offset-[-1px] outline-black relative flex flex-col">
-          <div class="px-2.5 py-[5px] left-[48.50px] top-[-11px] absolute bg-red-600 rounded-xs inline-flex justify-center items-center gap-2.5">
+        <div class="w-full md:w-[202px] p-5 md:p-0 bg-slate-900 rounded-sm outline outline-1 outline-offset-[-1px] outline-black relative flex flex-col">
+          <div class="px-2.5 py-[5px] left-1/2 -translate-x-1/2 top-[-11px] absolute bg-red-600 rounded-xs flex justify-center items-center gap-2.5 whitespace-nowrap">
             <div class="text-white text-[10.40px] font-extrabold font-['Bricolage_Grotesque'] uppercase leading-4 tracking-wide">Most popular</div>
           </div>
-          <div class="px-[21px] pt-[37px] flex-1 flex flex-col">
+          <div class="md:px-[21px] md:pt-[37px] flex-1 flex flex-col">
             <div class="text-white text-[15.20px] font-extrabold font-['DM_Sans'] uppercase leading-6 tracking-wide">Trainer Tier</div>
-            <div class="mt-px min-h-[52.2px] text-white/60 text-xs font-normal font-['DM_Sans'] leading-[17.40px]">Tools for coaches managing<br>athletes across multiple events.</div>
-            <div class="mt-[35px] text-white text-4xl font-black font-['DM_Sans'] leading-9">£12</div>
-            <div class="text-white/40 text-xs font-normal font-['DM_Sans'] leading-5">per month</div>
-            <div class="w-[160.20px] h-px mt-px bg-white/10"/>
-            <div class="w-[160.20px] mt-4 flex flex-col gap-[9.8px]">
+            <div class="mt-2.5 md:mt-px md:min-h-[52.2px] text-white/60 text-xs font-normal font-['DM_Sans'] leading-[17.40px]">Tools for coaches managing<br>athletes across multiple events.</div>
+            <div class="mt-2.5 md:mt-[35px] text-white text-4xl font-black font-['DM_Sans'] leading-9">£12</div>
+            <div class="mt-2.5 md:mt-0 text-white/40 text-xs font-normal font-['DM_Sans'] leading-5">per month</div>
+            <div class="h-px mt-2.5 md:mt-px md:w-[160.20px] bg-white/10"/>
+            <div class="mt-2.5 md:mt-4 md:w-[160.20px] flex flex-col gap-2.5 md:gap-[9.8px]">
               <div class="flex items-start gap-[5px]">
                 <CheckIcon class="h-3 w-4 mt-[1px] text-white/60" aria-hidden="true" />
                 <div class="text-white/60 text-[11px] font-normal font-['DM_Sans'] leading-[15px]">All Parent features</div>
@@ -224,18 +223,18 @@
               </div>
             </div>
           </div>
-          <div class="mx-[9px] mt-6 mb-[22px] px-[54px] py-[11px] bg-white rounded-sm flex justify-center items-center gap-2.5">
+          <div class="mt-2.5 md:mt-6 md:mx-[9px] md:mb-[22px] px-[54px] py-[11px] bg-white rounded-sm flex justify-center items-center gap-2.5">
             <div class="text-center text-black text-sm font-extrabold font-['Bricolage_Grotesque'] uppercase tracking-wide">Subscribe</div>
           </div>
         </div>
-        <div class="w-[202px] bg-white rounded-sm outline outline-1 outline-offset-[-1px] outline-slate-200 flex flex-col">
-          <div class="px-[21px] pt-[37px] flex-1 flex flex-col">
+        <div class="w-full md:w-[202px] p-5 md:p-0 bg-white rounded-sm outline outline-1 outline-offset-[-1px] outline-slate-200 flex flex-col">
+          <div class="md:px-[21px] md:pt-[37px] flex-1 flex flex-col">
             <div class="text-sky-950 text-[15.20px] font-extrabold font-['DM_Sans'] uppercase leading-6 tracking-wide">Club — Small</div>
-            <div class="mt-px min-h-[52.2px] text-slate-500 text-xs font-normal font-['DM_Sans'] leading-[17.40px]">Full club management for <br>smaller swim clubs.</div>
-            <div class="mt-[35px] text-sky-950 text-4xl font-black font-['DM_Sans'] leading-9">£25</div>
-            <div class="text-slate-500 text-xs font-normal font-['DM_Sans'] leading-5">per month</div>
-            <div class="w-[160.20px] h-px mt-px bg-slate-200"/>
-            <div class="w-[160.20px] mt-4 flex flex-col gap-[9.8px]">
+            <div class="mt-2.5 md:mt-px md:min-h-[52.2px] text-slate-500 text-xs font-normal font-['DM_Sans'] leading-[17.40px]">Full club management for <br>smaller swim clubs.</div>
+            <div class="mt-2.5 md:mt-[35px] text-sky-950 text-4xl font-black font-['DM_Sans'] leading-9">£25</div>
+            <div class="mt-2.5 md:mt-0 text-slate-500 text-xs font-normal font-['DM_Sans'] leading-5">per month</div>
+            <div class="h-px mt-2.5 md:mt-px md:w-[160.20px] bg-slate-200"/>
+            <div class="mt-2.5 md:mt-4 md:w-[160.20px] flex flex-col gap-2.5 md:gap-[9.8px]">
               <div class="flex items-start gap-[5px]">
                 <CheckIcon class="h-3 w-4 mt-[1px] text-slate-500" aria-hidden="true" />
                 <div class="text-slate-500 text-[11px] font-normal font-['DM_Sans'] leading-[15px]">All Trainer features</div>
@@ -262,18 +261,18 @@
               </div>
             </div>
           </div>
-          <div class="mx-[9px] mt-6 mb-[22px] px-[54px] py-[11px] rounded-sm outline outline-1 outline-offset-[-1px] outline-slate-200 flex justify-center items-center gap-2.5">
+          <div class="mt-2.5 md:mt-6 md:mx-[9px] md:mb-[22px] px-[54px] py-[11px] rounded-sm outline outline-1 outline-offset-[-1px] outline-slate-200 flex justify-center items-center gap-2.5">
             <div class="text-center text-sky-950 text-sm font-extrabold font-['Bricolage_Grotesque'] uppercase tracking-wide">Subscribe</div>
           </div>
         </div>
-        <div class="w-[201px] bg-white rounded-sm outline outline-1 outline-offset-[-1px] outline-slate-200 flex flex-col">
-          <div class="px-[21px] pt-[37px] flex-1 flex flex-col">
+        <div class="w-full md:w-[201px] p-5 md:p-0 bg-white rounded-sm outline outline-1 outline-offset-[-1px] outline-slate-200 flex flex-col">
+          <div class="md:px-[21px] md:pt-[37px] flex-1 flex flex-col">
             <div class="text-sky-950 text-[15.20px] font-extrabold font-['DM_Sans'] uppercase leading-6 tracking-wide">Club — Large</div>
-            <div class="w-[141px] mt-px min-h-[52.2px] text-slate-500 text-xs font-normal font-['DM_Sans'] leading-[17.40px]">Unlimited scale for large clubs with big squads.</div>
-            <div class="mt-[35px] text-sky-950 text-4xl font-black font-['DM_Sans'] leading-9">£35</div>
-            <div class="text-slate-500 text-xs font-normal font-['DM_Sans'] leading-5">per month</div>
-            <div class="w-[159.19px] h-px mt-px bg-slate-200"/>
-            <div class="w-[159.19px] mt-4 flex flex-col gap-[8.8px]">
+            <div class="mt-2.5 md:mt-px md:w-[141px] md:min-h-[52.2px] text-slate-500 text-xs font-normal font-['DM_Sans'] leading-[17.40px]">Unlimited scale for large clubs with big squads.</div>
+            <div class="mt-2.5 md:mt-[35px] text-sky-950 text-4xl font-black font-['DM_Sans'] leading-9">£35</div>
+            <div class="mt-2.5 md:mt-0 text-slate-500 text-xs font-normal font-['DM_Sans'] leading-5">per month</div>
+            <div class="h-px mt-2.5 md:mt-px md:w-[159.19px] bg-slate-200"/>
+            <div class="mt-2.5 md:mt-4 md:w-[159.19px] flex flex-col gap-2.5 md:gap-[8.8px]">
               <div class="flex items-start gap-[5px]">
                 <CheckIcon class="h-3 w-4 mt-[1px] text-slate-500" aria-hidden="true" />
                 <div class="text-slate-500 text-[11px] font-normal font-['DM_Sans'] leading-4">All Club (small) features</div>
@@ -288,13 +287,13 @@
               </div>
             </div>
           </div>
-          <div class="mx-[9px] mt-6 mb-[22px] px-[54px] py-[11px] rounded-sm outline outline-1 outline-offset-[-1px] outline-slate-200 flex justify-center items-center gap-2.5">
+          <div class="mt-2.5 md:mt-6 md:mx-[9px] md:mb-[22px] px-[54px] py-[11px] rounded-sm outline outline-1 outline-offset-[-1px] outline-slate-200 flex justify-center items-center gap-2.5">
             <div class="text-center text-sky-950 text-sm font-extrabold font-['Bricolage_Grotesque'] uppercase tracking-wide">Subscribe</div>
           </div>
         </div>
       </div>
     </div>
-    <div class="w-[1200px] p-[50px] bg-cyan-600 flex flex-col justify-start items-center gap-5">
+    <div class="w-full md:w-[1200px] p-5 md:p-[50px] bg-cyan-600 flex flex-col justify-start items-center gap-5">
       <div class="self-stretch h-[17px] text-center justify-center text-white text-sm font-bold font-['Bricolage_Grotesque'] uppercase leading-[23.04px] tracking-wide">Swim Racing</div>
       <div data-svg-wrapper class="relative">
         <svg width="53" height="22" viewBox="0 0 53 22" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -311,13 +310,13 @@
           </defs>
         </svg>
       </div>
-      <div class="size- inline-flex justify-start items-center gap-[27px]">
-        <div class="w-[76.37px] h-4 text-center justify-center text-white text-[12.80px] font-normal font-['Barlow'] leading-5">Privacy Policy</div>
-        <div class="w-[72.76px] h-4 text-center justify-center text-white text-[12.80px] font-normal font-['Barlow'] leading-5">Terms of Use</div>
-        <div class="w-[44.47px] h-4 text-center justify-center text-white text-[12.80px] font-normal font-['Barlow'] leading-5">Contact</div>
-        <div class="w-[97.98px] h-4 text-center justify-center text-white text-[12.80px] font-normal font-['Barlow'] leading-5">British Swimming</div>
+      <div class="flex flex-col md:flex-row justify-start items-center gap-2.5 md:gap-[27px]">
+        <div class="text-center text-white text-[12.80px] font-normal font-['Barlow'] leading-5">Privacy Policy</div>
+        <div class="text-center text-white text-[12.80px] font-normal font-['Barlow'] leading-5">Terms of Use</div>
+        <div class="text-center text-white text-[12.80px] font-normal font-['Barlow'] leading-5">Contact</div>
+        <div class="text-center text-white text-[12.80px] font-normal font-['Barlow'] leading-5">British Swimming</div>
       </div>
-      <div class="self-stretch h-3.5 text-center justify-center text-white text-xs font-normal font-['DM_Sans'] leading-5">© 2026 Swim Racing. All rights reserved. UK-based platform aligned with British Swimming standards.</div>
+      <div class="self-stretch text-center text-white text-xs font-normal font-['DM_Sans'] leading-5">© 2026 Swim Racing. All rights reserved. UK-based platform aligned with British Swimming standards.</div>
     </div>
   </div>
 </template>
