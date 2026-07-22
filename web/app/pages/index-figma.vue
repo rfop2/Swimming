@@ -82,7 +82,7 @@
     </div>
     <div class="w-[1200px] p-[100px] bg-white flex flex-col justify-start items-center gap-10">
       <div class="text-center justify-center text-red-600 text-xs font-bold font-['DM_Sans'] uppercase leading-5 tracking-widest">About</div>
-      <div class="text-center justify-center text-black text-[32px] font-extrabold font-['Bricolage_Grotesque'] uppercase leading-8">The UK's most complete hub     for swimmers, parents and clubs.</div>
+      <div class="text-center justify-center text-black text-[32px] font-extrabold font-['Bricolage_Grotesque'] uppercase leading-8">The UK's most complete hub for swimmers, parents and clubs.</div>
       <div class="text-center justify-center text-black text-xl font-normal font-['DM_Sans'] leading-[26px]">Swim Racing is the new performance and meet hub for county and<br>regional swimmers. Designed to provide accurate statistics and<br>competition results, Swim Racing offers a more in-depth analysis of not<br>only your registered swimmer, but of their competitors too. Log videos,<br>results, and schedule meets — the most detailed and accurate platform<br>for clubs, parents and swimmers to track progress and improve results.</div>
     </div>
     <div class="w-[1200px] p-[100px] inline-flex justify-center items-center gap-[57px] bg-[url('/images/home/Block-D-Performance.png')]">
@@ -152,11 +152,11 @@
     <div class="w-[1200px] px-[50px] py-[100px] bg-white flex flex-col justify-start items-end gap-8">
       <div class="w-[1100px] h-[42px] text-center justify-center text-sky-950 text-[40px] font-extrabold font-['Bricolage_Grotesque'] uppercase leading-[42px]">Plans for Every Swimmer</div>
       <div class="w-[1100px] h-[42.31px] text-center justify-center text-sky-950 text-sm font-normal font-['DM_Sans'] leading-5">From tracking a single swimmer to managing a whole club squad — <br>pick the plan that fits.</div>
-      <div class="self-stretch h-[435px] inline-flex justify-center items-center gap-5">
+      <div class="self-stretch inline-flex justify-center items-stretch gap-5">
         <div class="w-[202px] bg-white rounded-sm outline outline-1 outline-offset-[-1px] outline-slate-200 flex flex-col">
-          <div class="px-[21px] pt-[37px] flex flex-col">
+          <div class="px-[21px] pt-[37px] flex-1 flex flex-col">
             <div class="text-sky-950 text-[15.20px] font-extrabold font-['DM_Sans'] uppercase leading-6 tracking-wide">Parent Tier</div>
-            <div class="mt-px text-slate-500 text-xs font-normal font-['DM_Sans'] leading-[17.40px]">Follow your swimmers <br>through the full season.</div>
+            <div class="mt-px min-h-[52.2px] text-slate-500 text-xs font-normal font-['DM_Sans'] leading-[17.40px]">Follow your swimmers <br>through the full season.</div>
             <div class="mt-[35px] text-sky-950 text-4xl font-black font-['DM_Sans'] leading-9">£6</div>
             <div class="text-slate-500 text-xs font-normal font-['DM_Sans'] leading-5">per month</div>
             <div class="w-[160.20px] h-px mt-px bg-slate-200"/>
@@ -187,21 +187,21 @@
               </div>
             </div>
           </div>
-          <div class="mx-[9px] mt-6 mb-[24px] px-[54px] py-[11px] rounded-sm outline outline-1 outline-offset-[-1px] outline-slate-200 flex justify-center items-center gap-2.5">
+          <div class="mx-[9px] mt-6 mb-[22px] px-[54px] py-[11px] rounded-sm outline outline-1 outline-offset-[-1px] outline-slate-200 flex justify-center items-center gap-2.5">
             <div class="text-center text-sky-950 text-sm font-extrabold font-['Bricolage_Grotesque'] uppercase tracking-wide">Subscribe</div>
           </div>
         </div>
-        <div class="w-[202px] bg-slate-900 rounded-sm outline outline-1 outline-offset-[-1px] outline-black relative">
+        <div class="w-[202px] bg-slate-900 rounded-sm outline outline-1 outline-offset-[-1px] outline-black relative flex flex-col">
           <div class="px-2.5 py-[5px] left-[48.50px] top-[-11px] absolute bg-red-600 rounded-xs inline-flex justify-center items-center gap-2.5">
             <div class="text-white text-[10.40px] font-extrabold font-['Bricolage_Grotesque'] uppercase leading-4 tracking-wide">Most popular</div>
           </div>
-          <div class="px-[21px] pt-[37px] flex flex-col">
+          <div class="px-[21px] pt-[37px] flex-1 flex flex-col">
             <div class="text-white text-[15.20px] font-extrabold font-['DM_Sans'] uppercase leading-6 tracking-wide">Trainer Tier</div>
-            <div class="mt-px text-white/60 text-xs font-normal font-['DM_Sans'] leading-[17.40px]">Tools for coaches managing<br>athletes across multiple events.</div>
+            <div class="mt-px min-h-[52.2px] text-white/60 text-xs font-normal font-['DM_Sans'] leading-[17.40px]">Tools for coaches managing<br>athletes across multiple events.</div>
             <div class="mt-[35px] text-white text-4xl font-black font-['DM_Sans'] leading-9">£12</div>
             <div class="text-white/40 text-xs font-normal font-['DM_Sans'] leading-5">per month</div>
             <div class="w-[160.20px] h-px mt-px bg-white/10"/>
-            <div class="w-[160.20px] min-h-[142.78px] mt-4 flex flex-col gap-[9.8px]">
+            <div class="w-[160.20px] mt-4 flex flex-col gap-[9.8px]">
               <div class="flex items-start gap-[5px]">
                 <CheckIcon class="h-3 w-4 mt-[1px] text-white/60" aria-hidden="true" />
                 <div class="text-white/60 text-[11px] font-normal font-['DM_Sans'] leading-[15px]">All Parent features</div>
@@ -223,19 +223,19 @@
                 <div class="text-white/60 text-[11px] font-normal font-['DM_Sans'] leading-[15px]">Up to 15 swimmers</div>
               </div>
             </div>
-            <div class="mx-[-12px] mt-6 mb-[22px] px-[54px] py-2.5 bg-white rounded-sm flex justify-center items-center gap-2.5">
-              <div class="text-center text-black text-sm font-extrabold font-['Bricolage_Grotesque'] uppercase tracking-wide">Subscribe</div>
-            </div>
+          </div>
+          <div class="mx-[9px] mt-6 mb-[22px] px-[54px] py-[11px] bg-white rounded-sm flex justify-center items-center gap-2.5">
+            <div class="text-center text-black text-sm font-extrabold font-['Bricolage_Grotesque'] uppercase tracking-wide">Subscribe</div>
           </div>
         </div>
         <div class="w-[202px] bg-white rounded-sm outline outline-1 outline-offset-[-1px] outline-slate-200 flex flex-col">
-          <div class="px-[21px] pt-[37px] flex flex-col">
+          <div class="px-[21px] pt-[37px] flex-1 flex flex-col">
             <div class="text-sky-950 text-[15.20px] font-extrabold font-['DM_Sans'] uppercase leading-6 tracking-wide">Club — Small</div>
-            <div class="mt-px text-slate-500 text-xs font-normal font-['DM_Sans'] leading-[17.40px]">Full club management for <br>smaller swim clubs.</div>
+            <div class="mt-px min-h-[52.2px] text-slate-500 text-xs font-normal font-['DM_Sans'] leading-[17.40px]">Full club management for <br>smaller swim clubs.</div>
             <div class="mt-[35px] text-sky-950 text-4xl font-black font-['DM_Sans'] leading-9">£25</div>
             <div class="text-slate-500 text-xs font-normal font-['DM_Sans'] leading-5">per month</div>
             <div class="w-[160.20px] h-px mt-px bg-slate-200"/>
-            <div class="w-[160.20px] min-h-[140.78px] mt-4 flex flex-col gap-[9.8px]">
+            <div class="w-[160.20px] mt-4 flex flex-col gap-[9.8px]">
               <div class="flex items-start gap-[5px]">
                 <CheckIcon class="h-3 w-4 mt-[1px] text-slate-500" aria-hidden="true" />
                 <div class="text-slate-500 text-[11px] font-normal font-['DM_Sans'] leading-[15px]">All Trainer features</div>
@@ -267,13 +267,13 @@
           </div>
         </div>
         <div class="w-[201px] bg-white rounded-sm outline outline-1 outline-offset-[-1px] outline-slate-200 flex flex-col">
-          <div class="px-[21px] pt-[37px] flex flex-col">
+          <div class="px-[21px] pt-[37px] flex-1 flex flex-col">
             <div class="text-sky-950 text-[15.20px] font-extrabold font-['DM_Sans'] uppercase leading-6 tracking-wide">Club — Large</div>
-            <div class="w-[141px] mt-px text-slate-500 text-xs font-normal font-['DM_Sans'] leading-[17.40px]">Unlimited scale for large clubs with big squads.</div>
+            <div class="w-[141px] mt-px min-h-[52.2px] text-slate-500 text-xs font-normal font-['DM_Sans'] leading-[17.40px]">Unlimited scale for large clubs with big squads.</div>
             <div class="mt-[35px] text-sky-950 text-4xl font-black font-['DM_Sans'] leading-9">£35</div>
             <div class="text-slate-500 text-xs font-normal font-['DM_Sans'] leading-5">per month</div>
             <div class="w-[159.19px] h-px mt-px bg-slate-200"/>
-            <div class="w-[159.19px] min-h-[140.78px] mt-4 flex flex-col gap-[8.8px]">
+            <div class="w-[159.19px] mt-4 flex flex-col gap-[8.8px]">
               <div class="flex items-start gap-[5px]">
                 <CheckIcon class="h-3 w-4 mt-[1px] text-slate-500" aria-hidden="true" />
                 <div class="text-slate-500 text-[11px] font-normal font-['DM_Sans'] leading-4">All Club (small) features</div>
