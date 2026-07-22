@@ -27,7 +27,7 @@
 </script>
 
 <template>
-  <div class="w-[1200px] bg-white inline-flex flex-col justify-start items-center overflow-hidden">
+  <div class="w-[1200px] mx-auto bg-white flex flex-col justify-start items-center overflow-hidden">
     <div class="w-[1200px] h-[798px] relative">
       <div class="w-[1202px] h-[798px] left-0 top-0 absolute">
         <img class="w-[1202px] h-[798px] left-0 top-0 absolute" src="/images/home/Block-A-Bg.jpg" >
