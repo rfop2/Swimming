@@ -97,7 +97,7 @@
       </div>
     </div>
     <div class="w-full md:w-[1200px] bg-white flex flex-col md:flex-row justify-start md:justify-between items-center">
-      <div class="order-2 md:order-1 w-full md:w-[600px] px-5 md:p-[100px] py-[50px] bg-cyan-600 flex flex-col justify-start items-start gap-5">
+      <div class="order-2 md:order-1 w-full md:w-1/2 px-5 md:p-[100px] py-[50px] bg-cyan-600 flex flex-col justify-start items-start gap-5">
         <div class="self-stretch h-3.5 justify-center text-white text-xs font-bold font-['DM_Sans'] uppercase leading-5 tracking-widest">Competition</div>
         <div class="self-stretch justify-center text-white text-[32px] font-extrabold font-['Bricolage_Grotesque'] uppercase leading-8">Every race. <br>Every level. <br>One platform.</div>
         <div class="self-stretch md:w-[379px] justify-center text-white text-xl font-normal font-['DM_Sans'] leading-[26px]">Track progress month by month with a full calendar overview, and compare against competitors. </div>
@@ -110,10 +110,10 @@
       </div>
     </div>
     <div class="w-full md:w-[1200px] flex flex-col md:flex-row justify-start md:justify-end items-center">
-      <div class="w-full md:w-[603px] h-auto md:h-[598px] p-5 md:p-0 bg-slate-900 flex flex-col justify-center items-end md:items-center gap-2.5">
+      <div class="w-full md:w-1/2 h-auto md:h-[598px] p-5 md:p-0 bg-slate-900 flex flex-col justify-center items-end md:items-center gap-2.5">
         <img class="w-full max-w-[350px] md:max-w-none md:w-[500px] h-[257px] md:h-[367px] rounded-sm object-cover shadow-[10px_-10px_26.4px_-10px_rgba(0,0,0,0.25)]" src="/images/home/Block_F_Img.png" >
       </div>
-      <div class="w-full md:w-[597px] px-5 md:p-[100px] py-[50px] bg-red-600 flex flex-col justify-center items-start gap-5">
+      <div class="w-full md:w-1/2 px-5 md:p-[100px] py-[50px] bg-red-600 flex flex-col justify-center items-start gap-5">
         <div class="w-[181px] justify-center text-white text-xs font-bold font-['DM_Sans'] uppercase leading-5 tracking-widest">Timing & Analysis</div>
         <div class="self-stretch justify-center text-white text-[32px] font-extrabold font-['Bricolage_Grotesque'] uppercase leading-8">From poolside to playback. <br>Every detail captured.</div>
         <div class="self-stretch justify-center text-white text-xl font-normal font-['DM_Sans'] leading-[26px]">Time your swimmer live with our built-in timer, adapted for mobile use. Upload videos of your swimmer and set markers throughout their race to accurately document their strategy and technique. Compare results between strokes and races.</div>
@@ -126,7 +126,7 @@
       <div class="order-1 md:order-2 w-full md:w-auto p-5 md:p-0 bg-slate-900 flex flex-col justify-center items-center gap-2.5">
         <img class="w-full max-w-[361px] md:max-w-none md:w-[500px] h-[262px] md:h-[362px] rounded-sm object-cover" src="/images/home/Block_G_Img.png" >
       </div>
-      <div class="order-2 md:order-1 w-full md:w-[600px] px-5 md:p-[100px] py-[50px] bg-cyan-600 rounded-sm flex flex-col justify-start items-start gap-5 md:gap-[30px]">
+      <div class="order-2 md:order-1 w-full md:w-1/2 px-5 md:p-[100px] py-[50px] bg-cyan-600 rounded-sm flex flex-col justify-start items-start gap-5 md:gap-[30px]">
         <div class="self-stretch h-3.5 justify-center text-white text-xs font-bold font-['DM_Sans'] uppercase leading-5 tracking-widest">Qualifications</div>
         <div class="self-stretch justify-center text-white text-[32px] font-extrabold font-['Bricolage_Grotesque'] uppercase leading-8">Every cut-off.<br>Every county.<br>In one place.</div>
         <div class="self-stretch md:w-[379px] justify-center text-white text-xl font-normal font-['DM_Sans'] leading-[26px]">Keep up to date with qualifying periods and cut-off dates for summer, winter and general competitions.</div>
