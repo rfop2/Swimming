@@ -61,12 +61,8 @@
         <div class="relative md:absolute md:left-[280px] md:top-[307px] md:w-[642px] flex flex-col justify-center items-center gap-10 md:gap-[54px]">
           <div class="w-[292px] md:w-auto md:self-stretch text-center text-white text-[32px] md:text-[64px] font-extrabold font-['Bricolage_Grotesque'] uppercase leading-8 md:leading-[56px] [text-shadow:_6px_4px_12px_rgb(0_0_0_/_0.25)]">Everything your swimmer needs.       All in one place.</div>
           <div class="flex flex-col md:flex-row justify-center items-center gap-[21px]">
-            <div class="p-5 bg-white rounded-sm flex justify-center items-center gap-2.5">
-              <div class="text-center text-cyan-600 text-[15px] font-extrabold font-['Bricolage_Grotesque'] uppercase leading-[10px] tracking-wider">Start Free Trial</div>
-            </div>
-            <div class="px-7 py-[18px] rounded-sm outline outline-2 outline-offset-[-2px] outline-white flex justify-center items-center gap-2.5">
-              <div class="text-center text-white text-[15px] font-extrabold font-['Bricolage_Grotesque'] uppercase leading-[10px] tracking-wider">View Plans</div>
-            </div>
+            <UI-ButtonTransparent>Start Free Trial</UI-ButtonTransparent>
+            <UI-ButtonTransparent>View Plans</UI-ButtonTransparent>
           </div>
         </div>
       </div>
@@ -91,9 +87,7 @@
         <div class="self-stretch h-3.5 justify-center text-white text-xs font-bold font-['DM_Sans'] uppercase leading-5 tracking-widest">Performance</div>
         <div class="self-stretch justify-center text-white text-[32px] font-extrabold font-['Bricolage_Grotesque'] uppercase leading-8">Your swimmer.       Every stroke.       Every stat. </div>
         <div class="self-stretch md:w-[364px] justify-center text-white text-xl font-normal font-['DM_Sans'] leading-[26px]">Statistics of your swimmer’s performance broken down. Log strokes, time and rank, and find out what’s needed to improve for the next meet. Track progress month by month with a full calendar overview, and compare against competitors. </div>
-        <div class="p-2.5 bg-red-600 rounded-sm flex justify-center items-center gap-2.5">
-          <div class="justify-center text-white text-sm font-extrabold font-['Bricolage_Grotesque'] uppercase leading-5 tracking-widest">See What Your Swimmer's Data Can Do</div>
-        </div>
+        <UI-ButtonSlate>See What Your Swimmer's Data Can Do</UI-ButtonSlate>
       </div>
     </div>
     <div class="w-full md:w-[1200px] bg-white flex flex-col md:flex-row justify-start md:justify-between items-center">
@@ -117,9 +111,7 @@
         <div class="w-[181px] justify-center text-white text-xs font-bold font-['DM_Sans'] uppercase leading-5 tracking-widest">Timing & Analysis</div>
         <div class="self-stretch justify-center text-white text-[32px] font-extrabold font-['Bricolage_Grotesque'] uppercase leading-8">From poolside to playback. <br>Every detail captured.</div>
         <div class="self-stretch justify-center text-white text-xl font-normal font-['DM_Sans'] leading-[26px]">Time your swimmer live with our built-in timer, adapted for mobile use. Upload videos of your swimmer and set markers throughout their race to accurately document their strategy and technique. Compare results between strokes and races.</div>
-        <div class="p-2.5 bg-sky-950 rounded-sm flex justify-center items-center gap-2.5">
-          <div class="justify-center text-white text-sm font-extrabold font-['Bricolage_Grotesque'] uppercase leading-5 tracking-widest">Start Timing Your Swimmer</div>
-        </div>
+        <UI-ButtonSky>Start Timing Your Swimmer</UI-ButtonSky>
       </div>
     </div>
     <div class="w-full md:w-[1200px] bg-slate-900 flex flex-col md:flex-row justify-start items-center gap-0 md:gap-[55px]">
@@ -130,9 +122,7 @@
         <div class="self-stretch h-3.5 justify-center text-white text-xs font-bold font-['DM_Sans'] uppercase leading-5 tracking-widest">Qualifications</div>
         <div class="self-stretch justify-center text-white text-[32px] font-extrabold font-['Bricolage_Grotesque'] uppercase leading-8">Every cut-off.<br>Every county.<br>In one place.</div>
         <div class="self-stretch md:w-[379px] justify-center text-white text-xl font-normal font-['DM_Sans'] leading-[26px]">Keep up to date with qualifying periods and cut-off dates for summer, winter and general competitions.</div>
-        <div class="p-2.5 bg-sky-950 rounded-sm flex justify-center items-center gap-2.5">
-          <div class="justify-center text-white text-sm font-extrabold font-['Bricolage_Grotesque'] uppercase leading-5 tracking-widest">Find Your Swimmer's Ranking</div>
-        </div>
+        <UI-ButtonSky>Find Your Swimmer's Ranking</UI-ButtonSky>
       </div>
     </div>
     <img class="w-full hidden md:block h-[333px] object-cover" src="/images/home/pool-lanes.png" >
@@ -186,9 +176,7 @@
               </div>
             </div>
           </div>
-          <div class="mt-2.5 md:mt-6 md:mx-[9px] md:mb-[22px] px-[54px] py-[11px] rounded-sm outline outline-1 outline-offset-[-1px] outline-slate-200 flex justify-center items-center gap-2.5">
-            <div class="text-center text-sky-950 text-sm font-extrabold font-['Bricolage_Grotesque'] uppercase tracking-wide">Subscribe</div>
-          </div>
+          <UI-ButtonSolid class="mt-2.5 md:mt-6 md:mx-[9px] md:mb-[22px]">Subscribe</UI-ButtonSolid>
         </div>
         <div class="w-full md:w-[202px] p-5 md:p-0 bg-slate-900 rounded-sm outline outline-1 outline-offset-[-1px] outline-black relative flex flex-col">
           <div class="px-2.5 py-[5px] left-1/2 -translate-x-1/2 top-[-11px] absolute bg-red-600 rounded-xs flex justify-center items-center gap-2.5 whitespace-nowrap">
@@ -223,9 +211,7 @@
               </div>
             </div>
           </div>
-          <div class="mt-2.5 md:mt-6 md:mx-[9px] md:mb-[22px] px-[54px] py-[11px] bg-white rounded-sm flex justify-center items-center gap-2.5">
-            <div class="text-center text-black text-sm font-extrabold font-['Bricolage_Grotesque'] uppercase tracking-wide">Subscribe</div>
-          </div>
+          <UI-ButtonSolid class="mt-2.5 md:mt-6 md:mx-[9px] md:mb-[22px]">Subscribe</UI-ButtonSolid>
         </div>
         <div class="w-full md:w-[202px] p-5 md:p-0 bg-white rounded-sm outline outline-1 outline-offset-[-1px] outline-slate-200 flex flex-col">
           <div class="md:px-[21px] md:pt-[37px] flex-1 flex flex-col">
@@ -261,9 +247,7 @@
               </div>
             </div>
           </div>
-          <div class="mt-2.5 md:mt-6 md:mx-[9px] md:mb-[22px] px-[54px] py-[11px] rounded-sm outline outline-1 outline-offset-[-1px] outline-slate-200 flex justify-center items-center gap-2.5">
-            <div class="text-center text-sky-950 text-sm font-extrabold font-['Bricolage_Grotesque'] uppercase tracking-wide">Subscribe</div>
-          </div>
+          <UI-ButtonSolid class="mt-2.5 md:mt-6 md:mx-[9px] md:mb-[22px]">Subscribe</UI-ButtonSolid>
         </div>
         <div class="w-full md:w-[201px] p-5 md:p-0 bg-white rounded-sm outline outline-1 outline-offset-[-1px] outline-slate-200 flex flex-col">
           <div class="md:px-[21px] md:pt-[37px] flex-1 flex flex-col">
@@ -287,9 +271,7 @@
               </div>
             </div>
           </div>
-          <div class="mt-2.5 md:mt-6 md:mx-[9px] md:mb-[22px] px-[54px] py-[11px] rounded-sm outline outline-1 outline-offset-[-1px] outline-slate-200 flex justify-center items-center gap-2.5">
-            <div class="text-center text-sky-950 text-sm font-extrabold font-['Bricolage_Grotesque'] uppercase tracking-wide">Subscribe</div>
-          </div>
+          <UI-ButtonSolid class="mt-2.5 md:mt-6 md:mx-[9px] md:mb-[22px]">Subscribe</UI-ButtonSolid>
         </div>
       </div>
     </div>
