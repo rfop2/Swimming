@@ -788,6 +788,7 @@ interface MeetsResultsOptions {
   county?: string[]
   club?: string[]
   force?: boolean
+  lookback?: string
 }
 
 const getMeetSwimmers = async ( meetResults: MeetResults, year: string, options: MeetsResultsOptions ) => {
@@ -846,10 +847,13 @@ const getMeetSwimmers = async ( meetResults: MeetResults, year: string, options:
   return meetSwimmers
 }
 
+const DEFAULT_RESULTS_LOOKBACK_DAYS = 7
+
 const updateMeetsResults = async ( options: MeetsResultsOptions ) => {
   console.log( "Updating meets results" )
 
   const MAX_MEETS_RESULTS = 100
+  const lookbackDays = Number( options.lookback ?? DEFAULT_RESULTS_LOOKBACK_DAYS )
 
   const pool = await getPool()
   const selectLastResultsUpdate = prepareStatement<Record<string, never>,{value: string}>( pool, "SELECT value FROM System WHERE name = 'lastResultsUpdate'" )
@@ -873,7 +877,9 @@ const updateMeetsResults = async ( options: MeetsResultsOptions ) => {
     // console.log( inspect( pageData, { depth: 5 } ) )
     const $ = cheerio.load( content )
 
-    const firstMeetDate = lastResultsUpdate ? parse( lastResultsUpdate.value, "yyyy-MM-dd", new Date() ) : sub( now, { months: 1 } )
+    const firstMeetDate = lastResultsUpdate
+      ? sub( parse( lastResultsUpdate.value, "yyyy-MM-dd", new Date() ), { days: lookbackDays } )
+      : sub( now, { months: 1 } )
     const meetsResultsData = parseMeetsResults( page, $, firstMeetDate )
 
     // console.log( meetsData )
@@ -999,6 +1005,7 @@ const updateMeetsResults = async ( options: MeetsResultsOptions ) => {
     .option( "-r, --region <region>", "only fetch results for the specified region" )
     .option( "-c, --county <county...>", "only fetch results for the specified counties" )
     .option( "-C, --club <club...>", "only fetch results for the specified clubs" )
+    .option( "-l, --lookback <days>", "days to look back before the last update, to catch meets added to the results site late", String( DEFAULT_RESULTS_LOOKBACK_DAYS ) )
     .addOption( new Option( "-m, --mode <mode>", "fetching strategy versus caching" ).choices( [ "force", "lazy" ] ).default( "lazy" ) )
     .action( async ( options: MeetsResultsOptions ) => {
       try {
