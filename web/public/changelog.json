@@ -1,14 +1,48 @@
 [
   {
-    "isoDate": "2026-07-21",
-    "niceDate": "21 July 2026",
-    "diff": "15.8.0..",
-    "href": "https://bitbucket.org/swimracing/swimming/compare/15.9.0..15.8.0",
+    "isoDate": "2026-07-27",
+    "niceDate": "27 July 2026",
+    "diff": "15.9.0..",
+    "href": "https://bitbucket.org/swimracing/swimming/compare/15.9.1..15.9.0",
     "major": false,
     "minor": false,
     "tag": null,
+    "title": "15.9.1",
+    "date": "2026-07-27T11:12:01.062Z",
+    "summary": null,
+    "commits": [
+      {
+        "hash": "7f0031ce6cc2cb607f4216c277d7e6043447fc01",
+        "shorthash": "7f0031c",
+        "author": "Philip Coombes",
+        "email": "phil@web2wire.com",
+        "date": "2026-07-27T10:54:50.000Z",
+        "niceDate": "27 July 2026",
+        "subject": "Look back a week (by default) when fetching meet results.",
+        "message": "Look back a week (by default) when fetching meet results.",
+        "fixes": null,
+        "href": "https://bitbucket.org/swimracing/swimming/commits/7f0031ce6cc2cb607f4216c277d7e6043447fc01",
+        "breaking": false,
+        "files": 1,
+        "insertions": 8,
+        "deletions": 1,
+        "merge": null
+      }
+    ],
+    "merges": [],
+    "fixes": []
+  },
+  {
+    "isoDate": "2026-07-21",
+    "niceDate": "21 July 2026",
+    "diff": "15.8.0..15.9.0",
+    "href": "https://bitbucket.org/swimracing/swimming/compare/15.9.0..15.8.0",
+    "major": false,
+    "minor": true,
+    "tag": "15.9.0",
+    "date": "2026-07-21",
     "title": "15.9.0",
-    "date": "2026-07-21T07:45:42.414Z",
+    "version": "15.9.0",
     "summary": null,
     "commits": [
       {
