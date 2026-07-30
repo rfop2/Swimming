@@ -1,0 +1,30 @@
+<script setup lang="ts">
+  definePageMeta( {
+    layout: "figma-page",
+  } )
+
+  const config = useRuntimeConfig()
+
+  useHead( {
+    title: `Qualifications — ${ config.public.siteName }`,
+  } )
+</script>
+
+<template>
+  <div class="w-full md:w-[560px] px-5 md:px-0 py-[50px] md:py-[100px] flex flex-col justify-start items-start gap-8">
+    <div class="flex flex-col justify-start items-start gap-8">
+      <UI-BackLink />
+      <div class="text-slate-900 text-[32px] md:text-[64px] font-extrabold font-['Bricolage_Grotesque'] uppercase leading-8 md:leading-[56px]">Qualifications</div>
+      <img class="w-full md:w-[560px] h-[190px] rounded-sm object-cover" src="https://placehold.co/560x190" >
+      <div class="text-slate-900 text-2xl md:text-[32px] font-extrabold font-['Bricolage_Grotesque'] leading-8">Find every cut-off and every county <br>in one place.</div>
+      <div class="text-black text-xl font-normal font-['DM_Sans'] leading-[26px]">Keep up to date with qualifying periods and cut-off dates for summer, winter and general competitions.</div>
+    </div>
+    <div class="flex flex-col justify-start items-start gap-8">
+      <img class="w-full md:w-[560px] h-[406px] rounded-sm object-cover" src="https://placehold.co/560x406" >
+      <div>
+        <span class="text-black text-xl font-normal font-['DM_Sans'] leading-[26px]">Qualifying standards in British Swimming aren’t simple. They vary by age, by event, by county, by region, and by competition period – and they change. For parents and swimmers trying to understand what’s within reach, and for coaches planning a season around specific targets, keeping track of it all manually is a significant undertaking.<br><br>Swim Racing does it automatically.<br><br></span><span class="text-black text-xl font-bold font-['DM_Sans'] leading-[26px]">Standards, tracked across every level<br></span><span class="text-black text-xl font-normal font-['DM_Sans'] leading-[26px]"><br></span><span class="text-black text-xl font-normal font-['DM_Sans'] leading-[26px]">British Swimming qualifying standards are built into the platform alongside county and regional standards – so wherever your swimmer competes, and whatever they’re aiming for, the relevant cut-offs are always visible and always current. Summer, winter and general competition periods are all covered, with open and closed qualifying periods clearly indicated so you’re always focused on what’s still achievable.</span>
+      </div>
+      <CTAButtonPair />
+    </div>
+  </div>
+</template>
