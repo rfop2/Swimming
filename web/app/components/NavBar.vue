@@ -113,19 +113,19 @@
       { name: "Results", href: "/results", condition: () => canAccess( "results" ) },
       { name: "Compare", href: "/compare", condition: () => canAccess( "compare" ) },
     ] },
-    { name: "Training", children: [
-      { name: "Times", href: "/training/times", condition: () => canAccess( "trainingTimes" ) },
-      // { name: "Training", href: "/training/targets" },
-      { name: "Speedcharts", href: "/training/speedchart", condition: () => canAccess( "speedcharts" ) },
-    ] },
+    // { name: "Training", children: [
+    // { name: "Training", href: "/training/targets" },
+    // { name: "Speedcharts", href: "/training/speedchart", condition: () => canAccess( "speedcharts" ) },
+    // ] },
     { name: "Competition", children: [
       { name: "Meets", href: "/competition/meets" },
+      { name: "Race Times", href: "/competition/times", condition: () => canAccess( "trainingTimes" ) },
       { name: "Race Results", href: "/competition/races" },
     ] },
-    { name: "Timing", children: [
-      { name: "Timer", href: "/competition/timer" },
-      { name: "Video Library", href: "/competition/video-timer/videos" },
-      { name: "Video Timer", href: "/competition/video-timer" },
+    { name: "Video", children: [
+      // { name: "Timer", href: "/competition/timer" },
+      { name: "Library", href: "/competition/video-timer/videos" },
+      { name: "Timer", href: "/competition/video-timer" },
       { name: "Sessions", href: "/competition/video-timer/sessions" },
       { name: "Progress", href: "/competition/video-timer/progress" },
       { name: "Compare", href: "/competition/video-timer/compare" },
