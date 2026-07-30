@@ -141,8 +141,8 @@
         <div class="relative md:absolute md:left-[280px] md:top-[307px] md:w-[642px] flex flex-col justify-center items-center gap-10 md:gap-[54px]">
           <div class="w-[292px] md:w-auto md:self-stretch text-center text-white text-[32px] md:text-[64px] font-extrabold font-['Bricolage_Grotesque'] uppercase leading-8 md:leading-[56px] [text-shadow:_6px_4px_12px_rgb(0_0_0_/_0.25)]">Everything your swimmer needs.       All in one place.</div>
           <div class="flex flex-col md:flex-row justify-center items-center gap-[21px]">
-            <UI-ButtonTransparent>Start Free Trial</UI-ButtonTransparent>
-            <UI-ButtonTransparent>View Plans</UI-ButtonTransparent>
+            <UI-ButtonTransparent to="/register">Start Free Trial</UI-ButtonTransparent>
+            <UI-ButtonTransparent to="/pricing">View Plans</UI-ButtonTransparent>
           </div>
         </div>
       </div>
@@ -212,9 +212,9 @@
       <div class="w-full max-w-[456px] h-[42px] px-5 bg-white/10 rounded-sm outline outline-1 outline-offset-[-1px] outline-white/30 overflow-hidden flex items-center">
         <div class="text-white/50 text-sm font-normal font-['DM_Sans']">Enter your email address</div>
       </div>
-      <div class="w-full max-w-[456px] h-[43px] bg-white rounded-sm flex items-center justify-center">
+      <nuxt-link to="/register" class="w-full max-w-[456px] h-[43px] bg-white rounded-sm flex items-center justify-center">
         <div class="text-center text-cyan-600 text-[15.20px] font-extrabold font-['Bricolage_Grotesque'] uppercase tracking-wider">Start Free Trial</div>
-      </div>
+      </nuxt-link>
     </div>
     <div class="w-full md:w-[1200px] px-5 md:px-[50px] py-[50px] md:py-[100px] bg-white flex flex-col justify-start items-center gap-5 md:gap-8">
       <div class="max-w-[342px] md:max-w-none md:w-[1100px] text-center text-sky-950 text-[32px] md:text-[40px] font-extrabold font-['Bricolage_Grotesque'] uppercase leading-8 md:leading-[42px]">Plans for Every Swimmer</div>
@@ -254,7 +254,7 @@
               </div>
             </div>
           </div>
-          <UI-ButtonSolid class="mt-2.5 md:mt-6 md:mx-[9px] md:mb-[22px]">Subscribe</UI-ButtonSolid>
+          <UI-ButtonSolid to="/register?plan=parent" class="mt-2.5 md:mt-6 md:mx-[9px] md:mb-[22px]">Subscribe</UI-ButtonSolid>
         </div>
         <div class="w-full md:w-[202px] p-5 md:p-0 bg-slate-900 rounded-sm outline outline-1 outline-offset-[-1px] outline-black relative flex flex-col">
           <div class="px-2.5 py-[5px] left-1/2 -translate-x-1/2 top-[-11px] absolute bg-red-600 rounded-xs flex justify-center items-center gap-2.5 whitespace-nowrap">
@@ -289,7 +289,7 @@
               </div>
             </div>
           </div>
-          <UI-ButtonSolid class="mt-2.5 md:mt-6 md:mx-[9px] md:mb-[22px]">Subscribe</UI-ButtonSolid>
+          <UI-ButtonSolid to="/register?plan=trainer" class="mt-2.5 md:mt-6 md:mx-[9px] md:mb-[22px]">Subscribe</UI-ButtonSolid>
         </div>
         <div class="w-full md:w-[202px] p-5 md:p-0 bg-white rounded-sm outline outline-1 outline-offset-[-1px] outline-slate-200 flex flex-col">
           <div class="md:px-[21px] md:pt-[37px] flex-1 flex flex-col">
@@ -325,7 +325,7 @@
               </div>
             </div>
           </div>
-          <UI-ButtonSolid class="mt-2.5 md:mt-6 md:mx-[9px] md:mb-[22px]">Subscribe</UI-ButtonSolid>
+          <UI-ButtonSolid to="/register?plan=club-small" class="mt-2.5 md:mt-6 md:mx-[9px] md:mb-[22px]">Subscribe</UI-ButtonSolid>
         </div>
         <div class="w-full md:w-[201px] p-5 md:p-0 bg-white rounded-sm outline outline-1 outline-offset-[-1px] outline-slate-200 flex flex-col">
           <div class="md:px-[21px] md:pt-[37px] flex-1 flex flex-col">
@@ -349,7 +349,7 @@
               </div>
             </div>
           </div>
-          <UI-ButtonSolid class="mt-2.5 md:mt-6 md:mx-[9px] md:mb-[22px]">Subscribe</UI-ButtonSolid>
+          <UI-ButtonSolid to="/register?plan=club-large" class="mt-2.5 md:mt-6 md:mx-[9px] md:mb-[22px]">Subscribe</UI-ButtonSolid>
         </div>
       </div>
     </div>
