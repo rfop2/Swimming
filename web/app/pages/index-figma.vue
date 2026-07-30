@@ -167,7 +167,7 @@
         <div class="self-stretch h-3.5 justify-center text-white text-xs font-bold font-['DM_Sans'] uppercase leading-5 tracking-widest">Performance</div>
         <div class="self-stretch justify-center text-white text-[32px] font-extrabold font-['Bricolage_Grotesque'] uppercase leading-8">Your swimmer.       Every stroke.       Every stat. </div>
         <div class="self-stretch md:w-[364px] justify-center text-white text-xl font-normal font-['DM_Sans'] leading-[26px]">Statistics of your swimmer’s performance broken down. Log strokes, time and rank, and find out what’s needed to improve for the next meet. Track progress month by month with a full calendar overview, and compare against competitors. </div>
-        <UI-ButtonSlate>See What Your Swimmer's Data Can Do</UI-ButtonSlate>
+        <UI-ButtonSlate to="/performance-figma">See What Your Swimmer's Data Can Do</UI-ButtonSlate>
       </div>
     </div>
     <div id="competition" class="w-full md:w-[1200px] bg-white flex flex-col md:flex-row justify-start md:justify-between items-center">
@@ -175,7 +175,7 @@
         <div class="self-stretch h-3.5 justify-center text-white text-xs font-bold font-['DM_Sans'] uppercase leading-5 tracking-widest">Competition</div>
         <div class="self-stretch justify-center text-white text-[32px] font-extrabold font-['Bricolage_Grotesque'] uppercase leading-8">Every race. <br>Every level. <br>One platform.</div>
         <div class="self-stretch md:w-[379px] justify-center text-white text-xl font-normal font-['DM_Sans'] leading-[26px]">Track progress month by month with a full calendar overview, and compare against competitors. </div>
-        <UI-ButtonSlate class="px-5 py-2.5">Explore Competitions</UI-ButtonSlate>
+        <UI-ButtonSlate to="/competition-figma" class="px-5 py-2.5">Explore Competitions</UI-ButtonSlate>
       </div>
       <div class="order-1 md:order-2 w-full md:w-[600px] h-auto md:h-[488px] p-5 md:p-0 bg-slate-900 flex flex-col justify-center items-center gap-2.5">
         <img class="w-full max-w-[350px] md:max-w-none md:w-[500px] h-[163px] md:h-[227px] rounded-sm object-cover" src="/images/home/Block_E_Img.png" >
@@ -189,7 +189,7 @@
         <div class="w-[181px] justify-center text-white text-xs font-bold font-['DM_Sans'] uppercase leading-5 tracking-widest">Timing & Analysis</div>
         <div class="self-stretch justify-center text-white text-[32px] font-extrabold font-['Bricolage_Grotesque'] uppercase leading-8">From poolside to playback. <br>Every detail captured.</div>
         <div class="self-stretch justify-center text-white text-xl font-normal font-['DM_Sans'] leading-[26px]">Time your swimmer live with our built-in timer, adapted for mobile use. Upload videos of your swimmer and set markers throughout their race to accurately document their strategy and technique. Compare results between strokes and races.</div>
-        <UI-ButtonSky>Start Timing Your Swimmer</UI-ButtonSky>
+        <UI-ButtonSky to="/timing-figma">Start Timing Your Swimmer</UI-ButtonSky>
       </div>
     </div>
     <div id="qualifications" class="w-full md:w-[1200px] bg-slate-900 flex flex-col md:flex-row justify-start items-center gap-0 md:gap-[55px]">
@@ -200,7 +200,7 @@
         <div class="self-stretch h-3.5 justify-center text-white text-xs font-bold font-['DM_Sans'] uppercase leading-5 tracking-widest">Qualifications</div>
         <div class="self-stretch justify-center text-white text-[32px] font-extrabold font-['Bricolage_Grotesque'] uppercase leading-8">Every cut-off.<br>Every county.<br>In one place.</div>
         <div class="self-stretch md:w-[379px] justify-center text-white text-xl font-normal font-['DM_Sans'] leading-[26px]">Keep up to date with qualifying periods and cut-off dates for summer, winter and general competitions.</div>
-        <UI-ButtonSky>Find Your Swimmer's Ranking</UI-ButtonSky>
+        <UI-ButtonSky to="/qualifications-figma">Find Your Swimmer's Ranking</UI-ButtonSky>
       </div>
     </div>
     <img class="w-full hidden md:block h-[333px] object-cover" src="/images/home/pool-lanes.png" >
