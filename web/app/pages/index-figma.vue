@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { CheckIcon } from "@heroicons/vue/20/solid"
+  import { CheckIcon, ChevronUpIcon } from "@heroicons/vue/20/solid"
 
   definePageMeta( {
     layout: "landing",
@@ -14,6 +14,10 @@
     { name: "Timing & Analysis", href: "#timing" },
     { name: "Performance", href: "#performance" },
   ]
+
+  const scrollToTop = () => {
+    window.scrollTo( { top: 0, behavior: "smooth" } )
+  }
 
   const config = useRuntimeConfig()
 
@@ -370,5 +374,14 @@
       </div>
       <div class="self-stretch text-center text-white text-xs font-normal font-['DM_Sans'] leading-5">© 2026 Swim Racing. All rights reserved. UK-based platform aligned with British Swimming standards.</div>
     </div>
+
+    <button
+      type="button"
+      class="fixed bottom-6 right-6 z-40 flex items-center justify-center w-12 h-12 rounded-full bg-slate-900/40 backdrop-blur-sm hover:bg-slate-900/60 transition-colors"
+      aria-label="Back to top"
+      @click="scrollToTop"
+    >
+      <ChevronUpIcon class="h-6 w-6 text-white" aria-hidden="true" />
+    </button>
   </div>
 </template>
