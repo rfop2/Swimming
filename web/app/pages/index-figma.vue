@@ -5,6 +5,16 @@
     layout: "landing",
   } )
 
+  const menuOpen = ref( false )
+
+  const menuLinks = [
+    { name: "About", href: "#about" },
+    { name: "Qualifications", href: "#qualifications" },
+    { name: "Competition", href: "#competition" },
+    { name: "Timing & Analysis", href: "#timing" },
+    { name: "Performance", href: "#performance" },
+  ]
+
   const config = useRuntimeConfig()
 
   useHead( {
@@ -34,30 +44,92 @@
         <img class="absolute inset-0 w-full h-full object-cover" src="/images/home/Block-A-Bg-Mobile.png" >
       </picture>
       <div class="w-full h-full px-5 md:px-0 flex flex-col justify-between md:block items-center">
-        <div class="relative md:absolute md:left-0 md:top-0 w-full md:px-[50px] py-5 flex justify-between items-center">
-          <div class="w-[80.42px] h-[34px] relative overflow-hidden">
-            <svg xmlns="http://www.w3.org/2000/svg" width="81" height="34" viewBox="0 0 81 34" fill="none">
-              <g clip-path="url(#clip0_23_104)">
-                <path d="M14.8321 6.93506C14.7358 7.12768 14.6395 7.12768 14.2542 7.3203C13.0985 7.89817 9.53495 9.43915 9.43864 10.306C9.05339 12.3285 11.9427 10.5949 12.1354 10.4986C13.0985 10.017 14.1579 9.34284 15.2173 9.05391C14.8321 9.63178 12.039 11.2691 10.9796 12.0396C10.4018 12.5211 10.4018 13.0027 10.8833 13.6769C11.6538 13.7732 12.039 13.4842 12.5206 13.1953C13.1948 12.8101 16.2767 10.8838 16.662 10.7875L14.8321 12.3285C14.4468 12.6174 13.0985 13.5805 13.58 14.351C13.6763 14.5437 13.58 14.5437 13.9653 14.64C15.121 14.8326 16.8546 12.9064 18.0104 11.9433C18.4919 11.6543 19.3587 10.6912 19.9366 10.5949C20.1292 11.2691 18.8772 12.9064 18.9735 13.8695C18.9735 14.5437 19.6476 14.7363 20.3218 14.5437C21.2849 14.2547 22.537 11.8469 23.2112 10.7875C23.5001 10.4023 23.789 9.92071 24.078 9.53547C24.3669 9.15022 24.8485 8.47604 24.9448 8.0908C26.871 8.0908 36.9837 7.12768 37.9468 7.41662L43.7255 11.8469C44.1107 12.1359 45.4591 13.1953 45.8443 13.2916L43.6292 14.4473C42.8587 14.9289 42.1845 15.2178 41.5103 15.6994L37.2726 18.2035C42.6661 20.0334 47.7706 21.767 53.4529 23.1154C55.1865 23.5006 57.498 24.0785 59.3279 24.2711C60.0021 23.7896 61.0615 21.767 61.4468 20.6113C62.5062 17.433 62.5062 14.1584 60.6763 11.2691C59.2316 8.9576 56.0534 7.80186 53.4529 7.03137C49.3116 5.68301 47.1927 2.88998 42.3771 0.578508C37.9468 -1.44403 27.4489 2.11949 22.7296 3.0826C19.2624 3.75678 16.5657 4.14203 13.4837 5.39408C12.8095 5.68301 10.8833 6.35719 10.4981 6.74244C10.3054 6.93506 10.1128 7.41662 10.3054 7.80186C10.8833 8.57235 13.0985 7.22399 14.8321 6.93506Z" fill="white"/>
-                <path d="M0 31.4945C0.963114 31.2055 2.40778 30.435 4.43032 29.8572C13.4836 27.0641 22.0553 27.642 31.2049 29.3756C41.125 31.3018 52.2008 34.9617 62.6987 33.8059C68.4774 33.1318 75.2192 30.9166 79.6495 27.2568C79.8421 27.1605 79.7458 27.2568 79.9384 27.0641L80.0348 26.9678C80.0348 26.8715 80.0348 26.8715 80.1311 26.8715C79.3606 27.0641 77.627 28.0273 75.7007 28.6051C74.0635 29.183 72.5225 29.5682 70.8852 29.9535C67.0327 30.724 63.3729 30.8203 59.4241 30.6277C45.0737 29.8572 32.6496 21.9596 17.2397 23.9822C13.9652 24.4637 10.209 25.4268 7.6086 26.6789C5.48975 27.7383 2.69672 29.2793 0.866802 30.724L0 31.4945Z" fill="white"/>
-                <path d="M72.0409 7.51293C67.6105 8.28344 65.01 12.136 64.1432 16.8554C63.9506 18.0111 63.758 19.1669 63.469 20.419C63.1801 21.671 62.8911 22.9231 63.8543 23.7899C65.299 24.8494 69.4405 24.4641 71.2704 24.0789C73.7746 23.501 75.5082 22.4415 77.0492 21.2858C77.2419 20.9968 77.3382 20.9005 77.5308 20.7079C78.8792 19.4558 79.8423 17.8185 80.2276 15.8922C81.287 10.7876 77.1455 6.54979 72.0409 7.51293Z" fill="white"/>
-                <path d="M0.962891 22.8264C13.0018 18.3961 23.9813 20.0334 36.2129 23.0191C45.4587 25.3305 56.8235 29.183 66.6473 27.8346C67.803 27.7383 70.1145 27.3531 70.885 26.8715C66.262 26.9678 65.9731 27.1604 60.9649 26.4863C43.2436 23.8859 26.0039 12.1359 7.89731 18.8777C6.54895 19.4555 1.63707 21.767 0.962891 22.8264Z" fill="white"/>
-              </g>
-              <defs>
-                <clipPath id="clip0_23_104">
-                  <rect width="80.42" height="33.9992" fill="white"/>
-                </clipPath>
-              </defs>
-            </svg>
+        <div class="relative md:absolute md:left-0 md:top-0 w-full">
+          <div class="w-full md:px-[50px] py-5 flex justify-between items-center">
+            <div class="w-[80.42px] h-[34px] relative overflow-hidden">
+              <svg xmlns="http://www.w3.org/2000/svg" width="81" height="34" viewBox="0 0 81 34" fill="none">
+                <g clip-path="url(#clip0_23_104)">
+                  <path d="M14.8321 6.93506C14.7358 7.12768 14.6395 7.12768 14.2542 7.3203C13.0985 7.89817 9.53495 9.43915 9.43864 10.306C9.05339 12.3285 11.9427 10.5949 12.1354 10.4986C13.0985 10.017 14.1579 9.34284 15.2173 9.05391C14.8321 9.63178 12.039 11.2691 10.9796 12.0396C10.4018 12.5211 10.4018 13.0027 10.8833 13.6769C11.6538 13.7732 12.039 13.4842 12.5206 13.1953C13.1948 12.8101 16.2767 10.8838 16.662 10.7875L14.8321 12.3285C14.4468 12.6174 13.0985 13.5805 13.58 14.351C13.6763 14.5437 13.58 14.5437 13.9653 14.64C15.121 14.8326 16.8546 12.9064 18.0104 11.9433C18.4919 11.6543 19.3587 10.6912 19.9366 10.5949C20.1292 11.2691 18.8772 12.9064 18.9735 13.8695C18.9735 14.5437 19.6476 14.7363 20.3218 14.5437C21.2849 14.2547 22.537 11.8469 23.2112 10.7875C23.5001 10.4023 23.789 9.92071 24.078 9.53547C24.3669 9.15022 24.8485 8.47604 24.9448 8.0908C26.871 8.0908 36.9837 7.12768 37.9468 7.41662L43.7255 11.8469C44.1107 12.1359 45.4591 13.1953 45.8443 13.2916L43.6292 14.4473C42.8587 14.9289 42.1845 15.2178 41.5103 15.6994L37.2726 18.2035C42.6661 20.0334 47.7706 21.767 53.4529 23.1154C55.1865 23.5006 57.498 24.0785 59.3279 24.2711C60.0021 23.7896 61.0615 21.767 61.4468 20.6113C62.5062 17.433 62.5062 14.1584 60.6763 11.2691C59.2316 8.9576 56.0534 7.80186 53.4529 7.03137C49.3116 5.68301 47.1927 2.88998 42.3771 0.578508C37.9468 -1.44403 27.4489 2.11949 22.7296 3.0826C19.2624 3.75678 16.5657 4.14203 13.4837 5.39408C12.8095 5.68301 10.8833 6.35719 10.4981 6.74244C10.3054 6.93506 10.1128 7.41662 10.3054 7.80186C10.8833 8.57235 13.0985 7.22399 14.8321 6.93506Z" fill="white"/>
+                  <path d="M0 31.4945C0.963114 31.2055 2.40778 30.435 4.43032 29.8572C13.4836 27.0641 22.0553 27.642 31.2049 29.3756C41.125 31.3018 52.2008 34.9617 62.6987 33.8059C68.4774 33.1318 75.2192 30.9166 79.6495 27.2568C79.8421 27.1605 79.7458 27.2568 79.9384 27.0641L80.0348 26.9678C80.0348 26.8715 80.0348 26.8715 80.1311 26.8715C79.3606 27.0641 77.627 28.0273 75.7007 28.6051C74.0635 29.183 72.5225 29.5682 70.8852 29.9535C67.0327 30.724 63.3729 30.8203 59.4241 30.6277C45.0737 29.8572 32.6496 21.9596 17.2397 23.9822C13.9652 24.4637 10.209 25.4268 7.6086 26.6789C5.48975 27.7383 2.69672 29.2793 0.866802 30.724L0 31.4945Z" fill="white"/>
+                  <path d="M72.0409 7.51293C67.6105 8.28344 65.01 12.136 64.1432 16.8554C63.9506 18.0111 63.758 19.1669 63.469 20.419C63.1801 21.671 62.8911 22.9231 63.8543 23.7899C65.299 24.8494 69.4405 24.4641 71.2704 24.0789C73.7746 23.501 75.5082 22.4415 77.0492 21.2858C77.2419 20.9968 77.3382 20.9005 77.5308 20.7079C78.8792 19.4558 79.8423 17.8185 80.2276 15.8922C81.287 10.7876 77.1455 6.54979 72.0409 7.51293Z" fill="white"/>
+                  <path d="M0.962891 22.8264C13.0018 18.3961 23.9813 20.0334 36.2129 23.0191C45.4587 25.3305 56.8235 29.183 66.6473 27.8346C67.803 27.7383 70.1145 27.3531 70.885 26.8715C66.262 26.9678 65.9731 27.1604 60.9649 26.4863C43.2436 23.8859 26.0039 12.1359 7.89731 18.8777C6.54895 19.4555 1.63707 21.767 0.962891 22.8264Z" fill="white"/>
+                </g>
+                <defs>
+                  <clipPath id="clip0_23_104">
+                    <rect width="80.42" height="33.9992" fill="white"/>
+                  </clipPath>
+                </defs>
+              </svg>
+            </div>
+            <div class="hidden md:block w-[147px] justify-end text-white text-lg font-extrabold font-['Bricolage_Grotesque'] uppercase leading-[19px] tracking-wide">Swim Racing</div>
+            <div class="justify-center text-white text-sm font-bold font-['DM_Sans'] leading-[22.40px]">Sign In</div>
+            <button
+              type="button"
+              class="relative z-10"
+              :aria-expanded="menuOpen"
+              aria-label="Toggle menu"
+              @click="menuOpen = !menuOpen"
+            >
+              <svg v-if="!menuOpen" width="26" height="18" viewBox="0 0 26 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M1 9H25M1 1H25M1 17H25" stroke="white" stroke-width="2" stroke-linecap="square" stroke-linejoin="round"/>
+              </svg>
+              <svg v-else width="26" height="24" viewBox="0 0 26.0151 23.8493" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M1.01514 1.11211L25.0151 23.1121" stroke="white" stroke-width="2"/>
+                <line y1="-1" x2="33.3017" y2="-1" transform="matrix(0.750714 -0.660628 0.507568 0.861612 1.01514 23.7232)" stroke="white" stroke-width="2"/>
+              </svg>
+            </button>
           </div>
-          <div class="hidden md:block w-[147px] justify-end text-white text-lg font-extrabold font-['Bricolage_Grotesque'] uppercase leading-[19px] tracking-wide">Swim Racing</div>
-          <div class="justify-center text-white text-sm font-bold font-['DM_Sans'] leading-[22.40px]">Sign In</div>
-          <div data-svg-wrapper>
-            <svg width="26" height="18" viewBox="0 0 26 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M1 9H25M1 1H25M1 17H25" stroke="white" stroke-width="2" stroke-linecap="square" stroke-linejoin="round"/>
-            </svg>
+
+          <!-- Desktop expanded navigation -->
+          <div
+            v-if="menuOpen"
+            class="hidden md:flex w-full md:px-[50px] pb-[10px] items-start justify-between text-white text-xs font-bold font-['DM_Sans'] uppercase leading-[19.2px] tracking-[2.16px] text-right"
+          >
+            <a
+              v-for="link in menuLinks"
+              :key="link.name"
+              :href="link.href"
+              class="hover:opacity-70"
+              @click="menuOpen = false"
+            >{{ link.name }}</a>
           </div>
         </div>
+
+        <!-- Mobile expanded navigation -->
+        <Transition
+          enter-active-class="transition-opacity ease-out duration-200"
+          enter-from-class="opacity-0"
+          enter-to-class="opacity-100"
+          leave-active-class="transition-opacity ease-in duration-150"
+          leave-from-class="opacity-100"
+          leave-to-class="opacity-0"
+        >
+          <div
+            v-if="menuOpen"
+            class="md:hidden fixed inset-0 z-50 bg-slate-900 px-5 py-10 flex flex-col gap-9 items-end"
+          >
+            <button
+              type="button"
+              aria-label="Close menu"
+              @click="menuOpen = false"
+            >
+              <svg width="26" height="24" viewBox="0 0 26.0151 23.8493" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M1.01514 1.11211L25.0151 23.1121" stroke="white" stroke-width="2"/>
+                <line y1="-1" x2="33.3017" y2="-1" transform="matrix(0.750714 -0.660628 0.507568 0.861612 1.01514 23.7232)" stroke="white" stroke-width="2"/>
+              </svg>
+            </button>
+            <nav class="flex flex-col gap-9 items-end text-white text-xs font-bold font-['DM_Sans'] uppercase leading-[19.2px] tracking-[2.16px] text-right">
+              <a
+                v-for="link in menuLinks"
+                :key="link.name"
+                :href="link.href"
+                class="hover:opacity-70"
+                @click="menuOpen = false"
+              >{{ link.name }}</a>
+            </nav>
+          </div>
+        </Transition>
+
         <div class="relative md:absolute md:left-[280px] md:top-[307px] md:w-[642px] flex flex-col justify-center items-center gap-10 md:gap-[54px]">
           <div class="w-[292px] md:w-auto md:self-stretch text-center text-white text-[32px] md:text-[64px] font-extrabold font-['Bricolage_Grotesque'] uppercase leading-8 md:leading-[56px] [text-shadow:_6px_4px_12px_rgb(0_0_0_/_0.25)]">Everything your swimmer needs.       All in one place.</div>
           <div class="flex flex-col md:flex-row justify-center items-center gap-[21px]">
@@ -76,12 +148,12 @@
       <div class="w-0 md:w-px h-4 origin-top-left -rotate-90 md:rotate-0 bg-white/30"/>
       <div class="text-white text-xs font-bold font-['DM_Sans'] uppercase leading-5 tracking-widest">Swimmers</div>
     </div>
-    <div class="w-full md:w-[1200px] px-5 md:p-[100px] py-[50px] md:py-[100px] bg-white flex flex-col justify-start items-center gap-5 md:gap-10">
+    <div id="about" class="w-full md:w-[1200px] px-5 md:p-[100px] py-[50px] md:py-[100px] bg-white flex flex-col justify-start items-center gap-5 md:gap-10">
       <div class="text-center text-red-600 text-xs font-bold font-['DM_Sans'] uppercase leading-5 tracking-widest">About</div>
       <div class="max-w-[340px] md:max-w-none text-center text-black text-[32px] font-extrabold font-['Bricolage_Grotesque'] uppercase leading-8">The UK's most complete hub for swimmers, parents and clubs.</div>
       <div class="max-w-[340px] md:max-w-none text-center text-black text-xl font-normal font-['DM_Sans'] leading-[26px]">Swim Racing is the new performance and meet hub for county and regional swimmers. Designed to provide accurate statistics and competition results, Swim Racing offers a more in-depth analysis of not only your registered swimmer, but of their competitors too. Log videos, results, and schedule meets — the most detailed and accurate platform for clubs, parents and swimmers to track progress and improve results.</div>
     </div>
-    <div class="w-full md:w-[1200px] px-5 md:p-[100px] py-[50px] flex flex-col md:flex-row justify-center items-center gap-5 md:gap-[57px] md:bg-[url('/images/home/Block-D-Performance.png')]">
+    <div id="performance" class="w-full md:w-[1200px] px-5 md:p-[100px] py-[50px] flex flex-col md:flex-row justify-center items-center gap-5 md:gap-[57px] md:bg-[url('/images/home/Block-D-Performance.png')]">
       <img class="order-1 md:order-2 w-full max-w-[351px] md:max-w-none md:w-[535px] h-[215px] md:h-[327px] rounded-sm object-cover" src="/images/home/Block_D_Img.png" >
       <div class="order-2 md:order-1 w-full md:w-[465px] px-5 md:px-[50px] py-[50px] md:py-[50px] bg-slate-900 rounded-sm flex flex-col justify-start items-start gap-5">
         <div class="self-stretch h-3.5 justify-center text-white text-xs font-bold font-['DM_Sans'] uppercase leading-5 tracking-widest">Performance</div>
@@ -90,20 +162,18 @@
         <UI-ButtonSlate>See What Your Swimmer's Data Can Do</UI-ButtonSlate>
       </div>
     </div>
-    <div class="w-full md:w-[1200px] bg-white flex flex-col md:flex-row justify-start md:justify-between items-center">
+    <div id="competition" class="w-full md:w-[1200px] bg-white flex flex-col md:flex-row justify-start md:justify-between items-center">
       <div class="order-2 md:order-1 w-full md:w-1/2 px-5 md:p-[100px] py-[50px] bg-cyan-600 flex flex-col justify-start items-start gap-5">
         <div class="self-stretch h-3.5 justify-center text-white text-xs font-bold font-['DM_Sans'] uppercase leading-5 tracking-widest">Competition</div>
         <div class="self-stretch justify-center text-white text-[32px] font-extrabold font-['Bricolage_Grotesque'] uppercase leading-8">Every race. <br>Every level. <br>One platform.</div>
         <div class="self-stretch md:w-[379px] justify-center text-white text-xl font-normal font-['DM_Sans'] leading-[26px]">Track progress month by month with a full calendar overview, and compare against competitors. </div>
-        <div class="px-5 py-2.5 bg-slate-900 rounded-sm flex justify-center items-center gap-2.5">
-          <div class="justify-center text-white text-sm font-extrabold font-['Bricolage_Grotesque'] uppercase leading-5 tracking-widest">Explore Competitions</div>
-        </div>
+        <UI-ButtonSlate class="px-5 py-2.5">Explore Competitions</UI-ButtonSlate>
       </div>
       <div class="order-1 md:order-2 w-full md:w-[600px] h-auto md:h-[488px] p-5 md:p-0 bg-slate-900 flex flex-col justify-center items-center gap-2.5">
         <img class="w-full max-w-[350px] md:max-w-none md:w-[500px] h-[163px] md:h-[227px] rounded-sm object-cover" src="/images/home/Block_E_Img.png" >
       </div>
     </div>
-    <div class="w-full md:w-[1200px] flex flex-col md:flex-row justify-start md:justify-end items-center">
+    <div id="timing" class="w-full md:w-[1200px] flex flex-col md:flex-row justify-start md:justify-end items-center">
       <div class="w-full md:w-1/2 h-auto md:h-[598px] p-5 md:p-0 bg-slate-900 flex flex-col justify-center items-end md:items-center gap-2.5">
         <img class="w-full max-w-[350px] md:max-w-none md:w-[500px] h-[257px] md:h-[367px] rounded-sm object-cover shadow-[10px_-10px_26.4px_-10px_rgba(0,0,0,0.25)]" src="/images/home/Block_F_Img.png" >
       </div>
@@ -114,7 +184,7 @@
         <UI-ButtonSky>Start Timing Your Swimmer</UI-ButtonSky>
       </div>
     </div>
-    <div class="w-full md:w-[1200px] bg-slate-900 flex flex-col md:flex-row justify-start items-center gap-0 md:gap-[55px]">
+    <div id="qualifications" class="w-full md:w-[1200px] bg-slate-900 flex flex-col md:flex-row justify-start items-center gap-0 md:gap-[55px]">
       <div class="order-1 md:order-2 w-full md:w-auto p-5 md:p-0 bg-slate-900 flex flex-col justify-center items-center gap-2.5">
         <img class="w-full max-w-[361px] md:max-w-none md:w-[500px] h-[262px] md:h-[362px] rounded-sm object-cover" src="/images/home/Block_G_Img.png" >
       </div>
