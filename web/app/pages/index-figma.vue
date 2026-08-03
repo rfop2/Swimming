@@ -50,7 +50,7 @@
       <div class="w-full h-full px-5 md:px-0 flex flex-col justify-between md:block items-center">
         <div class="relative md:absolute md:left-0 md:top-0 w-full">
           <div class="w-full md:px-[50px] py-5 flex justify-between items-center">
-            <div class="flex items-center gap-x-4">
+            <nuxt-link to="/" class="flex items-center gap-x-4">
               <div class="w-[80.42px] h-[34px] relative overflow-hidden">
                 <svg xmlns="http://www.w3.org/2000/svg" width="81" height="34" viewBox="0 0 81 34" fill="none">
                   <g clip-path="url(#clip0_23_104)">
@@ -67,7 +67,7 @@
                 </svg>
               </div>
               <div class="hidden md:block w-[147px] justify-end text-white text-lg font-extrabold font-['Bricolage_Grotesque'] uppercase leading-[19px] tracking-wide">Swim Racing</div>
-            </div>
+            </nuxt-link>
             <div class="flex items-center gap-x-6">
               <nuxt-link to="/login" class="justify-center text-white text-sm font-bold font-['DM_Sans'] leading-[22.40px] hover:opacity-80">Sign In</nuxt-link>
               <button

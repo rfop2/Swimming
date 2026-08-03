@@ -1,7 +1,7 @@
 <template>
   <div class="w-full md:w-[1200px] mx-auto bg-white flex flex-col justify-start items-center">
     <div class="w-full md:w-[1200px] px-5 md:px-[50px] py-5 flex justify-between items-center">
-      <div class="flex items-center gap-x-4">
+      <nuxt-link to="/" class="flex items-center gap-x-4">
         <div class="w-[80.42px] h-[34px] relative overflow-hidden">
           <svg xmlns="http://www.w3.org/2000/svg" width="81" height="34" viewBox="0 0 81 34" fill="none">
             <g clip-path="url(#clip0_figma_page_logo)">
@@ -18,7 +18,7 @@
           </svg>
         </div>
         <div class="hidden md:block w-[147px] justify-end text-slate-900 text-lg font-extrabold font-['Bricolage_Grotesque'] uppercase leading-[19px] tracking-wide">Swim Racing</div>
-      </div>
+      </nuxt-link>
       <div class="flex items-center gap-x-6">
         <nuxt-link to="/login" class="justify-center text-slate-900 text-sm font-bold font-['DM_Sans'] leading-[22.40px] hover:opacity-70">Sign In</nuxt-link>
         <div data-svg-wrapper>
