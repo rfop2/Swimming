@@ -141,7 +141,6 @@
         <div class="relative md:absolute md:left-[280px] md:top-[307px] md:w-[642px] flex flex-col justify-center items-center gap-10 md:gap-[54px]">
           <div class="w-[292px] md:w-auto md:self-stretch text-center text-white text-[32px] md:text-[64px] font-extrabold font-['Bricolage_Grotesque'] uppercase leading-8 md:leading-[56px] [text-shadow:_6px_4px_12px_rgb(0_0_0_/_0.25)]">Everything your swimmer needs.       All in one place.</div>
           <div class="flex flex-col md:flex-row justify-center items-center gap-[21px]">
-            <UI-ButtonTransparent to="/register">Start Free Trial</UI-ButtonTransparent>
             <UI-ButtonTransparent to="/pricing">View Plans</UI-ButtonTransparent>
           </div>
         </div>
@@ -205,17 +204,6 @@
     </div>
     <img class="w-full hidden md:block h-[333px] object-cover" src="/images/home/pool-lanes.png" >
     <img class="w-full h-[333px] object-cover md:hidden" src="/images/home/pool-lanes-mobile.png" >
-    <div class="w-full md:w-[1200px] px-5 md:px-[50px] py-[50px] md:py-[100px] bg-slate-900 flex flex-col justify-start items-center gap-5">
-      <div class="text-center text-white text-[32px] font-extrabold font-['Bricolage_Grotesque'] uppercase leading-8">Try Swim Racing Free     for One Month</div>
-      <div class="max-w-[620px] text-center text-white/80 text-[15px] font-normal font-['DM_Sans'] leading-[21px]">Experience the full platform with no commitment. See exactly how Swim Racing transforms how your club tracks, analyses and improves — then choose the plan that fits.</div>
-      <div class="text-center text-white/50 text-xs font-normal font-['DM_Sans'] leading-5">One month free · Cancel any time</div>
-      <div class="w-full max-w-[456px] h-[42px] px-5 bg-white/10 rounded-sm outline outline-1 outline-offset-[-1px] outline-white/30 overflow-hidden flex items-center">
-        <div class="text-white/50 text-sm font-normal font-['DM_Sans']">Enter your email address</div>
-      </div>
-      <nuxt-link to="/register" class="w-full max-w-[456px] h-[43px] bg-white rounded-sm flex items-center justify-center">
-        <div class="text-center text-cyan-600 text-[15.20px] font-extrabold font-['Bricolage_Grotesque'] uppercase tracking-wider">Start Free Trial</div>
-      </nuxt-link>
-    </div>
     <div class="w-full md:w-[1200px] px-5 md:px-[50px] py-[50px] md:py-[100px] bg-white flex flex-col justify-start items-center gap-5 md:gap-8">
       <div class="max-w-[342px] md:max-w-none md:w-[1100px] text-center text-sky-950 text-[32px] md:text-[40px] font-extrabold font-['Bricolage_Grotesque'] uppercase leading-8 md:leading-[42px]">Plans for Every Swimmer</div>
       <div class="max-w-[342px] md:max-w-none md:w-[1100px] text-center text-sky-950 text-sm font-normal font-['DM_Sans'] leading-5">From tracking a single swimmer to managing a whole club squad — pick the plan that fits.</div>
