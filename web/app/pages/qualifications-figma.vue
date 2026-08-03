@@ -27,7 +27,7 @@
         <p class="copy-heading">Standards, tracked across every level</p>
         <p class="copy-text">British Swimming qualifying standards are built into the platform alongside county and regional standards – so wherever your swimmer competes, and whatever they’re aiming for, the relevant cut-offs are always visible and always current. Summer, winter and general competition periods are all covered, with open and closed qualifying periods clearly indicated so you’re always focused on what’s still achievable.</p>
       </div>
-      <CTAButtonPair />
+      <CTAButton />
     </div>
   </div>
 </template>

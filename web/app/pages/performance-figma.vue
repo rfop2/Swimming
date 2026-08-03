@@ -29,7 +29,7 @@
         <p class="copy-heading">Compare. Understand. Improve.</p>
         <p class="copy-text">The performance view isn’t just about your swimmer in isolation. Results can be shared directly from the platform, making it simple to loop in a coach, discuss progress with your club, or keep the wider support network informed. You can also see how their times compare directly against competitors within the same chart – identifying where the gaps are, which events represent the biggest opportunities, and where consistent improvement is already happening.</p>
       </div>
-      <CTAButtonPair />
+      <CTAButton />
     </div>
   </div>
 </template>

@@ -26,6 +26,6 @@
       <p class="copy-text">Swim Racing is built for anyone serious about competitive swimming in the UK – at any level.</p>
       <p class="copy-text">•  <span class="font-bold">Parents</span> – who want to support their swimmer’s progress without needing a coaching qualification<br>•  <span class="font-bold">Coaches and trainers</span> – who need detailed, comparable data across a full squad<br>•  <span class="font-bold">Clubs</span> – managing multiple swimmers, meets and qualification targets simultaneously<br>•  <span class="font-bold">Swimmers</span> – tracking their own progress and understanding what’s within reach</p>
     </div>
-    <CTAButtonPair />
+    <CTAButton />
   </div>
 </template>

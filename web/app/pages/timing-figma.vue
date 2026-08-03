@@ -43,6 +43,6 @@
         <p class="copy-text">For coaches and clubs, the Compare tab allows side-by-side analysis across multiple swimmers – making it straightforward to identify patterns, benchmark progress and tailor training accordingly.</p>
       </div>
     </div>
-    <CTAButtonPair />
+    <CTAButton />
   </div>
 </template>

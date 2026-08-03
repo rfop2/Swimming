@@ -31,7 +31,7 @@
         <p class="copy-heading">Race results</p>
         <p class="copy-text">The results tab gives you a full record of your swimmer’s past events, races and results, displayed in calendar view so you can see how the season has unfolded at a glance. Long course results are shown in italics, making it easy to differentiate between pool formats when reviewing performance over time.</p>
       </div>
-      <CTAButtonPair />
+      <CTAButton />
     </div>
   </div>
 </template>
