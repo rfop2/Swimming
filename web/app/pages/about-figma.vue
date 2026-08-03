@@ -11,10 +11,10 @@
 </script>
 
 <template>
-  <div class="w-full md:w-[555px] px-5 md:px-0 py-[50px] md:py-[100px] flex flex-col justify-start items-start gap-8">
+  <div class="w-full md:w-[768px] px-5 md:px-0 py-[50px] md:py-[100px] flex flex-col justify-start items-start gap-8">
     <UI-BackLink />
     <div class="text-slate-900 text-[32px] md:text-[64px] font-extrabold font-['Bricolage_Grotesque'] uppercase leading-8 md:leading-[56px]">About</div>
-    <img class="w-full md:w-[555px] h-[190px] rounded-sm object-cover" src="/images/home/Block-I-About-Img.jpg" >
+    <img class="w-full md:w-[768px] h-[190px] rounded-sm object-cover" src="/images/home/Block-I-About-Img.jpg" >
     <div class="text-slate-900 text-2xl md:text-[32px] font-extrabold font-['Bricolage_Grotesque'] leading-8">Built by someone who needed it. Designed for everyone who does.</div>
     <div>
       <p class="copy-text">Swim Racing started with a simple problem. A parent – deeply invested in their child’s passion for competitive swimming, and determined to be the best possible support – found themselves without the tools to do it well.</p>

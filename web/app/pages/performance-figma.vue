@@ -11,16 +11,16 @@
 </script>
 
 <template>
-  <div class="w-full md:w-[564px] px-5 md:px-0 py-[50px] md:py-[100px] flex flex-col justify-start items-start gap-8">
+  <div class="w-full md:w-[768px] px-5 md:px-0 py-[50px] md:py-[100px] flex flex-col justify-start items-start gap-8">
     <div class="flex flex-col justify-start items-start gap-8">
       <UI-BackLink />
       <div class="text-slate-900 text-[32px] md:text-[64px] font-extrabold font-['Bricolage_Grotesque'] uppercase leading-8 md:leading-[56px]">Performance</div>
-      <img class="w-full md:w-[555px] h-[190px] rounded-sm object-cover" src="/images/home/Block-I-Performace-Img.jpg" >
+      <img class="w-full md:w-[768px] h-[190px] rounded-sm object-cover" src="/images/home/Block-I-Performace-Img.jpg" >
       <div class="text-slate-900 text-2xl md:text-[32px] font-extrabold font-['Bricolage_Grotesque'] leading-8">Your swimmer. Every stroke. Every stat. </div>
       <p class="copy-text">Most platforms tell you a time. Swim Racing tells you what that time means.</p>
     </div>
     <div class="flex flex-col justify-start items-start gap-8">
-      <img class="w-full md:w-[564px] aspect-[564/345] rounded-sm object-cover" src="/images/home/Block-K-Performance-Img.png" >
+      <img class="w-full md:w-[768px] aspect-[564/345] rounded-sm object-cover" src="/images/home/Block-K-Performance-Img.png" >
       <div>
         <p class="copy-text">Every result your swimmer posts is automatically pulled from British Swimming records and placed in context – against qualifying standards, against competitors, and against their own personal best. The result is a performance picture that’s detailed enough to inform real decisions, and clear enough that you don’t need a coaching background to understand it.</p>
         <p class="copy-heading">What you can see at glance</p>
