@@ -1,10 +1,99 @@
 <script lang="ts" setup>
-  onMounted( () => {
-    if ( import.meta.client ) {
-      const script = document.createElement( "script" )
-      script.src = "https://form.jotform.com/jsform/252804433335352"
-      script.async = true
-      document.getElementById( "jotform-container" )?.appendChild( script )
+  import { useForm } from "vee-validate"
+  import * as yup from "yup"
+  import { toTypedSchema } from "@vee-validate/yup"
+  import type { FetchError } from "ofetch"
+
+  useHead( {
+    title: "Contact Us",
+    meta: [
+      { name: "description", content: "Get in touch with the Swim Racing team" }
+    ]
+  } )
+
+  const config = useRuntimeConfig()
+  const user = useUser()
+
+  const roleOptions = [
+    { value: "swimmer", label: "Swimmer" },
+    { value: "trainer", label: "Trainer" },
+    { value: "other", label: "Other" },
+    { value: "parent", label: "Parent" },
+    { value: "club-admin", label: "Club Administrator" },
+  ]
+
+  const requireCaptcha = computed( () => !user.value )
+
+  const { errors, defineField, handleSubmit, resetForm } = useForm( {
+    initialValues: {
+      firstName: user.value?.firstName ?? "",
+      lastName: user.value?.lastName ?? "",
+      username: user.value?.username ?? "",
+      phone: user.value?.phone ?? "",
+      role: "",
+      club: "",
+      message: "",
+      captcha: undefined as string | undefined,
+    },
+    validationSchema: toTypedSchema(
+      yup.object( {
+        firstName: yup.string().label( "First name" ).required(),
+        lastName: yup.string().label( "Last name" ).required(),
+        username: yup.string().email().label( "Email address" ).required(),
+        phone: yup.string().label( "Phone number" ).required(),
+        role: yup.string().label( "Are you a…" ).required(),
+        club: yup.string().label( "Swimming club" ).optional(),
+        message: yup.string().label( "Message" ).optional(),
+        captcha: requireCaptcha.value
+          ? yup.string().required( "Captcha is required" )
+          : yup.string().optional(),
+      } ),
+    ),
+  } )
+
+  const [ firstName, firstNameAttrs ] = defineField( "firstName" )
+  const [ lastName, lastNameAttrs ] = defineField( "lastName" )
+  const [ username, usernameAttrs ] = defineField( "username" )
+  const [ phone, phoneAttrs ] = defineField( "phone" )
+  const [ role, roleAttrs ] = defineField( "role" )
+  const [ club, clubAttrs ] = defineField( "club" )
+  const [ message, messageAttrs ] = defineField( "message" )
+  const [ captcha ] = defineField( "captcha" )
+
+  const onCaptchaSolved = ( token: string ) => {
+    captcha.value = token
+  }
+
+  const turnstile = ref()
+  const submitting = ref( false )
+  const submitSuccess = ref( false )
+  const submitErrorVisible = ref( false )
+  const submitError = ref( "" )
+
+  const submit = handleSubmit( async ( values ) => {
+    submitting.value = true
+    submitError.value = ""
+    try {
+      await $fetch( "/api/contact", {
+        method: "POST",
+        body: values,
+      } )
+      submitSuccess.value = true
+      resetForm( {
+        values: {
+          ...values,
+          role: "",
+          club: "",
+          message: "",
+          captcha: undefined,
+        },
+      } )
+    } catch ( error ) {
+      submitError.value = ( error as FetchError ).data?.message ?? "Something went wrong. Please try again."
+      submitErrorVisible.value = true
+      turnstile.value?.reset()
+    } finally {
+      submitting.value = false
     }
   } )
 </script>
@@ -28,9 +117,138 @@
         Please complete the form below and we will get back to you as soon as possible.
       </p>
     </div>
-    <div
-      id="jotform-container"
-      class="mx-auto max-w-2xl text-center"
+
+    <form
+      class="mx-auto mt-10 max-w-2xl"
+      novalidate
+      @submit.prevent="submit"
+    >
+      <div class="grid grid-cols-1 gap-x-6 gap-y-6 sm:grid-cols-2">
+        <div>
+          <UI-Input
+            v-model="firstName"
+            label="Full Name"
+            v-bind="firstNameAttrs"
+            placeholder="First Name"
+            autocomplete="given-name"
+            required
+            :error="errors.firstName"
+          />
+        </div>
+        <div class="sm:mt-7">
+          <UI-Input
+            v-model="lastName"
+            v-bind="lastNameAttrs"
+            placeholder="Last Name"
+            autocomplete="family-name"
+            required
+            :error="errors.lastName"
+          />
+        </div>
+
+        <div>
+          <UI-Input
+            v-model="username"
+            label="Email Address"
+            v-bind="usernameAttrs"
+            type="email"
+            placeholder="example@example.com"
+            autocomplete="email"
+            required
+            :error="errors.username"
+          />
+        </div>
+        <div>
+          <UI-Input
+            v-model="phone"
+            label="Phone Number"
+            v-bind="phoneAttrs"
+            type="tel"
+            placeholder="Please enter a valid phone number"
+            autocomplete="tel"
+            required
+            :error="errors.phone"
+          />
+        </div>
+
+        <div class="sm:col-span-2">
+          <span class="block text-sm/6 font-medium text-gray-900">Are you a …*</span>
+          <div class="mt-2 grid grid-cols-1 gap-x-8 gap-y-3 sm:grid-cols-2">
+            <div
+              v-for="option in roleOptions"
+              :key="option.value"
+              class="flex items-center gap-x-2"
+            >
+              <input
+                :id="`role-${option.value}`"
+                v-model="role"
+                v-bind="roleAttrs"
+                type="radio"
+                :value="option.value"
+                class="size-4 border-gray-300 text-indigo-600 focus:ring-indigo-600"
+              >
+              <label
+                :for="`role-${option.value}`"
+                class="block text-sm/6 text-gray-900"
+              >{{ option.label }}</label>
+            </div>
+          </div>
+          <p v-if="errors.role" class="mt-2 text-sm text-red-600">
+            {{ errors.role }}
+          </p>
+        </div>
+
+        <div class="sm:col-span-2">
+          <UI-Input
+            v-model="club"
+            v-bind="clubAttrs"
+            label="Swimming Club (if applicable)"
+            placeholder="Club Name"
+            :error="errors.club"
+          />
+        </div>
+
+        <div class="sm:col-span-2">
+          <UI-Input
+            v-model="message"
+            v-bind="messageAttrs"
+            label="Your Message"
+            type="textarea"
+            rows="4"
+            :error="errors.message"
+          />
+        </div>
+
+        <div
+          v-if="requireCaptcha"
+          class="sm:col-span-2"
+        >
+          <ClientOnly>
+            <NuxtTurnstile ref="turnstile" v-model="captcha" :site-key="config.public.turnstileSiteKey as string" @update:model-value="onCaptchaSolved" />
+          </ClientOnly>
+        </div>
+      </div>
+
+      <div class="mt-10">
+        <button
+          type="submit"
+          :disabled="submitting"
+          class="block w-full rounded-md bg-indigo-600 px-3.5 py-2.5 text-center text-sm font-semibold text-white shadow-xs hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-60"
+        >
+          {{ submitting ? "Sending…" : "Send Enquiry" }}
+        </button>
+      </div>
+    </form>
+
+    <UI-SuccessNotification
+      v-model="submitSuccess"
+      title="Enquiry sent!"
+      text="Thanks for getting in touch, we'll get back to you as soon as possible."
+    />
+    <UI-ErrorNotification
+      v-model="submitErrorVisible"
+      title="Unable to send your enquiry"
+      :text="submitError"
     />
   </div>
 </template>
