@@ -16,10 +16,10 @@
 
   const roleOptions = [
     { value: "swimmer", label: "Swimmer" },
-    { value: "trainer", label: "Trainer" },
-    { value: "other", label: "Other" },
     { value: "parent", label: "Parent" },
+    { value: "trainer", label: "Trainer" },
     { value: "club-admin", label: "Club Administrator" },
+    { value: "other", label: "Other" },
   ]
 
   const requireCaptcha = computed( () => !user.value )
