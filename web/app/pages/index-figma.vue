@@ -210,6 +210,29 @@
       <div class="w-full flex flex-col md:flex-row justify-center items-stretch gap-5">
         <div class="w-full md:w-[202px] p-5 md:p-0 bg-white rounded-sm outline outline-1 outline-offset-[-1px] outline-slate-200 flex flex-col">
           <div class="md:px-[21px] md:pt-[37px] flex-1 flex flex-col">
+            <div class="text-sky-950 text-[15.20px] font-extrabold font-['DM_Sans'] uppercase leading-6 tracking-wide">Free</div>
+            <div class="mt-2.5 md:mt-px md:min-h-[52.2px] text-slate-500 text-xs font-normal font-['DM_Sans'] leading-[17.40px]">Get started tracking personal bests with no commitment.</div>
+            <div class="mt-2.5 md:mt-[35px] text-sky-950 text-4xl font-black font-['DM_Sans'] leading-9">£0</div>
+            <div class="h-px mt-2.5 md:mt-px md:w-[160.20px] bg-slate-200"/>
+            <div class="mt-2.5 md:mt-4 md:w-[160.20px] flex flex-col gap-2.5 md:gap-[9.8px]">
+              <div class="flex items-start gap-[5px]">
+                <CheckIcon class="h-3 w-4 mt-[1px] text-slate-500" aria-hidden="true" />
+                <div class="text-slate-500 text-[11px] font-normal font-['DM_Sans'] leading-[15px]">Personal bests</div>
+              </div>
+              <div class="flex items-start gap-[5px]">
+                <CheckIcon class="h-3 w-4 mt-[1px] text-slate-500" aria-hidden="true" />
+                <div class="text-slate-500 text-[11px] font-normal font-['DM_Sans'] leading-[15px]">1 swimmer in your account</div>
+              </div>
+              <div class="flex items-start gap-[5px]">
+                <CheckIcon class="h-3 w-4 mt-[1px] text-slate-500" aria-hidden="true" />
+                <div class="text-slate-500 text-[11px] font-normal font-['DM_Sans'] leading-[15px]">Add your club</div>
+              </div>
+            </div>
+          </div>
+          <UI-ButtonSolid to="/register" class="mt-2.5 md:mt-6 md:mx-[9px] md:mb-[22px] !px-3">Get started free</UI-ButtonSolid>
+        </div>
+        <div class="w-full md:w-[202px] p-5 md:p-0 bg-white rounded-sm outline outline-1 outline-offset-[-1px] outline-slate-200 flex flex-col">
+          <div class="md:px-[21px] md:pt-[37px] flex-1 flex flex-col">
             <div class="text-sky-950 text-[15.20px] font-extrabold font-['DM_Sans'] uppercase leading-6 tracking-wide">Parent Tier</div>
             <div class="mt-2.5 md:mt-px md:min-h-[52.2px] text-slate-500 text-xs font-normal font-['DM_Sans'] leading-[17.40px]">Follow your swimmers <br>through the full season.</div>
             <div class="mt-2.5 md:mt-[35px] text-sky-950 text-4xl font-black font-['DM_Sans'] leading-9">£6</div>
