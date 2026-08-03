@@ -8,11 +8,11 @@
   const menuOpen = ref( false )
 
   const menuLinks = [
-    { name: "About", href: "#about" },
-    { name: "Qualifications", href: "#qualifications" },
-    { name: "Competition", href: "#competition" },
-    { name: "Timing & Analysis", href: "#timing" },
-    { name: "Performance", href: "#performance" },
+    { name: "About", href: "/about-figma" },
+    { name: "Qualifications", href: "/qualifications-figma" },
+    { name: "Competition", href: "/competition-figma" },
+    { name: "Timing & Analysis", href: "/timing-figma" },
+    { name: "Performance", href: "/performance-figma" },
   ]
 
   const scrollToTop = () => {
@@ -93,13 +93,13 @@
             v-if="menuOpen"
             class="hidden md:flex w-full md:px-[50px] pb-[10px] items-start justify-between text-white text-xs font-bold font-['DM_Sans'] uppercase leading-[19.2px] tracking-[2.16px] text-right"
           >
-            <a
+            <NuxtLink
               v-for="link in menuLinks"
               :key="link.name"
-              :href="link.href"
+              :to="link.href"
               class="hover:opacity-70"
               @click="menuOpen = false"
-            >{{ link.name }}</a>
+            >{{ link.name }}</NuxtLink>
           </div>
         </div>
 
@@ -127,13 +127,13 @@
               </svg>
             </button>
             <nav class="flex flex-col gap-9 items-end text-white text-xs font-bold font-['DM_Sans'] uppercase leading-[19.2px] tracking-[2.16px] text-right">
-              <a
+              <NuxtLink
                 v-for="link in menuLinks"
                 :key="link.name"
-                :href="link.href"
+                :to="link.href"
                 class="hover:opacity-70"
                 @click="menuOpen = false"
-              >{{ link.name }}</a>
+              >{{ link.name }}</NuxtLink>
             </nav>
           </div>
         </Transition>
@@ -156,12 +156,12 @@
       <div class="w-0 md:w-px h-4 origin-top-left -rotate-90 md:rotate-0 bg-white/30"/>
       <div class="text-white text-xs font-bold font-['DM_Sans'] uppercase leading-5 tracking-widest">Swimmers</div>
     </div>
-    <div id="about" class="w-full md:w-[1200px] px-5 md:p-[100px] py-[50px] md:py-[100px] bg-white flex flex-col justify-start items-center gap-5 md:gap-10">
+    <div class="w-full md:w-[1200px] px-5 md:p-[100px] py-[50px] md:py-[100px] bg-white flex flex-col justify-start items-center gap-5 md:gap-10">
       <div class="text-center text-red-600 text-xs font-bold font-['DM_Sans'] uppercase leading-5 tracking-widest">About</div>
       <div class="max-w-[340px] md:max-w-none text-center text-black text-[32px] font-extrabold font-['Bricolage_Grotesque'] uppercase leading-8">The UK's most complete hub for swimmers, parents and clubs.</div>
       <div class="max-w-[340px] md:max-w-none text-center text-black text-xl font-normal font-['DM_Sans'] leading-[26px]">Swim Racing is the new performance and meet hub for county and regional swimmers. Designed to provide accurate statistics and competition results, Swim Racing offers a more in-depth analysis of not only your registered swimmer, but of their competitors too. Log videos, results, and schedule meets — the most detailed and accurate platform for clubs, parents and swimmers to track progress and improve results.</div>
     </div>
-    <div id="performance" class="w-full md:w-[1200px] px-5 md:p-[100px] py-[50px] flex flex-col md:flex-row justify-center items-center gap-5 md:gap-[57px] md:bg-[url('/images/home/Block-D-Performance.png')]">
+    <div class="w-full md:w-[1200px] px-5 md:p-[100px] py-[50px] flex flex-col md:flex-row justify-center items-center gap-5 md:gap-[57px] md:bg-[url('/images/home/Block-D-Performance.png')]">
       <img class="order-1 md:order-2 w-full max-w-[351px] md:max-w-none md:w-[535px] h-[215px] md:h-[327px] rounded-sm object-cover" src="/images/home/Block_D_Img.png" >
       <div class="order-2 md:order-1 w-full md:w-[465px] px-5 md:px-[50px] py-[50px] md:py-[50px] bg-slate-900 rounded-sm flex flex-col justify-start items-start gap-5">
         <div class="self-stretch h-3.5 justify-center text-white text-xs font-bold font-['DM_Sans'] uppercase leading-5 tracking-widest">Performance</div>
@@ -170,7 +170,7 @@
         <UI-ButtonSlate to="/performance-figma">See What Your Swimmer's Data Can Do</UI-ButtonSlate>
       </div>
     </div>
-    <div id="competition" class="w-full md:w-[1200px] bg-white flex flex-col md:flex-row justify-start md:justify-between items-center">
+    <div class="w-full md:w-[1200px] bg-white flex flex-col md:flex-row justify-start md:justify-between items-center">
       <div class="order-2 md:order-1 w-full md:w-1/2 px-5 md:p-[100px] py-[50px] bg-cyan-600 flex flex-col justify-start items-start gap-5">
         <div class="self-stretch h-3.5 justify-center text-white text-xs font-bold font-['DM_Sans'] uppercase leading-5 tracking-widest">Competition</div>
         <div class="self-stretch justify-center text-white text-[32px] font-extrabold font-['Bricolage_Grotesque'] uppercase leading-8">Every race. <br>Every level. <br>One platform.</div>
@@ -181,7 +181,7 @@
         <img class="w-full max-w-[350px] md:max-w-none md:w-[500px] h-[163px] md:h-[227px] rounded-sm object-cover" src="/images/home/Block_E_Img.png" >
       </div>
     </div>
-    <div id="timing" class="w-full md:w-[1200px] flex flex-col md:flex-row justify-start md:justify-end items-center">
+    <div class="w-full md:w-[1200px] flex flex-col md:flex-row justify-start md:justify-end items-center">
       <div class="w-full md:w-1/2 h-auto md:h-[598px] p-5 md:p-0 bg-slate-900 flex flex-col justify-center items-end md:items-center gap-2.5">
         <img class="w-full max-w-[350px] md:max-w-none md:w-[500px] h-[257px] md:h-[367px] rounded-sm object-cover shadow-[10px_-10px_26.4px_-10px_rgba(0,0,0,0.25)]" src="/images/home/Block_F_Img.png" >
       </div>
@@ -192,7 +192,7 @@
         <UI-ButtonSky to="/timing-figma">Start Timing Your Swimmer</UI-ButtonSky>
       </div>
     </div>
-    <div id="qualifications" class="w-full md:w-[1200px] bg-slate-900 flex flex-col md:flex-row justify-start items-center gap-0 md:gap-[55px]">
+    <div class="w-full md:w-[1200px] bg-slate-900 flex flex-col md:flex-row justify-start items-center gap-0 md:gap-[55px]">
       <div class="order-1 md:order-2 w-full md:w-auto p-5 md:p-0 bg-slate-900 flex flex-col justify-center items-center gap-2.5">
         <img class="w-full max-w-[361px] md:max-w-none md:w-[500px] h-[262px] md:h-[362px] rounded-sm object-cover" src="/images/home/Block_G_Img.png" >
       </div>
