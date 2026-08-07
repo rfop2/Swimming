@@ -53,8 +53,17 @@
     type: QualifyingType
   }
 
+  interface ImportLayoutInfo {
+    id: string
+    name: string
+    shortName: string
+  }
+
   const structuredData = ref<StructuredRow[]>( [] )
   const selections = ref<Selections | null>( null )
+  const importLayout = ref<ImportLayoutInfo | null>( null )
+  const sourceFileName = ref( "" )
+  const detectedYear = ref<number | null>( null )
 
   const activeGender = ref<Gender>( "Male" )
   const activeStroke = ref<string>( "All" )
@@ -70,6 +79,11 @@
   const errorVisible = ref( false )
   const errorText = ref( "" )
   const saveSuccess = ref( false )
+  const importCompleted = ref( false )
+  const saving = ref( false )
+  const saveStage = ref<"idle" | "dates" | "times" | "complete">( "idle" )
+  const saveProgress = ref( 0 )
+  const successMessage = ref( "" )
 
   const sanitizeTime = ( val: string ) =>
     val
@@ -99,9 +113,18 @@
   onMounted( () => {
     const stored = sessionStorage.getItem( "parsedData" )
     if ( stored ) {
-      const parsed = JSON.parse( stored ) as { structured: StructuredRow[], selections: Selections }
+      const parsed = JSON.parse( stored ) as {
+        structured: StructuredRow[]
+        selections: Selections
+        layout?: ImportLayoutInfo
+        sourceFileName?: string
+        detectedYear?: number | null
+      }
       structuredData.value = parsed.structured ?? []
       selections.value = parsed.selections ?? null
+      importLayout.value = parsed.layout ?? null
+      sourceFileName.value = parsed.sourceFileName ?? ""
+      detectedYear.value = parsed.detectedYear ?? null
     } else {
       console.warn( "No parsedData found in sessionStorage" )
     }
@@ -165,6 +188,49 @@
   const strokes = computed<string[]>( () => {
     const allStrokes = structuredData.value.map( item => item.stroke ).filter( Boolean )
     return [ "All", ...Array.from( new Set( allStrokes ) ) ]
+  } )
+
+  const importSummary = computed( () => {
+    const total = structuredData.value.length
+    const filled = structuredData.value.filter( row => !!row.time?.toString().trim() ).length
+    const empty = total - filled
+    const invalid = structuredData.value.filter( row => {
+      const time = row.time?.toString().trim() ?? ""
+      return !!time && !looksLikeTime( time )
+    } ).length
+    const maleEvents = new Set(
+      structuredData.value
+        .filter( row => row.gender?.toLowerCase() === "male" )
+        .map( row => row.event || `${row.stroke} ${row.distance}` )
+    ).size
+    const femaleEvents = new Set(
+      structuredData.value
+        .filter( row => row.gender?.toLowerCase() === "female" )
+        .map( row => row.event || `${row.stroke} ${row.distance}` )
+    ).size
+
+    const seen = new Set<string>()
+    const duplicateKeys = new Set<string>()
+    for ( const row of structuredData.value ) {
+      const key = rowIdentity( row )
+      if ( seen.has( key ) ) duplicateKeys.add( key )
+      seen.add( key )
+    }
+
+    return { total, filled, empty, invalid, maleEvents, femaleEvents, duplicates: duplicateKeys.size, duplicateKeys }
+  } )
+
+  const reviewYearMismatch = computed( () =>
+    !!detectedYear.value && Number( selections.value?.year ) !== detectedYear.value
+  )
+
+  const currentStep = computed( () => importCompleted.value ? 5 : 4 )
+
+  const saveButtonText = computed( () => {
+    if ( saveStage.value === "dates" ) return "Saving qualification dates…"
+    if ( saveStage.value === "times" ) return `Saving ${importSummary.value.total} qualifying times…`
+    if ( saveStage.value === "complete" ) return "Saved"
+    return "Save to Database"
   } )
 
   const filteredData = computed<Record<string, StructuredRow[]>>( () => {
@@ -248,6 +314,28 @@
     return /^(?:\d{1,2}(?:\.\d{1,3})?|\d{1,2}:\d{2}(?:\.\d{1,3})?|\d{1,2}:\d{2}:\d{2}(?:\.\d{1,3})?)$/.test( s )
   }
 
+  function rowIdentity( row: StructuredRow ) {
+    return [ row.gender, row.course ?? selections.value?.course ?? "", row.stroke, row.distance, row.age ]
+      .map( value => value?.toString().trim().toLowerCase() ?? "" )
+      .join( ":" )
+  }
+
+  function isInvalidTime( row: StructuredRow ) {
+    const time = row.time?.toString().trim() ?? ""
+    return !!time && !looksLikeTime( time )
+  }
+
+  function reviewRowClass( row: StructuredRow, index: number ) {
+    if ( isInvalidTime( row ) ) return "bg-red-50"
+    if ( importSummary.value.duplicateKeys.has( rowIdentity( row ) ) ) return "bg-orange-50"
+    if ( !row.time?.toString().trim() ) return "bg-amber-50"
+    return index % 2 === 0 ? "bg-white" : "bg-gray-50"
+  }
+
+  function editKey( eventName: string | number, row: StructuredRow, index: number ) {
+    return `${eventName}:${row.gender}:${row.age}:${index}`
+  }
+
   function genderLabel( row: StructuredRow ) {
     const g = ( row?.gender ?? "" ).toString().trim().toLowerCase()
     if ( g.startsWith( "f" ) ) return "Female"
@@ -289,6 +377,8 @@
   }
 
   async function save() {
+    if ( saving.value ) return
+
     const check = validateStructuredTimesWithCourse( structuredData.value, selections.value )
     if ( !check.ok ) {
       errorText.value = check.message
@@ -306,13 +396,20 @@
       return
     }
 
+    const rows = mapToImportRows( structuredData.value, selections.value )
+    saving.value = true
+    saveSuccess.value = false
+    importCompleted.value = false
+    errorVisible.value = false
+    saveProgress.value = 10
+
     try {
-      const rows = mapToImportRows( structuredData.value, selections.value )
 
       if (
         selections.value &&
         ( selections.value.scope === "county" || selections.value.scope === "regional" )
       ) {
+        saveStage.value = "dates"
         const periodPayload = [ {
           year: Number( selections.value.year ),
           scope: selections.value.scope,
@@ -329,12 +426,25 @@
         } )
       }
 
+      saveProgress.value = 45
+      saveStage.value = "times"
       await $fetch( "/api/import", { method: "PUT", body: rows } )
+      saveProgress.value = 100
+      saveStage.value = "complete"
+      successMessage.value = `Successfully imported ${importSummary.value.total} ${importLayout.value?.shortName ?? ""} qualifying times. ${importSummary.value.filled} times saved, ${importSummary.value.empty} empty values recorded.`
+      importCompleted.value = true
       saveSuccess.value = true
       await refreshNuxtData( "import" )
     } catch ( error ) {
-      errorText.value = ( error as Error )?.message || "Import failed."
+      const serverMessage = ( error as { data?: { message?: string }, message?: string } )?.data?.message || ( error as Error )?.message
+      errorText.value = saveStage.value === "dates"
+        ? `Unable to save qualification dates. No qualifying times were saved. ${serverMessage || "Please try again."}`
+        : `Qualification dates were saved, but the qualifying times could not be saved. ${serverMessage || "Please try again."}`
       errorVisible.value = true
+      saveStage.value = "idle"
+      saveProgress.value = 0
+    } finally {
+      saving.value = false
     }
   }
 
@@ -342,7 +452,9 @@
 
 <template>
   <StandardPage title="Parsed Results - Please Verify Time Values">
-    <div class="h-screen flex flex-col">
+    <ImportSteps :current="currentStep" />
+
+    <div class="flex min-h-screen flex-col">
       <div
         v-if="!structuredData.length"
         class="text-center text-gray-500"
@@ -351,6 +463,72 @@
       </div>
 
       <div v-else>
+        <div class="mb-6 rounded-xl border border-gray-200 bg-white p-5">
+          <div class="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <p class="text-sm font-semibold uppercase tracking-wide text-blue-600">
+                Review before saving
+              </p>
+              <h2 class="text-xl font-bold text-gray-900">
+                {{ importLayout?.name ?? 'Imported qualifying times' }}
+              </h2>
+              <p v-if="sourceFileName" class="mt-1 text-sm text-gray-500">
+                {{ sourceFileName }}
+              </p>
+            </div>
+            <span
+              v-if="importLayout"
+              class="rounded-full bg-blue-100 px-3 py-1 text-sm font-semibold text-blue-800"
+            >
+              {{ importLayout.id.replace('layout', 'Layout ') }}
+            </span>
+          </div>
+
+          <div class="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
+            <div class="rounded-lg bg-gray-50 p-3">
+              <p class="text-2xl font-bold text-gray-900">{{ importSummary.total }}</p>
+              <p class="text-xs text-gray-500">Records found</p>
+            </div>
+            <div class="rounded-lg bg-green-50 p-3">
+              <p class="text-2xl font-bold text-green-800">{{ importSummary.filled }}</p>
+              <p class="text-xs text-green-700">Times filled</p>
+            </div>
+            <div :class="['rounded-lg p-3', importSummary.empty ? 'bg-amber-50' : 'bg-green-50']">
+              <p :class="['text-2xl font-bold', importSummary.empty ? 'text-amber-800' : 'text-green-800']">{{ importSummary.empty }}</p>
+              <p class="text-xs text-gray-600">Empty times</p>
+            </div>
+            <div class="rounded-lg bg-blue-50 p-3">
+              <p class="text-2xl font-bold text-blue-800">{{ importSummary.maleEvents }}</p>
+              <p class="text-xs text-blue-700">Male events</p>
+            </div>
+            <div class="rounded-lg bg-pink-50 p-3">
+              <p class="text-2xl font-bold text-pink-800">{{ importSummary.femaleEvents }}</p>
+              <p class="text-xs text-pink-700">Female events</p>
+            </div>
+            <div :class="['rounded-lg p-3', importSummary.invalid ? 'bg-red-50' : 'bg-green-50']">
+              <p :class="['text-2xl font-bold', importSummary.invalid ? 'text-red-800' : 'text-green-800']">{{ importSummary.invalid }}</p>
+              <p class="text-xs text-gray-600">Invalid values</p>
+            </div>
+            <div :class="['rounded-lg p-3', importSummary.duplicates ? 'bg-orange-50' : 'bg-green-50']">
+              <p :class="['text-2xl font-bold', importSummary.duplicates ? 'text-orange-800' : 'text-green-800']">{{ importSummary.duplicates }}</p>
+              <p class="text-xs text-gray-600">Duplicate rows</p>
+            </div>
+          </div>
+
+          <p v-if="!importSummary.invalid && !importSummary.duplicates" class="mt-4 text-sm font-medium text-green-700">
+            No invalid values or duplicate rows found.
+          </p>
+          <p v-if="importSummary.empty" class="mt-2 text-sm text-amber-800">
+            Empty times are highlighted in amber. Confirm that they are intentionally blank in the source document.
+          </p>
+        </div>
+
+        <div
+          v-if="reviewYearMismatch"
+          class="mb-5 rounded-lg border border-amber-300 bg-amber-50 p-4 text-amber-900"
+        >
+          The document appears to be for {{ detectedYear }}, but these times will be imported into {{ selections?.year }}.
+        </div>
         <div
           v-if="selections"
           class="text-gray-700 mb-4 flex gap-6"
@@ -412,13 +590,39 @@
             {{ c.label }}
           </button>
         </div>
-        <div class="space-x-4 mb-6">
+        <div class="mb-6">
           <button
-            class="bg-green-600 text-white px-4 py-2 rounded font-semibold ml-auto"
+            :disabled="saving || importCompleted || !!importSummary.invalid || !!importSummary.duplicates"
+            class="rounded bg-green-600 px-5 py-3 font-semibold text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:bg-gray-300"
             @click="save"
           >
-            Save to Database
+            {{ saveButtonText }}
           </button>
+          <div v-if="saving || saveStage === 'complete'" class="mt-3 max-w-xl">
+            <div class="h-2 overflow-hidden rounded-full bg-gray-200">
+              <div
+                class="h-full bg-green-600 transition-all duration-300"
+                :style="{ width: `${saveProgress}%` }"
+              />
+            </div>
+            <p class="mt-1 text-sm text-gray-600">{{ saveProgress }}% complete</p>
+          </div>
+        </div>
+
+        <div
+          v-if="importCompleted"
+          class="mb-6 flex flex-wrap items-center justify-between gap-4 rounded-xl border border-green-300 bg-green-50 p-5"
+        >
+          <div>
+            <h2 class="font-bold text-green-900">Import complete</h2>
+            <p class="mt-1 text-sm text-green-800">{{ successMessage }}</p>
+          </div>
+          <NuxtLink
+            to="/qualifying/times"
+            class="rounded-md bg-green-700 px-4 py-2 font-semibold text-white hover:bg-green-800"
+          >
+            View imported times
+          </NuxtLink>
         </div>
 
         <div
@@ -444,17 +648,17 @@
               <tr
                 v-for="(e, idx) in events"
                 :key="idx"
-                :class="idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'"
+                :class="reviewRowClass(e, idx)"
               >
                 <td class="border border-gray-300 px-4 py-2">
                   {{ e.age }}
                 </td>
                 <td class="border border-gray-300 px-4 py-2">
-                  <div v-if="!editingTime[`${idx}_${e.age}`]">
+                  <div v-if="!editingTime[editKey(eventName, e, idx)]">
                     {{ e.time ?? '—' }}
                     <button
                       class="ml-2 text-blue-600"
-                      @click="editingTime[`${idx}_${e.age}`] = true"
+                      @click="editingTime[editKey(eventName, e, idx)] = true"
                     >
                       ✏️
                     </button>
@@ -471,11 +675,11 @@
                       class="border px-2 py-1 w-20"
                       @keydown="onTimeKeydown"
                       @input="onTimeInput($event, v => e.time = v)"
-                      @keyup.enter="editingTime[`${idx}_${e.age}`] = false"
+                      @keyup.enter="editingTime[editKey(eventName, e, idx)] = false"
                     >
                     <button
                       class="text-gray-500 px-2"
-                      @click="editingTime[`${idx}_${e.age}`] = false"
+                      @click="editingTime[editKey(eventName, e, idx)] = false"
                     >
                       ❌
                     </button>
@@ -489,8 +693,8 @@
     </div>
     <UI-SuccessNotification
       v-model="saveSuccess"
-      title="Successfully saved!"
-      text="Data imported."
+      title="Import complete"
+      :text="successMessage"
     />
     <UI-ErrorNotification
       v-model="errorVisible"
