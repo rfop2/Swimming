@@ -3,6 +3,7 @@
   import * as yup from "yup"
   import { toTypedSchema } from "@vee-validate/yup"
   import type { FetchError } from "ofetch"
+  import type { Club, UserClub } from "lib"
 
   useHead( {
     title: "Contact Us",
@@ -24,7 +25,7 @@
 
   const requireCaptcha = computed( () => !user.value )
 
-  const { errors, defineField, handleSubmit, resetForm } = useForm( {
+  const { errors, defineField, handleSubmit, resetForm, setFieldValue } = useForm( {
     initialValues: {
       firstName: user.value?.firstName ?? "",
       lastName: user.value?.lastName ?? "",
@@ -56,9 +57,38 @@
   const [ username, usernameAttrs ] = defineField( "username" )
   const [ phone, phoneAttrs ] = defineField( "phone" )
   const [ role, roleAttrs ] = defineField( "role" )
-  const [ club, clubAttrs ] = defineField( "club" )
   const [ message, messageAttrs ] = defineField( "message" )
   const [ captcha ] = defineField( "captcha" )
+
+  const clubSelection = ref<string | undefined>( undefined )
+  const clubResults = ref<UISelection[]>( [] )
+
+  const searchClubs = async ( search: string ): Promise<UISelection[]> => {
+    if ( !search ) return []
+    const found = await $fetch<Club[]>( `/api/clubs/search?search=${encodeURIComponent( search )}` )
+    clubResults.value = found.map( c => ( { label: c.clubName, value: c.clubId } ) )
+    return clubResults.value
+  }
+
+  // Pre-fill with the logged-in user's existing club, if they have one
+  const { userClubs } = user.value ? useUserClubs() : { userClubs: ref<UserClub[]>( [] ) }
+
+  watch( userClubs, ( clubs ) => {
+    const firstClub = clubs?.at( 0 )
+    if ( firstClub && !clubSelection.value ) {
+      clubResults.value = [ { label: firstClub.clubName, value: firstClub.clubId } ]
+      clubSelection.value = firstClub.clubId
+    }
+  }, { immediate: true } )
+
+  watch( clubSelection, ( value ) => {
+    if ( !value ) {
+      setFieldValue( "club", "" )
+      return
+    }
+    const found = clubResults.value.find( c => c.value === value )
+    setFieldValue( "club", found ? ( found.label ?? String( found.value ) ) : String( value ) )
+  } )
 
   const onCaptchaSolved = ( token: string ) => {
     captcha.value = token
@@ -79,6 +109,7 @@
         body: values,
       } )
       submitSuccess.value = true
+      clubSelection.value = undefined
       resetForm( {
         values: {
           ...values,
@@ -199,11 +230,11 @@
         </div>
 
         <div class="sm:col-span-2">
-          <UI-Input
-            v-model="club"
-            v-bind="clubAttrs"
+          <UI-Combobox
+            v-model="clubSelection"
             label="Swimming Club (if applicable)"
-            placeholder="Club Name"
+            placeholder="Select or type club name"
+            :fetch-options="searchClubs"
             :error="errors.club"
           />
         </div>
