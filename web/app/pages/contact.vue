@@ -70,16 +70,22 @@
     return clubResults.value
   }
 
-  // Pre-fill with the logged-in user's existing club, if they have one
-  const { userClubs } = user.value ? useUserClubs() : { userClubs: ref<UserClub[]>( [] ) }
-
-  watch( userClubs, ( clubs ) => {
-    const firstClub = clubs?.at( 0 )
+  // Pre-fill with the logged-in user's existing club, if they have one.
+  // Fetched client-only in onMounted: the underlying endpoint relies on the
+  // session cookie, which a plain $fetch doesn't forward during SSR — doing this
+  // fetch during SSR would render with no club, then flip to one on the client,
+  // causing a hydration mismatch.
+  onMounted( async () => {
+    if ( !user.value ) return
+    // No id: the endpoint defaults to the current session's user. Passing an
+    // explicit id (even your own) requires admin — see server/api/userclubs/[id].get.ts
+    const clubs = await $fetch<UserClub[]>( "/api/userclubs/" )
+    const firstClub = clubs.at( 0 )
     if ( firstClub && !clubSelection.value ) {
       clubResults.value = [ { label: firstClub.clubName, value: firstClub.clubId } ]
       clubSelection.value = firstClub.clubId
     }
-  }, { immediate: true } )
+  } )
 
   watch( clubSelection, ( value ) => {
     if ( !value ) {
@@ -234,6 +240,7 @@
             v-model="clubSelection"
             label="Swimming Club (if applicable)"
             placeholder="Select or type club name"
+            :options="clubResults"
             :fetch-options="searchClubs"
             :error="errors.club"
           />
