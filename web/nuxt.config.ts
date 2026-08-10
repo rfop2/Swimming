@@ -84,6 +84,12 @@ export default defineNuxtConfig( {
         "chart.js",
         "chartjs-adapter-date-fns",
         "chartjs-plugin-annotation",
+        "@heroicons/vue/24/outline",
+        "@heroicons/vue/20/solid",
+        "ag-grid-community",
+        "ag-grid-vue3",
+        "yup",
+        "@vee-validate/yup",
       ]
     },
     plugins: [
