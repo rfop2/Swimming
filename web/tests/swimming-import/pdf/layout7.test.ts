@@ -47,7 +47,7 @@ describe( "parseSwimmingPdfLayout7", () => {
       distance: "800m",
       stroke: "Freestyle",
       age: "12",
-      time: "00:10:00",
+      time: "00:10:00.00",
     } )
     expect( result ).toContainEqual( {
       gender: "male",
@@ -55,7 +55,7 @@ describe( "parseSwimmingPdfLayout7", () => {
       distance: "100m",
       stroke: "Individual Medley",
       age: "17+",
-      time: "00:01:08",
+      time: "00:01:08.50",
     } )
   } )
 

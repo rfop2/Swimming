@@ -288,26 +288,28 @@
     const area = sel?.area ?? ""
     const qtype: QualifyingType = sel?.type ?? "general"
 
-    return structured.map( item => {
-      const course = resolveCourseForRow( item, sel )
-      const timeString = item.time || "00:00.00"
-      const time = item.time ? timeToSeconds( item.time ) : 0.0
+    return structured
+      .filter( item => !!item.time )
+      .map( item => {
+        const course = resolveCourseForRow( item, sel )
+        const timeString = item.time as string
+        const time = timeToSeconds( timeString )
 
-      return {
-        created,
-        year,
-        course,
-        scope,
-        area,
-        gender: item.gender,
-        age: item.age,
-        distance: item.distance,
-        stroke: normalizeStroke( item.stroke ),
-        timeString,
-        time,
-        type: qtype
-      }
-    } )
+        return {
+          created,
+          year,
+          course,
+          scope,
+          area,
+          gender: item.gender,
+          age: item.age,
+          distance: item.distance,
+          stroke: normalizeStroke( item.stroke ),
+          timeString,
+          time,
+          type: qtype
+        }
+      } )
   }
 
   function looksLikeTime( s: string ) {

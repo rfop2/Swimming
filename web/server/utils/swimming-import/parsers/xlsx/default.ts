@@ -72,22 +72,33 @@ export function parseSwimmingXlsx( buffer: ArrayBuffer | Buffer ) {
 
 // 2025-hcasa-champs-qts-v2
 
+// Formats a fractional-seconds value as a zero-padded "SS.ff" tail, e.g. 19.5 -> "19.50".
+const secondsWithDecimal = ( seconds: number ): string => {
+  const wholeSeconds = Math.floor( seconds )
+  const hundredths = Math.round( ( seconds - wholeSeconds ) * 100 )
+  return `${wholeSeconds.toString().padStart( 2, "0" )}.${hundredths.toString().padStart( 2, "0" )}`
+}
+
 function fixRawTime( value: string | number ): string {
   if ( typeof value === "string" ) {
-    // case 1: multiple dots like "2.48.10" â†’ "00:02:48"
+    // case 1: multiple dots like "2.48.10" → "00:02:48.10"
     if ( ( value.match( /\./g ) || [] ).length >= 2 ) {
-      const parts = value.split( "." )
-      const minutes = parts[0].padStart( 2, "0" )
-      const seconds = parts[1].padStart( 2, "0" )
-      return `00:${minutes}:${seconds}`
+      const [ minPart, secPart, decPart ] = value.split( "." ) as [ string, string, string? ]
+      const minutes = minPart.padStart( 2, "0" )
+      const seconds = secPart.padStart( 2, "0" )
+      // Pad on the right — this is a decimal fraction ("8" means .8, not .08).
+      const hundredths = ( decPart ?? "0" ).padEnd( 2, "0" ).slice( 0, 2 )
+      return `00:${minutes}:${seconds}.${hundredths}`
     }
 
-    // case 2: concatenated MMSS.s like "0140.8" â†’ "00:01:40"
+    // case 2: concatenated MMSS.s like "0140.8" → "00:01:40.80"
     const match = value.match( /^0?(\d+)(\d{2})(?:\.(\d+))?$/ )
     if ( match ) {
-      const minutes = parseInt( match[1], 10 )
-      const seconds = parseInt( match[2], 10 )
-      return `00:${String( minutes ).padStart( 2, "0" )}:${String( seconds ).padStart( 2, "0" )}`
+      const minutes = parseInt( match[1]!, 10 )
+      const seconds = parseInt( match[2]!, 10 )
+      // Pad on the right — this is a decimal fraction ("8" means .8, not .08).
+      const hundredths = ( match[3] ?? "0" ).padEnd( 2, "0" ).slice( 0, 2 )
+      return `00:${String( minutes ).padStart( 2, "0" )}:${String( seconds ).padStart( 2, "0" )}.${hundredths}`
     }
 
     // fallback: keep original string
@@ -97,18 +108,16 @@ function fixRawTime( value: string | number ): string {
   // numbers: treat as Excel fraction or minutes
   if ( typeof value === "number" ) {
     if ( value > 0 && value < 1 ) {
-      const totalSeconds = Math.round( value * 24 * 60 * 60 )
+      const totalSeconds = value * 24 * 60 * 60
       const hours = Math.floor( totalSeconds / 3600 )
       const minutes = Math.floor( ( totalSeconds % 3600 ) / 60 )
       const seconds = totalSeconds % 60
-      return `${hours.toString().padStart( 2, "0" )}:${minutes.toString().padStart( 2, "0" )}:${seconds
-        .toString()
-        .padStart( 2, "0" )}`
+      return `${hours.toString().padStart( 2, "0" )}:${minutes.toString().padStart( 2, "0" )}:${secondsWithDecimal( seconds )}`
     }
     if ( value >= 1 ) {
       const minutes = Math.floor( value / 60 )
-      const seconds = Math.round( value % 60 )
-      return `00:${minutes.toString().padStart( 2, "0" )}:${seconds.toString().padStart( 2, "0" )}`
+      const seconds = value % 60
+      return `00:${minutes.toString().padStart( 2, "0" )}:${secondsWithDecimal( seconds )}`
     }
   }
 
