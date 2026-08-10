@@ -12,6 +12,6 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true
   },
-  "include": ["src/*.mts", "src/*.ts"],
+  "include": ["src/**/*.mts", "src/**/*.ts"],
   "exclude": ["node_modules", "build", "eslint.config.mjs"]
 }

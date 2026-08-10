@@ -53,6 +53,7 @@ import {
   setGeocodeFetch,
   addNotification,
   REGIONS,
+  qualifyingSources,
 } from "lib"
 
 import type {
@@ -63,6 +64,8 @@ import type {
   MeetResults,
   PageInfo,
   PoolConnection,
+  QualifyingSource,
+  QualifyingStagingRow,
   Swimmer,
   SwimmerUpdateMode,
   SwimmerUpdateType,
@@ -71,6 +74,9 @@ import type {
 import { Command, Option } from "commander"
 import { addClubSwimmers } from "./lib.js"
 import type { User } from "lucia"
+import { fetchSwimmingTimes } from "./qualifying/swimming-times.mjs"
+import { fetchSwimturn } from "./qualifying/swimturn.mjs"
+import { printQualifyingDiffReport } from "./qualifying/report.mjs"
 
 const insertIndividualSql =
   `INSERT INTO Individual (
@@ -1546,6 +1552,65 @@ const updateMeetsResults = async ( options: MeetsResultsOptions ) => {
         saved++
       }
       console.log( `\nSaved ${saved} clubs to SwimmingClubs` )
+    } )
+
+  const insertQualifyingStagingSql =
+    `INSERT INTO QualifyingTimesStaging
+      (source, year, course, stroke, distance, scope, area, type, gender, age, timeString, time, sourceYear, sourceUrl, fetchedAt)
+    VALUES
+      (:source, :year, :course, :stroke, :distance, :scope, :area, :type, :gender, :age, :timeString, :time, :sourceYear, :sourceUrl, NOW())
+    ON DUPLICATE KEY UPDATE
+      timeString = :timeString,
+      time        = :time,
+      sourceYear  = :sourceYear,
+      sourceUrl   = :sourceUrl,
+      fetchedAt   = NOW()`
+
+  program.command( "qualifying" )
+    .description( "Scrape county/regional qualifying times from swimming-times.com and swimturn.com into QualifyingTimesStaging, and report diffs vs each other and the live QualifyingTimes table" )
+    .addOption( new Option( "-y, --year <year>", "season year to scrape" ).default( String( new Date().getFullYear() + 1 ) ) )
+    .addOption( new Option( "-s, --source <source...>", "limit to one or more sources" ).choices( qualifyingSources ) )
+    .addOption( new Option( "-m, --mode <mode>", "fetching strategy versus caching" ).choices( [ "force", "lazy" ] ).default( "lazy" ) )
+    .option( "--no-report", "skip the diff report (staging only)" )
+    .action( async ( options ) => {
+      const year = parseInt( options.year, 10 )
+      const force = options.mode === "force"
+      const sources: QualifyingSource[] = options.source?.length ? options.source : [ ...qualifyingSources ]
+
+      const rowsBySource = new Map<QualifyingSource, QualifyingStagingRow[]>()
+
+      for ( const source of sources ) {
+        console.log( `\nFetching ${source}...` )
+        try {
+          const rows = source === "swimming-times"
+            ? await fetchSwimmingTimes( { year, force, scope: "both" } )
+            : await fetchSwimturn( { year, force, scope: "both" } )
+          rowsBySource.set( source, rows )
+        } catch ( e ) {
+          console.error( `  ${source} failed: ${e}` )
+          Sentry.captureException( e )
+        }
+      }
+
+      await runTransaction( await getPool(), async ( conn: PoolConnection ) => {
+        const deleteStaging = prepareStatement<{ source: string, year: number }>(
+          conn,
+          "DELETE FROM QualifyingTimesStaging WHERE source = :source AND year = :year"
+        )
+        const insertStaging = prepareStatement<Record<string, unknown>>( conn, insertQualifyingStagingSql )
+
+        for ( const [ source, rows ] of rowsBySource ) {
+          await deleteStaging.run( { source, year } )
+          for ( const row of rows ) {
+            await insertStaging.run( { ...row, sourceYear: row.sourceYear ?? null, sourceUrl: row.sourceUrl ?? null } )
+          }
+          console.log( `  Saved ${rows.length} ${source} rows to QualifyingTimesStaging` )
+        }
+      } )
+
+      if ( options.report !== false && rowsBySource.size ) {
+        await printQualifyingDiffReport( await getPool(), year, [ ...rowsBySource.keys() ] )
+      }
     } )
 
   try {

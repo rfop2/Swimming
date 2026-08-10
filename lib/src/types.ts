@@ -201,7 +201,7 @@ export interface PageInfo {
   label: string
   url: URL
   referrer?: URL,
-  type: "individual" | "ranking" | "results" | "meets" | "meet" | "meetsResults" | "meetResults" | "pools" | "clubs"
+  type: "individual" | "ranking" | "results" | "meets" | "meet" | "meetsResults" | "meetResults" | "pools" | "clubs" | "qualifying"
   data?: unknown
 }
 
@@ -223,6 +223,15 @@ export interface QualifyingRow {
 
 export const qualifyingTypes = [ "general", "winter", "summer" ] as const
 export type QualifyingType = typeof qualifyingTypes[number]
+
+export const qualifyingSources = [ "swimming-times", "swimturn" ] as const
+export type QualifyingSource = typeof qualifyingSources[number]
+
+export interface QualifyingStagingRow extends QualifyingRow {
+  source: QualifyingSource
+  sourceYear?: number
+  sourceUrl?: string
+}
 
 export interface QualifyingPeriodRow {
   year: number
