@@ -244,6 +244,12 @@ export interface QualifyingPeriodRow {
   notes?: string
 }
 
+export interface QualifyingPeriodStagingRow extends Omit<QualifyingPeriodRow, "qualifyingStart"> {
+  source: QualifyingSource
+  qualifyingStart?: string
+  sourceUrl?: string
+}
+
 export interface ExtQualifyingPeriod extends QualifyingPeriodRow {
   qualifyingStarted: boolean
   qualifyingEnded: boolean

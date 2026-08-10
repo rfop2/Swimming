@@ -1,6 +1,6 @@
 import * as cheerio from "cheerio"
 import { fetchPage, secondsToTime } from "lib"
-import type { QualifyingStagingRow, StrokeType, GenderType } from "lib"
+import type { QualifyingStagingRow, QualifyingPeriodStagingRow, StrokeType, GenderType } from "lib"
 import { normalizeAreaCode } from "./normalize.mjs"
 
 const BASE_URL = "https://swimming-times.com"
@@ -89,6 +89,83 @@ const parseAgeGroup = ( heading: string ): string[] => {
   return [ ageText ]
 }
 
+const MONTHS: Record<string, number> = {
+  january: 1, february: 2, march: 3, april: 4, may: 5, june: 6,
+  july: 7, august: 8, september: 9, october: 10, november: 11, december: 12,
+}
+
+// "1 January 2025" -> "2025-01-01". Returns null for anything that doesn't match.
+const parseUkDate = ( text: string ): string | null => {
+  const m = text.trim().match( /^(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})$/ )
+  if ( !m ) return null
+  const month = MONTHS[m[2]!.toLowerCase()]
+  if ( !month ) return null
+  return `${m[3]}-${String( month ).padStart( 2, "0" )}-${m[1]!.padStart( 2, "0" )}`
+}
+
+// Every "Qualifying window" value observed on the site is one of three shapes:
+// "D Month YYYY to D Month YYYY" (range), "D Month YYYY onwards" (start only),
+// or "Up to D Month YYYY" (end only). Anything else is left unset rather than guessed.
+const parseQualifyingWindow = ( text: string ): { start: string | null, end: string | null } => {
+  const trimmed = text.trim()
+
+  const upTo = trimmed.match( /^up to\s+(.+)$/i )
+  if ( upTo ) return { start: null, end: parseUkDate( upTo[1]! ) }
+
+  const onwards = trimmed.match( /^(.+?)\s+onwards$/i )
+  if ( onwards ) return { start: parseUkDate( onwards[1]! ), end: null }
+
+  const range = trimmed.match( /^(.+?)\s+to\s+(.+)$/i )
+  if ( range ) return { start: parseUkDate( range[1]! ), end: parseUkDate( range[2]! ) }
+
+  return { start: null, end: null }
+}
+
+// "Championship dates" (when listed at all) is always "D Month YYYY – D Month YYYY"
+// (en dash). We only need the final date, for lastRaceDate.
+const parseChampionshipEndDate = ( text: string ): string | null => {
+  const parts = text.split( "–" ).map( p => p.trim() )
+  const last = parts.at( -1 )
+  return last ? parseUkDate( last ) : null
+}
+
+const parseCountyFacts = ( html: string ): Record<string, string> => {
+  const $ = cheerio.load( html )
+  const facts: Record<string, string> = {}
+  $( "dl.facts .fact" ).each( ( _, el ) => {
+    const key = $( el ).find( "dt" ).first().text().trim()
+    const value = $( el ).find( "dd" ).first().text().trim()
+    if ( key ) facts[key] = value
+  } )
+  return facts
+}
+
+const parseCountyPeriod = (
+  html: string,
+  areaName: string,
+  year: number,
+  sourceUrl: string,
+): QualifyingPeriodStagingRow | null => {
+  const facts = parseCountyFacts( html )
+  const windowText = facts["Qualifying window"]
+  if ( !windowText ) return null
+
+  const { start, end } = parseQualifyingWindow( windowText )
+  const championshipDates = facts["Championship dates"]
+
+  return {
+    source: "swimming-times",
+    year,
+    scope: "county",
+    area: normalizeAreaCode( areaName, "county" ),
+    type: "general",
+    qualifyingStart: start ?? undefined,
+    qualifyingEnd: end ?? undefined,
+    lastRaceDate: championshipDates ? ( parseChampionshipEndDate( championshipDates ) ?? undefined ) : undefined,
+    sourceUrl,
+  }
+}
+
 const parseCountyPage = (
   html: string,
   areaName: string,
@@ -169,10 +246,15 @@ const parseCountyPage = (
   return rows
 }
 
-export const fetchSwimmingTimes = async ( { year, force, scope }: SwimmingTimesOptions ): Promise<QualifyingStagingRow[]> => {
+export interface SwimmingTimesResult {
+  rows: QualifyingStagingRow[]
+  periods: QualifyingPeriodStagingRow[]
+}
+
+export const fetchSwimmingTimes = async ( { year, force, scope }: SwimmingTimesOptions ): Promise<SwimmingTimesResult> => {
   if ( scope === "regional" ) {
     console.log( "  swimming-times.com: regional standards live on a separate sub-app — not scraped yet, skipping" )
-    return []
+    return { rows: [], periods: [] }
   }
 
   const directoryPage = await fetchPage( {
@@ -185,6 +267,7 @@ export const fetchSwimmingTimes = async ( { year, force, scope }: SwimmingTimesO
   console.log( `  swimming-times.com: found ${counties.length} counties in directory` )
 
   const rows: QualifyingStagingRow[] = []
+  const periods: QualifyingPeriodStagingRow[] = []
   let skipped = 0
 
   for ( const county of counties ) {
@@ -195,14 +278,18 @@ export const fetchSwimmingTimes = async ( { year, force, scope }: SwimmingTimesO
         type: "qualifying",
       }, force ? 0 : undefined )
 
-      const countyRows = parseCountyPage( String( page.content ), county.name, year, county.listedYear, county.url )
+      const content = String( page.content )
+      const countyRows = parseCountyPage( content, county.name, year, county.listedYear, county.url )
       rows.push( ...countyRows )
+
+      const period = parseCountyPeriod( content, county.name, year, county.url )
+      if ( period ) periods.push( period )
     } catch ( e ) {
       console.error( `  Skipping ${county.name}: ${e}` )
       skipped++
     }
   }
 
-  console.log( `  swimming-times.com: parsed ${rows.length} rows from ${counties.length - skipped}/${counties.length} counties` )
-  return rows
+  console.log( `  swimming-times.com: parsed ${rows.length} rows and ${periods.length} qualifying periods from ${counties.length - skipped}/${counties.length} counties` )
+  return { rows, periods }
 }

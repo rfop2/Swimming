@@ -66,6 +66,7 @@ import type {
   PoolConnection,
   QualifyingSource,
   QualifyingStagingRow,
+  QualifyingPeriodStagingRow,
   Swimmer,
   SwimmerUpdateMode,
   SwimmerUpdateType,
@@ -1566,6 +1567,19 @@ const updateMeetsResults = async ( options: MeetsResultsOptions ) => {
       sourceUrl   = :sourceUrl,
       fetchedAt   = NOW()`
 
+  const insertQualifyingPeriodsStagingSql =
+    `INSERT INTO QualifyingPeriodsStaging
+      (source, year, scope, area, type, qualifyingStart, qualifyingEnd, lastRaceDate, notes, sourceUrl, fetchedAt)
+    VALUES
+      (:source, :year, :scope, :area, :type, :qualifyingStart, :qualifyingEnd, :lastRaceDate, :notes, :sourceUrl, NOW())
+    ON DUPLICATE KEY UPDATE
+      qualifyingStart = :qualifyingStart,
+      qualifyingEnd   = :qualifyingEnd,
+      lastRaceDate    = :lastRaceDate,
+      notes           = :notes,
+      sourceUrl       = :sourceUrl,
+      fetchedAt       = NOW()`
+
   program.command( "qualifying" )
     .description( "Scrape county/regional qualifying times from swimming-times.com and swimturn.com into QualifyingTimesStaging, and report diffs vs each other and the live QualifyingTimes table" )
     .addOption( new Option( "-y, --year <year>", "season year to scrape" ).default( String( new Date().getFullYear() + 1 ) ) )
@@ -1578,14 +1592,16 @@ const updateMeetsResults = async ( options: MeetsResultsOptions ) => {
       const sources: QualifyingSource[] = options.source?.length ? options.source : [ ...qualifyingSources ]
 
       const rowsBySource = new Map<QualifyingSource, QualifyingStagingRow[]>()
+      const periodsBySource = new Map<QualifyingSource, QualifyingPeriodStagingRow[]>()
 
       for ( const source of sources ) {
         console.log( `\nFetching ${source}...` )
         try {
-          const rows = source === "swimming-times"
+          const { rows, periods } = source === "swimming-times"
             ? await fetchSwimmingTimes( { year, force, scope: "both" } )
             : await fetchSwimturn( { year, force, scope: "both" } )
           rowsBySource.set( source, rows )
+          periodsBySource.set( source, periods )
         } catch ( e ) {
           console.error( `  ${source} failed: ${e}` )
           Sentry.captureException( e )
@@ -1605,6 +1621,27 @@ const updateMeetsResults = async ( options: MeetsResultsOptions ) => {
             await insertStaging.run( { ...row, sourceYear: row.sourceYear ?? null, sourceUrl: row.sourceUrl ?? null } )
           }
           console.log( `  Saved ${rows.length} ${source} rows to QualifyingTimesStaging` )
+        }
+
+        const deletePeriodsStaging = prepareStatement<{ source: string, year: number }>(
+          conn,
+          "DELETE FROM QualifyingPeriodsStaging WHERE source = :source AND year = :year"
+        )
+        const insertPeriodsStaging = prepareStatement<Record<string, unknown>>( conn, insertQualifyingPeriodsStagingSql )
+
+        for ( const [ source, periods ] of periodsBySource ) {
+          await deletePeriodsStaging.run( { source, year } )
+          for ( const period of periods ) {
+            await insertPeriodsStaging.run( {
+              ...period,
+              qualifyingStart: period.qualifyingStart ?? null,
+              qualifyingEnd: period.qualifyingEnd ?? null,
+              lastRaceDate: period.lastRaceDate ?? null,
+              notes: period.notes ?? null,
+              sourceUrl: period.sourceUrl ?? null,
+            } )
+          }
+          if ( periods.length ) console.log( `  Saved ${periods.length} ${source} qualifying periods to QualifyingPeriodsStaging` )
         }
       } )
 

@@ -1,6 +1,6 @@
 import * as cheerio from "cheerio"
 import { fetchPage, secondsToTime } from "lib"
-import type { QualifyingStagingRow, StrokeType } from "lib"
+import type { QualifyingStagingRow, QualifyingPeriodStagingRow, StrokeType } from "lib"
 import { normalizeAreaCode } from "./normalize.mjs"
 
 const BASE_URL = "https://swimturn.com"
@@ -147,7 +147,12 @@ const parseLeagueJson = (
   return rows
 }
 
-export const fetchSwimturn = async ( { year, force, scope }: SwimturnOptions ): Promise<QualifyingStagingRow[]> => {
+export interface SwimturnResult {
+  rows: QualifyingStagingRow[]
+  periods: QualifyingPeriodStagingRow[]
+}
+
+export const fetchSwimturn = async ( { year, force, scope }: SwimturnOptions ): Promise<SwimturnResult> => {
   const discovered = new Map<number, DiscoveredLeague>()
 
   const hubPage = await fetchPage( {
@@ -225,5 +230,7 @@ export const fetchSwimturn = async ( { year, force, scope }: SwimturnOptions ): 
   }
 
   console.log( `  swimturn.com: parsed ${rows.length} rows from ${discovered.size - skipped}/${discovered.size} leagues` )
-  return rows
+  // swimturn.com's league API/hub pages don't publish qualifying-window or
+  // championship-date information anywhere — periods are swimming-times.com only.
+  return { rows, periods: [] }
 }
