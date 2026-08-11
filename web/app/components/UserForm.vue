@@ -345,6 +345,8 @@
 
   const { createTask } = useTasks()
   const addSwimmersQueued = ref( false )
+  const addSwimmersError = ref( false )
+  const addSwimmersErrorText = ref( "" )
   const addClubSwimmers = async () => {
     if ( userClubId.value ) {
       try {
@@ -364,6 +366,8 @@
         addSwimmersQueued.value = true
       } catch ( error ) {
         console.error( "Error", error )
+        addSwimmersErrorText.value = `Unable to add swimmers to account '${( error as FetchError ).message}'`
+        addSwimmersError.value = true
         // showAlert( `Unable to add swimmers to account '${( error as FetchError ).message}'`, "error" )
         await createNotification( {
           notificationType: "error",
@@ -970,6 +974,11 @@
     v-model="addSwimmersQueued"
     title="Swimmers queued!"
     text="Club swimmers are being added in the background. Check the Updates or Tasks pages for progress."
+  />
+  <UI-ErrorNotification
+    v-model="addSwimmersError"
+    title="Unable to queue swimmers"
+    :text="addSwimmersErrorText"
   />
 </template>
 
