@@ -1,5 +1,7 @@
 import { mkdir, writeFile } from "fs/promises"
 import { dirname } from "path"
+import { prepareStatement } from "lib"
+import type { Pool } from "lib"
 import type { QualifyingReportData, TimeDiffResult, PeriodDiffResult, TimeDiffRow, PeriodDiffRow } from "./reportData.mjs"
 
 const escapeHtml = ( value: unknown ): string =>
@@ -336,4 +338,28 @@ export const renderQualifyingHtmlReport = ( data: QualifyingReportData ): string
 export const writeQualifyingHtmlReport = async ( data: QualifyingReportData, outputPath: string ): Promise<void> => {
   await mkdir( dirname( outputPath ), { recursive: true } )
   await writeFile( outputPath, renderQualifyingHtmlReport( data ), "utf8" )
+}
+
+const DEFAULT_RETAIN_COUNT = 30
+
+// Saves the rendered report into QualifyingReports so the admin web UI can list
+// and view it — the CLI and web app don't share a filesystem, so the DB is the
+// only channel between a periodic/cron fetch run and the browser. Each report is
+// several MB of embedded HTML/JSON, so old ones are pruned to keep the table bounded.
+export const saveQualifyingHtmlReport = async ( pool: Pool, data: QualifyingReportData, retainCount = DEFAULT_RETAIN_COUNT ): Promise<number> => {
+  const insert = prepareStatement<{ year: number, sources: string, html: string }>(
+    pool,
+    "INSERT INTO QualifyingReports (year, sources, html) VALUES (:year, :sources, :html)"
+  )
+  const { insertId } = await insert.run( { year: data.year, sources: data.sources.join( "," ), html: renderQualifyingHtmlReport( data ) } )
+
+  const prune = prepareStatement<{ retainCount: number }>(
+    pool,
+    `DELETE FROM QualifyingReports WHERE id NOT IN (
+      SELECT id FROM ( SELECT id FROM QualifyingReports ORDER BY generatedAt DESC LIMIT :retainCount ) AS keep
+    )`
+  )
+  await prune.run( { retainCount } )
+
+  return insertId
 }

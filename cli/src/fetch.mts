@@ -79,7 +79,7 @@ import type { User } from "lucia"
 import { fetchSwimmingTimes } from "./qualifying/swimming-times.mjs"
 import { fetchSwimturn } from "./qualifying/swimturn.mjs"
 import { buildQualifyingReportData, printQualifyingReportData } from "./qualifying/report.mjs"
-import { writeQualifyingHtmlReport } from "./qualifying/htmlReport.mjs"
+import { writeQualifyingHtmlReport, saveQualifyingHtmlReport } from "./qualifying/htmlReport.mjs"
 
 const insertIndividualSql =
   `INSERT INTO Individual (
@@ -1589,6 +1589,7 @@ const updateMeetsResults = async ( options: MeetsResultsOptions ) => {
     .addOption( new Option( "-m, --mode <mode>", "fetching strategy versus caching" ).choices( [ "force", "lazy" ] ).default( "lazy" ) )
     .option( "--no-report", "skip the console diff report (staging only)" )
     .option( "--html-report [path]", "also write an HTML version of the diff report to disk (defaults to reports/qualifying-<year>-<timestamp>.html)" )
+    .option( "--save-report", "also save the HTML report to the QualifyingReports DB table, so it's visible in the admin web UI (keeps the most recent 30)" )
     .action( async ( options ) => {
       const year = parseInt( options.year, 10 )
       const force = options.mode === "force"
@@ -1650,8 +1651,9 @@ const updateMeetsResults = async ( options: MeetsResultsOptions ) => {
 
       const wantsConsoleReport = options.report !== false
       const wantsHtmlReport = !!options.htmlReport
+      const wantsSaveReport = !!options.saveReport
 
-      if ( ( wantsConsoleReport || wantsHtmlReport ) && rowsBySource.size ) {
+      if ( ( wantsConsoleReport || wantsHtmlReport || wantsSaveReport ) && rowsBySource.size ) {
         const data = await buildQualifyingReportData( await getPool(), year, [ ...rowsBySource.keys() ] )
         if ( wantsConsoleReport ) printQualifyingReportData( data )
         if ( wantsHtmlReport ) {
@@ -1661,6 +1663,10 @@ const updateMeetsResults = async ( options: MeetsResultsOptions ) => {
             : path.join( "reports", `qualifying-${year}-${timestamp}.html` )
           await writeQualifyingHtmlReport( data, outputPath )
           console.log( `\nWrote HTML report to ${outputPath}` )
+        }
+        if ( wantsSaveReport ) {
+          const id = await saveQualifyingHtmlReport( await getPool(), data )
+          console.log( `Saved report to QualifyingReports (id ${id})` )
         }
       }
     } )

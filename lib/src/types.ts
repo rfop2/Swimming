@@ -250,6 +250,17 @@ export interface QualifyingPeriodStagingRow extends Omit<QualifyingPeriodRow, "q
   sourceUrl?: string
 }
 
+export interface QualifyingReportRecord {
+  id: number
+  year: number
+  sources: string
+  generatedAt: string
+}
+
+export interface QualifyingReportWithHtml extends QualifyingReportRecord {
+  html: string
+}
+
 export interface ExtQualifyingPeriod extends QualifyingPeriodRow {
   qualifyingStarted: boolean
   qualifyingEnded: boolean

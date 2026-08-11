@@ -135,6 +135,7 @@
       { name: "Times", href: "/qualifying/times", condition: () => canAccess( "qualifyingView" ) },
       { name: "Matrix", href: "/qualifying/matrix", condition: () => user.value.role === "admin" },
       { name: "Import", href: "/qualifying/import", condition: () => user.value.role === "admin" || canAccess( "qualifyingImport" ) },
+      { name: "Source Reports", href: "/qualifying/reports", condition: () => user.value.role === "admin" },
     ] },
   ] )
 
