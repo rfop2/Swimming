@@ -198,15 +198,23 @@
 
   const turnstile = ref()
   const saveSuccess = ref( false )
+  const userCreatedSuccess = ref( false )
+  const saveError = ref( false )
+  const saveErrorText = ref( "" )
   const save = handleSubmit( async () => {
+    const wasNewUser = isNewUser.value
     try {
       submitErrors.length = 0
       await props.saveFn( values )
       resetForm( { values } )
-      saveSuccess.value = true
+      if ( wasNewUser ) userCreatedSuccess.value = true
+      else saveSuccess.value = true
     } catch ( error ) {
       console.error( "Error", error )
-      submitErrors[0] = ( error as FetchError ).message ?? null
+      const message = ( error as FetchError ).message ?? "Unable to save changes."
+      submitErrors[0] = message
+      saveErrorText.value = message
+      saveError.value = true
       turnstile.value?.reset()
     }
   } )
@@ -969,6 +977,16 @@
     v-model="saveSuccess"
     title="Successfully saved!"
     text="Account details have been updated."
+  />
+  <UI-SuccessNotification
+    v-model="userCreatedSuccess"
+    title="User created!"
+    text="The new user has been added."
+  />
+  <UI-ErrorNotification
+    v-model="saveError"
+    title="Unable to save"
+    :text="saveErrorText"
   />
   <UI-SuccessNotification
     v-model="addSwimmersQueued"
