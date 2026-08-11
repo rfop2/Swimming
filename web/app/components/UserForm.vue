@@ -344,6 +344,7 @@
   const showLookup = ref<boolean>( false )
 
   const { createTask } = useTasks()
+  const addSwimmersQueued = ref( false )
   const addClubSwimmers = async () => {
     if ( userClubId.value ) {
       try {
@@ -360,6 +361,7 @@
           notificationType: "info",
           notificationText: "Swimmers are being added to account, please check back shortly",
         } )
+        addSwimmersQueued.value = true
       } catch ( error ) {
         console.error( "Error", error )
         // showAlert( `Unable to add swimmers to account '${( error as FetchError ).message}'`, "error" )
@@ -963,6 +965,11 @@
     v-model="saveSuccess"
     title="Successfully saved!"
     text="Account details have been updated."
+  />
+  <UI-SuccessNotification
+    v-model="addSwimmersQueued"
+    title="Swimmers queued!"
+    text="Club swimmers are being added in the background. Check the Updates or Tasks pages for progress."
   />
 </template>
 
