@@ -9,6 +9,7 @@ Sentry.init( {
 
 import { format, formatISO, parse, sub } from "date-fns"
 import * as cheerio from "cheerio"
+import path from "path"
 
 // import { inspect } from "util"
 
@@ -77,7 +78,8 @@ import { addClubSwimmers } from "./lib.js"
 import type { User } from "lucia"
 import { fetchSwimmingTimes } from "./qualifying/swimming-times.mjs"
 import { fetchSwimturn } from "./qualifying/swimturn.mjs"
-import { printQualifyingDiffReport } from "./qualifying/report.mjs"
+import { buildQualifyingReportData, printQualifyingReportData } from "./qualifying/report.mjs"
+import { writeQualifyingHtmlReport } from "./qualifying/htmlReport.mjs"
 
 const insertIndividualSql =
   `INSERT INTO Individual (
@@ -1585,7 +1587,8 @@ const updateMeetsResults = async ( options: MeetsResultsOptions ) => {
     .addOption( new Option( "-y, --year <year>", "season year to scrape" ).default( String( new Date().getFullYear() + 1 ) ) )
     .addOption( new Option( "-s, --source <source...>", "limit to one or more sources" ).choices( qualifyingSources ) )
     .addOption( new Option( "-m, --mode <mode>", "fetching strategy versus caching" ).choices( [ "force", "lazy" ] ).default( "lazy" ) )
-    .option( "--no-report", "skip the diff report (staging only)" )
+    .option( "--no-report", "skip the console diff report (staging only)" )
+    .option( "--html-report [path]", "also write an HTML version of the diff report to disk (defaults to reports/qualifying-<year>-<timestamp>.html)" )
     .action( async ( options ) => {
       const year = parseInt( options.year, 10 )
       const force = options.mode === "force"
@@ -1645,8 +1648,20 @@ const updateMeetsResults = async ( options: MeetsResultsOptions ) => {
         }
       } )
 
-      if ( options.report !== false && rowsBySource.size ) {
-        await printQualifyingDiffReport( await getPool(), year, [ ...rowsBySource.keys() ] )
+      const wantsConsoleReport = options.report !== false
+      const wantsHtmlReport = !!options.htmlReport
+
+      if ( ( wantsConsoleReport || wantsHtmlReport ) && rowsBySource.size ) {
+        const data = await buildQualifyingReportData( await getPool(), year, [ ...rowsBySource.keys() ] )
+        if ( wantsConsoleReport ) printQualifyingReportData( data )
+        if ( wantsHtmlReport ) {
+          const timestamp = new Date().toISOString().replace( /[:.]/g, "-" )
+          const outputPath = typeof options.htmlReport === "string"
+            ? options.htmlReport
+            : path.join( "reports", `qualifying-${year}-${timestamp}.html` )
+          await writeQualifyingHtmlReport( data, outputPath )
+          console.log( `\nWrote HTML report to ${outputPath}` )
+        }
       }
     } )
 
