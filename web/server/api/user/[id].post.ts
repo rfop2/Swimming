@@ -42,7 +42,10 @@ export default defineEventHandler( async ( event ) => {
         status: 401
       } )
     }
-    await runTransaction( await getPool(), addUser, userData )
+    let newUserId: string | undefined
+    await runTransaction( await getPool(), async ( conn, data ) => {
+      newUserId = await addUser( conn, data )
+    }, userData )
     try {
       await sendEmail(
         userData,
@@ -74,6 +77,8 @@ export default defineEventHandler( async ( event ) => {
     } catch ( e ) {
       console.log( "Unable to send admin notification email", e )
     }
+
+    return { id: newUserId }
   } catch ( error ) {
     console.error( error )
     throw error

@@ -47,19 +47,22 @@
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const saveUser = async ( values: any ) => {
     if ( user.value?.id === "0" ) {
-      await $fetch( `/api/user/${user.value?.id}`, {
+      const created = await $fetch<{ id: string }>( `/api/user/${user.value?.id}`, {
         method: "POST",
         body: JSON.stringify( values ),
       } )
+      // The route still says "0" (the new-user placeholder) — the real id only
+      // exists now, so refetch with that instead of the stale placeholder.
+      user.value = created?.id ? await $fetch<User>( `/api/user/${created.id}` ) : null
     } else {
       await $fetch( `/api/user/${user.value?.id}`, {
         method: "PUT",
         body: JSON.stringify( values ),
       } )
+      user.value = await $fetch<User>(
+        `/api/user/${userId}`
+      )
     }
-    user.value = await $fetch<User>(
-      `/api/user/${userId}`
-    )
     // await refreshNuxtData()
     await refreshUserClubs()
     await refreshSwimmers()
