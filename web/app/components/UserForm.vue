@@ -198,15 +198,23 @@
 
   const turnstile = ref()
   const saveSuccess = ref( false )
+  const userCreatedSuccess = ref( false )
+  const saveError = ref( false )
+  const saveErrorText = ref( "" )
   const save = handleSubmit( async () => {
+    const wasNewUser = isNewUser.value
     try {
       submitErrors.length = 0
       await props.saveFn( values )
       resetForm( { values } )
-      saveSuccess.value = true
+      if ( wasNewUser ) userCreatedSuccess.value = true
+      else saveSuccess.value = true
     } catch ( error ) {
       console.error( "Error", error )
-      submitErrors[0] = ( error as FetchError ).message ?? null
+      const message = ( error as FetchError ).message ?? "Unable to save changes."
+      submitErrors[0] = message
+      saveErrorText.value = message
+      saveError.value = true
       turnstile.value?.reset()
     }
   } )
@@ -344,6 +352,9 @@
   const showLookup = ref<boolean>( false )
 
   const { createTask } = useTasks()
+  const addSwimmersQueued = ref( false )
+  const addSwimmersError = ref( false )
+  const addSwimmersErrorText = ref( "" )
   const addClubSwimmers = async () => {
     if ( userClubId.value ) {
       try {
@@ -360,8 +371,11 @@
           notificationType: "info",
           notificationText: "Swimmers are being added to account, please check back shortly",
         } )
+        addSwimmersQueued.value = true
       } catch ( error ) {
         console.error( "Error", error )
+        addSwimmersErrorText.value = `Unable to add swimmers to account '${( error as FetchError ).message}'`
+        addSwimmersError.value = true
         // showAlert( `Unable to add swimmers to account '${( error as FetchError ).message}'`, "error" )
         await createNotification( {
           notificationType: "error",
@@ -963,6 +977,26 @@
     v-model="saveSuccess"
     title="Successfully saved!"
     text="Account details have been updated."
+  />
+  <UI-SuccessNotification
+    v-model="userCreatedSuccess"
+    title="User created!"
+    text="The new user has been added."
+  />
+  <UI-ErrorNotification
+    v-model="saveError"
+    title="Unable to save"
+    :text="saveErrorText"
+  />
+  <UI-SuccessNotification
+    v-model="addSwimmersQueued"
+    title="Swimmers queued!"
+    text="Club swimmers are being added in the background. Check the Updates or Tasks pages for progress."
+  />
+  <UI-ErrorNotification
+    v-model="addSwimmersError"
+    title="Unable to queue swimmers"
+    :text="addSwimmersErrorText"
   />
 </template>
 

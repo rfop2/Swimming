@@ -238,6 +238,8 @@ export const addUser = async ( conn: Pool | PoolConnection, userData: UserData )
 
   await updateUserSwimmers( conn, userId, userData.swimmers )
   await updateUserClubs( conn, userId, userData.clubs )
+
+  return userId
 }
 
 const updateUserPasswordSql = "UPDATE User SET password_hash = :passwordHash WHERE id = :userId"
