@@ -1,12 +1,13 @@
 import { format } from "date-fns"
+import { toValue, type MaybeRefOrGetter } from "vue"
 import type { ExtSwimmer } from "lib"
 
-export const useSwimmers = ( userId?: string ) => {
-  const swimmers = useState<ExtSwimmer[]>( `${userId ?? "0"}:swimmers`, () => [] )
+export const useSwimmers = ( userId?: MaybeRefOrGetter<string | undefined> ) => {
+  const swimmers = useState<ExtSwimmer[]>( `${toValue( userId ) ?? "0"}:swimmers`, () => [] )
   const requestFetch = useRequestFetch()
 
   const fetchSwimmers = async (): Promise<ExtSwimmer[]> => {
-    const data = await requestFetch<ExtSwimmer[]>( `/api/swimmers/${userId ?? ""}` )
+    const data = await requestFetch<ExtSwimmer[]>( `/api/swimmers/${toValue( userId ) ?? ""}` )
     return data
       .map( s => ( {
         ...s,
@@ -22,7 +23,13 @@ export const useSwimmers = ( userId?: string ) => {
   }
 
   // ✅ This actually produces serialized data in the SSR payload
-  const { data, pending, error, refresh } = useAsyncData( `swimmers-${userId ?? "0"}`, fetchSwimmers, { default: () => [] } )
+  // watch re-fetches whenever a reactive userId changes (e.g. navigating between
+  // different users' pages, which Nuxt doesn't remount by default).
+  const { data, pending, error, refresh } = useAsyncData(
+    `swimmers-${toValue( userId ) ?? "0"}`,
+    fetchSwimmers,
+    { default: () => [], watch: [ () => toValue( userId ) ] }
+  )
 
   // ✅ Keep global reactive state in sync with SSR data
   watchEffect( () => {
@@ -33,7 +40,7 @@ export const useSwimmers = ( userId?: string ) => {
 
   const clear = () => {
     swimmers.value = []
-    clearNuxtData( `swimmers-${userId}` )
+    clearNuxtData( `swimmers-${toValue( userId ) ?? "0"}` )
   }
 
   return {

@@ -1,15 +1,22 @@
+import { toValue, type MaybeRefOrGetter } from "vue"
 import type { UserClub } from "lib"
 
-export const useUserClubs = ( userId?: string ) => {
-  const userClubs = useState<UserClub[]>( `${userId ?? "0"}:userClubs`, () => [] )
+export const useUserClubs = ( userId?: MaybeRefOrGetter<string | undefined> ) => {
+  const userClubs = useState<UserClub[]>( `${toValue( userId ) ?? "0"}:userClubs`, () => [] )
 
   const fetchUserClubs = async (): Promise<UserClub[]> => {
-    const data = await $fetch<UserClub[]>( `/api/userclubs/${userId ?? ""}` )
+    const data = await $fetch<UserClub[]>( `/api/userclubs/${toValue( userId ) ?? ""}` )
     return data
   }
 
   // ✅ This actually produces serialized data in the SSR payload
-  const { data, pending, error, refresh } = useAsyncData( `userclubs-${userId ?? "0"}`, fetchUserClubs, { default: () => [] } )
+  // watch re-fetches whenever a reactive userId changes (e.g. navigating between
+  // different users' pages, which Nuxt doesn't remount by default) — see useSwimmers.ts.
+  const { data, pending, error, refresh } = useAsyncData(
+    `userclubs-${toValue( userId ) ?? "0"}`,
+    fetchUserClubs,
+    { default: () => [], watch: [ () => toValue( userId ) ] }
+  )
 
   // ✅ Keep global reactive state in sync with SSR data
   watchEffect( () => {
@@ -60,7 +67,7 @@ export const useUserClubs = ( userId?: string ) => {
   // --- Clear everything ---
   const clear = () => {
     userClubs.value = []
-    clearNuxtData( `userclubs-${userId}` )
+    clearNuxtData( `userclubs-${toValue( userId ) ?? "0"}` )
   }
 
   return {
