@@ -51,6 +51,7 @@ export const importLayoutCatalog: ImportLayoutMetadata[] = [
   { id: "layout19", name: "Wiltshire County 2027", shortName: "Wiltshire 2027", description: "Female and open/male consideration times arranged by age", fileType: "xlsx", exampleYear: 2027, supportedYears: [ 2027 ], areaCode: "WLTW", areaLabel: "Wiltshire", defaultCourse: "sc" },
   { id: "layout20", name: "Hertfordshire County", shortName: "Hertfordshire", description: "Open and female qualifying-time columns by age", fileType: "pdf", exampleYear: 2027, supportedYears: [ 2027 ], areaCode: "HRTT", areaLabel: "Hertfordshire" },
   { id: "layout21", name: "Northamptonshire County", shortName: "Northamptonshire", description: "Open/male and female 25m qualifying times", fileType: "pdf", exampleYear: 2027, supportedYears: [ 2027 ], areaCode: "NHPA", areaLabel: "Northamptonshire", defaultCourse: "sc" },
+  { id: "layout22", name: "Lancashire County", shortName: "Lancashire", description: "Open/male and female short-course consideration times", fileType: "pdf", exampleYear: 2027, supportedYears: [ 2027 ], areaCode: "LNCN", areaLabel: "Lancashire", defaultCourse: "sc" },
   { id: "xlsx", name: "Standard spreadsheet", shortName: "Spreadsheet", description: "Standard XLSX import format", fileType: "xlsx", exampleYear: 2027, supportedYears: [ 2025, 2026, 2027 ], areaCode: null, areaLabel: "All areas" },
 ]
 
