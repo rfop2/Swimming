@@ -1,14 +1,50 @@
 [
   {
-    "isoDate": "2026-08-11",
-    "niceDate": "11 August 2026",
-    "diff": "15.11.0..",
-    "href": "https://bitbucket.org/swimracing/swimming/compare/15.12.0..15.11.0",
+    "isoDate": "2026-08-18",
+    "niceDate": "18 August 2026",
+    "diff": "15.12.0..",
+    "href": "https://bitbucket.org/swimracing/swimming/compare/15.13.0..15.12.0",
     "major": false,
     "minor": false,
     "tag": null,
+    "title": "15.13.0",
+    "date": "2026-08-18T13:29:46.535Z",
+    "summary": null,
+    "commits": [],
+    "merges": [
+      {
+        "id": "45",
+        "message": "Lacanshire 2027",
+        "href": "https://bitbucket.org/swimracing/swimming/pull-requests/45",
+        "author": "Rodrigo Ferreira",
+        "commit": {
+          "hash": "0dddaab257dbb48ed82557e26a12e8b35e13057b",
+          "shorthash": "0dddaab",
+          "author": "Rodrigo Ferreira",
+          "email": "rf.oliveirapaula@gmail.com",
+          "date": "2026-08-18T13:17:38.000Z",
+          "niceDate": "18 August 2026",
+          "subject": "Merged in Lancashire-2027 (pull request #45)",
+          "message": "Merged in Lancashire-2027 (pull request #45)\n\nLacanshire 2027",
+          "fixes": null,
+          "href": "https://bitbucket.org/swimracing/swimming/commits/0dddaab257dbb48ed82557e26a12e8b35e13057b",
+          "breaking": false
+        }
+      }
+    ],
+    "fixes": []
+  },
+  {
+    "isoDate": "2026-08-11",
+    "niceDate": "11 August 2026",
+    "diff": "15.11.0..15.12.0",
+    "href": "https://bitbucket.org/swimracing/swimming/compare/15.12.0..15.11.0",
+    "major": false,
+    "minor": true,
+    "tag": "15.12.0",
+    "date": "2026-08-11",
     "title": "15.12.0",
-    "date": "2026-08-11T16:21:21.516Z",
+    "version": "15.12.0",
     "summary": null,
     "commits": [
       {
@@ -808,94 +844,6 @@
       }
     ],
     "merges": [],
-    "fixes": []
-  },
-  {
-    "isoDate": "2026-06-18",
-    "niceDate": "18 June 2026",
-    "diff": "15.2.1..15.3.0",
-    "href": "https://bitbucket.org/swimracing/swimming/compare/15.3.0..15.2.1",
-    "major": false,
-    "minor": true,
-    "tag": "15.3.0",
-    "date": "2026-06-18",
-    "title": "15.3.0",
-    "version": "15.3.0",
-    "summary": null,
-    "commits": [
-      {
-        "hash": "11115b85860388f8b071a6a67bc4dd838510214e",
-        "shorthash": "11115b8",
-        "author": "rodrigo ferreira",
-        "email": "rf.oliveirapaula@gmail.com",
-        "date": "2026-06-17T19:15:44.000Z",
-        "niceDate": "17 June 2026",
-        "subject": "add breath count tracking to video timer + Video controls card on top of Controls with steps",
-        "message": "add breath count tracking to video timer + Video controls card on top of Controls with steps",
-        "fixes": null,
-        "href": "https://bitbucket.org/swimracing/swimming/commits/11115b85860388f8b071a6a67bc4dd838510214e",
-        "breaking": false,
-        "files": 12,
-        "insertions": 769,
-        "deletions": 26,
-        "merge": null
-      },
-      {
-        "hash": "da9b5d0dbb7c3ac53f5ed731eb91b759dcfc3a19",
-        "shorthash": "da9b5d0",
-        "author": "rodrigo ferreira",
-        "email": "rf.oliveirapaula@gmail.com",
-        "date": "2026-06-17T19:37:10.000Z",
-        "niceDate": "17 June 2026",
-        "subject": "feature compare swimmer",
-        "message": "feature compare swimmer",
-        "fixes": null,
-        "href": "https://bitbucket.org/swimracing/swimming/commits/da9b5d0dbb7c3ac53f5ed731eb91b759dcfc3a19",
-        "breaking": false,
-        "files": 2,
-        "insertions": 774,
-        "deletions": 0,
-        "merge": null
-      },
-      {
-        "hash": "5df53631f4ed56a2cbef7111817b492662202016",
-        "shorthash": "5df5363",
-        "author": "rodrigo ferreira",
-        "email": "rf.oliveirapaula@gmail.com",
-        "date": "2026-06-17T17:16:38.000Z",
-        "niceDate": "17 June 2026",
-        "subject": "Split video timer official time input",
-        "message": "Split video timer official time input",
-        "fixes": null,
-        "href": "https://bitbucket.org/swimracing/swimming/commits/5df53631f4ed56a2cbef7111817b492662202016",
-        "breaking": false,
-        "files": 4,
-        "insertions": 162,
-        "deletions": 32,
-        "merge": null
-      }
-    ],
-    "merges": [
-      {
-        "id": "38",
-        "message": "Improv video timer feature",
-        "href": "https://bitbucket.org/swimracing/swimming/pull-requests/38",
-        "author": "Rodrigo Ferreira",
-        "commit": {
-          "hash": "25f157fec94c19063d64e4698c9b9df2ed8b0d9e",
-          "shorthash": "25f157f",
-          "author": "Rodrigo Ferreira",
-          "email": "rf.oliveirapaula@gmail.com",
-          "date": "2026-06-18T13:02:00.000Z",
-          "niceDate": "18 June 2026",
-          "subject": "Merged in Improv-video-timer-feature (pull request #38)",
-          "message": "Merged in Improv-video-timer-feature (pull request #38)\n\nImprov video timer feature",
-          "fixes": null,
-          "href": "https://bitbucket.org/swimracing/swimming/commits/25f157fec94c19063d64e4698c9b9df2ed8b0d9e",
-          "breaking": false
-        }
-      }
-    ],
     "fixes": []
   }
 ]
