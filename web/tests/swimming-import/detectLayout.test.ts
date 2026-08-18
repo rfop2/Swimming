@@ -140,4 +140,23 @@ describe( "detectImportLayout", () => {
       dates: { qualifyingStart: "2026-01-01" },
     } )
   } )
+
+  it( "detects Lancashire and its qualifying window", () => {
+    const result = detectImportLayout(
+      "Lancashire County Water Polo & Swimming Association Age Groups and Championships 2027 Consideration Times Short Course All times must have been achieved between 9th February 2026 and13th January 2027",
+      "Lancashire County Times 2027.pdf",
+      "pdf"
+    )
+
+    expect( result ).toMatchObject( {
+      suggestedLayoutId: "layout22",
+      suggestedLayoutName: "Lancashire County",
+      confidence: "high",
+      detectedYear: 2027,
+      dates: {
+        qualifyingStart: "2026-02-09",
+        qualifyingEnd: "2027-01-13",
+      },
+    } )
+  } )
 } )
