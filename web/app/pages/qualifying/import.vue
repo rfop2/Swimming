@@ -24,6 +24,7 @@
   import TableWarwickshire from "~/components/TableWarwickshire.vue"
   import TableHertfordshire from "~/components/TableHertfordshire.vue"
   import TableNorthamptonshire from "~/components/TableNorthamptonshire.vue"
+  import TableLancashire from "~/components/TableLancashire.vue"
   import TableSussexCounty from "~/components/TableSussexCounty.vue"
   import TableWCSA from "~/components/TableWCSA.vue"
   import TableWiltshire from "~/components/TableWiltshire.vue"
@@ -70,6 +71,7 @@
     layout19: TableWiltshire2027,
     layout20: TableHertfordshire,
     layout21: TableNorthamptonshire,
+    layout22: TableLancashire,
     xlsx: TableXlsx,
   }
 

@@ -28,6 +28,7 @@ const detectionRules: Record<string, DetectionRule[]> = {
   layout19: [ { pattern: /wiltshire (?:county qualification times|swimming championship)/, weight: 0.8 }, { pattern: /age on 31\/12\/27/, weight: 0.1 }, { pattern: /all times are 25m/, weight: 0.1 } ],
   layout20: [ { pattern: /swim england hertfordshire/, weight: 0.65 }, { pattern: /county championships 2027/, weight: 0.2 }, { pattern: /qualifying and consideration times/, weight: 0.15 } ],
   layout21: [ { pattern: /northamptonshire asa\s*-\s*county championships/, weight: 0.8 }, { pattern: /2027 qualifying times/, weight: 0.15 }, { pattern: /all times displayed above are in 25m format/, weight: 0.05 } ],
+  layout22: [ { pattern: /lancashire county water polo\s*&\s*swimming association/, weight: 0.75 }, { pattern: /age groups and championships 2027/, weight: 0.15 }, { pattern: /consideration times short course/, weight: 0.1 } ],
 }
 
 const monthNumbers: Record<string, string> = {
@@ -81,6 +82,17 @@ function extractSwumBetweenRange( source: string ) {
   }
 }
 
+function extractAchievedBetweenRange( source: string ) {
+  const textualDate = "(\\d{1,2})(?:st|nd|rd|th)?\\s+(january|february|march|april|may|june|july|august|september|october|november|december)\\s+(20\\d{2})"
+  const match = new RegExp( `times? must have been achieved between\\s+${textualDate}\\s+and\\s*${textualDate}`, "i" ).exec( source )
+  if ( !match ) return null
+
+  return {
+    start: formatDetectedDate( match[1], match[2], match[3] ),
+    end: formatDetectedDate( match[4], match[5], match[6] ),
+  }
+}
+
 function extractQualifyingWindow( source: string ) {
   const match = /qualifying window\s*:\s*(\d{1,2})(?:st|nd|rd|th)?\s+(january|february|march|april|may|june|july|august|september|october|november|december)\s*[-â€“â€”]\s*(\d{1,2})(?:st|nd|rd|th)?\s+(january|february|march|april|may|june|july|august|september|october|november|december)\s+(20\d{2})/i.exec( source )
   if ( !match ) return null
@@ -92,7 +104,7 @@ function extractQualifyingWindow( source: string ) {
 
 export function detectImportLayout( text: string, fileName: string, fileType: ImportLayoutFileType ): ImportLayoutDetection {
   const source = normalize( `${fileName} ${text}` )
-  const achievementRange = extractAchievementRange( source ) ?? extractSwumBetweenRange( source ) ?? extractQualifyingWindow( source )
+  const achievementRange = extractAchievementRange( source ) ?? extractSwumBetweenRange( source ) ?? extractAchievedBetweenRange( source ) ?? extractQualifyingWindow( source )
   const detectedYearMatch = source.match( /\b(20(?:2\d|3\d))\b/ )
   const detectedYear = detectedYearMatch ? Number( detectedYearMatch[1] ) : null
 
