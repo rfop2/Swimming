@@ -1,7 +1,6 @@
 <script setup lang="ts">
   import classNames from "classnames"
-  import { getYear } from "date-fns"
-  import type { IndividualRow, QualifyingRow } from "lib"
+  import type { IndividualRow, QualifyingRow, ExtQualifyingPeriod } from "lib"
   import { COURSES, strokes, secondsToTime, getSwimmerAgeGroup, convertTime, getSwimmerAge } from "lib"
 
   import type { InternalApi } from "nitropack"
@@ -95,9 +94,45 @@
     "/api/personal/",
   )
 
-  // type QualifyingApiResponse = InternalApi["/api/qualifying"]["get"]
-  const { data: qualifyingInfo } = await useFetch(
+  // Qualifying periods is a small table (one row per year/scope/area/type) — fetched
+  // in full so we know which years currently have an active or eligible period.
+  type PeriodsApiResponse = InternalApi["/api/qualifying/dates"]["get"]
+  const { data: periods } = await useFetch<PeriodsApiResponse>(
+    "/api/qualifying/dates",
+  )
+
+  const periodsByKey = computed( () => {
+    const map = new Map<string, ExtQualifyingPeriod>()
+    for ( const period of periods.value ?? [] ) {
+      map.set( `${period.year}|${period.scope}|${period.area}|${period.type}`, period )
+    }
+    return map
+  } )
+
+  // Only years with at least one active/eligible period are ever relevant — narrows
+  // the times fetch well below "every qualifying time ever recorded".
+  const relevantYears = computed( () => {
+    const years = new Set<number>()
+    for ( const period of periods.value ?? [] ) {
+      if ( period.qualifyingActive || period.eligibilityActive ) years.add( period.year )
+    }
+    return [ ...years ]
+  } )
+
+  type QualifyingApiResponse = InternalApi["/api/qualifying/times"]["get"]
+  const { data: qualifyingInfo } = await useFetch<QualifyingApiResponse>(
     "/api/qualifying/times",
+    {
+      query: () => ( {
+        stroke: selections.stroke,
+        // "0" is never a real qualifying year — used when nothing is currently
+        // active/eligible, so the query deliberately matches no rows rather than
+        // falling back to "no year filter" (which would mean "every year").
+        year: relevantYears.value.length ? relevantYears.value.join( "," ) : "0",
+      } ),
+      watch: [ () => selections.stroke ],
+      default: () => [],
+    }
   )
 
   const filteredRecords = computed( () => ( records.value || [] ).filter( record => record.stroke === selections.stroke && swimmersMap.value[record.swimmer] ) )
@@ -110,7 +145,6 @@
   }
 
   const groupedRecords = computed( () => {
-    const currentYear = getYear( new Date() )
     const map = new Map<string, Map<string, Map<string, QualifiedRow | null>>>()
     for ( const row of filteredRecords.value ) {
       if ( !map.has( row.swimmer ) ) {
@@ -122,8 +156,6 @@
       const swimmer = swimmersMap.value[row.swimmer]!
       const swimmerAge = getSwimmerAgeGroup( swimmer )
       const baseQualifyingTimes = ( qualifyingInfo.value ?? [] ).filter( q => {
-        if ( q.year !== currentYear )
-          return false
         if ( q.stroke !== row.stroke )
           return false
         if ( q.distance !== row.distance )
@@ -135,6 +167,12 @@
         if ( q.scope === "county" && q.area !== swimmer.county )
           return false
         if ( q.scope === "regional" && q.area !== swimmer.region )
+          return false
+        // Only count this as a real qualifying standard if its period is
+        // currently active or still in its post-qualifying eligibility window —
+        // otherwise a swimmer would show as "qualified" for a closed period.
+        const period = periodsByKey.value.get( `${q.year}|${q.scope}|${q.area}|${q.type}` )
+        if ( !period || !( period.qualifyingActive || period.eligibilityActive ) )
           return false
         return true
       } ).map( ( q ) => ( {
