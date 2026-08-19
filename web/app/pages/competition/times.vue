@@ -119,18 +119,22 @@
     return [ ...years ]
   } )
 
+  // useFetch only invokes a getter passed as `query` when it's a computed ref —
+  // a plain arrow function is stored as-is and passed straight through to $fetch,
+  // silently sending no query string at all.
+  const qualifyingQuery = computed( () => ( {
+    stroke: selections.stroke,
+    // "0" is never a real qualifying year — used when nothing is currently
+    // active/eligible, so the query deliberately matches no rows rather than
+    // falling back to "no year filter" (which would mean "every year").
+    year: relevantYears.value.length ? relevantYears.value.join( "," ) : "0",
+  } ) )
+
   type QualifyingApiResponse = InternalApi["/api/qualifying/times"]["get"]
   const { data: qualifyingInfo } = await useFetch<QualifyingApiResponse>(
     "/api/qualifying/times",
     {
-      query: () => ( {
-        stroke: selections.stroke,
-        // "0" is never a real qualifying year — used when nothing is currently
-        // active/eligible, so the query deliberately matches no rows rather than
-        // falling back to "no year filter" (which would mean "every year").
-        year: relevantYears.value.length ? relevantYears.value.join( "," ) : "0",
-      } ),
-      watch: [ () => selections.stroke ],
+      query: qualifyingQuery,
       default: () => [],
     }
   )
