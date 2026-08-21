@@ -49,6 +49,9 @@
   type SessionDetail = {
     id: string
     createdAt: string
+    isOwner: boolean
+    owner: { name: string, email: string } | null
+    shareId: string | null
     notes: string | null
     startOffsetMs: number | null
     resultDate: string | null
@@ -795,6 +798,28 @@
     }
   }
 
+  const unsharing = ref( false )
+  const unshareError = ref<string | null>( null )
+
+  const unshareSession = async () => {
+    if ( !session.value?.shareId || unsharing.value ) return
+
+    unshareError.value = null
+    unsharing.value = true
+
+    try {
+      await $fetch( `/api/competition/video-timer-session-shares/${session.value.shareId}`, {
+        method: "DELETE",
+      } )
+
+      await navigateTo( "/competition/video-timer/sessions/shared" )
+    } catch ( e: unknown ) {
+      unshareError.value = getErrorMessage( e )
+    } finally {
+      unsharing.value = false
+    }
+  }
+
   const openResultModal = () => {
     resultModalOpen.value = true
   }
@@ -829,7 +854,7 @@
             </NuxtLink>
 
             <NuxtLink
-              v-if="session"
+              v-if="session && session.isOwner"
               class="h-10 px-4 rounded-md bg-blue-600 text-white flex items-center"
               :to="`/competition/video-timer/sessions/${session.id}/edit`"
             >
@@ -873,23 +898,44 @@
                     </NuxtLink>
                   </MenuItem>
 
-                  <div class="my-1 border-t border-gray-200" />
+                  <template v-if="session.isOwner">
+                    <div class="my-1 border-t border-gray-200" />
 
-                  <MenuItem v-slot="{ active }">
-                    <button
-                      class="flex w-full items-center rounded-lg px-3 py-2 text-sm"
-                      :class="active ? 'bg-red-50 text-red-700' : 'text-red-600'"
-                      type="button"
-                      :disabled="deleting"
-                      @click="deleteSession"
-                    >
-                      {{ deleting ? "Deleting…" : "Delete session" }}
-                    </button>
-                  </MenuItem>
+                    <MenuItem v-slot="{ active }">
+                      <button
+                        class="flex w-full items-center rounded-lg px-3 py-2 text-sm"
+                        :class="active ? 'bg-red-50 text-red-700' : 'text-red-600'"
+                        type="button"
+                        :disabled="deleting"
+                        @click="deleteSession"
+                      >
+                        {{ deleting ? "Deleting…" : "Delete session" }}
+                      </button>
+                    </MenuItem>
+                  </template>
                 </MenuItems>
               </transition>
             </Menu>
           </div>
+        </div>
+
+        <div v-if="session && !session.isOwner" class="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 flex items-center justify-between gap-3">
+          <div class="text-sm text-amber-900">
+            Shared by <span class="font-medium">{{ session.owner?.name || session.owner?.email }}</span> · read-only
+          </div>
+
+          <button
+            type="button"
+            class="text-sm font-medium text-amber-900 underline disabled:no-underline disabled:text-amber-400"
+            :disabled="unsharing"
+            @click="unshareSession"
+          >
+            {{ unsharing ? "Removing…" : "Unshare" }}
+          </button>
+        </div>
+
+        <div v-if="unshareError" class="mt-4 text-sm text-red-600">
+          {{ unshareError }}
         </div>
 
         <div v-if="deleteError" class="mt-4 text-sm text-red-600">
@@ -934,6 +980,7 @@
                   </span>
 
                   <button
+                    v-if="session.isOwner"
                     class="font-medium text-blue-600 hover:text-blue-700"
                     type="button"
                     @click="openResultModal"

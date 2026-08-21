@@ -34,6 +34,7 @@
   type SessionDetail = {
     id: string
     createdAt: string
+    isOwner: boolean
     notes: string | null
     startOffsetMs: number | null
     selections: {
@@ -196,6 +197,11 @@
     () => data.value,
     value => {
       if ( !value ) return
+
+      if ( !value.isOwner ) {
+        navigateTo( `/competition/video-timer/sessions/${sessionId.value}` )
+        return
+      }
 
       selections.course = value.selections.course
       selections.stroke = value.selections.stroke

@@ -12,6 +12,7 @@ import { createError, defineEventHandler, getRouterParam } from "h3"
 
 type SessionRow = {
   id: string
+  userId: string
   created: string
   notes: string | null
   course: string
@@ -33,6 +34,10 @@ type SessionRow = {
   mimeType: string
   size: number
   durationMs: number | null
+  ownerFirstName: string
+  ownerLastName: string
+  ownerEmail: string
+  shareId: string | null
 }
 
 type MarkerRow = {
@@ -104,6 +109,7 @@ export default defineEventHandler( async ( event ) => {
       `
       SELECT
         s.id as id,
+        s.userId as userId,
         s.created as created,
         s.notes as notes,
         s.course as course,
@@ -124,17 +130,23 @@ export default defineEventHandler( async ( event ) => {
         v.originalName as originalName,
         v.mimeType as mimeType,
         v.size as size,
-        v.durationMs as durationMs
+        v.durationMs as durationMs,
+        owner.firstName as ownerFirstName,
+        owner.lastName as ownerLastName,
+        owner.username as ownerEmail,
+        sh.id as shareId
       FROM VideoTimerSessions s
       INNER JOIN VideoTimerVideos v ON v.id = s.videoId
+      INNER JOIN User owner ON owner.id = s.userId
       LEFT JOIN Swimmers sw ON sw.id = s.swimmerId
+      LEFT JOIN VideoTimerSessionShares sh ON sh.sessionId = s.id AND sh.sharedWithUserId = :userId
       LEFT JOIN Results r
         ON r.swimmer = s.resultSwimmer
         AND r.course = s.resultCourse
         AND r.stroke = s.resultStroke
         AND r.distance = s.resultDistance
         AND r.seq = s.resultSeq
-      WHERE s.id = :id AND s.userId = :userId
+      WHERE s.id = :id AND ( s.userId = :userId OR sh.id IS NOT NULL )
       LIMIT 1
       `
     )
@@ -324,9 +336,14 @@ export default defineEventHandler( async ( event ) => {
       turns,
     } )
 
+    const isOwner = row.userId === userId
+
     return {
       id: row.id,
       createdAt: row.created,
+      isOwner,
+      owner: isOwner ? null : { name: `${row.ownerFirstName} ${row.ownerLastName}`.trim(), email: row.ownerEmail },
+      shareId: row.shareId ?? null,
       notes: row.notes,
       startOffsetMs: row.startOffsetMs ?? null,
       resultDate: row.resultDate ?? null,

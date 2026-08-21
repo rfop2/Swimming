@@ -43,6 +43,18 @@ export type VideoTimerDraftStrokeMarker = Pick<VideoTimerStrokeMarkerRecord, "id
   id: string
 }
 
+export interface VideoTimerSessionShareRecord {
+  id: string
+  sessionId: string
+  ownerId: string
+  ownerName: string
+  ownerEmail: string
+  sharedWithUserId: string
+  sharedWithName: string
+  sharedWithEmail: string
+  createdAt: string
+}
+
 export type VideoTimerDraft = {
   finishVideoMs: number | null
   startOffsetMs: number | null
