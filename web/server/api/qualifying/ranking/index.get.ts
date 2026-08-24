@@ -1,0 +1,83 @@
+import type { QualifyingRow } from "lib"
+import { getPool, prepareStatement } from "lib"
+
+interface RankingQuery {
+  year?: string
+  gender?: string
+  age?: string
+  course?: string
+  stroke?: string
+  distance?: string
+}
+
+export interface QualifyingRankingRow extends QualifyingRow {
+  position: number
+  difference: number
+}
+
+export default defineEventHandler( async ( event ) => {
+  if ( !event.context.session || !event.context.user ) {
+    throw createError( {
+      status: 401
+    } )
+  }
+
+  const query = getQuery<RankingQuery>( event )
+  const year = Number( query.year )
+  const gender = query.gender === "male" || query.gender === "female" ? query.gender : ""
+
+  if ( !Number.isInteger( year ) || !query.age || !query.course || !query.stroke || !query.distance ) {
+    throw createError( {
+      status: 400,
+      message: "Year, age, course, stroke and distance are required."
+    } )
+  }
+
+  const params = {
+    year,
+    gender,
+    age: query.age,
+    course: query.course,
+    stroke: query.stroke,
+    distance: query.distance,
+  }
+
+  const selectTimes = prepareStatement<typeof params, QualifyingRow>(
+    await getPool(),
+    `
+      SELECT
+        *
+      FROM
+        QualifyingTimes
+      WHERE
+        year = :year AND
+        (:gender = '' OR gender = :gender) AND
+        age = :age AND
+        course = :course AND
+        stroke = :stroke AND
+        distance = :distance AND
+        time > 0
+      ORDER BY
+        gender,
+        time,
+        scope,
+        area,
+        type
+    ;`
+  )
+
+  const rows = await selectTimes.all( params )
+
+  return rows.map( ( row, _index, rankedRows ) => {
+    const genderRows = rankedRows.filter( candidate => candidate.gender === row.gender )
+    const fastest = genderRows[0]?.time ?? row.time
+    const firstMatchingTime = genderRows.findIndex( candidate => Number( candidate.time ) === Number( row.time ) )
+
+    return {
+      ...row,
+      time: Number( row.time ),
+      position: firstMatchingTime + 1,
+      difference: Number( row.time ) - Number( fastest ),
+    } satisfies QualifyingRankingRow
+  } )
+} )
