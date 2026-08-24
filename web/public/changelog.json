@@ -1,14 +1,50 @@
 [
   {
-    "isoDate": "2026-08-19",
-    "niceDate": "19 August 2026",
-    "diff": "15.13.0..",
-    "href": "https://bitbucket.org/swimracing/swimming/compare/15.14.0..15.13.0",
+    "isoDate": "2026-08-24",
+    "niceDate": "24 August 2026",
+    "diff": "15.14.0..",
+    "href": "https://bitbucket.org/swimracing/swimming/compare/15.15.0..15.14.0",
     "major": false,
     "minor": false,
     "tag": null,
+    "title": "15.15.0",
+    "date": "2026-08-24T17:00:39.588Z",
+    "summary": null,
+    "commits": [],
+    "merges": [
+      {
+        "id": "46",
+        "message": "ranking times",
+        "href": "https://bitbucket.org/swimracing/swimming/pull-requests/46",
+        "author": "Rodrigo Ferreira",
+        "commit": {
+          "hash": "51ba63b22ab2de43e9e3cf714ef9bf908f1d183e",
+          "shorthash": "51ba63b",
+          "author": "Rodrigo Ferreira",
+          "email": "rf.oliveirapaula@gmail.com",
+          "date": "2026-08-24T16:56:40.000Z",
+          "niceDate": "24 August 2026",
+          "subject": "Merged in ranking-times (pull request #46)",
+          "message": "Merged in ranking-times (pull request #46)\n\nranking times",
+          "fixes": null,
+          "href": "https://bitbucket.org/swimracing/swimming/commits/51ba63b22ab2de43e9e3cf714ef9bf908f1d183e",
+          "breaking": false
+        }
+      }
+    ],
+    "fixes": []
+  },
+  {
+    "isoDate": "2026-08-19",
+    "niceDate": "19 August 2026",
+    "diff": "15.13.0..15.14.0",
+    "href": "https://bitbucket.org/swimracing/swimming/compare/15.14.0..15.13.0",
+    "major": false,
+    "minor": true,
+    "tag": "15.14.0",
+    "date": "2026-08-19",
     "title": "15.14.0",
-    "date": "2026-08-19T16:55:31.075Z",
+    "version": "15.14.0",
     "summary": null,
     "commits": [
       {
@@ -773,128 +809,6 @@
         }
       }
     ],
-    "fixes": []
-  },
-  {
-    "isoDate": "2026-06-23",
-    "niceDate": "23 June 2026",
-    "diff": "15.4.0..15.5.0",
-    "href": "https://bitbucket.org/swimracing/swimming/compare/15.5.0..15.4.0",
-    "major": false,
-    "minor": true,
-    "tag": "15.5.0",
-    "date": "2026-06-23",
-    "title": "15.5.0",
-    "version": "15.5.0",
-    "summary": null,
-    "commits": [
-      {
-        "hash": "3c5e50296596094061a0a64ff8ef4c04df28d6a5",
-        "shorthash": "3c5e502",
-        "author": "rodrigo ferreira",
-        "email": "rf.oliveirapaula@gmail.com",
-        "date": "2026-06-23T12:45:46.000Z",
-        "niceDate": "23 June 2026",
-        "subject": "Add breath markers and improve video timer workflow",
-        "message": "Add breath markers and improve video timer workflow",
-        "fixes": null,
-        "href": "https://bitbucket.org/swimracing/swimming/commits/3c5e50296596094061a0a64ff8ef4c04df28d6a5",
-        "breaking": false,
-        "files": 13,
-        "insertions": 1188,
-        "deletions": 398,
-        "merge": null
-      },
-      {
-        "hash": "3ef88972ec2f38a522e1fe61acc2891e5abc8c4a",
-        "shorthash": "3ef8897",
-        "author": "rodrigo ferreira",
-        "email": "rf.oliveirapaula@gmail.com",
-        "date": "2026-06-23T12:44:55.000Z",
-        "niceDate": "23 June 2026",
-        "subject": "Improve official time input and session ordering",
-        "message": "Improve official time input and session ordering",
-        "fixes": null,
-        "href": "https://bitbucket.org/swimracing/swimming/commits/3ef88972ec2f38a522e1fe61acc2891e5abc8c4a",
-        "breaking": false,
-        "files": 3,
-        "insertions": 57,
-        "deletions": 20,
-        "merge": null
-      }
-    ],
-    "merges": [
-      {
-        "id": "39",
-        "message": "Improve video timer timing workflow and breath markers",
-        "href": "https://bitbucket.org/swimracing/swimming/pull-requests/39",
-        "author": "Rodrigo Ferreira",
-        "commit": {
-          "hash": "9a5f6fc540af5b313001384a7565b0ae8f655eaf",
-          "shorthash": "9a5f6fc",
-          "author": "Rodrigo Ferreira",
-          "email": "rf.oliveirapaula@gmail.com",
-          "date": "2026-06-23T12:48:55.000Z",
-          "niceDate": "23 June 2026",
-          "subject": "Merged in Improve-video-timer-timing-workflow-and-breath-markers (pull request #39)",
-          "message": "Merged in Improve-video-timer-timing-workflow-and-breath-markers (pull request #39)\n\nImprove video timer timing workflow and breath markers",
-          "fixes": null,
-          "href": "https://bitbucket.org/swimracing/swimming/commits/9a5f6fc540af5b313001384a7565b0ae8f655eaf",
-          "breaking": false
-        }
-      }
-    ],
-    "fixes": []
-  },
-  {
-    "isoDate": "2026-06-22",
-    "niceDate": "22 June 2026",
-    "diff": "15.3.0..15.4.0",
-    "href": "https://bitbucket.org/swimracing/swimming/compare/15.4.0..15.3.0",
-    "major": false,
-    "minor": true,
-    "tag": "15.4.0",
-    "date": "2026-06-22",
-    "title": "15.4.0",
-    "version": "15.4.0",
-    "summary": null,
-    "commits": [
-      {
-        "hash": "3d661eedab700d70769e3baef93e89407eb44798",
-        "shorthash": "3d661ee",
-        "author": "Philip Coombes",
-        "email": "phil@web2wire.com",
-        "date": "2026-06-22T12:56:07.000Z",
-        "niceDate": "22 June 2026",
-        "subject": "Use replace instead of insert when inserting results. Only delete orphans.",
-        "message": "Use replace instead of insert when inserting results. Only delete orphans.",
-        "fixes": null,
-        "href": "https://bitbucket.org/swimracing/swimming/commits/3d661eedab700d70769e3baef93e89407eb44798",
-        "breaking": false,
-        "files": 1,
-        "insertions": 9,
-        "deletions": 7,
-        "merge": null
-      },
-      {
-        "hash": "d4c04da54713c1cefc7bc512c7d395cfee79921e",
-        "shorthash": "d4c04da",
-        "author": "Philip Coombes",
-        "email": "phil@web2wire.com",
-        "date": "2026-06-22T13:06:16.000Z",
-        "niceDate": "22 June 2026",
-        "subject": "Change SQL to condition update instead of replace.",
-        "message": "Change SQL to condition update instead of replace.",
-        "fixes": null,
-        "href": "https://bitbucket.org/swimracing/swimming/commits/d4c04da54713c1cefc7bc512c7d395cfee79921e",
-        "breaking": false,
-        "files": 1,
-        "insertions": 11,
-        "deletions": 2,
-        "merge": null
-      }
-    ],
-    "merges": [],
     "fixes": []
   }
 ]
