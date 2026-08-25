@@ -1,7 +1,8 @@
 <script setup lang="ts">
-  import { COURSES, strokes } from "lib"
+  import { COURSES, strokes, timeToSeconds } from "lib"
   import type { VideoTimerDraft, VideoTimerMarkerRecord, CourseType, DistanceType, StrokeType } from "lib"
   import UIResultListbox from "~/components/ResultListbox.vue"
+  import { getVideoTimerResultState, serializeVideoTimerResult } from "~/utils/videoTimerResult"
 
   import VideoTimerReviewStep from "~/components/VideoTimerReviewStep.vue"
   import VideoTimerTimingStep from "~/components/VideoTimerTimingStep.vue"
@@ -41,25 +42,6 @@
 
 
   const selectedResultValue = ref<string | null>( null )
-
-  const serializeResultValue = ( payload: {
-    swimmer: string
-    course: string
-    stroke: string
-    distance: string
-    seq: string | number
-    date: string
-    meet: string
-  } ) =>
-    JSON.stringify( {
-      swimmer: payload.swimmer,
-      course: payload.course,
-      stroke: payload.stroke,
-      distance: payload.distance,
-      seq: Number( payload.seq ),
-      date: payload.date,
-      meet: payload.meet,
-    } )
 
   const { showNav } = useLayoutUi()
 
@@ -203,6 +185,8 @@
   const uploadToken = ref( 0 )
 
   const resultOfficialFinishTime = ref<string>( "" )
+  const selectedResultState = computed( () => getVideoTimerResultState( selectedResultValue.value ) )
+  const officialTimeLocked = computed( () => selectedResultState.value.officialTimeLocked )
 
   const libraryVideoId = computed( () =>
     typeof route.query.videoId === "string" && route.query.videoId
@@ -268,16 +252,19 @@
         resultDistance.value &&
         resultSeq.value &&
         resultDate.value &&
-        meetHint.value
+        meetHint.value &&
+        Number.isFinite( timeToSeconds( resultOfficialFinishTime.value ) ) &&
+        timeToSeconds( resultOfficialFinishTime.value ) > 0
       ) {
-        selectedResultValue.value = serializeResultValue( {
+        selectedResultValue.value = serializeVideoTimerResult( {
           swimmer: resultSwimmer.value,
           course: resultCourse.value,
           stroke: resultStroke.value,
           distance: resultDistance.value,
-          seq: resultSeq.value,
+          seq: Number( resultSeq.value ),
           date: resultDate.value,
           meet: meetHint.value,
+          time: timeToSeconds( resultOfficialFinishTime.value ),
         } )
       } else {
         selectedResultValue.value = null
@@ -287,7 +274,10 @@
   )
 
   watch( selectedResultValue, ( value ) => {
-    if ( !value ) {
+    const state = getVideoTimerResultState( value )
+    const parsed = state.result
+
+    if ( !parsed ) {
       meetHint.value = null
       resultDate.value = null
       resultSwimmer.value = null
@@ -295,30 +285,18 @@
       resultStroke.value = null
       resultDistance.value = null
       resultSeq.value = null
+      resultOfficialFinishTime.value = ""
       return
     }
 
-    try {
-      const parsed = JSON.parse( value ) as {
-        swimmer: string
-        course: string
-        stroke: string
-        distance: string
-        seq: number
-        date: string
-        meet: string
-      }
-
-      meetHint.value = parsed.meet
-      resultDate.value = parsed.date
-      resultSwimmer.value = parsed.swimmer
-      resultCourse.value = parsed.course
-      resultStroke.value = parsed.stroke
-      resultDistance.value = parsed.distance
-      resultSeq.value = String( parsed.seq )
-    } catch {
-      selectedResultValue.value = null
-    }
+    meetHint.value = parsed.meet
+    resultDate.value = parsed.date
+    resultSwimmer.value = parsed.swimmer
+    resultCourse.value = parsed.course
+    resultStroke.value = parsed.stroke
+    resultDistance.value = parsed.distance
+    resultSeq.value = String( parsed.seq )
+    resultOfficialFinishTime.value = state.officialTime
   } )
 
   const extractDurationMs = ( url: string ) =>
@@ -664,7 +642,11 @@
               </div>
 
               <div class="w-full sm:w-48">
-                <VideoTimerOfficialTimeInput v-model="resultOfficialFinishTime" />
+                <VideoTimerOfficialTimeInput
+                  v-model="resultOfficialFinishTime"
+                  :disabled="officialTimeLocked"
+                  :title="officialTimeLocked ? 'This time comes from the selected result. Clear the result to enter a different time.' : undefined"
+                />
               </div>
             </div>
           

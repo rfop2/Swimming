@@ -2,6 +2,7 @@
   import { Listbox, ListboxButton, ListboxLabel, ListboxOption, ListboxOptions } from "@headlessui/vue"
   import { CheckIcon, ChevronUpDownIcon } from "@heroicons/vue/24/outline"
   import classNames from "classnames"
+  import { serializeVideoTimerResult } from "~/utils/videoTimerResult"
 
   type ResultRow = {
     swimmer: string
@@ -12,6 +13,7 @@
     date: string
     meet: string
     round: string
+    time: number
   }
 
   type Option = {
@@ -174,21 +176,10 @@
     return ( results.value ?? [] ).filter( matchesResultQuery )
   } )
 
-  const serializeResultValue = ( result: ResultRow ) =>
-    JSON.stringify( {
-      swimmer: result.swimmer,
-      course: result.course,
-      stroke: result.stroke,
-      distance: result.distance,
-      seq: result.seq,
-      date: result.date,
-      meet: result.meet,
-    } )
-
   const options = computed<Option[]>( () => [
-    { value: null, label: "No linked result" },
+    { value: null, label: "No result selected — enter Official Time manually" },
     ...visibleResults.value.map( ( result ) => ( {
-      value: serializeResultValue( result ),
+      value: serializeVideoTimerResult( result ),
       label: `${formatDisplayDate( result.date )} • ${result.meet}`,
       result,
     } ) ),
@@ -281,15 +272,25 @@
               <li
                 :class="[
                   active ? 'bg-indigo-600 text-white' : 'text-gray-900',
+                  selected && option.value !== null && !active ? 'bg-indigo-50 text-indigo-900' : '',
                   'relative cursor-default select-none py-2 pl-3 pr-9'
                 ]"
               >
-                <span :class="[selected ? 'font-semibold' : 'font-normal', 'block truncate']">
-                  {{ option.label }}
+                <span class="flex min-w-0 items-center gap-2">
+                  <span :class="[selected && option.value !== null ? 'font-semibold' : 'font-normal', 'block truncate']">
+                    {{ option.label }}
+                  </span>
+                  <span
+                    v-if="selected && option.value !== null"
+                    :class="active ? 'bg-white/20 text-white' : 'bg-indigo-100 text-indigo-700'"
+                    class="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
+                  >
+                    Selected
+                  </span>
                 </span>
 
                 <span
-                  v-if="selected"
+                  v-if="selected && option.value !== null"
                   :class="[active ? 'text-white' : 'text-indigo-600', 'absolute inset-y-0 right-0 flex items-center pr-4']"
                 >
                   <CheckIcon class="h-5 w-5" aria-hidden="true" />
@@ -301,6 +302,9 @@
       </transition>
     </div>
 
+    <p v-if="!empty" class="mt-1 text-xs text-indigo-700">
+      Selected result. Official Time was populated automatically and cannot be edited.
+    </p>
     <span v-if="props.error" class="text-sm text-red-600">{{ props.error }}</span>
   </Listbox>
 </template>
