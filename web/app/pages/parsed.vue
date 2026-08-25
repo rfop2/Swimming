@@ -1,14 +1,19 @@
 <script setup lang="ts">
   import { ref, computed, onMounted } from "vue"
-  import { timeToSeconds, COUNTIES, REGIONS, NATIONALITIES } from "lib"
+  import { COUNTIES, REGIONS, NATIONALITIES } from "lib"
   import type { QualifyingType } from "lib"
+  import {
+    mapQualifyingImportRows,
+    type QualifyingCourse,
+    type StructuredQualifyingRow
+  } from "../utils/qualifyingImportRows"
 
   definePageMeta( {
     layout: "secure",
     middleware: [ "protected" ]
   } )
 
-  type Course = "lc" | "sc" | "both"
+  type Course = QualifyingCourse
   type Gender = "Male" | "Female"
 
   interface Selections {
@@ -28,30 +33,7 @@
     lastRaceDate: string | null
   }
 
-  interface StructuredRow {
-    gender: string
-    course?: string | null
-    event: string
-    distance: string
-    stroke: string
-    age: string
-    time?: string | null
-  }
-
-  interface ImportRow {
-    created: Date
-    year: number | string
-    course: Course | null
-    scope: string
-    area: string
-    gender: string
-    age: string
-    distance: string
-    stroke: string
-    timeString: string
-    time: number
-    type: QualifyingType
-  }
+  type StructuredRow = StructuredQualifyingRow
 
   interface ImportLayoutInfo {
     id: string
@@ -250,68 +232,6 @@
     }, {} )
   } )
 
-  function normalizeStroke( stroke: string ) {
-    switch ( stroke.toLowerCase() ) {
-      case "backstroke": return "backstroke"
-      case "breaststroke": return "breaststroke"
-      case "butterfly": return "butterfly"
-      case "freestyle": return "freestyle"
-      case "im":
-      case "medley":
-      case "individual medley":
-        return "individual_medley"
-      default:
-        return stroke.toLowerCase()
-    }
-  }
-
-  function resolveCourseForRow( item: StructuredRow, sel: Selections | null ): Course | null {
-    const choose = ( v: string | null | undefined ): Course | null =>
-      v === "lc" || v === "sc" ? v : null
-
-    const fromRow = choose( item.course ?? undefined )
-    if ( fromRow ) return fromRow
-
-    if ( !sel ) return null
-
-    if ( sel.course === "both" ) {
-      return item.course === "sc" ? "sc" : "lc"
-    }
-
-    return choose( sel.course )
-  }
-
-  function mapToImportRows( structured: StructuredRow[], sel: Selections | null ): ImportRow[] {
-    const created = new Date()
-    const year = sel?.year ?? ""
-    const scope = sel?.scope ?? ""
-    const area = sel?.area ?? ""
-    const qtype: QualifyingType = sel?.type ?? "general"
-
-    return structured
-      .filter( item => !!item.time )
-      .map( item => {
-        const course = resolveCourseForRow( item, sel )
-        const timeString = item.time as string
-        const time = timeToSeconds( timeString )
-
-        return {
-          created,
-          year,
-          course,
-          scope,
-          area,
-          gender: item.gender,
-          age: item.age,
-          distance: item.distance,
-          stroke: normalizeStroke( item.stroke ),
-          timeString,
-          time,
-          type: qtype
-        }
-      } )
-  }
-
   function looksLikeTime( s: string ) {
     return /^(?:\d{1,2}(?:\.\d{1,3})?|\d{1,2}:\d{2}(?:\.\d{1,3})?|\d{1,2}:\d{2}:\d{2}(?:\.\d{1,3})?)$/.test( s )
   }
@@ -398,7 +318,7 @@
       return
     }
 
-    const rows = mapToImportRows( structuredData.value, selections.value )
+    const rows = mapQualifyingImportRows( structuredData.value, selections.value )
     saving.value = true
     saveSuccess.value = false
     importCompleted.value = false
