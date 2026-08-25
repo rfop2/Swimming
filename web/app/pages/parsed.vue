@@ -228,7 +228,7 @@
 
   const saveButtonText = computed( () => {
     if ( saveStage.value === "dates" ) return "Saving qualification dates…"
-    if ( saveStage.value === "times" ) return `Saving ${importSummary.value.total} qualifying times…`
+    if ( saveStage.value === "times" ) return `Saving ${importSummary.value.filled} qualifying times…`
     if ( saveStage.value === "complete" ) return "Saved"
     return "Save to Database"
   } )
@@ -433,7 +433,7 @@
       await $fetch( "/api/import", { method: "PUT", body: rows } )
       saveProgress.value = 100
       saveStage.value = "complete"
-      successMessage.value = `Successfully imported ${importSummary.value.total} ${importLayout.value?.shortName ?? ""} qualifying times. ${importSummary.value.filled} times saved, ${importSummary.value.empty} empty values recorded.`
+      successMessage.value = `Successfully imported ${rows.length} ${importLayout.value?.shortName ?? ""} qualifying times. ${importSummary.value.empty} empty values skipped.`
       importCompleted.value = true
       saveSuccess.value = true
       await refreshNuxtData( "import" )
