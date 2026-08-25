@@ -461,6 +461,14 @@
   const timelineCenterMs = ref( 0 )
   const officialFinishText = ref( props.initialOfficialFinishTime || "" )
   const officialFinishMs = computed( () => parseOfficialTimeMs( officialFinishText.value ) )
+  const officialFinishTimeLocked = computed( () => !!(
+    props.resultLink.resultSwimmer &&
+    props.resultLink.resultCourse &&
+    props.resultLink.resultStroke &&
+    props.resultLink.resultDistance &&
+    props.resultLink.resultSeq
+  ) )
+  const linkedResultTimeTitle = "This time comes from the selected result. Clear the result to enter a different time."
   const showFinishEditor = ref( false )
   const finishSetupError = ref( "" )
 
@@ -1503,7 +1511,16 @@
 
                       <div class="grid grid-cols-1 gap-3">
                         <div>
-                          <VideoTimerOfficialTimeInput v-model="officialFinishText" label="Official finish time" />
+                          <VideoTimerOfficialTimeInput
+                            v-model="officialFinishText"
+                            label="Official finish time"
+                            :disabled="officialFinishTimeLocked"
+                            :title="officialFinishTimeLocked ? linkedResultTimeTitle : undefined"
+                          />
+
+                          <p v-if="officialFinishTimeLocked" class="mt-1 text-[11px] text-indigo-700">
+                            This time comes from the selected result and cannot be edited.
+                          </p>
 
                           <div
                             v-if="officialFinishText.trim() && officialFinishMs === null"
@@ -1557,7 +1574,16 @@
 
                       <div class="grid grid-cols-1 gap-3">
                         <div>
-                          <VideoTimerOfficialTimeInput v-model="officialFinishText" label="Official finish time" />
+                          <VideoTimerOfficialTimeInput
+                            v-model="officialFinishText"
+                            label="Official finish time"
+                            :disabled="officialFinishTimeLocked"
+                            :title="officialFinishTimeLocked ? linkedResultTimeTitle : undefined"
+                          />
+
+                          <p v-if="officialFinishTimeLocked" class="mt-1 text-[11px] text-indigo-700">
+                            This time comes from the selected result and cannot be edited.
+                          </p>
 
                           <div
                             v-if="officialFinishText.trim() && officialFinishMs === null"

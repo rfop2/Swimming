@@ -11,6 +11,7 @@ type ResultRow = {
   date: string
   meet: string
   round: string
+  time: number
 }
 
 export default defineEventHandler( async ( event ) => {
@@ -60,13 +61,16 @@ export default defineEventHandler( async ( event ) => {
         r.seq,
         r.date,
         r.meet,
-        r.round
+        r.round,
+        r.time
       FROM Results r
       WHERE
         r.swimmer = :swimmerId
         AND r.course = :course
         AND r.stroke = :stroke
         AND r.distance = :distance
+        AND r.time IS NOT NULL
+        AND r.time > 0
         AND NOT EXISTS (
           SELECT 1
           FROM VideoTimerSessions s

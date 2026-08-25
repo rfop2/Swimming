@@ -49,14 +49,12 @@
 
   const selections = ref<{
     year?: number
-    gender: GenderType | ""
     age?: string
     course?: CourseType
     stroke?: StrokeType
     distance?: DistanceType
   }>( {
     year: undefined,
-    gender: "",
     age: undefined,
     course: undefined,
     stroke: undefined,
@@ -64,17 +62,11 @@
   } )
 
   const yearRows = computed( () => ( available.value ?? [] ).filter( row => row.year === selections.value.year ) )
-  const genderRows = computed( () => yearRows.value.filter( row => !selections.value.gender || row.gender === selections.value.gender ) )
-  const ageRows = computed( () => genderRows.value.filter( row => row.age === selections.value.age ) )
+  const ageRows = computed( () => yearRows.value.filter( row => row.age === selections.value.age ) )
   const courseRows = computed( () => ageRows.value.filter( row => row.course === selections.value.course ) )
   const strokeRows = computed( () => courseRows.value.filter( row => row.stroke === selections.value.stroke ) )
 
-  const genderOptions = [
-    { value: "", label: "All genders" },
-    { value: "male", label: "Open/Male" },
-    { value: "female", label: "Female" },
-  ] as const
-  const ageOptions = computed( () => unique( genderRows.value.map( row => row.age ) )
+  const ageOptions = computed( () => unique( yearRows.value.map( row => row.age ) )
     .sort( ( a, b ) => ageOrder( a ) - ageOrder( b ) || a.localeCompare( b ) )
     .map( value => ( { value } ) ) )
   const courseOptions = computed( () => unique( ageRows.value.map( row => row.course ) )
@@ -106,7 +98,6 @@
 
   const rankingQuery = computed( () => ( {
     year: selections.value.year,
-    gender: selections.value.gender,
     age: selections.value.age,
     course: selections.value.course,
     stroke: selections.value.stroke,
@@ -128,17 +119,36 @@
     { watch: [ rankingQuery ] }
   )
 
-  const rankingsByGender = computed( () => [ "male", "female" ].map( gender => ( {
-    gender: gender as GenderType,
-    label: gender === "male" ? "Open/Male" : "Female",
-    rows: ( ranking.value ?? [] ).filter( row => row.gender === gender ),
-  } ) ).filter( group => group.rows.length > 0 ) )
+  interface CombinedRankingRow {
+    key: string
+    scope: ScopeType
+    area: string
+    male?: RankingRow
+    female?: RankingRow
+  }
 
-  const areaName = ( row: RankingRow ) => row.scope === "county"
+  const combinedRanking = computed<CombinedRankingRow[]>( () => {
+    const combined = new Map<string, CombinedRankingRow>()
+
+    for ( const row of ranking.value ?? [] ) {
+      const key = `${row.scope}:${row.area}`
+      const entry = combined.get( key ) ?? { key, scope: row.scope, area: row.area }
+      entry[row.gender] = row
+      combined.set( key, entry )
+    }
+
+    return Array.from( combined.values() ).sort( ( a, b ) => {
+      const maleRankDifference = ( a.male?.position ?? Number.MAX_SAFE_INTEGER ) - ( b.male?.position ?? Number.MAX_SAFE_INTEGER )
+      if ( maleRankDifference ) return maleRankDifference
+      const femaleRankDifference = ( a.female?.position ?? Number.MAX_SAFE_INTEGER ) - ( b.female?.position ?? Number.MAX_SAFE_INTEGER )
+      if ( femaleRankDifference ) return femaleRankDifference
+      return areaName( a ).localeCompare( areaName( b ) )
+    } )
+  } )
+
+  const areaName = ( row: Pick<RankingRow, "scope" | "area"> ) => row.scope === "county"
     ? COUNTIES[row.area as keyof typeof COUNTIES] ?? row.area
     : REGIONS[row.area as keyof typeof REGIONS] ?? row.area
-  const scopeLabel = ( row: RankingRow ) => `${row.scope === "county" ? "County" : "Region"} · ${row.type[0]?.toUpperCase()}${row.type.slice( 1 )}`
-  const formattedDifference = ( difference: number ) => difference > 0 ? `+${secondsToTime( difference )}` : "Fastest"
 </script>
 
 <template>
@@ -150,9 +160,6 @@
     <template #controls>
       <div class="min-w-24">
         <UI-Listbox v-model="selections.year" :options="yearOptions" label="Year" placeholder="Choose year" />
-      </div>
-      <div class="min-w-36">
-        <UI-Listbox v-model="selections.gender" :options="genderOptions" label="Gender" />
       </div>
       <div class="min-w-28">
         <UI-Listbox v-model="selections.age" :options="ageOptions" label="Age Group" placeholder="Choose age" />
@@ -176,47 +183,51 @@
       Qualification rankings could not be loaded. Please try again.
     </div>
 
-    <div v-else-if="rankingsByGender.length" class="space-y-8">
-      <section v-for="group in rankingsByGender" :key="group.gender">
-        <div class="mb-3 flex items-center gap-2">
-          <TrophyIcon class="h-5 w-5 text-amber-500" aria-hidden="true" />
-          <h2 class="text-base font-semibold text-gray-900">{{ group.label }}</h2>
-          <span class="text-sm text-gray-500">{{ group.rows.length }} standards</span>
-        </div>
+    <div v-else-if="combinedRanking.length">
+      <div class="mb-3 flex items-center gap-2">
+        <TrophyIcon class="h-5 w-5 text-amber-500" aria-hidden="true" />
+        <h2 class="text-base font-semibold text-gray-900">Qualification rankings</h2>
+        <span class="text-sm text-gray-500">{{ combinedRanking.length }} areas</span>
+      </div>
 
-        <div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-          <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-              <thead class="bg-gray-50">
-                <tr>
-                  <th class="w-20 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Rank</th>
-                  <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">County / Region</th>
-                  <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Standard</th>
-                  <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-600">Time</th>
-                  <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-600">Gap</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-gray-100 bg-white">
-                <tr v-for="row in group.rows" :key="`${row.scope}-${row.area}-${row.type}`" :class="{ 'bg-amber-50/60': row.position === 1 }">
-                  <td class="whitespace-nowrap px-4 py-3 text-sm font-semibold text-gray-900">#{{ row.position }}</td>
-                  <td class="whitespace-nowrap px-4 py-3 text-sm font-medium text-gray-900">{{ areaName( row ) }}</td>
-                  <td class="whitespace-nowrap px-4 py-3 text-sm text-gray-600">{{ scopeLabel( row ) }}</td>
-                  <td class="whitespace-nowrap px-4 py-3 text-right font-mono text-sm font-semibold text-gray-900">{{ secondsToTime( row.time ) }}</td>
-                  <td class="whitespace-nowrap px-4 py-3 text-right text-sm" :class="row.difference ? 'text-gray-500' : 'font-medium text-emerald-700'">
-                    {{ formattedDifference( row.difference ) }}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+      <div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">County / Region</th>
+                <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-600">Male Rank</th>
+                <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-600">Male Time</th>
+                <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-600">Female Rank</th>
+                <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-600">Female Time</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100 bg-white">
+              <tr v-for="row in combinedRanking" :key="row.key">
+                <td class="whitespace-nowrap px-4 py-3 text-sm font-medium text-gray-900">{{ areaName( row ) }}</td>
+                <td class="whitespace-nowrap px-4 py-3 text-right text-sm font-semibold" :class="row.male?.position === 1 ? 'text-emerald-700' : 'text-gray-900'">
+                  {{ row.male ? `#${row.male.position}` : '—' }}
+                </td>
+                <td class="whitespace-nowrap px-4 py-3 text-right font-mono text-sm font-semibold" :class="row.male?.position === 1 ? 'bg-amber-50/60 text-emerald-700' : 'text-gray-900'">
+                  {{ row.male ? secondsToTime( row.male.time ) : '—' }}
+                </td>
+                <td class="whitespace-nowrap px-4 py-3 text-right text-sm font-semibold" :class="row.female?.position === 1 ? 'text-emerald-700' : 'text-gray-900'">
+                  {{ row.female ? `#${row.female.position}` : '—' }}
+                </td>
+                <td class="whitespace-nowrap px-4 py-3 text-right font-mono text-sm font-semibold" :class="row.female?.position === 1 ? 'bg-amber-50/60 text-emerald-700' : 'text-gray-900'">
+                  {{ row.female ? secondsToTime( row.female.time ) : '—' }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
-      </section>
+      </div>
     </div>
 
     <div v-else class="rounded-lg border border-dashed border-gray-300 px-6 py-12 text-center">
       <TrophyIcon class="mx-auto h-10 w-10 text-gray-300" aria-hidden="true" />
       <h2 class="mt-3 text-sm font-semibold text-gray-900">No qualification times found</h2>
-      <p class="mt-1 text-sm text-gray-500">Try a different gender, age group, course, stroke or distance.</p>
+      <p class="mt-1 text-sm text-gray-500">Try a different age group, course, stroke or distance.</p>
     </div>
   </StandardPage>
 </template>

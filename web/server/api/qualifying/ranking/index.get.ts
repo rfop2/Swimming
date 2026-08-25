@@ -3,7 +3,6 @@ import { getPool, prepareStatement } from "lib"
 
 interface RankingQuery {
   year?: string
-  gender?: string
   age?: string
   course?: string
   stroke?: string
@@ -24,7 +23,6 @@ export default defineEventHandler( async ( event ) => {
 
   const query = getQuery<RankingQuery>( event )
   const year = Number( query.year )
-  const gender = query.gender === "male" || query.gender === "female" ? query.gender : ""
 
   if ( !Number.isInteger( year ) || !query.age || !query.course || !query.stroke || !query.distance ) {
     throw createError( {
@@ -35,7 +33,6 @@ export default defineEventHandler( async ( event ) => {
 
   const params = {
     year,
-    gender,
     age: query.age,
     course: query.course,
     stroke: query.stroke,
@@ -51,7 +48,6 @@ export default defineEventHandler( async ( event ) => {
         QualifyingTimes
       WHERE
         year = :year AND
-        (:gender = '' OR gender = :gender) AND
         age = :age AND
         course = :course AND
         stroke = :stroke AND
@@ -68,8 +64,26 @@ export default defineEventHandler( async ( event ) => {
 
   const rows = await selectTimes.all( params )
 
-  return rows.map( ( row, _index, rankedRows ) => {
-    const genderRows = rankedRows.filter( candidate => candidate.gender === row.gender )
+  // An area can contain more than one championship type (for example,
+  // regional summer and winter standards). The ranking is by County/Region,
+  // so retain only that area's fastest standard for each gender.
+  const fastestByArea = new Map<string, QualifyingRow>()
+  for ( const row of rows ) {
+    const key = `${row.gender}:${row.scope}:${row.area}`
+    if ( !fastestByArea.has( key ) ) fastestByArea.set( key, row )
+  }
+
+  const rankedRows = Array.from( fastestByArea.values() ).sort( ( a, b ) => {
+    const genderDifference = a.gender.localeCompare( b.gender )
+    if ( genderDifference ) return genderDifference
+    const timeDifference = Number( a.time ) - Number( b.time )
+    if ( timeDifference ) return timeDifference
+    const scopeDifference = a.scope.localeCompare( b.scope )
+    return scopeDifference || a.area.localeCompare( b.area )
+  } )
+
+  return rankedRows.map( ( row, _index, allRankedRows ) => {
+    const genderRows = allRankedRows.filter( candidate => candidate.gender === row.gender )
     const fastest = genderRows[0]?.time ?? row.time
     const firstMatchingTime = genderRows.findIndex( candidate => Number( candidate.time ) === Number( row.time ) )
 

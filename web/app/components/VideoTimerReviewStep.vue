@@ -418,6 +418,10 @@
         selections: props.selections,
         swimmerId,
         notes: props.notes ?? "",
+        officialFinishMs:
+          props.draft.finishVideoMs !== null && props.startOffsetMs !== null
+            ? Math.max( 0, props.draft.finishVideoMs - props.startOffsetMs )
+            : null,
         startOffsetMs: props.startOffsetMs,
         resultSwimmer: props.resultLink.resultSwimmer,
         resultCourse: props.resultLink.resultCourse,
