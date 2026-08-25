@@ -4,9 +4,11 @@
   const props = withDefaults( defineProps<{
     label?: string
     disabled?: boolean
+    title?: string
   }>(), {
     label: "Official time",
     disabled: false,
+    title: undefined,
   } )
 
   const minutes = ref( "" )
@@ -128,6 +130,7 @@
       <input
         :value="minutes"
         :disabled="props.disabled"
+        :title="props.title"
         type="text"
         inputmode="numeric"
         maxlength="2"
@@ -143,6 +146,7 @@
       <input
         :value="seconds"
         :disabled="props.disabled"
+        :title="props.title"
         type="text"
         inputmode="numeric"
         maxlength="2"
@@ -158,6 +162,7 @@
       <input
         :value="hundredths"
         :disabled="props.disabled"
+        :title="props.title"
         type="text"
         inputmode="numeric"
         maxlength="2"

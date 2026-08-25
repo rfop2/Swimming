@@ -6,6 +6,10 @@ import { randomUUID } from "node:crypto"
 type MarkerType = "surfacing" | "split"
 const strokesWithoutBreathMarkers = new Set( [ "backstroke", "breaststroke" ] )
 
+type LinkedResultTimeRow = {
+  time: number | null
+}
+
 type Body = {
   video: {
     id: string
@@ -177,8 +181,8 @@ export default defineEventHandler( async ( event ) => {
 
   const swimmerId = body?.swimmerId ? asNonEmptyString( body.swimmerId ) : null
   const notes = typeof body?.notes === "string" ? body.notes : null
-  const officialFinishMs = asUnsignedIntOrNull( body?.officialFinishMs )
-  const startOffsetMs = asUnsignedIntOrNull( body?.startOffsetMs )
+  let officialFinishMs = asUnsignedIntOrNull( body?.officialFinishMs )
+  let startOffsetMs = asUnsignedIntOrNull( body?.startOffsetMs )
 
   const resultSwimmer = body?.resultSwimmer ? asNonEmptyString( body.resultSwimmer ) : null
   const resultCourse = body?.resultCourse ? asNonEmptyString( body.resultCourse ) : null
@@ -186,12 +190,45 @@ export default defineEventHandler( async ( event ) => {
   const resultDistance = body?.resultDistance ? asNonEmptyString( body.resultDistance ) : null
   const resultSeq = asUnsignedIntOrNull( body?.resultSeq )
 
+  const resultIsClear =
+    resultSwimmer === null &&
+    resultCourse === null &&
+    resultStroke === null &&
+    resultDistance === null &&
+    resultSeq === null
+  const resultIsFull = !!(
+    resultSwimmer &&
+    resultCourse &&
+    resultStroke &&
+    resultDistance &&
+    resultSeq
+  )
+
+  if ( !resultIsClear && !resultIsFull ) {
+    throw createError( { status: 400, message: "Result payload must be fully filled or fully null" } )
+  }
+
   if ( !videoId || !playbackUrl || !originalName || !mimeType || size === null ) {
     throw createError( { status: 400, message: "Missing video fields" } )
   }
 
   if ( !course || !stroke || !distance ) {
     throw createError( { status: 400, message: "Missing selections" } )
+  }
+
+  if (
+    resultIsFull &&
+    (
+      resultSwimmer !== swimmerId
+      || resultCourse !== course
+      || resultStroke !== stroke
+      || resultDistance !== distance
+    )
+  ) {
+    throw createError( {
+      status: 400,
+      message: "Selected result does not match the session swimmer and selections"
+    } )
   }
 
   const distanceM = parseDistanceM( distance )
@@ -351,6 +388,55 @@ export default defineEventHandler( async ( event ) => {
 
   const sortedStrokeCounts = [ ...strokeCounts ].sort( ( a, b ) => a.lengthIndex - b.lengthIndex )
   const finishMarkerTime = findMarkerTime( markers, "finish_time" ) ?? findMarkerTime( markers, "finish" )
+
+  if ( resultIsFull ) {
+    const selectLinkedResult = prepareStatement<{
+      swimmer: string
+      course: string
+      stroke: string
+      distance: string
+      seq: number
+    }, LinkedResultTimeRow>(
+      await getPool(),
+      `
+        SELECT time
+        FROM Results
+        WHERE swimmer = :swimmer
+          AND course = :course
+          AND stroke = :stroke
+          AND distance = :distance
+          AND seq = :seq
+        LIMIT 1
+      `
+    )
+
+    const linkedResult = await selectLinkedResult.get( {
+      swimmer: resultSwimmer,
+      course: resultCourse,
+      stroke: resultStroke,
+      distance: resultDistance,
+      seq: resultSeq,
+    } )
+    const linkedResultSeconds = Number( linkedResult?.time )
+
+    if ( !linkedResult || !Number.isFinite( linkedResultSeconds ) || linkedResultSeconds <= 0 ) {
+      throw createError( { status: 404, message: "Selected result or its official time was not found" } )
+    }
+
+    officialFinishMs = Math.round( linkedResultSeconds * 1000 )
+
+    if ( finishMarkerTime !== null ) {
+      const canonicalStartOffsetMs = finishMarkerTime - officialFinishMs
+      if ( canonicalStartOffsetMs < 0 ) {
+        throw createError( { status: 400, message: "Selected result time is longer than the available race video" } )
+      }
+      startOffsetMs = canonicalStartOffsetMs
+    }
+  }
+
+  if ( officialFinishMs === null ) {
+    throw createError( { status: 400, message: "Official finish time is required" } )
+  }
   const savedSplitMarkerKeys = new Set(
     markers
       .filter( marker => marker.type === "split" && marker.code !== "finish_time" )
@@ -443,6 +529,44 @@ export default defineEventHandler( async ( event ) => {
 
   try {
     await conn.beginTransaction()
+
+    if ( resultIsFull ) {
+      const selectExistingResultLink = prepareStatement<{
+        userId: string
+        swimmer: string
+        course: string
+        stroke: string
+        distance: string
+        seq: number
+      }, { id: string }>(
+        conn,
+        `
+          SELECT id
+          FROM VideoTimerSessions
+          WHERE userId = :userId
+            AND resultSwimmer = :swimmer
+            AND resultCourse = :course
+            AND resultStroke = :stroke
+            AND resultDistance = :distance
+            AND resultSeq = :seq
+          LIMIT 1
+          FOR UPDATE
+        `
+      )
+
+      const existingResultLink = await selectExistingResultLink.get( {
+        userId,
+        swimmer: resultSwimmer,
+        course: resultCourse,
+        stroke: resultStroke,
+        distance: resultDistance,
+        seq: resultSeq,
+      } )
+
+      if ( existingResultLink ) {
+        throw createError( { status: 409, message: "This result is already linked to another session" } )
+      }
+    }
 
     const upsertVideo = prepareStatement(
       conn,
@@ -801,6 +925,10 @@ export default defineEventHandler( async ( event ) => {
       await conn.rollback()
     } catch ( err ) {
       void err
+    }
+
+    if ( ( error as { statusCode?: number } )?.statusCode ) {
+      throw error
     }
 
     if ( isMySql2Error( error ) ) {
