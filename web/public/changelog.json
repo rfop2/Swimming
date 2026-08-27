@@ -1,14 +1,50 @@
 [
   {
-    "isoDate": "2026-08-25",
-    "niceDate": "25 August 2026",
-    "diff": "15.15.0..",
-    "href": "https://bitbucket.org/swimracing/swimming/compare/15.16.0..15.15.0",
+    "isoDate": "2026-08-27",
+    "niceDate": "27 August 2026",
+    "diff": "15.16.0..",
+    "href": "https://bitbucket.org/swimracing/swimming/compare/15.17.0..15.16.0",
     "major": false,
     "minor": false,
     "tag": null,
+    "title": "15.17.0",
+    "date": "2026-08-27T15:23:28.184Z",
+    "summary": null,
+    "commits": [],
+    "merges": [
+      {
+        "id": "48",
+        "message": "align per position",
+        "href": "https://bitbucket.org/swimracing/swimming/pull-requests/48",
+        "author": "Rodrigo Ferreira",
+        "commit": {
+          "hash": "43ee511163d030e656f3acdeb60e573f30cc3ea4",
+          "shorthash": "43ee511",
+          "author": "Rodrigo Ferreira",
+          "email": "rf.oliveirapaula@gmail.com",
+          "date": "2026-08-27T12:18:26.000Z",
+          "niceDate": "27 August 2026",
+          "subject": "Merged in adjust-ranking/official-time- (pull request #48)",
+          "message": "Merged in adjust-ranking/official-time- (pull request #48)\n\nalign per position",
+          "fixes": null,
+          "href": "https://bitbucket.org/swimracing/swimming/commits/43ee511163d030e656f3acdeb60e573f30cc3ea4",
+          "breaking": false
+        }
+      }
+    ],
+    "fixes": []
+  },
+  {
+    "isoDate": "2026-08-25",
+    "niceDate": "25 August 2026",
+    "diff": "15.15.0..15.16.0",
+    "href": "https://bitbucket.org/swimracing/swimming/compare/15.16.0..15.15.0",
+    "major": false,
+    "minor": true,
+    "tag": "15.16.0",
+    "date": "2026-08-25",
     "title": "15.16.0",
-    "date": "2026-08-25T16:40:00.774Z",
+    "version": "15.16.0",
     "summary": null,
     "commits": [
       {
