@@ -2,13 +2,14 @@
   {
     "isoDate": "2026-08-27",
     "niceDate": "27 August 2026",
-    "diff": "15.16.0..",
+    "diff": "15.16.0..15.17.0",
     "href": "https://bitbucket.org/swimracing/swimming/compare/15.17.0..15.16.0",
     "major": false,
-    "minor": false,
-    "tag": null,
+    "minor": true,
+    "tag": "15.17.0",
+    "date": "2026-08-27",
     "title": "15.17.0",
-    "date": "2026-08-27T15:23:28.184Z",
+    "version": "15.17.0",
     "summary": null,
     "commits": [],
     "merges": [
