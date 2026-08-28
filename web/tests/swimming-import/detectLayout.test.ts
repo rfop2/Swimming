@@ -159,4 +159,23 @@ describe( "detectImportLayout", () => {
       },
     } )
   } )
+
+  it( "detects Cumbria and its qualifying window", () => {
+    const result = detectImportLayout(
+      "Cumbria County Championships 2027 (CC27) Short Course Qualifying Times Times to be achieved from 9th February 2026 until 5th January 2027 This meet uses LLT (Lower Limit Time) Qualifying Times",
+      "Cumbria 27-Qualifying-Times-FINAL-v2.pdf",
+      "pdf"
+    )
+
+    expect( result ).toMatchObject( {
+      suggestedLayoutId: "layout23",
+      suggestedLayoutName: "Cumbria County",
+      confidence: "high",
+      detectedYear: 2027,
+      dates: {
+        qualifyingStart: "2026-02-09",
+        qualifyingEnd: "2027-01-05",
+      },
+    } )
+  } )
 } )
