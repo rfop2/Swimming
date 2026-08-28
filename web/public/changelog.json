@@ -1,5 +1,40 @@
 [
   {
+    "isoDate": "2026-08-28",
+    "niceDate": "28 August 2026",
+    "diff": "15.18.0..",
+    "href": "https://bitbucket.org/swimracing/swimming/compare/15.19.0..15.18.0",
+    "major": false,
+    "minor": false,
+    "tag": null,
+    "title": "15.19.0",
+    "date": "2026-08-28T17:25:49.233Z",
+    "summary": null,
+    "commits": [],
+    "merges": [
+      {
+        "id": "49",
+        "message": "Cumbria-2027",
+        "href": "https://bitbucket.org/swimracing/swimming/pull-requests/49",
+        "author": "Rodrigo Ferreira",
+        "commit": {
+          "hash": "75902c0241cea3e00dadb1d31f0dca94d193511c",
+          "shorthash": "75902c0",
+          "author": "Rodrigo Ferreira",
+          "email": "rf.oliveirapaula@gmail.com",
+          "date": "2026-08-28T17:24:47.000Z",
+          "niceDate": "28 August 2026",
+          "subject": "Merged in Cumbria-2027 (pull request #49)",
+          "message": "Merged in Cumbria-2027 (pull request #49)\n\nCumbria-2027",
+          "fixes": null,
+          "href": "https://bitbucket.org/swimracing/swimming/commits/75902c0241cea3e00dadb1d31f0dca94d193511c",
+          "breaking": false
+        }
+      }
+    ],
+    "fixes": []
+  },
+  {
     "isoDate": "2026-08-27",
     "niceDate": "27 August 2026",
     "diff": "15.16.0..15.17.0",
