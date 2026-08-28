@@ -119,32 +119,45 @@
     { watch: [ rankingQuery ] }
   )
 
-  interface CombinedRankingRow {
+  interface AlignedRankingRow {
     key: string
-    scope: ScopeType
-    area: string
+    position: number
+    showPosition: boolean
+    positionRowspan: number
     male?: RankingRow
     female?: RankingRow
   }
 
-  const combinedRanking = computed<CombinedRankingRow[]>( () => {
-    const combined = new Map<string, CombinedRankingRow>()
+  const alignedRanking = computed<AlignedRankingRow[]>( () => {
+    const maleByPosition = new Map<number, RankingRow[]>()
+    const femaleByPosition = new Map<number, RankingRow[]>()
 
     for ( const row of ranking.value ?? [] ) {
-      const key = `${row.scope}:${row.area}`
-      const entry = combined.get( key ) ?? { key, scope: row.scope, area: row.area }
-      entry[row.gender] = row
-      combined.set( key, entry )
+      const rowsByPosition = row.gender === "male" ? maleByPosition : femaleByPosition
+      const rows = rowsByPosition.get( row.position ) ?? []
+      rows.push( row )
+      rowsByPosition.set( row.position, rows )
     }
 
-    return Array.from( combined.values() ).sort( ( a, b ) => {
-      const maleRankDifference = ( a.male?.position ?? Number.MAX_SAFE_INTEGER ) - ( b.male?.position ?? Number.MAX_SAFE_INTEGER )
-      if ( maleRankDifference ) return maleRankDifference
-      const femaleRankDifference = ( a.female?.position ?? Number.MAX_SAFE_INTEGER ) - ( b.female?.position ?? Number.MAX_SAFE_INTEGER )
-      if ( femaleRankDifference ) return femaleRankDifference
-      return areaName( a ).localeCompare( areaName( b ) )
+    const positions = unique( [ ...maleByPosition.keys(), ...femaleByPosition.keys() ] ).sort( ( a, b ) => a - b )
+
+    return positions.flatMap( position => {
+      const maleRows = maleByPosition.get( position ) ?? []
+      const femaleRows = femaleByPosition.get( position ) ?? []
+      const positionRowspan = Math.max( maleRows.length, femaleRows.length )
+
+      return Array.from( { length: positionRowspan }, ( _, index ) => ( {
+        key: `${position}:${index}`,
+        position,
+        showPosition: index === 0,
+        positionRowspan,
+        male: maleRows[index],
+        female: femaleRows[index],
+      } ) )
     } )
   } )
+
+  const rankCount = computed( () => unique( alignedRanking.value.map( row => row.position ) ).length )
 
   const areaName = ( row: Pick<RankingRow, "scope" | "area"> ) => row.scope === "county"
     ? COUNTIES[row.area as keyof typeof COUNTIES] ?? row.area
@@ -183,11 +196,11 @@
       Qualification rankings could not be loaded. Please try again.
     </div>
 
-    <div v-else-if="combinedRanking.length">
+    <div v-else-if="alignedRanking.length">
       <div class="mb-3 flex items-center gap-2">
         <TrophyIcon class="h-5 w-5 text-amber-500" aria-hidden="true" />
         <h2 class="text-base font-semibold text-gray-900">Qualification rankings</h2>
-        <span class="text-sm text-gray-500">{{ combinedRanking.length }} areas</span>
+        <span class="text-sm text-gray-500">{{ rankCount }} ranks</span>
       </div>
 
       <div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
@@ -195,26 +208,32 @@
           <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">
               <tr>
-                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">County / Region</th>
-                <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-600">Male Rank</th>
-                <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-600">Male Time</th>
-                <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-600">Female Rank</th>
-                <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-600">Female Time</th>
+                <th rowspan="2" class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-gray-600">Rank</th>
+                <th colspan="2" class="border-l border-gray-200 px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-gray-600">Boys/Open</th>
+                <th colspan="2" class="border-l border-gray-200 px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-gray-600">Girls</th>
+              </tr>
+              <tr class="border-t border-gray-200">
+                <th class="border-l border-gray-200 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">County / Region</th>
+                <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-600">Time</th>
+                <th class="border-l border-gray-200 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">County / Region</th>
+                <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-600">Time</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-100 bg-white">
-              <tr v-for="row in combinedRanking" :key="row.key">
-                <td class="whitespace-nowrap px-4 py-3 text-sm font-medium text-gray-900">{{ areaName( row ) }}</td>
-                <td class="whitespace-nowrap px-4 py-3 text-right text-sm font-semibold" :class="row.male?.position === 1 ? 'text-emerald-700' : 'text-gray-900'">
-                  {{ row.male ? `#${row.male.position}` : '—' }}
+              <tr v-for="row in alignedRanking" :key="row.key">
+                <td v-if="row.showPosition" :rowspan="row.positionRowspan" class="whitespace-nowrap px-4 py-3 text-center align-middle text-sm font-semibold text-gray-900">
+                  #{{ row.position }}
                 </td>
-                <td class="whitespace-nowrap px-4 py-3 text-right font-mono text-sm font-semibold" :class="row.male?.position === 1 ? 'bg-amber-50/60 text-emerald-700' : 'text-gray-900'">
+                <td class="whitespace-nowrap border-l border-gray-200 px-4 py-3 text-sm font-medium text-gray-900">
+                  {{ row.male ? areaName( row.male ) : '—' }}
+                </td>
+                <td class="whitespace-nowrap px-4 py-3 text-right font-mono text-sm font-semibold" :class="row.position === 1 && row.male ? 'bg-amber-50/60 text-emerald-700' : 'text-gray-900'">
                   {{ row.male ? secondsToTime( row.male.time ) : '—' }}
                 </td>
-                <td class="whitespace-nowrap px-4 py-3 text-right text-sm font-semibold" :class="row.female?.position === 1 ? 'text-emerald-700' : 'text-gray-900'">
-                  {{ row.female ? `#${row.female.position}` : '—' }}
+                <td class="whitespace-nowrap border-l border-gray-200 px-4 py-3 text-sm font-medium text-gray-900">
+                  {{ row.female ? areaName( row.female ) : '—' }}
                 </td>
-                <td class="whitespace-nowrap px-4 py-3 text-right font-mono text-sm font-semibold" :class="row.female?.position === 1 ? 'bg-amber-50/60 text-emerald-700' : 'text-gray-900'">
+                <td class="whitespace-nowrap px-4 py-3 text-right font-mono text-sm font-semibold" :class="row.position === 1 && row.female ? 'bg-amber-50/60 text-emerald-700' : 'text-gray-900'">
                   {{ row.female ? secondsToTime( row.female.time ) : '—' }}
                 </td>
               </tr>
