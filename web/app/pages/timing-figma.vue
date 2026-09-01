@@ -11,13 +11,13 @@
 </script>
 
 <template>
-  <div class="w-full md:w-[768px] px-5 md:px-0 py-[50px] md:py-[100px] flex flex-col justify-start items-start gap-8 md:gap-10">
+  <div class="w-full md:w-[960px] px-5 md:px-0 py-[50px] md:py-[100px] flex flex-col justify-start items-start gap-8 md:gap-10">
     <UI-BackLink />
     <div class="flex flex-col justify-start items-start gap-8 md:gap-10">
       <div class="text-slate-900 text-[32px] md:text-[64px] font-extrabold font-['Bricolage_Grotesque'] uppercase leading-8 md:leading-[56px]">
         <span class="md:hidden">Timing</span><span class="hidden md:inline">Timing & Analysis</span>
       </div>
-      <img class="w-full md:w-[768px] h-[190px] rounded-sm object-cover" src="/images/home/Block-I-Timing-Img.png" >
+      <img class="w-full md:w-[960px] h-[190px] rounded-sm object-cover" src="/images/home/Block-I-Timing-Img.png" >
       <div class="text-slate-900 text-2xl md:text-[32px] font-extrabold font-['Bricolage_Grotesque'] leading-8">
         <span class="md:hidden">Race-day timing. Poolside-ready.</span><span class="hidden md:inline">From poolside to playback. Every <br>detail captured.</span>
       </div>

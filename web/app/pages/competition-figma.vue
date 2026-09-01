@@ -11,11 +11,11 @@
 </script>
 
 <template>
-  <div class="w-full md:w-[768px] px-5 md:px-0 py-[50px] md:py-[100px] flex flex-col justify-start items-start gap-8">
+  <div class="w-full md:w-[960px] px-5 md:px-0 py-[50px] md:py-[100px] flex flex-col justify-start items-start gap-8">
     <div class="flex flex-col justify-start items-start gap-8">
       <UI-BackLink />
       <div class="text-slate-900 text-[32px] md:text-[64px] font-extrabold font-['Bricolage_Grotesque'] uppercase leading-8 md:leading-[56px]">Competition</div>
-      <img class="w-full md:w-[768px] h-[190px] rounded-sm object-cover" src="/images/home/Block-I-Competition-Img.jpg" >
+      <img class="w-full md:w-[960px] h-[190px] rounded-sm object-cover" src="/images/home/Block-I-Competition-Img.jpg" >
       <div class="text-slate-900 text-2xl md:text-[32px] font-extrabold font-['Bricolage_Grotesque'] leading-8">Every race. Every level. One platform.</div>
       <p class="copy-text">Track progress month by month with a full calendar overview, and compare against competitors.</p>
     </div>
