@@ -138,10 +138,10 @@
           </div>
         </Transition>
 
-        <div class="relative md:absolute md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[642px] flex flex-col justify-center items-center gap-10 md:gap-[54px]">
-          <div class="w-[292px] md:w-auto md:self-stretch text-center text-white text-[32px] md:text-[64px] font-extrabold font-['Bricolage_Grotesque'] uppercase leading-8 md:leading-[56px] [text-shadow:_6px_4px_12px_rgb(0_0_0_/_0.25)]">Everything your swimmer needs.       All in one place.</div>
+        <div class="relative md:absolute md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[642px] flex flex-col justify-center items-center gap-10 md:gap-[54px] pb-8 md:pb-0">
+          <div class="w-[292px] md:w-auto md:self-stretch text-center text-white text-[32px] md:text-[64px] font-extrabold font-['Bricolage_Grotesque'] uppercase leading-8 md:leading-[56px] [text-shadow:_6px_4px_12px_rgb(0_0_0_/_0.25)]">Everything your swimmer needs. All in one place.</div>
           <div class="flex flex-col md:flex-row justify-center items-center gap-[21px]">
-            <UI-ButtonTransparent to="/pricing">View Plans</UI-ButtonTransparent>
+            <UI-ButtonTransparent to="/pricing" class="px-8">View Plans</UI-ButtonTransparent>
           </div>
         </div>
       </div>
