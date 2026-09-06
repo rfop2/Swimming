@@ -1,6 +1,6 @@
 <template>
   <div class="w-full bg-white flex flex-col justify-start items-center">
-    <div class="w-full px-5 md:px-[50px] py-5 flex justify-between items-center">
+    <div class="sticky top-0 z-50 w-full bg-white px-5 md:px-[50px] py-5 flex justify-between items-center">
       <nuxt-link to="/" class="flex items-center gap-x-4">
         <div class="w-[80.42px] h-[34px] relative overflow-hidden">
           <svg xmlns="http://www.w3.org/2000/svg" width="81" height="34" viewBox="0 0 81 34" fill="none">
