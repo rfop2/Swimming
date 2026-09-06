@@ -1,3 +1,15 @@
+<script setup lang="ts">
+  const menuOpen = ref( false )
+
+  const menuLinks = [
+    { name: "About", href: "/about" },
+    { name: "Qualifications", href: "/qualifications" },
+    { name: "Competition", href: "/competitions" },
+    { name: "Timing & Analysis", href: "/timing" },
+    { name: "Performance", href: "/performance" },
+  ]
+</script>
+
 <template>
   <div class="w-full bg-white flex flex-col justify-start items-center">
     <div class="sticky top-0 z-50 w-full bg-white px-5 md:px-[50px] py-5 flex justify-between items-center">
@@ -21,13 +33,72 @@
       </nuxt-link>
       <div class="flex items-center gap-x-6">
         <nuxt-link to="/login" class="justify-center text-slate-900 text-sm font-bold font-['DM_Sans'] leading-[22.40px] hover:opacity-70">Sign In</nuxt-link>
-        <div data-svg-wrapper>
-          <svg width="26" height="18" viewBox="0 0 26 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <button
+          type="button"
+          class="relative z-10"
+          :aria-expanded="menuOpen"
+          aria-label="Toggle menu"
+          @click="menuOpen = !menuOpen"
+        >
+          <svg v-if="!menuOpen" width="26" height="18" viewBox="0 0 26 18" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M1 9H25M1 1H25M1 17H25" stroke="#00123B" stroke-width="2" stroke-linecap="square" stroke-linejoin="round"/>
           </svg>
-        </div>
+          <svg v-else width="26" height="24" viewBox="0 0 26.0151 23.8493" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M1.01514 1.11211L25.0151 23.1121" stroke="#00123B" stroke-width="2"/>
+            <line y1="-1" x2="33.3017" y2="-1" transform="matrix(0.750714 -0.660628 0.507568 0.861612 1.01514 23.7232)" stroke="#00123B" stroke-width="2"/>
+          </svg>
+        </button>
       </div>
     </div>
+
+    <!-- Desktop expanded navigation -->
+    <div
+      v-if="menuOpen"
+      class="sticky top-[74px] z-40 hidden md:flex w-full bg-white px-[50px] pb-[10px] items-start justify-end gap-9 text-slate-900 text-xs font-bold font-['DM_Sans'] uppercase leading-[19.2px] tracking-[2.16px] text-right border-b border-gray-100"
+    >
+      <nuxt-link
+        v-for="link in menuLinks"
+        :key="link.name"
+        :to="link.href"
+        class="hover:opacity-70"
+        @click="menuOpen = false"
+      >{{ link.name }}</nuxt-link>
+    </div>
+
+    <!-- Mobile expanded navigation -->
+    <Transition
+      enter-active-class="transition-opacity ease-out duration-200"
+      enter-from-class="opacity-0"
+      enter-to-class="opacity-100"
+      leave-active-class="transition-opacity ease-in duration-150"
+      leave-from-class="opacity-100"
+      leave-to-class="opacity-0"
+    >
+      <div
+        v-if="menuOpen"
+        class="md:hidden fixed inset-0 z-50 bg-slate-900 px-5 py-10 flex flex-col gap-9 items-end"
+      >
+        <button
+          type="button"
+          aria-label="Close menu"
+          @click="menuOpen = false"
+        >
+          <svg width="26" height="24" viewBox="0 0 26.0151 23.8493" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M1.01514 1.11211L25.0151 23.1121" stroke="white" stroke-width="2"/>
+            <line y1="-1" x2="33.3017" y2="-1" transform="matrix(0.750714 -0.660628 0.507568 0.861612 1.01514 23.7232)" stroke="white" stroke-width="2"/>
+          </svg>
+        </button>
+        <nav class="flex flex-col gap-9 items-end text-white text-xs font-bold font-['DM_Sans'] uppercase leading-[19.2px] tracking-[2.16px] text-right">
+          <nuxt-link
+            v-for="link in menuLinks"
+            :key="link.name"
+            :to="link.href"
+            class="hover:opacity-70"
+            @click="menuOpen = false"
+          >{{ link.name }}</nuxt-link>
+        </nav>
+      </div>
+    </Transition>
 
     <slot />
 
