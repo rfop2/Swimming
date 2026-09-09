@@ -53,6 +53,21 @@ export const REGIONS: Record<string,string> = {
   "[MA]": "English Midlands",
 }
 
+// Maps a swimmer/club REGIONS code to the licence-number prefix used on meet
+// results pages (e.g. Swimmers.region "W" -> meet licences like "SW250123").
+export const REGION_LICENCE_PREFIXES: Record<string,string> = {
+  "A": "EM", // East Midland
+  "T": "ER", // East
+  "L": "LR", // London
+  "E": "NE", // North East
+  "N": "NW", // North West
+  "S": "SE", // South East
+  "W": "SW", // South West
+  "M": "WM", // West Midlands
+  "X": "SS", // Scotland
+  "Y": "WL", // Wales
+}
+
 export const COUNTIES: Record<string,string> = {
   "XXXX": "No County",
   "BDFT": "Bedfordshire",

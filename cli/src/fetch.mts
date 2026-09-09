@@ -53,6 +53,7 @@ import {
   setGeocodeFetch,
   addNotification,
   REGIONS,
+  REGION_LICENCE_PREFIXES,
 } from "lib"
 
 import type {
@@ -784,11 +785,12 @@ const updateMeets = async ( force: boolean ) => {
 }
 
 interface MeetsResultsOptions {
-  region?: string
+  region?: string[]
   county?: string[]
   club?: string[]
   force?: boolean
   lookback?: string
+  smart?: boolean
 }
 
 const getMeetSwimmers = async ( meetResults: MeetResults, year: string, options: MeetsResultsOptions ) => {
@@ -849,6 +851,32 @@ const getMeetSwimmers = async ( meetResults: MeetResults, year: string, options:
 
 const DEFAULT_RESULTS_LOOKBACK_DAYS = 7
 
+const getSmartAreas = async () => {
+  const getSwimmerAreas = prepareStatement<Record<string, never>,{region: string, county: string}>(
+    await getPool(),
+    "SELECT DISTINCT region, county FROM Swimmers WHERE active = 1"
+  )
+  const swimmerAreas = await getSwimmerAreas.all()
+
+  const regions = new Set<string>()
+  const counties = new Set<string>()
+  for ( const { region, county } of swimmerAreas ) {
+    if ( region ) {
+      const prefix = REGION_LICENCE_PREFIXES[region]
+      if ( prefix ) {
+        regions.add( prefix )
+      } else {
+        console.warn( `No licence prefix known for region '${region}', skipping` )
+      }
+    }
+    if ( county ) {
+      counties.add( county )
+    }
+  }
+
+  return { region: [ ...regions ], county: [ ...counties ] }
+}
+
 const updateMeetsResults = async ( options: MeetsResultsOptions ) => {
   console.log( "Updating meets results" )
 
@@ -887,7 +915,7 @@ const updateMeetsResults = async ( options: MeetsResultsOptions ) => {
 
     for ( const meetResults of meetsResultsData ) {
       try {
-        if ( !options.region || meetResults.code.startsWith( options.region ) ) {
+        if ( !options.region?.length || options.region.some( region => meetResults.code.startsWith( region ) ) ) {
           const meetSwimmers = await getMeetSwimmers( meetResults, thisYear, options )
           meetSwimmers.forEach( id => resultsSwimmers.add( id ) )
           if ( meetSwimmers.size ) {
@@ -1002,13 +1030,23 @@ const updateMeetsResults = async ( options: MeetsResultsOptions ) => {
 
   program.command( "results" )
     .description( "Fetch recent results listings and identify swimmers that need updates" )
-    .option( "-r, --region <region>", "only fetch results for the specified region" )
+    .option( "-r, --region <region...>", "only fetch results for the specified regions" )
     .option( "-c, --county <county...>", "only fetch results for the specified counties" )
     .option( "-C, --club <club...>", "only fetch results for the specified clubs" )
     .option( "-l, --lookback <days>", "days to look back before the last update, to catch meets added to the results site late", String( DEFAULT_RESULTS_LOOKBACK_DAYS ) )
+    .option( "-s, --smart", "automatically determine which regions and counties to fetch from the swimmers currently in the database" )
     .addOption( new Option( "-m, --mode <mode>", "fetching strategy versus caching" ).choices( [ "force", "lazy" ] ).default( "lazy" ) )
     .action( async ( options: MeetsResultsOptions ) => {
       try {
+        if ( options.smart ) {
+          if ( options.region?.length || options.county?.length ) {
+            throw new Error( "--smart can't be combined with --region or --county" )
+          }
+          const smartAreas = await getSmartAreas()
+          options.region = smartAreas.region
+          options.county = smartAreas.county
+          console.log( `Smart mode: fetching regions [${smartAreas.region.join( ", " )}] and counties [${smartAreas.county.join( ", " )}]` )
+        }
         await updateMeetsResults( options )
       } catch ( e ) {
         console.error( "Unable to update meet results", e )
