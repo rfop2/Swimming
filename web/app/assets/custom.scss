@@ -4,6 +4,15 @@ body,
   height: 100%;
 }
 
+/* Shared body-copy styles for the figma-derived pages (about/performance/competition/timing/qualifications + home) */
+.copy-text {
+  @apply text-black text-xl font-light font-['DM_Sans'] leading-[26px] mb-[26px] last:mb-0;
+}
+
+.copy-heading {
+  @apply text-black text-xl font-bold font-['DM_Sans'] leading-[26px] mb-[26px] last:mb-0;
+}
+
 /* Tooltip container */
 .tooltip {
     position: relative;
