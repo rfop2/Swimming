@@ -43,7 +43,8 @@ export default defineNuxtConfig( {
         authToken: process.env.SENTRY_AUTH_TOKEN,
         release: { name: pkg.version }
       }
-    ]
+    ],
+    "@nuxt/fonts"
   ],
 
   app: {

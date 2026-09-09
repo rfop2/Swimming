@@ -109,7 +109,7 @@
 
   const navigation = computed<MainNavOption[]>( () => [
     { name: "Performance", children: [
-      { name: "Personal Bests", href: "/performance" },
+      { name: "Personal Bests", href: "/personal-bests" },
       { name: "Results", href: "/results", condition: () => canAccess( "results" ) },
       { name: "Compare", href: "/compare", condition: () => canAccess( "compare" ) },
     ] },

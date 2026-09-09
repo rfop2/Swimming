@@ -4,6 +4,11 @@
     "source.fixAll.eslint": "always"
   },
 
+  // Tailwind at-rules (@apply, @tailwind, @screen, etc.) aren't real CSS/SCSS,
+  // so the built-in language server flags them as unknown at-rules
+  "css.lint.unknownAtRules": "ignore",
+  "scss.lint.unknownAtRules": "ignore",
+
   // Disable VSCode's built-in formatter or Prettier from interfering
   "editor.formatOnSave": false,
 

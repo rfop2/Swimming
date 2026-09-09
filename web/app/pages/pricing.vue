@@ -2,8 +2,14 @@
   import { CheckIcon } from "@heroicons/vue/20/solid"
   import type { TierInfo } from "~/composables/useTiers"
 
+  definePageMeta( {
+    layout: "figma-page",
+  } )
+
+  const config = useRuntimeConfig()
+
   useHead( {
-    title: "Pricing",
+    title: `Pricing — ${ config.public.siteName }`,
     meta: [ { name: "description", content: "Choose the right plan for your swimming club, coaches and parents" } ],
   } )
 
@@ -111,104 +117,81 @@
 </script>
 
 <template>
-  <div class="bg-white py-24 sm:py-32">
-    <div class="mx-auto max-w-7xl px-6 lg:px-8">
-      <!-- Header -->
-      <div class="mx-auto max-w-4xl text-center">
-        <h2 class="text-base/7 font-semibold text-indigo-600">
-          Pricing
-        </h2>
-        <p class="mt-2 text-balance text-5xl font-semibold tracking-tight text-gray-900 sm:text-6xl">
-          Plans for every swimmer
-        </p>
-      </div>
-      <p class="mx-auto mt-6 max-w-2xl text-pretty text-center text-lg font-medium text-gray-600 sm:text-xl/8">
-        From tracking a single swimmer to managing a whole club squad — pick the plan that fits.
-      </p>
+  <div class="w-full md:w-[1200px] px-5 md:px-[50px] py-[50px] md:py-[100px] flex flex-col justify-start items-center gap-8">
+    <UI-BackLink class="self-start" />
 
-      <!-- Error banner -->
+    <div class="max-w-[342px] md:max-w-none md:w-[1100px] text-center text-sky-950 text-[32px] md:text-[40px] font-extrabold font-['Bricolage_Grotesque'] uppercase leading-8 md:leading-[42px]">Plans for Every Swimmer</div>
+    <div class="max-w-[342px] md:max-w-none md:w-[1100px] text-center text-sky-950 text-sm font-normal font-['DM_Sans'] leading-5">From tracking a single swimmer to managing a whole club squad — pick the plan that fits.</div>
+
+    <div
+      v-if="error"
+      class="w-full max-w-md text-center text-red-600 text-sm font-normal font-['DM_Sans'] leading-5"
+    >
+      {{ error }}
+    </div>
+
+    <div class="w-full flex flex-col md:flex-row justify-center items-stretch gap-5">
       <div
-        v-if="error"
-        class="mx-auto mt-8 max-w-md rounded-md bg-red-50 p-4 text-center text-sm text-red-700 ring-1 ring-red-200"
+        v-for="tier in tiers"
+        :key="tier.id"
+        class="w-full md:w-[202px] p-5 md:p-0 rounded-sm outline outline-1 outline-offset-[-1px] flex flex-col relative"
+        :class="tier.featured ? 'bg-slate-900 outline-black' : 'bg-white outline-slate-200'"
       >
-        {{ error }}
-      </div>
-
-      <!-- Tier cards -->
-      <div class="isolate mx-auto mt-10 grid max-w-md grid-cols-1 gap-8 md:max-w-2xl md:grid-cols-2 lg:max-w-4xl xl:mx-0 xl:max-w-none xl:grid-cols-5">
         <div
-          v-for="tier in tiers"
-          :key="tier.id"
-          class="rounded-3xl p-8 ring-1 ring-gray-200"
-          :class="{ 'ring-2 ring-indigo-600': tier.featured }"
+          v-if="tier.featured"
+          class="px-2.5 py-[5px] left-1/2 -translate-x-1/2 top-[-11px] absolute bg-red-600 rounded-xs flex justify-center items-center gap-2.5 whitespace-nowrap"
         >
-          <!-- Name + badge -->
-          <div class="flex items-center justify-between gap-x-4">
-            <h3
-              class="text-lg/8 font-semibold text-gray-900"
-              :class="{ 'text-indigo-600': tier.featured }"
-            >
-              {{ tier.name }}
-            </h3>
-            <p
-              v-if="tier.featured"
-              class="rounded-full bg-indigo-600/10 px-2.5 py-1 text-xs/5 font-semibold text-indigo-600"
-            >
-              Most popular
-            </p>
-          </div>
-
-          <!-- Description -->
-          <p class="mt-4 text-sm/6 text-gray-600">
-            {{ tier.description }}
-          </p>
-
-          <!-- Price -->
-          <p class="mt-6 flex items-baseline gap-x-1">
-            <span class="text-4xl font-semibold tracking-tight text-gray-900">{{ tier.price }}</span>
-            <span
-              v-if="tier.id !== 'free'"
-              class="text-sm/6 font-semibold text-gray-600"
-            >/month</span>
-          </p>
-
-          <!-- CTA button -->
-          <button
-            class="mt-6 block w-full rounded-md px-3 py-2 text-center text-sm/6 font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-60"
-            :class="tier.featured
-              ? 'bg-indigo-600 text-white shadow-sm hover:bg-indigo-500'
-              : 'text-indigo-600 ring-1 ring-inset ring-indigo-200 hover:ring-indigo-300'"
-            :disabled="loading === tier.id"
-            @click="handleCta(tier)"
-          >
-            <span v-if="loading === tier.id">Redirecting…</span>
-            <span v-else>{{ tier.cta }}</span>
-          </button>
-
-          <!-- Features -->
-          <ul
-            role="list"
-            class="mt-8 space-y-3 text-sm/6 text-gray-600"
-          >
-            <li
+          <div class="text-white text-[10.40px] font-extrabold font-['Bricolage_Grotesque'] uppercase leading-4 tracking-wide">Most popular</div>
+        </div>
+        <div class="md:px-[21px] md:pt-[37px] flex-1 flex flex-col">
+          <div
+            class="text-[15.20px] font-extrabold font-['DM_Sans'] uppercase leading-6 tracking-wide"
+            :class="tier.featured ? 'text-white' : 'text-sky-950'"
+          >{{ tier.name }}</div>
+          <div
+            class="mt-2.5 md:mt-px md:min-h-[52.2px] text-xs font-normal font-['DM_Sans'] leading-[17.40px]"
+            :class="tier.featured ? 'text-white/60' : 'text-slate-500'"
+          >{{ tier.description }}</div>
+          <div
+            class="mt-2.5 md:mt-[35px] text-4xl font-black font-['DM_Sans'] leading-9"
+            :class="tier.featured ? 'text-white' : 'text-sky-950'"
+          >{{ tier.price }}</div>
+          <div
+            v-if="tier.id !== 'free'"
+            class="mt-2.5 md:mt-0 text-xs font-normal font-['DM_Sans'] leading-5"
+            :class="tier.featured ? 'text-white/40' : 'text-slate-500'"
+          >per month</div>
+          <div
+            class="h-px mt-2.5 md:mt-px md:w-[160.20px]"
+            :class="tier.featured ? 'bg-white/10' : 'bg-slate-200'"
+          />
+          <div class="mt-2.5 md:mt-4 md:w-[160.20px] flex flex-col gap-2.5 md:gap-[9.8px]">
+            <div
               v-for="feature in tier.features"
               :key="feature"
-              class="flex gap-x-3"
+              class="flex items-start gap-[5px]"
             >
               <CheckIcon
-                class="h-6 w-5 flex-none text-indigo-600"
+                class="h-3 w-4 mt-[1px]"
+                :class="tier.featured ? 'text-white/60' : 'text-slate-500'"
                 aria-hidden="true"
               />
-              {{ feature }}
-            </li>
-          </ul>
+              <div
+                class="text-[11px] font-normal font-['DM_Sans'] leading-[15px]"
+                :class="tier.featured ? 'text-white/60' : 'text-slate-500'"
+              >{{ feature }}</div>
+            </div>
+          </div>
         </div>
+        <UI-ButtonSolid
+          class="mt-2.5 md:mt-6 md:mx-[9px] md:mb-[22px]"
+          :class="{ '!px-3': tier.id === 'free' }"
+          :disabled="loading === tier.id"
+          @click="handleCta(tier)"
+        >{{ loading === tier.id ? "Redirecting…" : tier.cta }}</UI-ButtonSolid>
       </div>
-
-      <!-- Footer note -->
-      <p class="mx-auto mt-12 max-w-2xl text-center text-sm text-gray-500">
-        All plans are billed monthly via GoCardless Direct Debit. Cancel any time — your access continues to the end of the billing period.
-      </p>
     </div>
+
+    <div class="max-w-[342px] md:max-w-none md:w-[600px] text-center text-slate-500 text-xs font-normal font-['DM_Sans'] leading-5">All plans are billed monthly via GoCardless Direct Debit. Cancel any time — your access continues to the end of the billing period.</div>
   </div>
 </template>
