@@ -1,5 +1,6 @@
 import type { CourseType, DistanceType, GenderType, StrokeType } from "lib"
 import { getPool, prepareStatement } from "lib"
+import { addConvertibleCourseOptions } from "../../../utils/qualifyingRanking"
 
 interface RankingOption {
   year: number
@@ -41,5 +42,5 @@ export default defineEventHandler( async ( event ) => {
     ;`
   )
 
-  return selectOptions.all()
+  return addConvertibleCourseOptions( await selectOptions.all() )
 } )

@@ -32,6 +32,8 @@
     time: number
     position: number
     difference: number
+    converted: boolean
+    sourceCourse: CourseType
   }
 
   const { data: available, status: optionsStatus, error: optionsError } = await useFetch<RankingOption[]>(
@@ -158,10 +160,13 @@
   } )
 
   const rankCount = computed( () => unique( alignedRanking.value.map( row => row.position ) ).length )
+  const hasConvertedTimes = computed( () => ( ranking.value ?? [] ).some( row => row.converted ) )
 
   const areaName = ( row: Pick<RankingRow, "scope" | "area"> ) => row.scope === "county"
     ? COUNTIES[row.area as keyof typeof COUNTIES] ?? row.area
     : REGIONS[row.area as keyof typeof REGIONS] ?? row.area
+
+  const courseName = ( course: CourseType ) => course === "lc" ? "Long Course" : "Short Course"
 </script>
 
 <template>
@@ -201,6 +206,7 @@
         <TrophyIcon class="h-5 w-5 text-amber-500" aria-hidden="true" />
         <h2 class="text-base font-semibold text-gray-900">Qualification rankings</h2>
         <span class="text-sm text-gray-500">{{ rankCount }} ranks</span>
+        <span v-if="hasConvertedTimes" class="ml-auto text-xs italic text-gray-500">Italic times are converted</span>
       </div>
 
       <div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
@@ -228,13 +234,19 @@
                   {{ row.male ? areaName( row.male ) : '—' }}
                 </td>
                 <td class="whitespace-nowrap px-4 py-3 text-right font-mono text-sm font-semibold" :class="row.position === 1 && row.male ? 'bg-amber-50/60 text-emerald-700' : 'text-gray-900'">
-                  {{ row.male ? secondsToTime( row.male.time ) : '—' }}
+                  <UI-Tooltip v-if="row.male?.converted" :text="`Converted from ${courseName( row.male.sourceCourse )}`" position="top">
+                    <span class="italic underline decoration-dotted underline-offset-4">{{ secondsToTime( row.male.time ) }}</span>
+                  </UI-Tooltip>
+                  <template v-else>{{ row.male ? secondsToTime( row.male.time ) : '—' }}</template>
                 </td>
                 <td class="whitespace-nowrap border-l border-gray-200 px-4 py-3 text-sm font-medium text-gray-900">
                   {{ row.female ? areaName( row.female ) : '—' }}
                 </td>
                 <td class="whitespace-nowrap px-4 py-3 text-right font-mono text-sm font-semibold" :class="row.position === 1 && row.female ? 'bg-amber-50/60 text-emerald-700' : 'text-gray-900'">
-                  {{ row.female ? secondsToTime( row.female.time ) : '—' }}
+                  <UI-Tooltip v-if="row.female?.converted" :text="`Converted from ${courseName( row.female.sourceCourse )}`" position="top">
+                    <span class="italic underline decoration-dotted underline-offset-4">{{ secondsToTime( row.female.time ) }}</span>
+                  </UI-Tooltip>
+                  <template v-else>{{ row.female ? secondsToTime( row.female.time ) : '—' }}</template>
                 </td>
               </tr>
             </tbody>
