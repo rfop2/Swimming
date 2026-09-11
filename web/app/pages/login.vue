@@ -13,7 +13,7 @@
 
   const user = useUser()
   if ( user.value ) {
-    await navigateTo( "/" )
+    await navigateTo( "/personal-bests" )
   }
 
   const errString = ref<string | null>( null )
@@ -24,7 +24,7 @@
         method: "POST",
         body: new FormData( e.target as HTMLFormElement )
       } )
-      await navigateTo( "/" )
+      await navigateTo( "/personal-bests" )
     } catch ( error ) {
       errString.value = ( error as FetchError ).message ?? null
     }

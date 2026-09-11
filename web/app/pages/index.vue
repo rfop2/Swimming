@@ -41,11 +41,6 @@
     ]
   } )
 
-  const user = useUser()
-  if ( user.value ) {
-    await navigateTo( "/personal-bests" )
-  }
-
   const nav = [
     { name: "Pricing", href: "/pricing" },
     { name: "About", href: "/about" },
