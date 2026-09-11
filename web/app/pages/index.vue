@@ -5,6 +5,7 @@
     layout: "landing",
   } )
 
+  const user = useUser()
   const menuOpen = ref( false )
   const scrolled = ref( false )
 
@@ -87,10 +88,10 @@
             </nuxt-link>
             <div class="flex items-center gap-x-6">
               <nuxt-link
-                to="/login"
+                :to="user ? '/personal-bests' : '/login'"
                 class="justify-center text-sm font-bold font-['DM_Sans'] leading-[22.40px] hover:opacity-80"
                 :class="scrolled ? 'text-slate-900' : 'text-white'"
-              >Sign In</nuxt-link>
+              >{{ user ? 'Dashboard' : 'Sign In' }}</nuxt-link>
               <button
                 type="button"
                 class="relative z-10"

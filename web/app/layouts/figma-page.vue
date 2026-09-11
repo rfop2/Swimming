@@ -1,4 +1,5 @@
 <script setup lang="ts">
+  const user = useUser()
   const menuOpen = ref( false )
 
   const menuLinks = [
@@ -32,7 +33,10 @@
         <div class="hidden md:block w-[147px] justify-end text-slate-900 text-lg font-extrabold font-['Bricolage_Grotesque'] uppercase leading-[19px] tracking-wide">Swim Racing</div>
       </nuxt-link>
       <div class="flex items-center gap-x-6">
-        <nuxt-link to="/login" class="justify-center text-slate-900 text-sm font-bold font-['DM_Sans'] leading-[22.40px] hover:opacity-70">Sign In</nuxt-link>
+        <nuxt-link
+          :to="user ? '/personal-bests' : '/login'"
+          class="justify-center text-slate-900 text-sm font-bold font-['DM_Sans'] leading-[22.40px] hover:opacity-70"
+        >{{ user ? 'Dashboard' : 'Sign In' }}</nuxt-link>
         <button
           type="button"
           class="relative z-10"
