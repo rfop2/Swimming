@@ -32,16 +32,14 @@
     ]
   } )
 
-  const baseLocation = {
-    latitude: 51.5844700, longitude: -2.0982042
-  }
-
   interface ExtMeet extends ClubMeet {
     distance: number | null
   }
 
   const { formatTemporal } = useTemporal()
   const updated = useState<string>( "meets-updated", () => "<never>" )
+
+  const { data: baseLocation } = await useFetch( "/api/user/location", { key: "meets-user-location" } )
 
   type MeetApiResponse = InternalApi["/api/meets"]["get"]
   const { data } = await useFetch(
@@ -53,7 +51,7 @@
           return {
             ...row,
             ...{
-              distance: row.latitude && row.longitude ? haversineDistance( baseLocation, { latitude: row.latitude, longitude: row.longitude } ) : null,
+              distance: row.latitude && row.longitude && baseLocation.value ? haversineDistance( baseLocation.value, { latitude: row.latitude, longitude: row.longitude } ) : null,
             }
           }
         } )

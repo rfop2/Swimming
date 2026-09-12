@@ -1,4 +1,4 @@
-import { getPool, runTransaction } from "lib"
+import { geocodeLocation, getPool, runTransaction } from "lib"
 
 export default defineEventHandler( async ( event ) => {
   if ( !event.context.session || !event.context.user ) {
@@ -23,6 +23,13 @@ export default defineEventHandler( async ( event ) => {
     }
 
     const userData = await readBody( event )
+
+    if ( userData.location ) {
+      const geocoded = await geocodeLocation( userData.location )
+      if ( geocoded ) {
+        userData.locationId = geocoded.locationId
+      }
+    }
 
     await runTransaction( await getPool(), updateUser, userId, userData )
   } catch ( error ) {

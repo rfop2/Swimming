@@ -5,6 +5,7 @@
     layout: "landing",
   } )
 
+  const user = useUser()
   const menuOpen = ref( false )
   const scrolled = ref( false )
 
@@ -40,11 +41,6 @@
       { name: "description", content: "Swimmer performance tracking, qualifying times, and race analysis." }
     ]
   } )
-
-  const user = useUser()
-  if ( user.value ) {
-    await navigateTo( "/personal-bests" )
-  }
 
   const nav = [
     { name: "Pricing", href: "/pricing" },
@@ -92,10 +88,10 @@
             </nuxt-link>
             <div class="flex items-center gap-x-6">
               <nuxt-link
-                to="/login"
+                :to="user ? '/personal-bests' : '/login'"
                 class="justify-center text-sm font-bold font-['DM_Sans'] leading-[22.40px] hover:opacity-80"
                 :class="scrolled ? 'text-slate-900' : 'text-white'"
-              >Sign In</nuxt-link>
+              >{{ user ? 'Dashboard' : 'Sign In' }}</nuxt-link>
               <button
                 type="button"
                 class="relative z-10"
@@ -167,9 +163,6 @@
 
         <div class="relative md:absolute md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[642px] flex flex-col justify-center items-center gap-10 md:gap-[54px] pb-8 md:pb-0">
           <div class="w-[292px] md:w-auto md:self-stretch text-center text-white text-[32px] md:text-[64px] font-extrabold font-['Bricolage_Grotesque'] uppercase leading-8 md:leading-[56px] [text-shadow:_6px_4px_12px_rgb(0_0_0_/_0.25)]">Everything your swimmer needs. All in one place.</div>
-          <div class="flex flex-col md:flex-row justify-center items-center gap-[21px]">
-            <UI-ButtonTransparent to="/pricing" class="px-8">View Plans</UI-ButtonTransparent>
-          </div>
         </div>
       </div>
     </div>
@@ -427,9 +420,9 @@
           <nuxt-link to="/privacy" class="text-center text-white text-[12.80px] font-normal font-['Barlow'] leading-5 hover:opacity-70">Privacy Policy</nuxt-link>
           <nuxt-link to="/terms" class="text-center text-white text-[12.80px] font-normal font-['Barlow'] leading-5 hover:opacity-70">Terms of Use</nuxt-link>
           <nuxt-link to="/contact" class="text-center text-white text-[12.80px] font-normal font-['Barlow'] leading-5 hover:opacity-70">Contact</nuxt-link>
-          <a href="https://www.swimmingresults.org/" target="_blank" rel="noopener noreferrer" class="text-center text-white text-[12.80px] font-normal font-['Barlow'] leading-5 hover:opacity-70">British Swimming</a>
+          <a href="https://www.swimmingresults.org/" target="_blank" rel="noopener noreferrer" class="text-center text-white text-[12.80px] font-normal font-['Barlow'] leading-5 hover:opacity-70">Aquatics GB</a>
         </div>
-        <div class="self-stretch text-center text-white text-xs font-normal font-['DM_Sans'] leading-5">© 2026 Swim Racing. All rights reserved. UK-based platform aligned with British Swimming standards.</div>
+        <div class="self-stretch text-center text-white text-xs font-normal font-['DM_Sans'] leading-5">© 2026 Swim Racing. All rights reserved. UK-based platform aligned with Aquatics GB standards.</div>
       </div>
     </div>
 

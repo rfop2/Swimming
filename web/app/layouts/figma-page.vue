@@ -1,4 +1,5 @@
 <script setup lang="ts">
+  const user = useUser()
   const menuOpen = ref( false )
 
   const menuLinks = [
@@ -32,7 +33,10 @@
         <div class="hidden md:block w-[147px] justify-end text-slate-900 text-lg font-extrabold font-['Bricolage_Grotesque'] uppercase leading-[19px] tracking-wide">Swim Racing</div>
       </nuxt-link>
       <div class="flex items-center gap-x-6">
-        <nuxt-link to="/login" class="justify-center text-slate-900 text-sm font-bold font-['DM_Sans'] leading-[22.40px] hover:opacity-70">Sign In</nuxt-link>
+        <nuxt-link
+          :to="user ? '/personal-bests' : '/login'"
+          class="justify-center text-slate-900 text-sm font-bold font-['DM_Sans'] leading-[22.40px] hover:opacity-70"
+        >{{ user ? 'Dashboard' : 'Sign In' }}</nuxt-link>
         <button
           type="button"
           class="relative z-10"
@@ -124,9 +128,9 @@
           <nuxt-link to="/privacy" class="text-center text-white text-[12.80px] font-normal font-['Barlow'] leading-5 hover:opacity-70">Privacy Policy</nuxt-link>
           <nuxt-link to="/terms" class="text-center text-white text-[12.80px] font-normal font-['Barlow'] leading-5 hover:opacity-70">Terms of Use</nuxt-link>
           <nuxt-link to="/contact" class="text-center text-white text-[12.80px] font-normal font-['Barlow'] leading-5 hover:opacity-70">Contact</nuxt-link>
-          <a href="https://www.swimmingresults.org/" target="_blank" rel="noopener noreferrer" class="text-center text-white text-[12.80px] font-normal font-['Barlow'] leading-5 hover:opacity-70">British Swimming</a>
+          <a href="https://www.swimmingresults.org/" target="_blank" rel="noopener noreferrer" class="text-center text-white text-[12.80px] font-normal font-['Barlow'] leading-5 hover:opacity-70">Aquatics GB</a>
         </div>
-        <div class="self-stretch text-center text-white text-xs font-normal font-['DM_Sans'] leading-5">© 2026 Swim Racing. All rights reserved. UK-based platform aligned with British Swimming standards.</div>
+        <div class="self-stretch text-center text-white text-xs font-normal font-['DM_Sans'] leading-5">© 2026 Swim Racing. All rights reserved. UK-based platform aligned with Aquatics GB standards.</div>
       </div>
     </div>
   </div>

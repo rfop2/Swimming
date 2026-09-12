@@ -1,4 +1,4 @@
-import { getPool, runTransaction } from "lib"
+import { geocodeLocation, getPool, runTransaction } from "lib"
 import type { User } from "lucia"
 import { sendEmail } from "~~/server/utils/email"
 
@@ -42,6 +42,13 @@ export default defineEventHandler( async ( event ) => {
         status: 401
       } )
     }
+    if ( userData.location ) {
+      const geocoded = await geocodeLocation( userData.location )
+      if ( geocoded ) {
+        userData.locationId = geocoded.locationId
+      }
+    }
+
     let newUserId: string | undefined
     await runTransaction( await getPool(), async ( conn, data ) => {
       newUserId = await addUser( conn, data )

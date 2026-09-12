@@ -22,10 +22,10 @@
     <div class="flex flex-col justify-start items-start gap-8">
       <img class="w-full md:w-[960px] h-[406px] rounded-sm object-cover" src="/images/home/Block-K-Qualifications-Img.png" >
       <div>
-        <p class="copy-text">Qualifying standards in British Swimming aren’t simple. They vary by age, by event, by county, by region, and by competition period – and they change. For parents and swimmers trying to understand what’s within reach, and for coaches planning a season around specific targets, keeping track of it all manually is a significant undertaking.</p>
+        <p class="copy-text">Qualifying standards in Aquatics GB aren’t simple. They vary by age, by event, by county, by region, and by competition period – and they change. For parents and swimmers trying to understand what’s within reach, and for coaches planning a season around specific targets, keeping track of it all manually is a significant undertaking.</p>
         <p class="copy-text">Swim Racing does it automatically.</p>
         <p class="copy-heading">Standards, tracked across every level</p>
-        <p class="copy-text">British Swimming qualifying standards are built into the platform alongside county and regional standards – so wherever your swimmer competes, and whatever they’re aiming for, the relevant cut-offs are always visible and always current. Summer, winter and general competition periods are all covered, with open and closed qualifying periods clearly indicated so you’re always focused on what’s still achievable.</p>
+        <p class="copy-text">Aquatics GB qualifying standards are built into the platform alongside county and regional standards – so wherever your swimmer competes, and whatever they’re aiming for, the relevant cut-offs are always visible and always current. Summer, winter and general competition periods are all covered, with open and closed qualifying periods clearly indicated so you’re always focused on what’s still achievable.</p>
       </div>
       <CTAButton />
     </div>

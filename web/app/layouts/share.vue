@@ -1,5 +1,6 @@
 <script setup lang="ts">
   const config = useRuntimeConfig()
+  const user = useUser()
 </script>
 
 <template>
@@ -19,10 +20,10 @@
             <span class="text-xl font-semibold text-gray-900">{{ config.public.siteName }}</span>
           </a>
           <a
-            href="/login"
+            :href="user ? '/personal-bests' : '/login'"
             class="text-sm font-medium text-indigo-600 hover:text-indigo-500"
           >
-            Sign in
+            {{ user ? 'Dashboard' : 'Sign in' }}
           </a>
         </div>
       </div>

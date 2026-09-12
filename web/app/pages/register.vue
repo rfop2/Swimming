@@ -21,7 +21,7 @@
 
   const user = useUser()
   if ( user.value ) {
-    await navigateTo( "/" )
+    await navigateTo( "/personal-bests" )
   }
 
   const newUser = ref( {
