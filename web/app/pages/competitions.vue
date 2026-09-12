@@ -22,7 +22,7 @@
     <div class="self-stretch flex flex-col justify-start items-start gap-8">
       <img class="self-stretch h-[249px] rounded-sm object-cover" src="/images/home/Block-E-Img.png" >
       <div>
-        <p class="copy-text">Finding the right competitions used to mean cross-referencing club notices, county calendars and British Swimming bulletins. Swim Racing brings all of it into one place – organised, filterable, and easy to act on whether you’re a parent planning ahead or a coach managing a full squad.</p>
+        <p class="copy-text">Finding the right competitions used to mean cross-referencing club notices, county calendars and Aquatics GB bulletins. Swim Racing brings all of it into one place – organised, filterable, and easy to act on whether you’re a parent planning ahead or a coach managing a full squad.</p>
         <p class="copy-heading">Upcoming meets</p>
         <p class="copy-text">The meets calendar shows forthcoming events and competitions across the UK, updated automatically so you’re never working from outdated information. Filter by course, competition level, club or distance to find what’s relevant to your swimmer – whether that’s a local club gala or a Level 1 national qualifier.</p>
         <p class="copy-text">Competitions are organised across all four levels:</p>

@@ -420,9 +420,9 @@
           <nuxt-link to="/privacy" class="text-center text-white text-[12.80px] font-normal font-['Barlow'] leading-5 hover:opacity-70">Privacy Policy</nuxt-link>
           <nuxt-link to="/terms" class="text-center text-white text-[12.80px] font-normal font-['Barlow'] leading-5 hover:opacity-70">Terms of Use</nuxt-link>
           <nuxt-link to="/contact" class="text-center text-white text-[12.80px] font-normal font-['Barlow'] leading-5 hover:opacity-70">Contact</nuxt-link>
-          <a href="https://www.swimmingresults.org/" target="_blank" rel="noopener noreferrer" class="text-center text-white text-[12.80px] font-normal font-['Barlow'] leading-5 hover:opacity-70">British Swimming</a>
+          <a href="https://www.swimmingresults.org/" target="_blank" rel="noopener noreferrer" class="text-center text-white text-[12.80px] font-normal font-['Barlow'] leading-5 hover:opacity-70">Aquatics GB</a>
         </div>
-        <div class="self-stretch text-center text-white text-xs font-normal font-['DM_Sans'] leading-5">© 2026 Swim Racing. All rights reserved. UK-based platform aligned with British Swimming standards.</div>
+        <div class="self-stretch text-center text-white text-xs font-normal font-['DM_Sans'] leading-5">© 2026 Swim Racing. All rights reserved. UK-based platform aligned with Aquatics GB standards.</div>
       </div>
     </div>
 
