@@ -6,7 +6,7 @@
 
   import type { FetchError } from "ofetch"
   import { COUNTIES, NATIONALITIES, REGIONS } from "lib"
-  import type { Club, ExtSwimmer, Task, UserClub } from "lib"
+  import type { Club, ExtSwimmer, Task, UserClub, UserAttribute } from "lib"
   import type { User } from "lucia"
 
   const props = defineProps<{
@@ -24,6 +24,7 @@
   const currentUser = useUser()
   const isAdmin = currentUser.value?.role === "admin"
   const editingSelf = computed( () => !currentUser.value || ( currentUser.value.id === props.user.id ) )
+  const showAdminAttributes = computed( () => isAdmin && !editingSelf.value )
 
   const locations = ref<{ place_id: number, name: string, display_name: string }[]>( [] )
   const searchLocation = async ( location: string  ): Promise<UISelection[]> => {
@@ -58,6 +59,7 @@
     locationId: props.user.locationId,
     clubs: props.clubs.map( ( { clubId, clubOwner } ) => ( { clubId, clubOwner } ) ), // Filter out the other fields
     swimmers: props.swimmers,
+    attributes: props.user.attributes ?? [],
   } ) )
 
   // If the parent sends new values… reset the form
@@ -127,7 +129,8 @@
           county: yup.string().required(),
           squad: yup.string(),
           active: yup.number().oneOf( [ 0, 1 ] ).required(),
-        } ) )
+        } ) ),
+        attributes: yup.array( yup.string().required() ).optional(),
       } ),
     ),
   } )
@@ -158,6 +161,21 @@
       userClubOwner.value = firstClub.clubOwner ? 1 : 0
     }
   }, { immediate: true, deep: true } )
+
+  const countyAdmin = ref<0 | 1>( 0 )
+  const regionalAdmin = ref<0 | 1>( 0 )
+
+  watch( () => props.user.attributes, ( attributes ) => {
+    countyAdmin.value = attributes?.includes( "countyAdmin" ) ? 1 : 0
+    regionalAdmin.value = attributes?.includes( "regionalAdmin" ) ? 1 : 0
+  }, { immediate: true } )
+
+  watch( [ countyAdmin, regionalAdmin ], ( [ county, regional ] ) => {
+    const attributes: UserAttribute[] = []
+    if ( county ) attributes.push( "countyAdmin" )
+    if ( regional ) attributes.push( "regionalAdmin" )
+    setFieldValue( "attributes", attributes )
+  } )
 
   watch( [ userClubId, userClubOwner ], ( [ clubId, clubOwner ] ) => {
     if ( clubId ) {
@@ -537,6 +555,30 @@
                 type="checkbox"
                 label="Club Admin"
                 :disabled="!userClubId"
+                :true-value="1"
+                :false-value="0"
+              />
+            </div>
+            <div
+              v-if="showAdminAttributes"
+              class="sm:col-span-1"
+            >
+              <UI-input
+                v-model="countyAdmin"
+                type="checkbox"
+                label="County Admin"
+                :true-value="1"
+                :false-value="0"
+              />
+            </div>
+            <div
+              v-if="showAdminAttributes"
+              class="sm:col-span-1"
+            >
+              <UI-input
+                v-model="regionalAdmin"
+                type="checkbox"
+                label="Regional Admin"
                 :true-value="1"
                 :false-value="0"
               />
