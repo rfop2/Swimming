@@ -1,5 +1,5 @@
 import { hash } from "@node-rs/argon2"
-import type { UserClub, ExtSwimmer } from "lib"
+import type { UserClub, ExtSwimmer, UserAttribute } from "lib"
 import { prepareStatement, addSwimmerTask, isMySql2Error } from "lib"
 import type { User } from "lucia"
 import { generateId } from "lucia"
@@ -16,6 +16,7 @@ export interface UserData {
   confirmPassword: string
   clubs: Array<UserClub>
   swimmers: Array<ExtSwimmer>
+  attributes?: UserAttribute[]
 }
 
 const deleteUserSwimmersSql = "DELETE FROM UserSwimmers WHERE userId = :userId"
@@ -157,7 +158,7 @@ export const updateUserClubs = async ( conn: Pool | PoolConnection, userId: User
   }
 }
 
-const insertUserSql = "INSERT INTO User ( id, username, password_hash, firstName, lastName, phone, location, locationId ) VALUES( :userId, :username, :passwordHash, :firstName, :lastName, :phone, :location, :locationId )"
+const insertUserSql = "INSERT INTO User ( id, username, password_hash, firstName, lastName, phone, location, locationId, attributes ) VALUES( :userId, :username, :passwordHash, :firstName, :lastName, :phone, :location, :locationId, :attributes )"
 
 export const addUser = async ( conn: Pool | PoolConnection, userData: UserData ) => {
   if (
@@ -213,7 +214,7 @@ export const addUser = async ( conn: Pool | PoolConnection, userData: UserData )
       conn,
       insertUserSql
     )
-    await addUserQuery.run( { ...userData, userId, passwordHash } )
+    await addUserQuery.run( { ...userData, userId, passwordHash, attributes: JSON.stringify( userData.attributes ?? [] ) } )
   } catch ( e ) {
     console.error( e )
     if ( isMySql2Error( e ) ) {
@@ -244,6 +245,7 @@ export const addUser = async ( conn: Pool | PoolConnection, userData: UserData )
 
 const updateUserPasswordSql = "UPDATE User SET password_hash = :passwordHash WHERE id = :userId"
 const updateUserSql = "UPDATE User SET username = :username, firstName = :firstName, lastName = :lastName, phone = :phone, location = :location, locationId = :locationId WHERE id = :userId"
+const updateUserAttributesSql = "UPDATE User SET attributes = :attributes WHERE id = :userId"
 
 export const updateUser = async ( conn: Pool | PoolConnection, userId: string, userData: UserData ) => {
   if ( userData.password && userData.confirmPassword ) {
@@ -291,6 +293,11 @@ export const updateUser = async ( conn: Pool | PoolConnection, userId: string, u
     updateUserSql
   )
   await updateUserQuery.run( { ...userData, ...{ userId } } )
+
+  if ( userData.attributes !== undefined ) {
+    const updateAttributes = prepareStatement( conn, updateUserAttributesSql )
+    await updateAttributes.run( { attributes: JSON.stringify( userData.attributes ), userId } )
+  }
   console.log( "User updated" )
 
   await updateUserSwimmers( conn, userId, userData.swimmers )

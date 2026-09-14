@@ -1,4 +1,4 @@
-import { getPool, prepareStatement } from "lib"
+import { getPool, prepareStatement, parseUserAttributes } from "lib"
 import type { User } from "lucia"
 
 interface ExtUser extends User {
@@ -47,6 +47,7 @@ export default defineEventHandler( async ( event ) => {
       u.phone,
       u.location,
       u.role,
+      u.attributes,
       GROUP_CONCAT(
           CONCAT(IF(uc.ClubOwner, '*', ''), c.ClubName) SEPARATOR ','
       ) AS clubs,
@@ -91,5 +92,5 @@ export default defineEventHandler( async ( event ) => {
       u.id`
   )
   const data = await selectRecords.all( ipParams )
-  return data
+  return data.map( user => ( { ...user, attributes: parseUserAttributes( user.attributes ) } ) )
 } )

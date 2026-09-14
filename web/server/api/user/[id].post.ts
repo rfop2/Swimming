@@ -42,6 +42,11 @@ export default defineEventHandler( async ( event ) => {
         status: 401
       } )
     }
+    // Attribute flags (county/regional admin, etc.) can only be set by an admin creating the account.
+    if ( event.context.user?.role !== "admin" ) {
+      delete userData.attributes
+    }
+
     if ( userData.location ) {
       const geocoded = await geocodeLocation( userData.location )
       if ( geocoded ) {

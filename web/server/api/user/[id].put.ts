@@ -24,6 +24,11 @@ export default defineEventHandler( async ( event ) => {
 
     const userData = await readBody( event )
 
+    // Attribute flags (county/regional admin, etc.) can only be set by an admin editing someone else's account.
+    if ( event.context.user.role !== "admin" || userId === event.context.user.id ) {
+      delete userData.attributes
+    }
+
     if ( userData.location ) {
       const geocoded = await geocodeLocation( userData.location )
       if ( geocoded ) {

@@ -1,3 +1,20 @@
+export const userAttributes = [ "countyAdmin", "regionalAdmin" ] as const
+export type UserAttribute = typeof userAttributes[number]
+
+// MariaDB's JSON type is a LONGTEXT alias, so mysql2 doesn't always auto-parse it - parse defensively here.
+export const parseUserAttributes = ( value: unknown ): UserAttribute[] | null => {
+  if ( Array.isArray( value ) ) return value as UserAttribute[]
+  if ( typeof value === "string" ) {
+    try {
+      const parsed = JSON.parse( value )
+      return Array.isArray( parsed ) ? parsed as UserAttribute[] : null
+    } catch {
+      return null
+    }
+  }
+  return null
+}
+
 export interface DatabaseUser {
   id: string
   username: string
@@ -8,6 +25,7 @@ export interface DatabaseUser {
   location: string
   locationId?: number
   role: "system" | "admin" | "user"
+  attributes?: UserAttribute[] | null
   created?: string
 }
 

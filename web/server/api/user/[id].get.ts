@@ -1,4 +1,4 @@
-import { getPool, prepareStatement } from "lib"
+import { getPool, prepareStatement, parseUserAttributes } from "lib"
 import type { User } from "lucia"
 
 export default defineEventHandler( async ( event ) => {
@@ -17,8 +17,11 @@ export default defineEventHandler( async ( event ) => {
 
   const selectUser = prepareStatement<{ userId: string }, User>(
     await getPool(),
-    "SELECT id, username, firstName, lastName, phone, location, locationId, role, created, updated FROM User WHERE id = :userId"
+    "SELECT id, username, firstName, lastName, phone, location, locationId, role, attributes, created, updated FROM User WHERE id = :userId"
   )
   const data = await selectUser.get( { userId } )
+  if ( data ) {
+    data.attributes = parseUserAttributes( data.attributes )
+  }
   return data
 } )

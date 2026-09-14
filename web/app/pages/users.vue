@@ -61,6 +61,20 @@
     navigateTo( "/user/0" )
   }
 
+  const userInfo = ( user: UserRow ) => {
+    let info = ""
+    if ( user.attributes?.includes( "countyAdmin" ) ) info += "C"
+    if ( user.attributes?.includes( "regionalAdmin" ) ) info += "R"
+    return info
+  }
+
+  const userInfoTitle = ( user: UserRow ) => {
+    const labels = []
+    if ( user.attributes?.includes( "countyAdmin" ) ) labels.push( "County Admin" )
+    if ( user.attributes?.includes( "regionalAdmin" ) ) labels.push( "Regional Admin" )
+    return labels.join( ", " )
+  }
+
   const impersonateUser = async ( userIndex: number ) => {
     if ( !users.value )
       return
@@ -190,6 +204,13 @@
               <th
                 scope="col"
                 class="px-1 py-3.5 text-left text-sm font-semibold text-gray-900"
+                title="County Admin / Regional Admin"
+              >
+                Info
+              </th>
+              <th
+                scope="col"
+                class="px-1 py-3.5 text-left text-sm font-semibold text-gray-900"
               >
                 Phone
               </th>
@@ -275,6 +296,9 @@
               </td>
               <td class="px-1 py-2 text-sm whitespace-nowrap text-gray-500" :class="`role-${user.role}`">
                 {{ user.username }}
+              </td>
+              <td class="px-1 py-2 text-sm whitespace-nowrap text-gray-500" :title="userInfoTitle( user )">
+                {{ userInfo( user ) }}
               </td>
               <td class="px-1 py-2 text-sm whitespace-nowrap text-gray-500">
                 {{ user.phone }}

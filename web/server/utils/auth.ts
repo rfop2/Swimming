@@ -3,6 +3,7 @@ import type { H3Event } from "h3"
 import { createPool } from "mysql2/promise"
 import { Mysql2Adapter } from "@lucia-auth/adapter-mysql"
 import type { DatabaseUser } from "lib"
+import { parseUserAttributes } from "lib"
 
 const pool = createPool( {
   host: process.env.MARIADB_HOST ?? ( process.env.NODE_ENV === "production" ? "db" : "192.168.45.2" ),
@@ -32,6 +33,7 @@ export const lucia = new Lucia( adapter, {
       role: attributes.role,
       location: attributes.location,
       locationId: attributes.locationId,
+      attributes: parseUserAttributes( attributes.attributes ),
       created: attributes.created,
     }
   }

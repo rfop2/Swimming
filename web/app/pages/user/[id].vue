@@ -30,6 +30,7 @@
     location: "",
     locationId: undefined,
     role: "user",
+    attributes: [],
     created: undefined,
   } )
 
