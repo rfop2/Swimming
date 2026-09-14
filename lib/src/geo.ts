@@ -78,7 +78,7 @@ const nominatimFetch = async ( locationName: string ): Promise<Response> => {
   if ( delay > 0 ) await new Promise( resolve => setTimeout( resolve, delay ) )
 
   return _geocodeFetch(
-    `https://nominatim.openstreetmap.org/search?format=json&city=${encodeURIComponent( locationName )}&countrycodes=gb&layer=address&addressdetails=1`,
+    `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent( locationName )}&countrycodes=gb&layer=address&addressdetails=1`,
     { headers: { "User-Agent": "SwimmingResultsApp/1.0 (contact@swim.racing)" } }
   )
 }
