@@ -547,41 +547,37 @@
               />
             </div>
             <div
-              v-if="isAdmin"
-              class="sm:col-span-1"
+              v-if="isAdmin || showAdminAttributes"
+              class="sm:col-span-2 flex gap-x-6"
             >
-              <UI-input
-                v-model="userClubOwner"
-                type="checkbox"
-                label="Club Admin"
-                :disabled="!userClubId"
-                :true-value="1"
-                :false-value="0"
-              />
-            </div>
-            <div
-              v-if="showAdminAttributes"
-              class="sm:col-span-1"
-            >
-              <UI-input
-                v-model="countyAdmin"
-                type="checkbox"
-                label="County Admin"
-                :true-value="1"
-                :false-value="0"
-              />
-            </div>
-            <div
-              v-if="showAdminAttributes"
-              class="sm:col-span-1"
-            >
-              <UI-input
-                v-model="regionalAdmin"
-                type="checkbox"
-                label="Regional Admin"
-                :true-value="1"
-                :false-value="0"
-              />
+              <div v-if="isAdmin">
+                <UI-input
+                  v-model="userClubOwner"
+                  type="checkbox"
+                  label="Club Admin"
+                  :disabled="!userClubId"
+                  :true-value="1"
+                  :false-value="0"
+                />
+              </div>
+              <div v-if="showAdminAttributes">
+                <UI-input
+                  v-model="countyAdmin"
+                  type="checkbox"
+                  label="County Admin"
+                  :true-value="1"
+                  :false-value="0"
+                />
+              </div>
+              <div v-if="showAdminAttributes">
+                <UI-input
+                  v-model="regionalAdmin"
+                  type="checkbox"
+                  label="Regional Admin"
+                  :true-value="1"
+                  :false-value="0"
+                />
+              </div>
             </div>
             <div
               v-if="isNewUser && !isAdmin"
