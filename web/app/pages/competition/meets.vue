@@ -73,6 +73,7 @@
           return a.name.localeCompare( b.name )
         } )
 
+        console.log( extData )
         return extData
       },
       onResponse( { response } ) {
@@ -93,35 +94,7 @@
     }
   )
 
-  const meets = computed( (): Array<ExtMeet> => {
-    const extData = ( data.value ?? [] ).map( row => {
-      return {
-        ...row,
-        ...{
-          distance: row.latitude && row.longitude ? haversineDistance( baseLocation, { latitude: row.latitude, longitude: row.longitude } ) : null,
-        }
-      }
-    } )
-    extData.sort( ( a, b ) => {
-      // 1. Sort by date
-      if ( a.date !== b.date ) return a.date.localeCompare( b.date )
-
-      // 2. Sort by duration
-      const durationDiff = a.duration - b.duration
-      if ( durationDiff !== 0 ) return durationDiff
-
-      // 3. Sort by distance (nulls last)
-      const distanceA = a.distance ?? Infinity
-      const distanceB = b.distance ?? Infinity
-      const distanceDiff = distanceA - distanceB
-      if ( distanceDiff !== 0 ) return distanceDiff
-
-      // 4. Sort by name (alphabetically)
-      return a.name.localeCompare( b.name )
-    } )
-
-    return extData
-  } )
+  const meets = computed( (): Array<ExtMeet> => data.value ?? [] )
 
   interface CalendarEvent extends CalendarEventExternal {
     duration: number

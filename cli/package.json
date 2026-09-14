@@ -10,7 +10,8 @@
     "add": "node ./build/addUser.mjs",
     "import": "node ./build/clubImport.mjs",
     "migrate": "node ./build/migrate.js",
-    "expire-subscriptions": "node ./build/expireSubscriptions.mjs"
+    "expire-subscriptions": "node ./build/expireSubscriptions.mjs",
+    "backfill-user-locations": "node ./build/backfillUserLocations.mjs"
   },
   "dependencies": {
     "@node-rs/argon2": "^2.0.2",
