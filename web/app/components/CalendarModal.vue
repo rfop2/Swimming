@@ -236,7 +236,7 @@
       <span class="">Level {{ meet.level }} / {{ meet.course === "lc" ? "Long" : "Short" }} Course</span>
     </div>
     <div
-      v-if="meet.contact || meet.email"
+      v-if="meet.contact || meet.email || meet.meetPack"
       class="sx__has-icon sx__event-modal__description"
     >
       <svg
@@ -253,9 +253,7 @@
           d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5"
         />
       </svg>
-      <div
-        v-if="meet.contact || meet.email"
-      >
+      <div>
         <span v-if="meet.contact">{{ meet.contact }}</span>
         <span
           v-if="meet.contact && meet.email"
@@ -263,7 +261,7 @@
         >(<a :href="`mailto: ${meet.email}?subject=${meet.name}`">{{ meet.email }}</a>)</span>
         <span v-if="!meet.contact && meet.email"><a :href="`mailto: ${meet.email}?subject=${meet.name}`">{{ meet.email }}</a></span>
         <span v-if="meet.meetPack">
-          <br>
+          <br v-if="meet.contact || meet.email">
           Meet Pack: <a
             :href="`/downloads/meets/${ meet.meetPack }`"
             rel="nofollow noopener"
