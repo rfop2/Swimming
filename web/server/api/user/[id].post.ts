@@ -1,6 +1,7 @@
 import { geocodeLocation, getPool, runTransaction } from "lib"
 import type { User } from "lucia"
 import { sendEmail } from "~~/server/utils/email"
+import { createPasswordResetToken } from "~~/server/utils/passwordResetTokens"
 
 export default defineEventHandler( async ( event ) => {
   const config = useRuntimeConfig()
@@ -42,9 +43,20 @@ export default defineEventHandler( async ( event ) => {
         status: 401
       } )
     }
+    const isAdminCreating = event.context.user?.role === "admin"
+
     // Attribute flags (county/regional admin, etc.) can only be set by an admin creating the account.
-    if ( event.context.user?.role !== "admin" ) {
+    if ( !isAdminCreating ) {
       delete userData.attributes
+    }
+
+    // Self-registration always needs a password; an admin may instead leave it blank
+    // and have the new user set their own via an emailed link (see below).
+    if ( !isAdminCreating && ( !userData.password || !userData.confirmPassword ) ) {
+      throw createError( {
+        message: "Password is required",
+        status: 400
+      } )
     }
 
     if ( userData.location ) {
@@ -59,15 +71,30 @@ export default defineEventHandler( async ( event ) => {
       newUserId = await addUser( conn, data )
     }, userData )
     try {
-      await sendEmail(
-        userData,
-      `${config.public.siteName}: Thank you for registering`,
-      `<p>Welcome to ${config.public.siteName}. You can now log in and add swimmers to your account.</p>`,
-      {
-        label: `Login to ${config.public.siteName}`,
-        url: `${config.public.siteUrl}/login`,
+      if ( userData.password ) {
+        await sendEmail(
+          userData,
+        `${config.public.siteName}: Thank you for registering`,
+        `<p>Welcome to ${config.public.siteName}. You can now log in and add swimmers to your account.</p>`,
+        {
+          label: `Login to ${config.public.siteName}`,
+          url: `${config.public.siteUrl}/login`,
+        }
+        )
+      } else if ( newUserId ) {
+        // Pending setup - email the new user a link to choose their own password.
+        const token = await createPasswordResetToken( newUserId, 7 * 24 * 60 )
+        const link = `${getRequestURL( event ).origin}/reset-password?token=${token}`
+        await sendEmail(
+          userData,
+        `${config.public.siteName}: Set up your account`,
+        `<p>An account has been created for you on ${config.public.siteName}. Click below to set your password and complete your account setup (link expires in 7 days).</p>`,
+        {
+          label: "Set up your account",
+          url: link,
+        }
+        )
       }
-      )
     } catch ( e ) {
       console.log( "Unable to send user confirmation email", e )
     }

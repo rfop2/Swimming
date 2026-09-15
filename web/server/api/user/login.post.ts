@@ -37,6 +37,14 @@ export default defineEventHandler( async ( event ) => {
     } )
   }
 
+  if ( !existingUser.password_hash ) {
+    // Account is pending setup (created by an admin, awaiting the user to set their own password).
+    throw createError( {
+      message: "Incorrect username or password",
+      status: 400
+    } )
+  }
+
   const validPassword = await verify( existingUser.password_hash, password, {
     memoryCost: 19456,
     timeCost: 2,

@@ -1,9 +1,9 @@
-import crypto from "node:crypto"
 import { createError, readBody } from "h3"
 import { getPool, prepareStatement } from "lib"
 import { sendEmail } from "~~/server/utils/email"
 import type { User } from "lucia"
 import { checkRateLimit } from "~~/server/utils/rateLimiter"
+import { createPasswordResetToken } from "~~/server/utils/passwordResetTokens"
 
 export default defineEventHandler( async ( event ) => {
   const ip = getRequestIP( event, { xForwardedFor: true } ) ?? "unknown"
@@ -24,14 +24,7 @@ export default defineEventHandler( async ( event ) => {
   if ( !user ) return { success: true } // don’t reveal account existence
 
   // Create token
-  const token = crypto.randomBytes( 32 ).toString( "hex" )
-
-  // Store token
-  const insertToken = prepareStatement<{ token: string, user_id: string}>(
-    await getPool(),
-    "REPLACE INTO PasswordResetTokens (token, user_id, expires_at) VALUES (:token, :user_id, NOW() + INTERVAL 15 MINUTE)"
-  )
-  await insertToken.run( { token, user_id: user.id } )
+  const token = await createPasswordResetToken( user.id, 15 )
 
   // Construct reset link
   const base = getRequestURL( event ).origin

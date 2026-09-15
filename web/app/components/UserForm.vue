@@ -47,6 +47,11 @@
   const isNewUser = computed( () => props.user.id === "0" )
   const isRegistering = computed( () => isNewUser.value && editingSelf.value )
 
+  const showSetupEmailToggle = computed( () => isNewUser.value && isAdmin )
+  const sendSetupEmail = ref<0 | 1>( 1 )
+  const hidePasswordFields = computed( () => showSetupEmailToggle.value && !!sendSetupEmail.value )
+  const passwordRequired = computed( () => isRegistering.value || ( isNewUser.value && isAdmin && !sendSetupEmail.value ) )
+
   const initialValues = computed( () => ( {
     firstName: props.user.firstName,
     lastName: props.user.lastName,
@@ -86,7 +91,7 @@
             "skip-placeholder-validation",
             "Password must be 8-32 chars, include upper/lowercase, digit & symbol",
             value => {
-              if ( isNewUser.value && !value ) return false
+              if ( passwordRequired.value && !value ) return false
               if ( !value || value === PASSWORD ) return true
               // Your strict password validation
               const length = value.length >= 8 && value.length <= 32
@@ -103,7 +108,7 @@
             "Passwords must match",
             function( value ) {
               const { password } = this.parent
-              if ( isNewUser.value && !value ) return false
+              if ( passwordRequired.value && !value ) return false
               if ( ( !value || value === PASSWORD ) && ( password === PASSWORD || !password ) ) return true
               // Confirm password only if password field is not the placeholder
               return value === password
@@ -161,6 +166,13 @@
       userClubOwner.value = firstClub.clubOwner ? 1 : 0
     }
   }, { immediate: true, deep: true } )
+
+  watch( sendSetupEmail, ( setup ) => {
+    if ( setup ) {
+      setFieldValue( "password", "" )
+      setFieldValue( "confirmPassword", "" )
+    }
+  } )
 
   const countyAdmin = ref<0 | 1>( 0 )
   const regionalAdmin = ref<0 | 1>( 0 )
@@ -488,7 +500,23 @@
               />
             </div>
 
-            <div class="sm:col-span-2">
+            <div
+              v-if="showSetupEmailToggle"
+              class="sm:col-span-2"
+            >
+              <UI-input
+                v-model="sendSetupEmail"
+                type="checkbox"
+                label="Email the user a link to set up their own password"
+                :true-value="1"
+                :false-value="0"
+              />
+            </div>
+
+            <div
+              v-if="!hidePasswordFields"
+              class="sm:col-span-2"
+            >
               <UI-Input
                 id="password"
                 v-model="password"
@@ -500,7 +528,10 @@
               />
             </div>
 
-            <div class="sm:col-span-2">
+            <div
+              v-if="!hidePasswordFields"
+              class="sm:col-span-2"
+            >
               <UI-Input
                 id="confirm-password"
                 v-model="confirmPassword"

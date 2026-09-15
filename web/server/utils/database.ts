@@ -12,8 +12,8 @@ export interface UserData {
   phone: string
   location: string
   locationId: number
-  password: string
-  confirmPassword: string
+  password?: string
+  confirmPassword?: string
   clubs: Array<UserClub>
   swimmers: Array<ExtSwimmer>
   attributes?: UserAttribute[]
@@ -172,12 +172,14 @@ export const addUser = async ( conn: Pool | PoolConnection, userData: UserData )
     } )
   }
 
-  if ( userData.password && userData.confirmPassword ) {
+  // No password means this account is pending setup - the user will be emailed a link to set their own.
+  let passwordHash: string | null = null
+  if ( userData.password || userData.confirmPassword ) {
     if ( userData.password === userData.confirmPassword ) {
-      if ( userData.password.length >= 8 && userData.password.length <= 32 ) {
+      if ( userData.password!.length >= 8 && userData.password!.length <= 32 ) {
         // Ignore it if it's just *s
-        if ( !userData.password.match( /^\*+$/ ) ) {
-          if ( !userData.password.match( /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).+$/ ) ) {
+        if ( !userData.password!.match( /^\*+$/ ) ) {
+          if ( !userData.password!.match( /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).+$/ ) ) {
             throw createError( {
               message: "Password must contain mixed case letters, numbers and symbols",
               status: 400
@@ -196,16 +198,15 @@ export const addUser = async ( conn: Pool | PoolConnection, userData: UserData )
         status: 400
       } )
     }
-  }
 
-  // Password is ok
-  const passwordHash = await hash( userData.password, {
-    // recommended minimum parameters
-    memoryCost: 19456,
-    timeCost: 2,
-    outputLen: 32,
-    parallelism: 1
-  } )
+    passwordHash = await hash( userData.password!, {
+      // recommended minimum parameters
+      memoryCost: 19456,
+      timeCost: 2,
+      outputLen: 32,
+      parallelism: 1
+    } )
+  }
 
   const userId = generateId( 15 )
 
