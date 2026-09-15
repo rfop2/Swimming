@@ -18,7 +18,7 @@ export const parseUserAttributes = ( value: unknown ): UserAttribute[] | null =>
 export interface DatabaseUser {
   id: string
   username: string
-  password_hash: string
+  password_hash: string | null
   firstName: string
   lastName: string
   phone: string

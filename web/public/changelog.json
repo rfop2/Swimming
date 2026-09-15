@@ -2,13 +2,98 @@
   {
     "isoDate": "2026-09-15",
     "niceDate": "15 September 2026",
-    "diff": "16.4.0..",
-    "href": "https://bitbucket.org/swimracing/swimming/compare/16.4.1..16.4.0",
+    "diff": "16.4.1..",
+    "href": "https://bitbucket.org/swimracing/swimming/compare/16.5.0..16.4.1",
     "major": false,
     "minor": false,
     "tag": null,
+    "title": "16.5.0",
+    "date": "2026-09-15T14:48:21.737Z",
+    "summary": null,
+    "commits": [
+      {
+        "hash": "96adf75a5c205ff33ba53a00fac629c48109089d",
+        "shorthash": "96adf75",
+        "author": "Philip Coombes",
+        "email": "phil@web2wire.com",
+        "date": "2026-09-15T08:24:22.000Z",
+        "niceDate": "15 September 2026",
+        "subject": "Initial changes to send new users emails to complete account setup",
+        "message": "Initial changes to send new users emails to complete account setup",
+        "fixes": null,
+        "href": "https://bitbucket.org/swimracing/swimming/commits/96adf75a5c205ff33ba53a00fac629c48109089d",
+        "breaking": false,
+        "files": 10,
+        "insertions": 140,
+        "deletions": 41,
+        "merge": null
+      },
+      {
+        "hash": "223b6c2355428685a16465e3be1412d2a4a9fa25",
+        "shorthash": "223b6c2",
+        "author": "Philip Coombes",
+        "email": "phil@web2wire.com",
+        "date": "2026-09-15T14:47:28.000Z",
+        "niceDate": "15 September 2026",
+        "subject": "Fix form/location validation issues.",
+        "message": "Fix form/location validation issues.",
+        "fixes": null,
+        "href": "https://bitbucket.org/swimracing/swimming/commits/223b6c2355428685a16465e3be1412d2a4a9fa25",
+        "breaking": false,
+        "files": 1,
+        "insertions": 71,
+        "deletions": 59,
+        "merge": null
+      },
+      {
+        "hash": "a1a6a2d8bb817552a3bbb30b9a8c34dfe71984d9",
+        "shorthash": "a1a6a2d",
+        "author": "Philip Coombes",
+        "email": "phil@web2wire.com",
+        "date": "2026-09-15T14:25:41.000Z",
+        "niceDate": "15 September 2026",
+        "subject": "Fixed passwords layout niggle.",
+        "message": "Fixed passwords layout niggle.",
+        "fixes": null,
+        "href": "https://bitbucket.org/swimracing/swimming/commits/a1a6a2d8bb817552a3bbb30b9a8c34dfe71984d9",
+        "breaking": false,
+        "files": 1,
+        "insertions": 13,
+        "deletions": 13,
+        "merge": null
+      },
+      {
+        "hash": "86b3468b62228bf542fcb8bb4b031ecef68c74f0",
+        "shorthash": "86b3468",
+        "author": "Philip Coombes",
+        "email": "phil@web2wire.com",
+        "date": "2026-09-15T14:46:39.000Z",
+        "niceDate": "15 September 2026",
+        "subject": "Fix issue with attribute binding",
+        "message": "Fix issue with attribute binding",
+        "fixes": null,
+        "href": "https://bitbucket.org/swimracing/swimming/commits/86b3468b62228bf542fcb8bb4b031ecef68c74f0",
+        "breaking": false,
+        "files": 1,
+        "insertions": 6,
+        "deletions": 1,
+        "merge": null
+      }
+    ],
+    "merges": [],
+    "fixes": []
+  },
+  {
+    "isoDate": "2026-09-15",
+    "niceDate": "15 September 2026",
+    "diff": "16.4.0..16.4.1",
+    "href": "https://bitbucket.org/swimracing/swimming/compare/16.4.1..16.4.0",
+    "major": false,
+    "minor": false,
+    "tag": "16.4.1",
+    "date": "2026-09-15",
     "title": "16.4.1",
-    "date": "2026-09-15T10:58:06.263Z",
+    "version": "16.4.1",
     "summary": null,
     "commits": [
       {
@@ -1627,42 +1712,6 @@
       }
     ],
     "merges": [],
-    "fixes": []
-  },
-  {
-    "isoDate": "2026-07-17",
-    "niceDate": "17 July 2026",
-    "diff": "15.7.0..15.8.0",
-    "href": "https://bitbucket.org/swimracing/swimming/compare/15.8.0..15.7.0",
-    "major": false,
-    "minor": true,
-    "tag": "15.8.0",
-    "date": "2026-07-17",
-    "title": "15.8.0",
-    "version": "15.8.0",
-    "summary": null,
-    "commits": [],
-    "merges": [
-      {
-        "id": "42",
-        "message": "remove-graph-and-fix-breath/layout-for-video-player",
-        "href": "https://bitbucket.org/swimracing/swimming/pull-requests/42",
-        "author": "Rodrigo Ferreira",
-        "commit": {
-          "hash": "f7fd6f75814ef383221e8378227ea12013da4177",
-          "shorthash": "f7fd6f7",
-          "author": "Rodrigo Ferreira",
-          "email": "rf.oliveirapaula@gmail.com",
-          "date": "2026-07-17T13:55:40.000Z",
-          "niceDate": "17 July 2026",
-          "subject": "Merged in remove-graph-and-fix-breath/layout-for-video-player (pull request #42)",
-          "message": "Merged in remove-graph-and-fix-breath/layout-for-video-player (pull request #42)\n\nremove-graph-and-fix-breath/layout-for-video-player",
-          "fixes": null,
-          "href": "https://bitbucket.org/swimracing/swimming/commits/f7fd6f75814ef383221e8378227ea12013da4177",
-          "breaking": false
-        }
-      }
-    ],
     "fixes": []
   }
 ]

@@ -71,11 +71,16 @@
   const resetPassword = handleSubmit( async () => {
     try {
       submitErrors.length = 0
-      await $fetch( "/api/auth/reset-password", {
+      const result = await $fetch( "/api/auth/reset-password", {
         method: "POST",
         body: { token: token.value, newPassword: password.value },
       } )
       resetForm( { values } )
+      if ( result.loggedIn ) {
+        // First-time account setup - the user is now signed in, so take them straight in.
+        await navigateTo( "/personal-bests" )
+        return
+      }
       saveSuccess.value = true
     } catch ( error ) {
       console.error( "Error", error )

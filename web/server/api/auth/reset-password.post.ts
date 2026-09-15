@@ -1,5 +1,5 @@
 import { hash } from "@node-rs/argon2"
-import { readBody, createError } from "h3"
+import { readBody, createError, setCookie } from "h3"
 import { getPool, prepareStatement } from "lib"
 
 export default defineEventHandler( async ( event ) => {
@@ -16,6 +16,15 @@ export default defineEventHandler( async ( event ) => {
 
   if ( !record || record.used || new Date( record.expires_at ) < new Date() )
     throw createError( { statusCode: 400, message: "Invalid or expired token" } )
+
+  // An account created by an admin has no password until this first setup - detect that
+  // before overwriting it, so we know whether to log the user straight in below.
+  const getUser = prepareStatement<{ userId: string }, { password_hash: string | null }>(
+    await getPool(),
+    "SELECT password_hash FROM User WHERE id = :userId"
+  )
+  const existingUser = await getUser.get( { userId: record.user_id } )
+  const isFirstTimeSetup = !existingUser?.password_hash
 
   // Hash new password
   const passwordHash = await hash( newPassword, {
@@ -43,5 +52,12 @@ export default defineEventHandler( async ( event ) => {
   // Invalidate all sessions (recommended)
   await lucia.invalidateUserSessions( record.user_id )
 
-  return { success: true }
+  if ( isFirstTimeSetup ) {
+    // Log the user straight in - they've just proven ownership of the account via the emailed token.
+    const session = await lucia.createSession( record.user_id, {} )
+    const cookie = lucia.createSessionCookie( session.id )
+    setCookie( event, cookie.name, cookie.value, cookie.attributes )
+  }
+
+  return { success: true, loggedIn: isFirstTimeSetup }
 } )

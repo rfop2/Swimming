@@ -10,6 +10,8 @@
   } from "@headlessui/vue"
   import { XMarkIcon } from "@heroicons/vue/24/outline"
 
+  defineOptions( { inheritAttrs: false } )
+
   const model = defineModel<UISelection["value"] | Array<UISelection["value"]>>()
 
   const defaultId = useId()
@@ -21,6 +23,7 @@
     label?: string
     multiple?: boolean
     required?: boolean
+    disabled?: boolean
     strict?: boolean
     clearable?: boolean
     placeholder?: string
@@ -33,6 +36,7 @@
     label: undefined,
     multiple: false,
     required: false,
+    disabled: false,
     strict: true,
     clearable: true,
     placeholder: "Select Option or Add New",
@@ -92,7 +96,7 @@
     :id="props.id ?? defaultId"
     :key="Array.isArray(model) ? model.join('|') || 'empty' : model ?? 'empty'"
     v-model="model"
-    v-bind="$attrs"
+    :disabled="disabled"
     as="div"
   >
     <ComboboxLabel
@@ -104,6 +108,7 @@
     <div class="relative" :class="{ 'mt-1 sm:mt-2': props.label }">
       <ComboboxInput
         class="form-disabled block w-full rounded-md bg-white py-1.5 pl-3 pr-12 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
+        v-bind="$attrs"
         :display-value="(value) => {
           if (value === undefined) return '' // explicitly clear when undefined
           const found = internalOptions.find(opt => opt.value === value)
