@@ -45,8 +45,7 @@ export default defineEventHandler( async ( event ) => {
   )
   const meets = await selectRecords.all( { userId: event.context.user.id } )
 
-  // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
-  const selectLastUpdated = prepareStatement<void, { lastUpdated: string }>(
+  const selectLastUpdated = prepareStatement<unknown[], { lastUpdated: string }>(
     await getPool(),
     `SELECT
       GREATEST(

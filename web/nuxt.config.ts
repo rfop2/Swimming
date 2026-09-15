@@ -91,6 +91,10 @@ export default defineNuxtConfig( {
         "ag-grid-vue3",
         "yup",
         "@vee-validate/yup",
+        "@schedule-x/calendar",
+        "@schedule-x/event-modal",
+        "@schedule-x/events-service",
+        "@schedule-x/vue",
       ]
     },
     plugins: [
