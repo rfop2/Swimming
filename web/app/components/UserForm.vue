@@ -501,19 +501,6 @@
             </div>
 
             <div
-              v-if="showSetupEmailToggle"
-              class="sm:col-span-2"
-            >
-              <UI-input
-                v-model="sendSetupEmail"
-                type="checkbox"
-                label="Email the user a link to set up their own password"
-                :true-value="1"
-                :false-value="0"
-              />
-            </div>
-
-            <div
               v-if="!hidePasswordFields"
               class="sm:col-span-2"
             >
@@ -540,6 +527,19 @@
                 type="password"
                 required
                 :error="errors.confirmPassword"
+              />
+            </div>
+
+            <div
+              v-if="showSetupEmailToggle"
+              class="sm:col-span-2"
+            >
+              <UI-input
+                v-model="sendSetupEmail"
+                type="checkbox"
+                label="Email the user a link to set up their own password"
+                :true-value="1"
+                :false-value="0"
               />
             </div>
 
