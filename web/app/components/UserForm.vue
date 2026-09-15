@@ -79,65 +79,77 @@
     { deep: true }
   )
 
+  const userFormSchema = yup.object( {
+    firstName: yup.string().label( "First name" ).required(),
+    lastName: yup.string().label( "Last name" ).required(),
+    username: yup.string().email().label( "Email address" ).required(),
+    password: yup.string()
+      .test(
+        "skip-placeholder-validation",
+        "Password must be 8-32 chars, include upper/lowercase, digit & symbol",
+        value => {
+          if ( passwordRequired.value && !value ) return false
+          if ( !value || value === PASSWORD ) return true
+          // Your strict password validation
+          const length = value.length >= 8 && value.length <= 32
+          const lower = /[a-z]/.test( value )
+          const upper = /[A-Z]/.test( value )
+          const digit = /[0-9]/.test( value )
+          const symbol = /[^\w\s]/.test( value )
+          return length && lower && upper && digit && symbol
+        }
+      ),
+    confirmPassword: yup.string()
+      .test(
+        "skip-placeholder-validation",
+        "Passwords must match",
+        function( value ) {
+          const { password } = this.parent
+          if ( passwordRequired.value && !value ) return false
+          if ( ( !value || value === PASSWORD ) && ( password === PASSWORD || !password ) ) return true
+          // Confirm password only if password field is not the placeholder
+          return value === password
+        }
+      ),
+    captcha: isRegistering.value
+      ? yup.string().required( "Captcha is required" )
+      : yup.string().optional(),
+    phone: yup.string().label( "Phone / Mobile" ),
+    location: yup.string().label( "Town / City" ).optional(),
+    locationId: yup.number().label( "Town / City" ).required(),
+    clubs: yup.array( yup.object( {
+      clubId: yup.string().required(),
+      clubOwner: yup.number().required(),
+    } ) ),
+    swimmers: yup.array( yup.object( {
+      firstName: yup.string().required(),
+      lastName: yup.string().required(),
+      gender: yup.string().required(),
+      birthday: yup.string().required(),
+      nationality: yup.string().required(),
+      region: yup.string().required(),
+      county: yup.string().required(),
+      squad: yup.string(),
+      active: yup.number().oneOf( [ 0, 1 ] ).required(),
+    } ) ),
+    attributes: yup.array( yup.string().required() ).optional(),
+  } )
+
   const { values, errors, meta, defineField, setFieldValue, setTouched, resetForm, handleSubmit } = useForm( {
     initialValues: initialValues.value,
-    validationSchema: toTypedSchema(
-      yup.object( {
-        firstName: yup.string().label( "First name" ).required(),
-        lastName: yup.string().label( "Last name" ).required(),
-        username: yup.string().email().label( "Email address" ).required(),
-        password: yup.string()
-          .test(
-            "skip-placeholder-validation",
-            "Password must be 8-32 chars, include upper/lowercase, digit & symbol",
-            value => {
-              if ( passwordRequired.value && !value ) return false
-              if ( !value || value === PASSWORD ) return true
-              // Your strict password validation
-              const length = value.length >= 8 && value.length <= 32
-              const lower = /[a-z]/.test( value )
-              const upper = /[A-Z]/.test( value )
-              const digit = /[0-9]/.test( value )
-              const symbol = /[^\w\s]/.test( value )
-              return length && lower && upper && digit && symbol
-            }
-          ),
-        confirmPassword: yup.string()
-          .test(
-            "skip-placeholder-validation",
-            "Passwords must match",
-            function( value ) {
-              const { password } = this.parent
-              if ( passwordRequired.value && !value ) return false
-              if ( ( !value || value === PASSWORD ) && ( password === PASSWORD || !password ) ) return true
-              // Confirm password only if password field is not the placeholder
-              return value === password
-            }
-          ),
-        captcha: isRegistering.value
-          ? yup.string().required( "Captcha is required" )
-          : yup.string().optional(),
-        phone: yup.string().label( "Phone / Mobile" ),
-        location: yup.string().label( "Town / City" ).optional(),
-        locationId: yup.number().label( "Town / City" ).required(),
-        clubs: yup.array( yup.object( {
-          clubId: yup.string().required(),
-          clubOwner: yup.number().required(),
-        } ) ),
-        swimmers: yup.array( yup.object( {
-          firstName: yup.string().required(),
-          lastName: yup.string().required(),
-          gender: yup.string().required(),
-          birthday: yup.string().required(),
-          nationality: yup.string().required(),
-          region: yup.string().required(),
-          county: yup.string().required(),
-          squad: yup.string(),
-          active: yup.number().oneOf( [ 0, 1 ] ).required(),
-        } ) ),
-        attributes: yup.array( yup.string().required() ).optional(),
-      } ),
-    ),
+    validationSchema: toTypedSchema( userFormSchema ),
+  } )
+
+  // vee-validate only tracks errors for fields that have already been touched/validated,
+  // so `errors`/`meta.valid` stay optimistic for required fields (e.g. locationId via
+  // UI-Combobox) the user hasn't interacted with yet. Validate the schema directly against
+  // the live values so the submit button reflects real validity regardless of touch state.
+  const isFormValid = computed( () => {
+    try {
+      return userFormSchema.isValidSync( values )
+    } catch {
+      return false
+    }
   } )
 
   const [ firstName, firstNameAttrs ] = defineField( "firstName" )
@@ -871,7 +883,7 @@
       </button>
       <button
         type="submit"
-        :disabled="editing !== null || deleting !== null || !meta.dirty || !!Object.entries(errors).length"
+        :disabled="editing !== null || deleting !== null || !meta.dirty || !isFormValid"
         class="rounded-md bg-indigo-600 disabled:bg-gray-300 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
       >
         {{ isNewUser ? "Register" : "Save" }}
@@ -889,7 +901,7 @@
       </button>
       <button
         type="submit"
-        :disabled="editing !== null || deleting !== null || !meta.dirty || !!Object.entries(errors).length"
+        :disabled="editing !== null || deleting !== null || !meta.dirty || !isFormValid"
         class="rounded-md bg-indigo-600 disabled:bg-gray-300 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
       >
         {{ isNewUser ? "Register" : "Save" }}
