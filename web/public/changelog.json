@@ -1,16 +1,67 @@
 [
   {
-    "isoDate": "2026-09-15",
-    "niceDate": "15 September 2026",
+    "isoDate": "2026-09-17",
+    "niceDate": "17 September 2026",
     "diff": "16.4.1..",
-    "href": "https://bitbucket.org/swimracing/swimming/compare/16.5.0..16.4.1",
+    "href": "https://bitbucket.org/swimracing/swimming/compare/16.6.0..16.4.1",
     "major": false,
     "minor": false,
     "tag": null,
-    "title": "16.5.0",
-    "date": "2026-09-15T14:48:21.737Z",
+    "title": "16.6.0",
+    "date": "2026-09-17T17:53:56.847Z",
     "summary": null,
     "commits": [
+      {
+        "hash": "cc51f0a3d7beccee7928bece08f65b6ded67e8af",
+        "shorthash": "cc51f0a",
+        "author": "rodrigo ferreira",
+        "email": "rf.oliveirapaula@gmail.com",
+        "date": "2026-09-17T17:40:51.000Z",
+        "niceDate": "17 September 2026",
+        "subject": "feat(import): add audited import rollback",
+        "message": "feat(import): add audited import rollback\n\nAdd import audit tables and persist qualification dates, times, and change snapshots in one transaction. Admin endpoints expose history and restore prior values during rollback.",
+        "fixes": null,
+        "href": "https://bitbucket.org/swimracing/swimming/commits/cc51f0a3d7beccee7928bece08f65b6ded67e8af",
+        "breaking": false,
+        "files": 5,
+        "insertions": 522,
+        "deletions": 52,
+        "merge": null
+      },
+      {
+        "hash": "747665aae7ada9bad5d9102de4e10938e8a096bd",
+        "shorthash": "747665a",
+        "author": "rodrigo ferreira",
+        "email": "rf.oliveirapaula@gmail.com",
+        "date": "2026-09-17T17:43:16.000Z",
+        "niceDate": "17 September 2026",
+        "subject": "feat(import): add admin history page",
+        "message": "feat(import): add admin history page",
+        "fixes": null,
+        "href": "https://bitbucket.org/swimracing/swimming/commits/747665aae7ada9bad5d9102de4e10938e8a096bd",
+        "breaking": false,
+        "files": 3,
+        "insertions": 315,
+        "deletions": 23,
+        "merge": null
+      },
+      {
+        "hash": "ab150ccee7b86bfb79dcb90400f8410e2fc1b274",
+        "shorthash": "ab150cc",
+        "author": "rodrigo ferreira",
+        "email": "rf.oliveirapaula@gmail.com",
+        "date": "2026-09-17T17:43:50.000Z",
+        "niceDate": "17 September 2026",
+        "subject": "test(import): cover history rollback",
+        "message": "test(import): cover history rollback",
+        "fixes": null,
+        "href": "https://bitbucket.org/swimracing/swimming/commits/ab150ccee7b86bfb79dcb90400f8410e2fc1b274",
+        "breaking": false,
+        "files": 5,
+        "insertions": 248,
+        "deletions": 0,
+        "merge": null
+      },
       {
         "hash": "96adf75a5c205ff33ba53a00fac629c48109089d",
         "shorthash": "96adf75",
@@ -80,7 +131,27 @@
         "merge": null
       }
     ],
-    "merges": [],
+    "merges": [
+      {
+        "id": "51",
+        "message": "Import history rollback",
+        "href": "https://bitbucket.org/swimracing/swimming/pull-requests/51",
+        "author": "Rodrigo Ferreira",
+        "commit": {
+          "hash": "3b282a98566fea5edf29a9786137459043835010",
+          "shorthash": "3b282a9",
+          "author": "Rodrigo Ferreira",
+          "email": "rf.oliveirapaula@gmail.com",
+          "date": "2026-09-17T17:51:45.000Z",
+          "niceDate": "17 September 2026",
+          "subject": "Merged in import-history-rollback (pull request #51)",
+          "message": "Merged in import-history-rollback (pull request #51)\n\nImport history rollback",
+          "fixes": null,
+          "href": "https://bitbucket.org/swimracing/swimming/commits/3b282a98566fea5edf29a9786137459043835010",
+          "breaking": false
+        }
+      }
+    ],
     "fixes": []
   },
   {

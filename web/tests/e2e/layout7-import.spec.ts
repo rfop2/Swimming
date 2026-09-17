@@ -59,6 +59,29 @@ const readSeededValues = async () => {
   }
 }
 
+const readImportHistory = async () => {
+  const { database } = layout7TestConfig
+  const connection = await createConnection( {
+    host: database.host,
+    port: database.port,
+    user: database.user,
+    password: database.password,
+    database: database.name,
+  } )
+
+  try {
+    const [ imports ] = await connection.execute<RowDataPacket[]>( `
+      SELECT id, filename, status, totalCount, insertedCount, updatedCount
+      FROM QualifyingImports
+      ORDER BY id DESC
+      LIMIT 1
+    ` )
+    return imports[0]
+  } finally {
+    await connection.end()
+  }
+}
+
 test( "imports the real Berkshire PDF through the UI and overwrites test sentinels", async ( { page } ) => {
   const { admin, import: importValues, sentinel, expected } = layout7TestConfig
 
@@ -116,4 +139,33 @@ test( "imports the real Berkshire PDF through the UI and overwrites test sentine
     qualifyingEnd: importValues.qualifyingEnd,
     lastRaceDate: importValues.lastRaceDate,
   } )
+
+  const audit = await readImportHistory()
+  expect( audit ).toMatchObject( {
+    filename: "Berkshire & South Buckinghamshire.pdf",
+    status: "completed",
+    totalCount: 272,
+    insertedCount: 271,
+    updatedCount: 1,
+  } )
+
+  await page.goto( "/import-history" )
+  await expect( page.getByRole( "heading", { name: "Import History" } ) ).toBeVisible()
+  await expect( page.getByText( "Berkshire & South Buckinghamshire.pdf", { exact: true } ) ).toBeVisible()
+  await page.getByRole( "button", { name: "View" } ).click()
+  await expect( page.getByText( "37.50", { exact: true } ).first() ).toBeVisible()
+
+  page.once( "dialog", dialog => dialog.accept() )
+  await page.getByRole( "button", { name: "Rollback" } ).click()
+  await expect( page.getByText( /was rolled back/ ) ).toBeVisible()
+
+  const rolledBack = await readSeededValues()
+  expect( rolledBack.time.timeString ).toBe( sentinel.timeString )
+  expect( rolledBack.rowCount ).toBe( 1 )
+  expect( rolledBack.period ).toMatchObject( {
+    qualifyingStart: sentinel.qualifyingStart,
+    qualifyingEnd: sentinel.qualifyingEnd,
+    lastRaceDate: sentinel.lastRaceDate,
+  } )
+  expect( ( await readImportHistory() ).status ).toBe( "rolled_back" )
 } )
