@@ -81,7 +81,7 @@
   const saveSuccess = ref( false )
   const importCompleted = ref( false )
   const saving = ref( false )
-  const saveStage = ref<"idle" | "dates" | "times" | "complete">( "idle" )
+  const saveStage = ref<"idle" | "saving" | "complete">( "idle" )
   const saveProgress = ref( 0 )
   const successMessage = ref( "" )
 
@@ -227,8 +227,7 @@
   const currentStep = computed( () => importCompleted.value ? 5 : 4 )
 
   const saveButtonText = computed( () => {
-    if ( saveStage.value === "dates" ) return "Saving qualification dates…"
-    if ( saveStage.value === "times" ) return `Saving ${importSummary.value.total} qualifying times…`
+    if ( saveStage.value === "saving" ) return `Saving ${importSummary.value.total} qualifying times…`
     if ( saveStage.value === "complete" ) return "Saved"
     return "Save to Database"
   } )
@@ -404,13 +403,10 @@
     saveProgress.value = 10
 
     try {
-
-      if (
-        selections.value &&
+      saveStage.value = "saving"
+      const periodPayload = selections.value &&
         ( selections.value.scope === "county" || selections.value.scope === "regional" )
-      ) {
-        saveStage.value = "dates"
-        const periodPayload = [ {
+        ? {
           year: Number( selections.value.year ),
           scope: selections.value.scope,
           area: selections.value.area,
@@ -418,17 +414,27 @@
           qualifyingStart: period.value.qualifyingStart || null,
           qualifyingEnd: period.value.qualifyingEnd || null,
           lastRaceDate: period.value.lastRaceDate || null,
-        } ]
+        }
+        : null
 
-        await $fetch( "/api/qualifying/dates", {
-          method: "PUT",
-          body: JSON.stringify( periodPayload ),
-        } )
-      }
-
-      saveProgress.value = 45
-      saveStage.value = "times"
-      await $fetch( "/api/import", { method: "PUT", body: rows } )
+      saveProgress.value = 35
+      await $fetch( "/api/import", {
+        method: "PUT",
+        body: {
+          metadata: {
+            filename: sourceFileName.value || "Unknown file",
+            layoutId: importLayout.value?.id ?? null,
+            layoutName: importLayout.value?.name ?? null,
+            year: Number( selections.value?.year ),
+            scope: selections.value?.scope ?? "",
+            area: selections.value?.area ?? "",
+            type: selections.value?.type ?? "general",
+            course: selections.value?.course ?? "",
+          },
+          period: periodPayload,
+          rows,
+        }
+      } )
       saveProgress.value = 100
       saveStage.value = "complete"
       successMessage.value = `Successfully imported ${importSummary.value.total} ${importLayout.value?.shortName ?? ""} qualifying times. ${importSummary.value.filled} times saved, ${importSummary.value.empty} empty values recorded.`
@@ -437,9 +443,7 @@
       await refreshNuxtData( "import" )
     } catch ( error ) {
       const serverMessage = ( error as { data?: { message?: string }, message?: string } )?.data?.message || ( error as Error )?.message
-      errorText.value = saveStage.value === "dates"
-        ? `Unable to save qualification dates. No qualifying times were saved. ${serverMessage || "Please try again."}`
-        : `Qualification dates were saved, but the qualifying times could not be saved. ${serverMessage || "Please try again."}`
+      errorText.value = `The import could not be saved. No qualification dates or times were changed. ${serverMessage || "Please try again."}`
       errorVisible.value = true
       saveStage.value = "idle"
       saveProgress.value = 0
