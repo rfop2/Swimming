@@ -111,6 +111,18 @@ export async function setupLayout7TestDatabase() {
       await connection.query( raceDateMigration )
     }
 
+    const [ importHistoryTables ] = await connection.query<RowDataPacket[]>( `
+      SELECT TABLE_NAME FROM information_schema.TABLES
+      WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'QualifyingImports'
+    `, [ database.name ] )
+    if ( importHistoryTables.length === 0 ) {
+      const importHistoryMigration = await readFile(
+        resolve( process.cwd(), "../data/migrations/20260917_001_qualifying_import_history.sql" ),
+        "utf8"
+      )
+      await connection.query( importHistoryMigration )
+    }
+
     const passwordHash = await hash( admin.password )
     await connection.execute( `
       INSERT INTO User (
@@ -122,6 +134,17 @@ export async function setupLayout7TestDatabase() {
         status = 'active'
     `, [ admin.id, admin.username, passwordHash ] )
     await connection.execute( "DELETE FROM Session WHERE user_id = ?", [ admin.id ] )
+    await connection.execute( "DELETE FROM QualifyingImports" )
+    await connection.execute( `
+      DELETE FROM QualifyingTimes
+      WHERE year = ? AND course = ? AND scope = ? AND area = ? AND type = ?
+    `, [
+      importValues.year,
+      importValues.course,
+      importValues.scope,
+      importValues.area,
+      importValues.type,
+    ] )
 
     await connection.execute( `
       INSERT INTO QualifyingPeriods (

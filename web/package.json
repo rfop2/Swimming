@@ -14,6 +14,7 @@
     "test:layout7:api": "vitest --run tests/swimming-import/pdf/layout7.real-document.test.ts tests/integration/layout7-import-api.test.ts",
     "test:layout7:db": "tsx scripts/setup-layout7-test-db.ts",
     "test:layout7:e2e": "npm run test:layout7:db && playwright test --config playwright.layout7.config.ts",
+    "test:import-history": "npm run test:layout7:db && playwright test --config playwright.import-history.config.ts",
     "test:layout14": "npm run test:layout14:parser && npm run test:layout14:db",
     "test:layout14:parser": "vitest --run tests/swimming-import/pdf/layout14.real-document.test.ts",
     "test:layout14:db": "npm run test:layout7:db && playwright test --config playwright.layout14.config.ts",
