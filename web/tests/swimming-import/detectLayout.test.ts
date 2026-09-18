@@ -178,4 +178,24 @@ describe( "detectImportLayout", () => {
       },
     } )
   } )
+
+  it( "detects the South West Winter regional image-based PDF and applies its confirmed metadata", () => {
+    const result = detectImportLayout(
+      "All entries must be made from times on the rankings database from Level 1, 2 or 3 events since the 3rd November 2025.",
+      "South West QT.pdf",
+      "pdf"
+    )
+
+    expect( result ).toMatchObject( {
+      suggestedLayoutId: "layout25",
+      suggestedLayoutName: "South West Winter Regional 2026",
+      confidence: "high",
+      detectedYear: 2026,
+      dates: {
+        qualifyingStart: "2025-11-03",
+        qualifyingEnd: "2026-10-18",
+        lastRaceDate: null,
+      },
+    } )
+  } )
 } )

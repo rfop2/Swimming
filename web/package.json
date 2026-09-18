@@ -1,6 +1,6 @@
 {
   "name": "swimming-app",
-  "version": "16.6.0",
+  "version": "16.7.0",
   "description": "Swimming performance and qualification monitoring",
   "private": true,
   "type": "module",
@@ -45,6 +45,9 @@
     "test:layout23": "npm run test:layout23:parser && npm run test:layout23:db",
     "test:layout23:parser": "vitest --run tests/swimming-import/pdf/layout23.real-document.test.ts",
     "test:layout23:db": "npm run test:layout7:db && playwright test --config playwright.layout23.config.ts",
+    "test:layout25": "npm run test:layout25:parser && npm run test:layout25:db",
+    "test:layout25:parser": "vitest --run tests/swimming-import/pdf/layout25.real-document.test.ts",
+    "test:layout25:db": "npm run test:layout7:db && playwright test --config playwright.layout25.config.ts",
     "migrate": "tsx server/db/migrate.ts"
   },
   "dependencies": {
