@@ -26,6 +26,7 @@
   import TableNorthamptonshire from "~/components/TableNorthamptonshire.vue"
   import TableLancashire from "~/components/TableLancashire.vue"
   import TableCumbria from "~/components/TableCumbria.vue"
+  import TableSouthWestWinter from "~/components/TableSouthWestWinter.vue"
   import TableSussexCounty from "~/components/TableSussexCounty.vue"
   import TableWCSA from "~/components/TableWCSA.vue"
   import TableWiltshire from "~/components/TableWiltshire.vue"
@@ -74,6 +75,7 @@
     layout21: TableNorthamptonshire,
     layout22: TableLancashire,
     layout23: TableCumbria,
+    layout25: TableSouthWestWinter,
     xlsx: TableXlsx,
   }
 
@@ -254,12 +256,19 @@
     selectedLayoutId.value = id
     previewLayoutId.value = id
 
-    if ( detection.value?.detectedYear ) selections.value.year = detection.value.detectedYear
+    if ( layout.defaultYear ) selections.value.year = layout.defaultYear
+    else if ( detection.value?.detectedYear ) selections.value.year = detection.value.detectedYear
     if ( layout.defaultCourse ) selections.value.course = layout.defaultCourse
     if ( layout.areaCode ) {
-      selections.value.scope = layout.areaCode === "L" ? "regional" : "county"
+      selections.value.scope = layout.defaultScope ?? ( layout.areaCode === "L" ? "regional" : "county" )
       await nextTick()
       selections.value.area = layout.areaCode
+    }
+    if ( layout.defaultType ) selections.value.type = layout.defaultType
+    if ( layout.defaultDates ) {
+      selections.value.qualifyingStart = layout.defaultDates.qualifyingStart ?? ""
+      selections.value.qualifyingEnd = layout.defaultDates.qualifyingEnd
+      selections.value.lastRaceDate = layout.defaultDates.lastRaceDate
     }
   }
 

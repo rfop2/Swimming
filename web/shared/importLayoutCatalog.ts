@@ -11,6 +11,14 @@ export interface ImportLayoutMetadata {
   areaCode: string | null
   areaLabel: string
   defaultCourse?: "lc" | "sc" | "both"
+  defaultScope?: "county" | "regional" | "national"
+  defaultType?: "general" | "summer" | "winter"
+  defaultYear?: number
+  defaultDates?: {
+    qualifyingStart: string | null
+    qualifyingEnd: string | null
+    lastRaceDate: string | null
+  }
 }
 
 export type ImportDetectionConfidence = "high" | "medium" | "low"
@@ -53,6 +61,7 @@ export const importLayoutCatalog: ImportLayoutMetadata[] = [
   { id: "layout21", name: "Northamptonshire County", shortName: "Northamptonshire", description: "Open/male and female 25m qualifying times", fileType: "pdf", exampleYear: 2027, supportedYears: [ 2027 ], areaCode: "NHPA", areaLabel: "Northamptonshire", defaultCourse: "sc" },
   { id: "layout22", name: "Lancashire County", shortName: "Lancashire", description: "Open/male and female short-course consideration times", fileType: "pdf", exampleYear: 2027, supportedYears: [ 2027 ], areaCode: "LNCN", areaLabel: "Lancashire", defaultCourse: "sc" },
   { id: "layout23", name: "Cumbria County", shortName: "Cumbria", description: "Female and open/male short-course qualifying times in opposite age order", fileType: "pdf", exampleYear: 2027, supportedYears: [ 2027 ], areaCode: "CUMN", areaLabel: "Cumbria", defaultCourse: "sc" },
+  { id: "layout25", name: "South West Winter Regional 2026", shortName: "South West Winter", description: "Open/male and female short-course consideration times for junior and senior age groups", fileType: "pdf", exampleYear: 2026, supportedYears: [ 2026 ], areaCode: "W", areaLabel: "South West", defaultCourse: "sc", defaultScope: "regional", defaultType: "winter", defaultYear: 2026, defaultDates: { qualifyingStart: "2025-11-03", qualifyingEnd: "2026-10-18", lastRaceDate: null } },
   { id: "xlsx", name: "Standard spreadsheet", shortName: "Spreadsheet", description: "Standard XLSX import format", fileType: "xlsx", exampleYear: 2027, supportedYears: [ 2025, 2026, 2027 ], areaCode: null, areaLabel: "All areas" },
 ]
 
