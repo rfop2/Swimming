@@ -30,6 +30,7 @@ const detectionRules: Record<string, DetectionRule[]> = {
   layout21: [ { pattern: /northamptonshire asa\s*-\s*county championships/, weight: 0.8 }, { pattern: /2027 qualifying times/, weight: 0.15 }, { pattern: /all times displayed above are in 25m format/, weight: 0.05 } ],
   layout22: [ { pattern: /lancashire county water polo\s*&\s*swimming association/, weight: 0.75 }, { pattern: /age groups and championships 2027/, weight: 0.15 }, { pattern: /consideration times short course/, weight: 0.1 } ],
   layout23: [ { pattern: /cumbria county championships 2027/, weight: 0.75 }, { pattern: /short course qualifying times/, weight: 0.15 }, { pattern: /lower limit time/, weight: 0.1 } ],
+  layout24: [ { pattern: /seh county championships 2027/, weight: 0.6 }, { pattern: /open\s*\/\s*male/, weight: 0.15 }, { pattern: /qualifying window/, weight: 0.15 }, { pattern: /qualifying and consideration times/, weight: 0.1 } ],
 }
 
 const monthNumbers: Record<string, string> = {

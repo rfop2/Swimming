@@ -178,4 +178,24 @@ describe( "detectImportLayout", () => {
       },
     } )
   } )
+
+  it( "detects the Hertfordshire 2027 spreadsheet and leaves Last Race Date empty", () => {
+    const result = detectImportLayout(
+      "SEH County Championships 2027 Qualifying and Consideration times OPEN/MALE FEMALE Qualifying window : 16th May - 6th December 2026 (inclusive)",
+      "SEH County Championships 2027 Qualifying and Consideration times v1.xlsx",
+      "xlsx"
+    )
+
+    expect( result ).toMatchObject( {
+      suggestedLayoutId: "layout24",
+      suggestedLayoutName: "Hertfordshire County 2027 (Excel)",
+      confidence: "high",
+      detectedYear: 2027,
+      dates: {
+        qualifyingStart: "2026-05-16",
+        qualifyingEnd: "2026-12-06",
+        lastRaceDate: null,
+      },
+    } )
+  } )
 } )

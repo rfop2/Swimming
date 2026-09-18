@@ -74,6 +74,7 @@
     layout21: TableNorthamptonshire,
     layout22: TableLancashire,
     layout23: TableCumbria,
+    layout24: TableHertfordshire,
     xlsx: TableXlsx,
   }
 
