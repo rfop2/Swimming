@@ -238,4 +238,24 @@ describe( "detectImportLayout", () => {
       },
     } )
   } )
+
+  it( "detects the Staffordshire PDF and applies the confirmed import dates", () => {
+    const result = detectImportLayout(
+      "County Qualifying Times 2027 Male/Open Female 10/11 12 13 14 15 16 17/Over Event",
+      "Staffordshire QT_2027_15Sep26.pdf",
+      "pdf"
+    )
+
+    expect( result ).toMatchObject( {
+      suggestedLayoutId: "layout28",
+      suggestedLayoutName: "Staffordshire County 2027",
+      confidence: "high",
+      detectedYear: 2027,
+      dates: {
+        qualifyingStart: "2026-04-01",
+        qualifyingEnd: "2027-01-13",
+        lastRaceDate: null,
+      },
+    } )
+  } )
 } )

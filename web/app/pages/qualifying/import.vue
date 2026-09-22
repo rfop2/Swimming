@@ -27,6 +27,7 @@
   import TableLancashire from "~/components/TableLancashire.vue"
   import TableCumbria from "~/components/TableCumbria.vue"
   import TableSouthWestWinter from "~/components/TableSouthWestWinter.vue"
+  import TableStaffordshire from "~/components/TableStaffordshire.vue"
   import TableSussexCounty from "~/components/TableSussexCounty.vue"
   import TableWCSA from "~/components/TableWCSA.vue"
   import TableWiltshire from "~/components/TableWiltshire.vue"
@@ -78,6 +79,7 @@
     layout25: TableSouthWestWinter,
     layout26: TableFemaleEventMale,
     layout27: TableHertfordshire,
+    layout28: TableStaffordshire,
     xlsx: TableXlsx,
   }
 
