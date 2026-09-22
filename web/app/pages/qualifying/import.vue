@@ -76,6 +76,7 @@
     layout22: TableLancashire,
     layout23: TableCumbria,
     layout25: TableSouthWestWinter,
+    layout26: TableFemaleEventMale,
     xlsx: TableXlsx,
   }
 

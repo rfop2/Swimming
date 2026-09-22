@@ -198,4 +198,24 @@ describe( "detectImportLayout", () => {
       },
     } )
   } )
+
+  it( "detects the Cambridgeshire QT/CT spreadsheet and applies its confirmed 2027 metadata", () => {
+    const result = detectImportLayout(
+      "Cambridgeshire County Championships Qualifying Times 2026 ALL ENTRIES MUST INCLUDE A TIME WHICH IS EQUAL TO OR FASTER THAN QT or CT Qualification time Consideration time",
+      "2026 SECC QTCT.xlsx",
+      "xlsx"
+    )
+
+    expect( result ).toMatchObject( {
+      suggestedLayoutId: "layout26",
+      suggestedLayoutName: "Cambridgeshire County 2027",
+      confidence: "high",
+      detectedYear: 2027,
+      dates: {
+        qualifyingStart: "2026-01-01",
+        qualifyingEnd: "2027-01-06",
+        lastRaceDate: null,
+      },
+    } )
+  } )
 } )

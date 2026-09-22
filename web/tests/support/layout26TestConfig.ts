@@ -1,0 +1,55 @@
+import { layout7TestConfig } from "./layout7TestConfig"
+
+export const layout26TestConfig = {
+  database: layout7TestConfig.database,
+  admin: layout7TestConfig.admin,
+  import: {
+    year: 2027,
+    course: "sc",
+    scope: "county",
+    area: "CMBT",
+    type: "general",
+    qualifyingStart: "2026-01-01",
+    qualifyingEnd: "2027-01-06",
+    lastRaceDate: null,
+  },
+  sentinel: {
+    timeString: "99.99",
+    time: 99.99,
+    qualifyingStart: "2001-01-01",
+    qualifyingEnd: "2001-01-02",
+    lastRaceDate: "2001-01-03",
+  },
+  samples: [
+    {
+      gender: "female",
+      event: "Freestyle 50m",
+      distance: "50m",
+      stroke: "Freestyle",
+      databaseStroke: "freestyle",
+      age: "10",
+      timeString: "40.5",
+      time: 40.5,
+    },
+    {
+      gender: "male",
+      event: "Freestyle 100m",
+      distance: "100m",
+      stroke: "Freestyle",
+      databaseStroke: "freestyle",
+      age: "17+",
+      timeString: "58",
+      time: 58,
+    },
+    {
+      gender: "female",
+      event: "Individual Medley 200m",
+      distance: "200m",
+      stroke: "Individual Medley",
+      databaseStroke: "individual_medley",
+      age: "14",
+      timeString: "2:51.0",
+      time: 171,
+    },
+  ],
+} as const
