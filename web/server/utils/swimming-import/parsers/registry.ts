@@ -23,6 +23,8 @@ import { parseSwimmingPdfLayout22 } from "./pdf/layout22"
 import { parseSwimmingPdfLayout23 } from "./pdf/layout23"
 import { parseSwimmingPdfLayout25 } from "./pdf/layout25"
 import { parseSwimmingPdfLayout28 } from "./pdf/layout28"
+import { parseSwimmingPdfLayout29 } from "./pdf/layout29"
+import { parseSwimmingPdfLayout31 } from "./pdf/layout31"
 
 export type PdfParser = ( text: string ) => ImportEvent[]
 
@@ -51,6 +53,8 @@ export const pdfParserRegistry = {
   layout23: parseSwimmingPdfLayout23,
   layout25: parseSwimmingPdfLayout25,
   layout28: parseSwimmingPdfLayout28,
+  layout29: parseSwimmingPdfLayout29,
+  layout31: parseSwimmingPdfLayout31,
 } satisfies Record<string, PdfParser>
 
 export type PdfLayout = keyof typeof pdfParserRegistry
