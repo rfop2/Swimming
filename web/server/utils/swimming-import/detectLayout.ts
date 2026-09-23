@@ -30,6 +30,13 @@ const detectionRules: Record<string, DetectionRule[]> = {
   layout21: [ { pattern: /northamptonshire asa\s*-\s*county championships/, weight: 0.8 }, { pattern: /2027 qualifying times/, weight: 0.15 }, { pattern: /all times displayed above are in 25m format/, weight: 0.05 } ],
   layout22: [ { pattern: /lancashire county water polo\s*&\s*swimming association/, weight: 0.75 }, { pattern: /age groups and championships 2027/, weight: 0.15 }, { pattern: /consideration times short course/, weight: 0.1 } ],
   layout23: [ { pattern: /cumbria county championships 2027/, weight: 0.75 }, { pattern: /short course qualifying times/, weight: 0.15 }, { pattern: /lower limit time/, weight: 0.1 } ],
+  layout25: [ { pattern: /south west qt\.pdf/, weight: 0.75 }, { pattern: /all entries must be made from times on the rankings database/, weight: 0.2 }, { pattern: /3rd november 2025/, weight: 0.05 } ],
+  layout26: [ { pattern: /cambridgeshire county championships qualifying times 2026/, weight: 0.65 }, { pattern: /all entries must include a time which is equal to or faster than qt or ct/, weight: 0.25 }, { pattern: /2026 secc qtct\.xlsx/, weight: 0.1 } ],
+  layout27: [ { pattern: /seh county championships 2027 qualifying and consideration times/, weight: 0.7 }, { pattern: /qualifying window\s*:\s*16th may\s*-\s*6th december 2026/, weight: 0.2 }, { pattern: /open\/male/, weight: 0.1 } ],
+  layout28: [ { pattern: /staffordshire qt_2027_15sep26\.pdf/, weight: 0.8 }, { pattern: /county qualifying times 2027/, weight: 0.15 }, { pattern: /male\/open female/, weight: 0.05 } ],
+  layout29: [ { pattern: /cornwall county champs 2027/, weight: 0.65 }, { pattern: /qualifying and consideration times/, weight: 0.2 }, { pattern: /v2\.1_30\.08\.2026/, weight: 0.1 }, { pattern: /cornwall-county-champs-2027-qts_v2\.1_30082026\.pdf/, weight: 0.05 } ],
+  layout30: [ { pattern: /devon county asa 2027 consideration times/, weight: 0.7 }, { pattern: /open\s*\/\s*male 2027 times/, weight: 0.1 }, { pattern: /female 2027 times/, weight: 0.1 }, { pattern: /2027-devon-championship-qualifying-times-v1\.xlsx/, weight: 0.1 } ],
+  layout31: [ { pattern: /cheshire county w\.p\.\s*&\s*s\.a\. swimming championships 2027/, weight: 0.7 }, { pattern: /consideration times/, weight: 0.15 }, { pattern: /times to have been achieved since 1st january 2026/, weight: 0.1 }, { pattern: /cheshire county 2027 consideration times\.pdf/, weight: 0.05 } ],
 }
 
 const monthNumbers: Record<string, string> = {
@@ -107,7 +114,7 @@ export function detectImportLayout( text: string, fileName: string, fileType: Im
   const source = normalize( `${fileName} ${text}` )
   const achievementRange = extractAchievementRange( source ) ?? extractSwumBetweenRange( source ) ?? extractAchievedBetweenRange( source ) ?? extractQualifyingWindow( source )
   const detectedYearMatch = source.match( /\b(20(?:2\d|3\d))\b/ )
-  const detectedYear = detectedYearMatch ? Number( detectedYearMatch[1] ) : null
+  const sourceDetectedYear = detectedYearMatch ? Number( detectedYearMatch[1] ) : null
 
   const ruleScores = new Map( importLayoutCatalog.map( layout => [
     layout.id,
@@ -133,6 +140,7 @@ export function detectImportLayout( text: string, fileName: string, fileType: Im
   const best = candidates[0]
   const suggestedLayoutId = best && best.score >= 0.35 ? best.id : null
   const suggestedLayout = suggestedLayoutId ? importLayoutById.get( suggestedLayoutId ) : null
+  const detectedYear = suggestedLayout?.defaultYear ?? sourceDetectedYear
   const compatibleLayoutIds = candidates.filter( candidate => candidate.score >= 0.35 ).map( candidate => candidate.id )
   const confidence: ImportLayoutDetection["confidence"] = !best || best.score < 0.35
     ? null
@@ -146,9 +154,9 @@ export function detectImportLayout( text: string, fileName: string, fileType: Im
     compatibleLayoutIds,
     detectedYear,
     dates: {
-      qualifyingStart: achievementRange?.start ?? extractDateAfter( source, [ /times?.{0,35}(?:swum|achieved).{0,40}(?:since|from)/i, /qualifying start(?: date)?/i ] ),
-      qualifyingEnd: achievementRange?.end ?? extractDateAfter( source, [ /qualifying end(?: date)?/i, /qualifying period.{0,20}(?:ends?|until|to)/i, /times?.{0,35}(?:achieved|swum).{0,20}(?:by|until)/i ] ),
-      lastRaceDate: extractDateAfter( source, [ /last race date/i, /final competition date/i ] ),
+      qualifyingStart: achievementRange?.start ?? extractDateAfter( source, [ /times?.{0,35}(?:swum|achieved).{0,40}(?:since|from)/i, /qualifying start(?: date)?/i ] ) ?? suggestedLayout?.defaultDates?.qualifyingStart ?? null,
+      qualifyingEnd: achievementRange?.end ?? extractDateAfter( source, [ /qualifying end(?: date)?/i, /qualifying period.{0,20}(?:ends?|until|to)/i, /times?.{0,35}(?:achieved|swum).{0,20}(?:by|until)/i ] ) ?? suggestedLayout?.defaultDates?.qualifyingEnd ?? null,
+      lastRaceDate: extractDateAfter( source, [ /last race date/i, /final competition date/i ] ) ?? suggestedLayout?.defaultDates?.lastRaceDate ?? null,
     },
   }
 }

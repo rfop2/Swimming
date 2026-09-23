@@ -159,6 +159,7 @@
 
   const userNavigation = computed<UserNavOption[]>( () => [
     { name: "Account", href: "/account" },
+    { name: "Import History", href: "/import-history", condition: () => user.value.role === "admin" },
     { name: "Pricing", href: "/pricing" },
     { name: "Updates", href: "/updates" },
     { name: "Tasks", href: "/tasks" },
