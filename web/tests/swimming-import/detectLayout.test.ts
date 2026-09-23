@@ -298,4 +298,24 @@ describe( "detectImportLayout", () => {
       },
     } )
   } )
+
+  it( "detects the London Winter PDF and applies its confirmed import dates", () => {
+    const result = detectImportLayout(
+      "SE LONDON WINTER CHAMPIONSHIPS 2026 QUALIFYING AND CONSIDERATION TIMES LONG COURSE SHORT COURSE",
+      "London Winter 26 champs QT and CT v0.1.pdf",
+      "pdf"
+    )
+
+    expect( result ).toMatchObject( {
+      suggestedLayoutId: "layout34",
+      suggestedLayoutName: "London Winter Regional 2026",
+      confidence: "high",
+      detectedYear: 2026,
+      dates: {
+        qualifyingStart: "2025-10-22",
+        qualifyingEnd: "2026-10-21",
+        lastRaceDate: null,
+      },
+    } )
+  } )
 } )

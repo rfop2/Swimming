@@ -36,6 +36,7 @@ const detectionRules: Record<string, DetectionRule[]> = {
   layout28: [ { pattern: /staffordshire qt_2027_15sep26\.pdf/, weight: 0.8 }, { pattern: /county qualifying times 2027/, weight: 0.15 }, { pattern: /male\/open female/, weight: 0.05 } ],
   layout32: [ { pattern: /swim england east region long course championships 2026/, weight: 0.7 }, { pattern: /short course times women men\/open/, weight: 0.15 }, { pattern: /qualifying period is 1 january 2025 to the entry closing date/, weight: 0.1 }, { pattern: /east region\.pdf/, weight: 0.05 } ],
   layout33: [ { pattern: /swim england essex county age group championships/, weight: 0.7 }, { pattern: /short course consideration times/, weight: 0.2 }, { pattern: /essex qt times 2027\.pdf/, weight: 0.1 } ],
+  layout34: [ { pattern: /se london winter championships 2026/, weight: 0.75 }, { pattern: /qualifying and consideration times/, weight: 0.15 }, { pattern: /london winter 26 champs qt and ct v0\.1\.pdf/, weight: 0.1 } ],
 }
 
 const monthNumbers: Record<string, string> = {
