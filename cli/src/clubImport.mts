@@ -25,7 +25,7 @@ import { getPool, prepareStatement, setupNordFetch } from "lib"
 
   if ( process.env.NORDVPN_SC_USERNAME && process.env.NORDVPN_SC_PASSWORD ) {
     await setupNordFetch( {
-      server: "nl.socks.nordhold.net",
+      server: process.env.NORDVPN_SC_SERVER ?? "nl.socks.nordhold.net",
       username: process.env.NORDVPN_SC_USERNAME!,
       password: process.env.NORDVPN_SC_PASSWORD!
     } )
