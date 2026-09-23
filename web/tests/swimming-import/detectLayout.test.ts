@@ -258,4 +258,25 @@ describe( "detectImportLayout", () => {
       },
     } )
   } )
+
+  it( "detects the Cornwall 2027 PDF and applies its confirmed import dates", () => {
+    const result = detectImportLayout(
+      "Cornwall County Champs 2027 Qualifying and Consideration Times V2.1_30.08.2026 Times must have been achieved since 01/03/ 2026",
+      "Cornwall-County-Champs-2027-QTs_V2.1_30082026.pdf",
+      "pdf"
+    )
+
+    expect( result ).toMatchObject( {
+      suggestedLayoutId: "layout29",
+      suggestedLayoutName: "Cornwall County 2027",
+      confidence: "high",
+      detectedYear: 2027,
+      dates: {
+        qualifyingStart: "2026-03-01",
+        qualifyingEnd: "2027-01-16",
+        lastRaceDate: null,
+      },
+    } )
+  } )
+
 } )
