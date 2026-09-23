@@ -2,13 +2,47 @@
   {
     "isoDate": "2026-09-23",
     "niceDate": "23 September 2026",
-    "diff": "16.8.0..",
-    "href": "https://bitbucket.org/swimracing/swimming/compare/16.9.0..16.8.0",
+    "diff": "16.9.0..",
+    "href": "https://bitbucket.org/swimracing/swimming/compare/16.9.1..16.9.0",
     "major": false,
     "minor": false,
     "tag": null,
+    "title": "16.9.1",
+    "date": "2026-09-23T16:30:16.371Z",
+    "summary": null,
+    "commits": [
+      {
+        "hash": "926a4245dedf18b310085fda202c7eb53188ea72",
+        "shorthash": "926a424",
+        "author": "Philip Coombes",
+        "email": "phil@web2wire.com",
+        "date": "2026-09-23T16:30:01.000Z",
+        "niceDate": "23 September 2026",
+        "subject": "Allow Nord socks server to be specified in env.",
+        "message": "Allow Nord socks server to be specified in env.",
+        "fixes": null,
+        "href": "https://bitbucket.org/swimracing/swimming/commits/926a4245dedf18b310085fda202c7eb53188ea72",
+        "breaking": false,
+        "files": 3,
+        "insertions": 3,
+        "deletions": 3,
+        "merge": null
+      }
+    ],
+    "merges": [],
+    "fixes": []
+  },
+  {
+    "isoDate": "2026-09-23",
+    "niceDate": "23 September 2026",
+    "diff": "16.8.0..16.9.0",
+    "href": "https://bitbucket.org/swimracing/swimming/compare/16.9.0..16.8.0",
+    "major": false,
+    "minor": true,
+    "tag": "16.9.0",
+    "date": "2026-09-23",
     "title": "16.9.0",
-    "date": "2026-09-23T13:07:13.796Z",
+    "version": "16.9.0",
     "summary": null,
     "commits": [
       {
@@ -248,8 +282,8 @@
   {
     "isoDate": "2026-09-17",
     "niceDate": "17 September 2026",
-    "diff": "16.4.1..16.6.0",
-    "href": "https://bitbucket.org/swimracing/swimming/compare/16.6.0..16.4.1",
+    "diff": "16.5.0..16.6.0",
+    "href": "https://bitbucket.org/swimracing/swimming/compare/16.6.0..16.5.0",
     "major": false,
     "minor": true,
     "tag": "16.6.0",
@@ -308,7 +342,44 @@
         "insertions": 248,
         "deletions": 0,
         "merge": null
-      },
+      }
+    ],
+    "merges": [
+      {
+        "id": "51",
+        "message": "Import history rollback",
+        "href": "https://bitbucket.org/swimracing/swimming/pull-requests/51",
+        "author": "Rodrigo Ferreira",
+        "commit": {
+          "hash": "3b282a98566fea5edf29a9786137459043835010",
+          "shorthash": "3b282a9",
+          "author": "Rodrigo Ferreira",
+          "email": "rf.oliveirapaula@gmail.com",
+          "date": "2026-09-17T17:51:45.000Z",
+          "niceDate": "17 September 2026",
+          "subject": "Merged in import-history-rollback (pull request #51)",
+          "message": "Merged in import-history-rollback (pull request #51)\n\nImport history rollback",
+          "fixes": null,
+          "href": "https://bitbucket.org/swimracing/swimming/commits/3b282a98566fea5edf29a9786137459043835010",
+          "breaking": false
+        }
+      }
+    ],
+    "fixes": []
+  },
+  {
+    "isoDate": "2026-09-15",
+    "niceDate": "15 September 2026",
+    "diff": "16.4.1..16.5.0",
+    "href": "https://bitbucket.org/swimracing/swimming/compare/16.5.0..16.4.1",
+    "major": false,
+    "minor": true,
+    "tag": "16.5.0",
+    "date": "2026-09-15",
+    "title": "16.5.0",
+    "version": "16.5.0",
+    "summary": null,
+    "commits": [
       {
         "hash": "96adf75a5c205ff33ba53a00fac629c48109089d",
         "shorthash": "96adf75",
@@ -378,27 +449,7 @@
         "merge": null
       }
     ],
-    "merges": [
-      {
-        "id": "51",
-        "message": "Import history rollback",
-        "href": "https://bitbucket.org/swimracing/swimming/pull-requests/51",
-        "author": "Rodrigo Ferreira",
-        "commit": {
-          "hash": "3b282a98566fea5edf29a9786137459043835010",
-          "shorthash": "3b282a9",
-          "author": "Rodrigo Ferreira",
-          "email": "rf.oliveirapaula@gmail.com",
-          "date": "2026-09-17T17:51:45.000Z",
-          "niceDate": "17 September 2026",
-          "subject": "Merged in import-history-rollback (pull request #51)",
-          "message": "Merged in import-history-rollback (pull request #51)\n\nImport history rollback",
-          "fixes": null,
-          "href": "https://bitbucket.org/swimracing/swimming/commits/3b282a98566fea5edf29a9786137459043835010",
-          "breaking": false
-        }
-      }
-    ],
+    "merges": [],
     "fixes": []
   },
   {
