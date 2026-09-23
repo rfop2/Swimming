@@ -276,6 +276,7 @@ describe( "detectImportLayout", () => {
         qualifyingEnd: "2027-01-16",
         lastRaceDate: null,
       },
+    } )
   } )
 
   it( "detects the Devon workbook and applies both-course import metadata", () => {
@@ -297,6 +298,24 @@ describe( "detectImportLayout", () => {
       },
     } )
   } )
-} )
 
+  it( "detects the Cheshire PDF and applies its confirmed import dates", () => {
+    const result = detectImportLayout(
+      "Cheshire County W.P. & S.A. Swimming Championships 2027 CONSIDERATION Times Times to have been achieved since 1st January 2026 at Licensed Meets",
+      "Cheshire County 2027 Consideration Times.pdf",
+      "pdf"
+    )
+
+    expect( result ).toMatchObject( {
+      suggestedLayoutId: "layout31",
+      suggestedLayoutName: "Cheshire County 2027",
+      confidence: "high",
+      detectedYear: 2027,
+      dates: {
+        qualifyingStart: "2026-01-01",
+        qualifyingEnd: "2026-12-09",
+        lastRaceDate: null,
+      },
+    } )
+  } )
 } )
