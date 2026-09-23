@@ -35,6 +35,7 @@ const detectionRules: Record<string, DetectionRule[]> = {
   layout27: [ { pattern: /seh county championships 2027 qualifying and consideration times/, weight: 0.7 }, { pattern: /qualifying window\s*:\s*16th may\s*-\s*6th december 2026/, weight: 0.2 }, { pattern: /open\/male/, weight: 0.1 } ],
   layout28: [ { pattern: /staffordshire qt_2027_15sep26\.pdf/, weight: 0.8 }, { pattern: /county qualifying times 2027/, weight: 0.15 }, { pattern: /male\/open female/, weight: 0.05 } ],
   layout29: [ { pattern: /cornwall county champs 2027/, weight: 0.65 }, { pattern: /qualifying and consideration times/, weight: 0.2 }, { pattern: /v2\.1_30\.08\.2026/, weight: 0.1 }, { pattern: /cornwall-county-champs-2027-qts_v2\.1_30082026\.pdf/, weight: 0.05 } ],
+  layout30: [ { pattern: /devon county asa 2027 consideration times/, weight: 0.7 }, { pattern: /open\s*\/\s*male 2027 times/, weight: 0.1 }, { pattern: /female 2027 times/, weight: 0.1 }, { pattern: /2027-devon-championship-qualifying-times-v1\.xlsx/, weight: 0.1 } ],
 }
 
 const monthNumbers: Record<string, string> = {

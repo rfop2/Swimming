@@ -276,7 +276,27 @@ describe( "detectImportLayout", () => {
         qualifyingEnd: "2027-01-16",
         lastRaceDate: null,
       },
+  } )
+
+  it( "detects the Devon workbook and applies both-course import metadata", () => {
+    const result = detectImportLayout(
+      "DEVON COUNTY ASA 2027 CONSIDERATION TIMES Open / Male 2027 Times Female 2027 Times Entry times to have been achieved since 1st March 2026 Entries close 16th December 2026",
+      "2027-Devon-Championship-Qualifying-Times-V1.xlsx",
+      "xlsx"
+    )
+
+    expect( result ).toMatchObject( {
+      suggestedLayoutId: "layout30",
+      suggestedLayoutName: "Devon County 2027",
+      confidence: "high",
+      detectedYear: 2027,
+      dates: {
+        qualifyingStart: "2026-03-01",
+        qualifyingEnd: "2026-12-16",
+        lastRaceDate: null,
+      },
     } )
   } )
+} )
 
 } )
