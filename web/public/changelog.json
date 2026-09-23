@@ -1,14 +1,102 @@
 [
   {
-    "isoDate": "2026-09-18",
-    "niceDate": "18 September 2026",
-    "diff": "16.6.0..",
-    "href": "https://bitbucket.org/swimracing/swimming/compare/16.7.0..16.6.0",
+    "isoDate": "2026-09-23",
+    "niceDate": "23 September 2026",
+    "diff": "16.7.0..",
+    "href": "https://bitbucket.org/swimracing/swimming/compare/16.8.0..16.7.0",
     "major": false,
     "minor": false,
     "tag": null,
+    "title": "16.8.0",
+    "date": "2026-09-23T11:39:55.861Z",
+    "summary": null,
+    "commits": [
+      {
+        "hash": "d04bf7e1d519d0bd7d261f8c599b7b31044ffe12",
+        "shorthash": "d04bf7e",
+        "author": "rodrigo ferreira",
+        "email": "rf.oliveirapaula@gmail.com",
+        "date": "2026-09-22T18:11:53.000Z",
+        "niceDate": "22 September 2026",
+        "subject": "feat(import): add Cambridgeshire 2027 layout",
+        "message": "feat(import): add Cambridgeshire 2027 layout",
+        "fixes": null,
+        "href": "https://bitbucket.org/swimracing/swimming/commits/d04bf7e1d519d0bd7d261f8c599b7b31044ffe12",
+        "breaking": false,
+        "files": 13,
+        "insertions": 531,
+        "deletions": 2,
+        "merge": null
+      },
+      {
+        "hash": "b0c2d8d2e26046cb0fcf2ebba0a08840895e08c9",
+        "shorthash": "b0c2d8d",
+        "author": "rodrigo ferreira",
+        "email": "rf.oliveirapaula@gmail.com",
+        "date": "2026-09-22T19:33:19.000Z",
+        "niceDate": "22 September 2026",
+        "subject": "feat(import): add Staffordshire 2027 layout",
+        "message": "feat(import): add Staffordshire 2027 layout",
+        "fixes": null,
+        "href": "https://bitbucket.org/swimracing/swimming/commits/b0c2d8d2e26046cb0fcf2ebba0a08840895e08c9",
+        "breaking": false,
+        "files": 14,
+        "insertions": 436,
+        "deletions": 0,
+        "merge": null
+      },
+      {
+        "hash": "c11b27af7c2001a63cc57df136d62ea06cfa6683",
+        "shorthash": "c11b27a",
+        "author": "rodrigo ferreira",
+        "email": "rf.oliveirapaula@gmail.com",
+        "date": "2026-09-22T19:30:09.000Z",
+        "niceDate": "22 September 2026",
+        "subject": "feat(import): add Hertfordshire Excel layout",
+        "message": "feat(import): add Hertfordshire Excel layout",
+        "fixes": null,
+        "href": "https://bitbucket.org/swimracing/swimming/commits/c11b27af7c2001a63cc57df136d62ea06cfa6683",
+        "breaking": false,
+        "files": 13,
+        "insertions": 432,
+        "deletions": 2,
+        "merge": null
+      }
+    ],
+    "merges": [
+      {
+        "id": "53",
+        "message": "Codex/imports 2027 batch 1",
+        "href": "https://bitbucket.org/swimracing/swimming/pull-requests/53",
+        "author": "Rodrigo Ferreira",
+        "commit": {
+          "hash": "549a520e50141619956d2dffddf1fc191da9acab",
+          "shorthash": "549a520",
+          "author": "Rodrigo Ferreira",
+          "email": "rf.oliveirapaula@gmail.com",
+          "date": "2026-09-23T11:39:20.000Z",
+          "niceDate": "23 September 2026",
+          "subject": "Merged in codex/imports-2027-batch-1 (pull request #53)",
+          "message": "Merged in codex/imports-2027-batch-1 (pull request #53)\n\nCodex/imports 2027 batch 1",
+          "fixes": null,
+          "href": "https://bitbucket.org/swimracing/swimming/commits/549a520e50141619956d2dffddf1fc191da9acab",
+          "breaking": false
+        }
+      }
+    ],
+    "fixes": []
+  },
+  {
+    "isoDate": "2026-09-18",
+    "niceDate": "18 September 2026",
+    "diff": "16.6.0..16.7.0",
+    "href": "https://bitbucket.org/swimracing/swimming/compare/16.7.0..16.6.0",
+    "major": false,
+    "minor": true,
+    "tag": "16.7.0",
+    "date": "2026-09-18",
     "title": "16.7.0",
-    "date": "2026-09-18T10:22:13.584Z",
+    "version": "16.7.0",
     "summary": null,
     "commits": [
       {
@@ -1816,40 +1904,6 @@
         "files": 1,
         "insertions": 8,
         "deletions": 1,
-        "merge": null
-      }
-    ],
-    "merges": [],
-    "fixes": []
-  },
-  {
-    "isoDate": "2026-07-21",
-    "niceDate": "21 July 2026",
-    "diff": "15.8.0..15.9.0",
-    "href": "https://bitbucket.org/swimracing/swimming/compare/15.9.0..15.8.0",
-    "major": false,
-    "minor": true,
-    "tag": "15.9.0",
-    "date": "2026-07-21",
-    "title": "15.9.0",
-    "version": "15.9.0",
-    "summary": null,
-    "commits": [
-      {
-        "hash": "504dc430a8abe2a97a31f1ee979d4b631a24708b",
-        "shorthash": "504dc43",
-        "author": "Philip Coombes",
-        "email": "phil@web2wire.com",
-        "date": "2026-07-09T14:33:03.000Z",
-        "niceDate": "9 July 2026",
-        "subject": "Initial changes to qualifying eligibility",
-        "message": "Initial changes to qualifying eligibility",
-        "fixes": null,
-        "href": "https://bitbucket.org/swimracing/swimming/commits/504dc430a8abe2a97a31f1ee979d4b631a24708b",
-        "breaking": false,
-        "files": 11,
-        "insertions": 32,
-        "deletions": 87,
         "merge": null
       }
     ],
