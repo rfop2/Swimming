@@ -35,6 +35,7 @@ const detectionRules: Record<string, DetectionRule[]> = {
   layout27: [ { pattern: /seh county championships 2027 qualifying and consideration times/, weight: 0.7 }, { pattern: /qualifying window\s*:\s*16th may\s*-\s*6th december 2026/, weight: 0.2 }, { pattern: /open\/male/, weight: 0.1 } ],
   layout28: [ { pattern: /staffordshire qt_2027_15sep26\.pdf/, weight: 0.8 }, { pattern: /county qualifying times 2027/, weight: 0.15 }, { pattern: /male\/open female/, weight: 0.05 } ],
   layout32: [ { pattern: /swim england east region long course championships 2026/, weight: 0.7 }, { pattern: /short course times women men\/open/, weight: 0.15 }, { pattern: /qualifying period is 1 january 2025 to the entry closing date/, weight: 0.1 }, { pattern: /east region\.pdf/, weight: 0.05 } ],
+  layout33: [ { pattern: /swim england essex county age group championships/, weight: 0.7 }, { pattern: /short course consideration times/, weight: 0.2 }, { pattern: /essex qt times 2027\.pdf/, weight: 0.1 } ],
 }
 
 const monthNumbers: Record<string, string> = {
@@ -99,6 +100,23 @@ function extractAchievedBetweenRange( source: string ) {
   }
 }
 
+function shiftNumericDate( day: string, month: string, year: string, days: number ) {
+  const fullYear = year.length === 2 ? `20${year}` : year
+  const value = new Date( Date.UTC( Number( fullYear ), Number( month ) - 1, Number( day ) ) )
+  value.setUTCDate( value.getUTCDate() + days )
+  return value.toISOString().slice( 0, 10 )
+}
+
+function extractExclusiveAchievementRange( source: string ) {
+  const match = /times? must be achieved after\s+(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})\s+and before(?: the)? closing date\s+(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})/i.exec( source )
+  if ( !match ) return null
+
+  return {
+    start: shiftNumericDate( match[1], match[2], match[3], 1 ),
+    end: shiftNumericDate( match[4], match[5], match[6], -1 ),
+  }
+}
+
 function extractQualifyingWindow( source: string ) {
   const match = /qualifying window\s*:\s*(\d{1,2})(?:st|nd|rd|th)?\s+(january|february|march|april|may|june|july|august|september|october|november|december)\s*[-â€“â€”]\s*(\d{1,2})(?:st|nd|rd|th)?\s+(january|february|march|april|may|june|july|august|september|october|november|december)\s+(20\d{2})/i.exec( source )
   if ( !match ) return null
@@ -110,7 +128,7 @@ function extractQualifyingWindow( source: string ) {
 
 export function detectImportLayout( text: string, fileName: string, fileType: ImportLayoutFileType ): ImportLayoutDetection {
   const source = normalize( `${fileName} ${text}` )
-  const achievementRange = extractAchievementRange( source ) ?? extractSwumBetweenRange( source ) ?? extractAchievedBetweenRange( source ) ?? extractQualifyingWindow( source )
+  const achievementRange = extractExclusiveAchievementRange( source ) ?? extractAchievementRange( source ) ?? extractSwumBetweenRange( source ) ?? extractAchievedBetweenRange( source ) ?? extractQualifyingWindow( source )
   const detectedYearMatch = source.match( /\b(20(?:2\d|3\d))\b/ )
   const sourceDetectedYear = detectedYearMatch ? Number( detectedYearMatch[1] ) : null
 

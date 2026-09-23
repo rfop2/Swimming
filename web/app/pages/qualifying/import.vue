@@ -29,6 +29,7 @@
   import TableSouthWestWinter from "~/components/TableSouthWestWinter.vue"
   import TableStaffordshire from "~/components/TableStaffordshire.vue"
   import TableEastRegion2026 from "~/components/TableEastRegion2026.vue"
+  import TableEssex from "~/components/TableEssex.vue"
   import TableSussexCounty from "~/components/TableSussexCounty.vue"
   import TableWCSA from "~/components/TableWCSA.vue"
   import TableWiltshire from "~/components/TableWiltshire.vue"
@@ -82,6 +83,7 @@
     layout27: TableHertfordshire,
     layout28: TableStaffordshire,
     layout32: TableEastRegion2026,
+    layout33: TableEssex,
     xlsx: TableXlsx,
   }
 
