@@ -51,7 +51,7 @@ export const getBrowserPage = async () => {
   if ( !browser ) {
     const { anonymizeProxy } = await import( "proxy-chain" )
 
-    const socksHost = "nl.socks.nordhold.net" // or "amsterdam.nl.socks.nordhold.net"
+    const socksHost = process.env.NORDVPN_SC_SERVER ?? "nl.socks.nordhold.net"
     const socksPort = 1080
 
     const nordSocks = `socks5://${encodeURIComponent( username )}:${encodeURIComponent( password )}@${socksHost}:${socksPort}`
