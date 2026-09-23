@@ -198,4 +198,64 @@ describe( "detectImportLayout", () => {
       },
     } )
   } )
+
+  it( "detects the Cambridgeshire QT/CT spreadsheet and applies its confirmed 2027 metadata", () => {
+    const result = detectImportLayout(
+      "Cambridgeshire County Championships Qualifying Times 2026 ALL ENTRIES MUST INCLUDE A TIME WHICH IS EQUAL TO OR FASTER THAN QT or CT Qualification time Consideration time",
+      "2026 SECC QTCT.xlsx",
+      "xlsx"
+    )
+
+    expect( result ).toMatchObject( {
+      suggestedLayoutId: "layout26",
+      suggestedLayoutName: "Cambridgeshire County 2027",
+      confidence: "high",
+      detectedYear: 2027,
+      dates: {
+        qualifyingStart: "2026-01-01",
+        qualifyingEnd: "2027-01-06",
+        lastRaceDate: null,
+      },
+    } )
+  } )
+
+  it( "detects the Hertfordshire QT/CT workbook and its qualifying window", () => {
+    const result = detectImportLayout(
+      "OPEN/MALE FEMALE QT CT Qualifying and Consideration Times Qualifying window : 16th May - 6th December 2026 (inclusive)",
+      "SEH County Championships 2027 Qualifying and Consideration times v1.xlsx",
+      "xlsx"
+    )
+
+    expect( result ).toMatchObject( {
+      suggestedLayoutId: "layout27",
+      suggestedLayoutName: "Hertfordshire County 2027 (Excel)",
+      confidence: "high",
+      detectedYear: 2027,
+      dates: {
+        qualifyingStart: "2026-05-16",
+        qualifyingEnd: "2026-12-06",
+        lastRaceDate: null,
+      },
+    } )
+  } )
+
+  it( "detects the Staffordshire PDF and applies the confirmed import dates", () => {
+    const result = detectImportLayout(
+      "County Qualifying Times 2027 Male/Open Female 10/11 12 13 14 15 16 17/Over Event",
+      "Staffordshire QT_2027_15Sep26.pdf",
+      "pdf"
+    )
+
+    expect( result ).toMatchObject( {
+      suggestedLayoutId: "layout28",
+      suggestedLayoutName: "Staffordshire County 2027",
+      confidence: "high",
+      detectedYear: 2027,
+      dates: {
+        qualifyingStart: "2026-04-01",
+        qualifyingEnd: "2027-01-13",
+        lastRaceDate: null,
+      },
+    } )
+  } )
 } )

@@ -31,6 +31,9 @@ const detectionRules: Record<string, DetectionRule[]> = {
   layout22: [ { pattern: /lancashire county water polo\s*&\s*swimming association/, weight: 0.75 }, { pattern: /age groups and championships 2027/, weight: 0.15 }, { pattern: /consideration times short course/, weight: 0.1 } ],
   layout23: [ { pattern: /cumbria county championships 2027/, weight: 0.75 }, { pattern: /short course qualifying times/, weight: 0.15 }, { pattern: /lower limit time/, weight: 0.1 } ],
   layout25: [ { pattern: /south west qt\.pdf/, weight: 0.75 }, { pattern: /all entries must be made from times on the rankings database/, weight: 0.2 }, { pattern: /3rd november 2025/, weight: 0.05 } ],
+  layout26: [ { pattern: /cambridgeshire county championships qualifying times 2026/, weight: 0.65 }, { pattern: /all entries must include a time which is equal to or faster than qt or ct/, weight: 0.25 }, { pattern: /2026 secc qtct\.xlsx/, weight: 0.1 } ],
+  layout27: [ { pattern: /seh county championships 2027 qualifying and consideration times/, weight: 0.7 }, { pattern: /qualifying window\s*:\s*16th may\s*-\s*6th december 2026/, weight: 0.2 }, { pattern: /open\/male/, weight: 0.1 } ],
+  layout28: [ { pattern: /staffordshire qt_2027_15sep26\.pdf/, weight: 0.8 }, { pattern: /county qualifying times 2027/, weight: 0.15 }, { pattern: /male\/open female/, weight: 0.05 } ],
 }
 
 const monthNumbers: Record<string, string> = {
