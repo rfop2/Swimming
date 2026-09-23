@@ -34,6 +34,7 @@ const detectionRules: Record<string, DetectionRule[]> = {
   layout26: [ { pattern: /cambridgeshire county championships qualifying times 2026/, weight: 0.65 }, { pattern: /all entries must include a time which is equal to or faster than qt or ct/, weight: 0.25 }, { pattern: /2026 secc qtct\.xlsx/, weight: 0.1 } ],
   layout27: [ { pattern: /seh county championships 2027 qualifying and consideration times/, weight: 0.7 }, { pattern: /qualifying window\s*:\s*16th may\s*-\s*6th december 2026/, weight: 0.2 }, { pattern: /open\/male/, weight: 0.1 } ],
   layout28: [ { pattern: /staffordshire qt_2027_15sep26\.pdf/, weight: 0.8 }, { pattern: /county qualifying times 2027/, weight: 0.15 }, { pattern: /male\/open female/, weight: 0.05 } ],
+  layout32: [ { pattern: /swim england east region long course championships 2026/, weight: 0.7 }, { pattern: /short course times women men\/open/, weight: 0.15 }, { pattern: /qualifying period is 1 january 2025 to the entry closing date/, weight: 0.1 }, { pattern: /east region\.pdf/, weight: 0.05 } ],
 }
 
 const monthNumbers: Record<string, string> = {
@@ -152,7 +153,7 @@ export function detectImportLayout( text: string, fileName: string, fileType: Im
     detectedYear,
     dates: {
       qualifyingStart: achievementRange?.start ?? extractDateAfter( source, [ /times?.{0,35}(?:swum|achieved).{0,40}(?:since|from)/i, /qualifying start(?: date)?/i ] ) ?? suggestedLayout?.defaultDates?.qualifyingStart ?? null,
-      qualifyingEnd: achievementRange?.end ?? extractDateAfter( source, [ /qualifying end(?: date)?/i, /qualifying period.{0,20}(?:ends?|until|to)/i, /times?.{0,35}(?:achieved|swum).{0,20}(?:by|until)/i ] ) ?? suggestedLayout?.defaultDates?.qualifyingEnd ?? null,
+      qualifyingEnd: achievementRange?.end ?? extractDateAfter( source, [ /closing date(?: for all events)?(?: is)?/i, /qualifying end(?: date)?/i, /qualifying period.{0,20}(?:ends?|until|to)/i, /times?.{0,35}(?:achieved|swum).{0,20}(?:by|until)/i ] ) ?? suggestedLayout?.defaultDates?.qualifyingEnd ?? null,
       lastRaceDate: extractDateAfter( source, [ /last race date/i, /final competition date/i ] ) ?? suggestedLayout?.defaultDates?.lastRaceDate ?? null,
     },
   }

@@ -258,4 +258,24 @@ describe( "detectImportLayout", () => {
       },
     } )
   } )
+
+  it( "detects the East Region PDF and applies its qualifying period", () => {
+    const result = detectImportLayout(
+      "Swim England East Region Long Course Championships 2026 Qualifying Times Short Course Times Women Men/Open The closing date for all events is Tuesday 14 April 2026. Qualifying period is 1 January 2025 to the entry closing date",
+      "East Region.pdf",
+      "pdf"
+    )
+
+    expect( result ).toMatchObject( {
+      suggestedLayoutId: "layout32",
+      suggestedLayoutName: "East Region Championships 2026",
+      confidence: "high",
+      detectedYear: 2026,
+      dates: {
+        qualifyingStart: "2025-01-01",
+        qualifyingEnd: "2026-04-14",
+        lastRaceDate: null,
+      },
+    } )
+  } )
 } )

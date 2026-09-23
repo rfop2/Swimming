@@ -57,6 +57,9 @@
     "test:layout28": "npm run test:layout28:parser && npm run test:layout28:db",
     "test:layout28:parser": "vitest --run tests/swimming-import/pdf/layout28.real-document.test.ts",
     "test:layout28:db": "npm run test:layout7:db && playwright test --config playwright.layout28.config.ts",
+    "test:layout32": "npm run test:layout32:parser && npm run test:layout32:db",
+    "test:layout32:parser": "vitest --run tests/swimming-import/pdf/layout32.real-document.test.ts",
+    "test:layout32:db": "npm run test:layout7:db && playwright test --config playwright.layout32.config.ts",
     "migrate": "tsx server/db/migrate.ts"
   },
   "dependencies": {
