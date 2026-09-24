@@ -552,10 +552,11 @@ export const fetchPages = async ( pages: Map<string,PageInfo>, cacheTime: number
   return responses
 }
 
-// Fetches a page via a JS-rendering method (needed for pages, e.g. meets, that
-// require client-side rendering) using whichever fetch method is configured:
-// ScraperAPI's render mode, or a local Puppeteer browser over the NordVPN proxy.
+// Fetches a page that needs client-side JS rendering (e.g. meets pages) via a
+// local Puppeteer browser, routed through whichever fetch method is configured
+// (NordVPN SOCKS proxy or ScraperAPI's proxy mode) - see getBrowserPage().
 export const fetchPageBrowser = async ( pageInfo: PageInfo, cacheTime: number = DEFAULT_CACHE_TIME ) => {
+  const page = await getBrowserPage()
   const contentFile = CACHE_DIR + "/" + pageInfo.label
   console.log( `Processing ${pageInfo.label} -> ${pageInfo.url}` )
   const cachedPage = await loadCachedPage( contentFile, cacheTime )
@@ -565,19 +566,8 @@ export const fetchPageBrowser = async ( pageInfo: PageInfo, cacheTime: number = 
     process.stdout.write( `Fetching ${pageInfo.url}` )
     const timer = new Timer()
     timer.start()
-    let content: string
-    if ( getFetchMethod() === "scraperapi" ) {
-      const anonUrl = `https://api.scraperapi.com/?api_key=${process.env.SCRAPER_API_KEY}&url=${pageInfo.url}&render=true`
-      const response = await fetch( anonUrl, { method: "GET" } )
-      if ( response.status < 200 || response.status >= 300 ) {
-        throw new Error( `Request failed: ${response.status} (${response.statusText})` )
-      }
-      content = await response.text()
-    } else {
-      const page = await getBrowserPage()
-      await page.goto( pageInfo.url.toString(), { waitUntil: "networkidle2" } )
-      content = await page.content()
-    }
+    await page.goto( pageInfo.url.toString(), { waitUntil: "networkidle2" } )
+    const content = await page.content()
     process.stdout.write( ` - ${timer.elapsedSeconds().toFixed( 2 )}\n` )
     timer.stop()
     await saveCachedPage( contentFile, content )
