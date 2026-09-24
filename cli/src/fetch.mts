@@ -51,6 +51,7 @@ import {
   parseMeetResults,
   setupNordFetch,
   setGeocodeFetch,
+  getFetchMethod,
   addNotification,
   REGIONS,
   REGION_LICENCE_PREFIXES,
@@ -1590,7 +1591,7 @@ const updateMeetsResults = async ( options: MeetsResultsOptions ) => {
     // Capture native fetch before NordVPN patches globalThis.fetch, so geocoding
     // goes via the real IP rather than a shared VPN exit node (which Nominatim blocks).
     setGeocodeFetch( globalThis.fetch )
-    if ( process.env.NORDVPN_SC_USERNAME && process.env.NORDVPN_SC_PASSWORD ) {
+    if ( getFetchMethod() === "nordvpn" ) {
       await setupNordFetch( {
         server: process.env.NORDVPN_SC_SERVER ?? "nl.socks.nordhold.net",
         username: process.env.NORDVPN_SC_USERNAME!,

@@ -8,6 +8,7 @@ import { getBrowserPage } from "./puppeteer.js"
 import { geocodeLocation } from "./geo.js"
 import { Timer } from "./timer.js"
 import { nordFetch } from "./nord-fetch.js"
+import { getFetchMethod } from "./fetch-method.js"
 
 export const BASE_URL = "https://www.swimmingresults.org"
 
@@ -391,7 +392,7 @@ export const fetchPage = async ( pageInfo: PageInfo, cacheTime: number = DEFAULT
     let response: Response | null = null
     const timer = new Timer()
     timer.start()
-    if ( process.env.SCRAPER_API_KEY ) {
+    if ( getFetchMethod() === "scraperapi" ) {
       const anonUrl = `https://api.scraperapi.com/?api_key=${process.env.SCRAPER_API_KEY}&url=${pageInfo.url}`
       response = await fetch( anonUrl, {
         method: "GET",
@@ -446,7 +447,7 @@ export const fetchPages = async ( pages: Map<string,PageInfo>, cacheTime: number
   console.log( `Getting content for ${pages.size} pages` )
 
   const responses: Map<string,{ age: number, content: string | Buffer<ArrayBufferLike>}> = new Map()
-  if ( process.env.SCRAPER_API_KEY ) {
+  if ( getFetchMethod() === "scraperapi" ) {
     for ( const pageInfo of pages.values() ) {
       const contentFile = CACHE_DIR + "/" + pageInfo.label
       console.log( `Processing ${pageInfo.label} -> ${pageInfo.url}` )
@@ -551,8 +552,10 @@ export const fetchPages = async ( pages: Map<string,PageInfo>, cacheTime: number
   return responses
 }
 
+// Fetches a page via a JS-rendering method (needed for pages, e.g. meets, that
+// require client-side rendering) using whichever fetch method is configured:
+// ScraperAPI's render mode, or a local Puppeteer browser over the NordVPN proxy.
 export const fetchPageBrowser = async ( pageInfo: PageInfo, cacheTime: number = DEFAULT_CACHE_TIME ) => {
-  const page = await getBrowserPage()
   const contentFile = CACHE_DIR + "/" + pageInfo.label
   console.log( `Processing ${pageInfo.label} -> ${pageInfo.url}` )
   const cachedPage = await loadCachedPage( contentFile, cacheTime )
@@ -562,8 +565,19 @@ export const fetchPageBrowser = async ( pageInfo: PageInfo, cacheTime: number = 
     process.stdout.write( `Fetching ${pageInfo.url}` )
     const timer = new Timer()
     timer.start()
-    await page.goto( pageInfo.url.toString(), { waitUntil: "networkidle2" } )
-    const content = await page.content()
+    let content: string
+    if ( getFetchMethod() === "scraperapi" ) {
+      const anonUrl = `https://api.scraperapi.com/?api_key=${process.env.SCRAPER_API_KEY}&url=${pageInfo.url}&render=true`
+      const response = await fetch( anonUrl, { method: "GET" } )
+      if ( response.status < 200 || response.status >= 300 ) {
+        throw new Error( `Request failed: ${response.status} (${response.statusText})` )
+      }
+      content = await response.text()
+    } else {
+      const page = await getBrowserPage()
+      await page.goto( pageInfo.url.toString(), { waitUntil: "networkidle2" } )
+      content = await page.content()
+    }
     process.stdout.write( ` - ${timer.elapsedSeconds().toFixed( 2 )}\n` )
     timer.stop()
     await saveCachedPage( contentFile, content )
