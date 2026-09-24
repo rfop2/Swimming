@@ -426,7 +426,8 @@ export const fetchPage = async ( pageInfo: PageInfo, cacheTime: number = DEFAULT
     return { age: 0, content }
   } catch ( error ) {
     console.error( `\nFailed to fetch ${pageInfo.url}`, error )
-    throw error
+    const message = error instanceof Error ? error.message : String( error )
+    throw new Error( `${message} for ${pageInfo.url}`, { cause: error } )
   }
 }
 
@@ -574,7 +575,8 @@ export const fetchPageBrowser = async ( pageInfo: PageInfo, cacheTime: number = 
     return { age: 0, content }
   } catch ( error ) {
     console.error( `\nFailed to fetch ${pageInfo.url}`, error )
-    throw error
+    const message = error instanceof Error ? error.message : String( error )
+    throw new Error( `${message} for ${pageInfo.url}`, { cause: error } )
   }
 }
 
