@@ -51,6 +51,8 @@ import {
   parseMeetResults,
   setupNordFetch,
   setGeocodeFetch,
+  getFetchMethod,
+  formatErrorForStorage,
   addNotification,
   REGIONS,
   REGION_LICENCE_PREFIXES,
@@ -1205,8 +1207,9 @@ const updateMeetsResults = async ( options: MeetsResultsOptions ) => {
           }
         } catch ( e ) {
           console.error( "Unable to execute task", e )
-          await addNotification( pool, systemUser.id, task.creatorId ?? "", "error", `Task: ${task.taskDescription} was not able to be run` )
-          task.taskResult = JSON.stringify( e )
+          const errorMessage = e instanceof Error ? e.message : String( e )
+          await addNotification( pool, systemUser.id, task.creatorId ?? "", "error", `Task: ${task.taskDescription} was not able to be run: ${errorMessage}`.slice( 0, 255 ) )
+          task.taskResult = formatErrorForStorage( e )
           await taskUpdateError.run( task )
         }
       }
@@ -1590,7 +1593,7 @@ const updateMeetsResults = async ( options: MeetsResultsOptions ) => {
     // Capture native fetch before NordVPN patches globalThis.fetch, so geocoding
     // goes via the real IP rather than a shared VPN exit node (which Nominatim blocks).
     setGeocodeFetch( globalThis.fetch )
-    if ( process.env.NORDVPN_SC_USERNAME && process.env.NORDVPN_SC_PASSWORD ) {
+    if ( getFetchMethod() === "nordvpn" ) {
       await setupNordFetch( {
         server: process.env.NORDVPN_SC_SERVER ?? "nl.socks.nordhold.net",
         username: process.env.NORDVPN_SC_USERNAME!,

@@ -2,7 +2,7 @@
 import "dotenv/config"
 import type { User } from "lucia"
 import { addClubSwimmers } from "./lib.js"
-import { getPool, prepareStatement, setupNordFetch } from "lib"
+import { getPool, prepareStatement, setupNordFetch, getFetchMethod } from "lib"
 
 ( async () => {
   const args = process.argv.slice( 2 )
@@ -23,7 +23,7 @@ import { getPool, prepareStatement, setupNordFetch } from "lib"
     throw new Error ( `Invalid user '${username}'` )
   }
 
-  if ( process.env.NORDVPN_SC_USERNAME && process.env.NORDVPN_SC_PASSWORD ) {
+  if ( getFetchMethod() === "nordvpn" ) {
     await setupNordFetch( {
       server: process.env.NORDVPN_SC_SERVER ?? "nl.socks.nordhold.net",
       username: process.env.NORDVPN_SC_USERNAME!,

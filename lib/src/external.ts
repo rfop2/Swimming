@@ -8,6 +8,7 @@ import { getBrowserPage } from "./puppeteer.js"
 import { geocodeLocation } from "./geo.js"
 import { Timer } from "./timer.js"
 import { nordFetch } from "./nord-fetch.js"
+import { getFetchMethod } from "./fetch-method.js"
 
 export const BASE_URL = "https://www.swimmingresults.org"
 
@@ -391,7 +392,7 @@ export const fetchPage = async ( pageInfo: PageInfo, cacheTime: number = DEFAULT
     let response: Response | null = null
     const timer = new Timer()
     timer.start()
-    if ( process.env.SCRAPER_API_KEY ) {
+    if ( getFetchMethod() === "scraperapi" ) {
       const anonUrl = `https://api.scraperapi.com/?api_key=${process.env.SCRAPER_API_KEY}&url=${pageInfo.url}`
       response = await fetch( anonUrl, {
         method: "GET",
@@ -425,7 +426,8 @@ export const fetchPage = async ( pageInfo: PageInfo, cacheTime: number = DEFAULT
     return { age: 0, content }
   } catch ( error ) {
     console.error( `\nFailed to fetch ${pageInfo.url}`, error )
-    throw error
+    const message = error instanceof Error ? error.message : String( error )
+    throw new Error( `${message} for ${pageInfo.url}`, { cause: error } )
   }
 }
 
@@ -446,7 +448,7 @@ export const fetchPages = async ( pages: Map<string,PageInfo>, cacheTime: number
   console.log( `Getting content for ${pages.size} pages` )
 
   const responses: Map<string,{ age: number, content: string | Buffer<ArrayBufferLike>}> = new Map()
-  if ( process.env.SCRAPER_API_KEY ) {
+  if ( getFetchMethod() === "scraperapi" ) {
     for ( const pageInfo of pages.values() ) {
       const contentFile = CACHE_DIR + "/" + pageInfo.label
       console.log( `Processing ${pageInfo.label} -> ${pageInfo.url}` )
@@ -551,6 +553,9 @@ export const fetchPages = async ( pages: Map<string,PageInfo>, cacheTime: number
   return responses
 }
 
+// Fetches a page that needs client-side JS rendering (e.g. meets pages) via a
+// local Puppeteer browser, routed through whichever fetch method is configured
+// (NordVPN SOCKS proxy or ScraperAPI's proxy mode) - see getBrowserPage().
 export const fetchPageBrowser = async ( pageInfo: PageInfo, cacheTime: number = DEFAULT_CACHE_TIME ) => {
   const page = await getBrowserPage()
   const contentFile = CACHE_DIR + "/" + pageInfo.label
@@ -570,7 +575,8 @@ export const fetchPageBrowser = async ( pageInfo: PageInfo, cacheTime: number = 
     return { age: 0, content }
   } catch ( error ) {
     console.error( `\nFailed to fetch ${pageInfo.url}`, error )
-    throw error
+    const message = error instanceof Error ? error.message : String( error )
+    throw new Error( `${message} for ${pageInfo.url}`, { cause: error } )
   }
 }
 

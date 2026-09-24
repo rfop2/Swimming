@@ -1,4 +1,5 @@
 import type { Browser, Page, LaunchOptions } from "puppeteer"
+import { getFetchMethod } from "./fetch-method.js"
 
 const allowDomainPatterns: RegExp[] = [
   // /(^|\.)cloudflare/i,
@@ -42,29 +43,36 @@ let page: Page | null = null
 let localHttpProxy: string | null = null
 
 export const getBrowserPage = async () => {
-  const username = process.env.NORDVPN_SC_USERNAME!
-  const password = process.env.NORDVPN_SC_PASSWORD!
+  const method = getFetchMethod()
 
-  // closest to UK: Dublin or Amsterdam SOCKS5
   const puppeteer = await import( "puppeteer" ) // dynamic import
 
   if ( !browser ) {
-    const { anonymizeProxy } = await import( "proxy-chain" )
+    const launchArgs = [
+      "--no-sandbox",
+      "--disable-setuid-sandbox",
+      "--ignore-certificate-errors",
+    ]
 
-    const socksHost = process.env.NORDVPN_SC_SERVER ?? "nl.socks.nordhold.net"
-    const socksPort = 1080
+    if ( method === "scraperapi" ) {
+      // Standard forward HTTP proxy - JS is rendered locally by this Puppeteer
+      // instance, ScraperAPI just supplies the exit IP, so render=true is not used.
+      launchArgs.push( "--proxy-server=http://proxy-server.scraperapi.com:8001" )
+    } else {
+      const { anonymizeProxy } = await import( "proxy-chain" )
 
-    const nordSocks = `socks5://${encodeURIComponent( username )}:${encodeURIComponent( password )}@${socksHost}:${socksPort}`
-    localHttpProxy = await anonymizeProxy( nordSocks ) // converts SOCKS5→HTTP for Puppeteer
+      // closest to UK: Dublin or Amsterdam SOCKS5
+      const socksHost = process.env.NORDVPN_SC_SERVER ?? "nl.socks.nordhold.net"
+      const socksPort = 1080
+
+      const nordSocks = `socks5://${encodeURIComponent( process.env.NORDVPN_SC_USERNAME! )}:${encodeURIComponent( process.env.NORDVPN_SC_PASSWORD! )}@${socksHost}:${socksPort}`
+      localHttpProxy = await anonymizeProxy( nordSocks ) // converts SOCKS5→HTTP for Puppeteer
+      launchArgs.push( `--proxy-server=${localHttpProxy}` )
+    }
 
     const launchOptions: LaunchOptions = {
       headless: true,
-      args: [
-        "--no-sandbox",
-        "--disable-setuid-sandbox",
-        `--proxy-server=${localHttpProxy}`,
-        "--ignore-certificate-errors",
-      ]
+      args: launchArgs,
     }
     browser = await puppeteer.launch( launchOptions )
     process.on( "exit", async () => {
@@ -83,7 +91,11 @@ export const getBrowserPage = async () => {
     page.setDefaultNavigationTimeout( 120_000 )
     page.setDefaultTimeout( 120_000 )
 
-    await page.authenticate( { username, password: password } )
+    if ( method === "scraperapi" ) {
+      await page.authenticate( { username: "scraperapi.country_code=gb", password: process.env.SCRAPER_API_KEY! } )
+    } else {
+      await page.authenticate( { username: process.env.NORDVPN_SC_USERNAME!, password: process.env.NORDVPN_SC_PASSWORD! } )
+    }
 
     const client = await page.createCDPSession()
     await client.send( "Network.enable" )
@@ -137,8 +149,6 @@ export const getBrowserPage = async () => {
 }
 
 export const closeBrowser = async () => {
-  const { closeAnonymizedProxy } = await import( "proxy-chain" )
-
   // Close browser
   if ( browser ) {
     if ( page ) {
@@ -150,6 +160,7 @@ export const closeBrowser = async () => {
     browser = null
   }
   if ( localHttpProxy ) {
+    const { closeAnonymizedProxy } = await import( "proxy-chain" )
     await closeAnonymizedProxy( localHttpProxy, true )
   }
 }
