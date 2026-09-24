@@ -1207,7 +1207,8 @@ const updateMeetsResults = async ( options: MeetsResultsOptions ) => {
           }
         } catch ( e ) {
           console.error( "Unable to execute task", e )
-          await addNotification( pool, systemUser.id, task.creatorId ?? "", "error", `Task: ${task.taskDescription} was not able to be run: ${formatErrorForStorage( e, 100 )}` )
+          const errorMessage = e instanceof Error ? e.message : String( e )
+          await addNotification( pool, systemUser.id, task.creatorId ?? "", "error", `Task: ${task.taskDescription} was not able to be run: ${errorMessage}`.slice( 0, 255 ) )
           task.taskResult = formatErrorForStorage( e )
           await taskUpdateError.run( task )
         }
