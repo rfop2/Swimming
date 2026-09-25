@@ -798,6 +798,7 @@ interface MeetsResultsOptions {
   force?: boolean
   lookback?: string
   smart?: boolean
+  activeDays?: string
 }
 
 const getMeetSwimmers = async ( meetResults: MeetResults, year: string, options: MeetsResultsOptions ) => {
@@ -857,13 +858,24 @@ const getMeetSwimmers = async ( meetResults: MeetResults, year: string, options:
 }
 
 const DEFAULT_RESULTS_LOOKBACK_DAYS = 7
+const DEFAULT_ACTIVE_USER_DAYS = 60
 
-const getSmartAreas = async () => {
-  const getSwimmerAreas = prepareStatement<Record<string, never>,{region: string, county: string}>(
+// Restricts Swimmers to those on the account of a user who has logged in within
+// :activeDays days; an :activeDays of 0 disables the restriction.
+const ACTIVE_SWIMMERS_SQL = `( :activeDays = 0 OR Swimmers.id IN (
+  SELECT UserSwimmers.swimmerId
+  FROM UserSwimmers
+  INNER JOIN SessionTracking ON SessionTracking.userId = UserSwimmers.userId
+  WHERE SessionTracking.sessionAction = 'login'
+    AND SessionTracking.actionTime >= DATE_SUB( NOW(), INTERVAL :activeDays DAY )
+) )`
+
+const getSmartAreas = async ( activeDays: number ) => {
+  const getSwimmerAreas = prepareStatement<{activeDays: number},{region: string, county: string}>(
     await getPool(),
-    "SELECT DISTINCT region, county FROM Swimmers WHERE active = 1"
+    `SELECT DISTINCT region, county FROM Swimmers WHERE active = 1 AND ${ACTIVE_SWIMMERS_SQL}`
   )
-  const swimmerAreas = await getSwimmerAreas.all()
+  const swimmerAreas = await getSwimmerAreas.all( { activeDays } )
 
   const regions = new Set<string>()
   const counties = new Set<string>()
@@ -958,7 +970,7 @@ const updateMeetsResults = async ( options: MeetsResultsOptions ) => {
       SELECT
         :userId, :taskType, :taskOptions, :taskDescription, :targetType, :targetId
       WHERE EXISTS (
-        SELECT 1 FROM Swimmers WHERE Swimmers.id = :targetId
+        SELECT 1 FROM Swimmers WHERE Swimmers.id = :targetId AND ${ACTIVE_SWIMMERS_SQL}
       )`
     )
     let swimmersToUpdate = 0
@@ -969,7 +981,8 @@ const updateMeetsResults = async ( options: MeetsResultsOptions ) => {
         taskOptions: JSON.stringify( { updateType: "rankings" } ),
         taskDescription: `Triggered rankings update of swimmer ${swimmerId} from meet results`,
         targetType: "swimmer",
-        targetId: swimmerId
+        targetId: swimmerId,
+        activeDays: Number( options.activeDays ?? DEFAULT_ACTIVE_USER_DAYS ),
       } )
       swimmersToUpdate += result.affectedRows
       if ( result.affectedRows ) {
@@ -1003,22 +1016,24 @@ const updateMeetsResults = async ( options: MeetsResultsOptions ) => {
     .description( "Fetch swimmer data" )
     .option( "-i, --id <ids...>", "fetch data for specified swimmers" )
     .option( "-c, --club <club>", "fetch data for swimmers in specified club only" )
+    .option( "-a, --active-days <days>", "only update swimmers on accounts of users who logged in within this many days (0 for all swimmers; ignored when --id is given)", String( DEFAULT_ACTIVE_USER_DAYS ) )
     .addOption( new Option( "-u, --update <update>", "what level of swimmer data to update" ).choices( [ "individual", "results", "rankings" ] ) )
     .addOption( new Option( "-m, --mode <mode>", "fetching strategy versus caching" ).choices( [ "force", "smart", "lazy" ] ).default( "lazy" ) )
     .action( async ( options ) => {
-      const getSwimmers = prepareStatement<Record<string, never>,Swimmer>(
+      const getSwimmers = prepareStatement<{activeDays: number},Swimmer>(
         await getPool(),
-        "SELECT * FROM Swimmers WHERE active = 1"
+        `SELECT * FROM Swimmers WHERE active = 1 AND ${ACTIVE_SWIMMERS_SQL}`
       )
-      const getClubSwimmers = prepareStatement<{clubId: string},Swimmer>(
+      const getClubSwimmers = prepareStatement<{clubId: string, activeDays: number},Swimmer>(
         await getPool(),
-        "SELECT Swimmers.* FROM Swimmers INNER JOIN ClubSwimmers ON (Swimmers.id = ClubSwimmers.swimmerId) INNER JOIN Clubs ON (ClubSwimmers.clubId = Clubs.clubId) WHERE Clubs.ClubId = :clubId AND Swimmers.active = 1"
+        `SELECT Swimmers.* FROM Swimmers INNER JOIN ClubSwimmers ON (Swimmers.id = ClubSwimmers.swimmerId) INNER JOIN Clubs ON (ClubSwimmers.clubId = Clubs.clubId) WHERE Clubs.ClubId = :clubId AND Swimmers.active = 1 AND ${ACTIVE_SWIMMERS_SQL}`
       )
+      const activeDays = options.ids ? 0 : Number( options.activeDays )
       const swimmerUpdateError = prepareStatement(
         await getPool(),
         "UPDATE Swimmers SET updateStatus = 'error' WHERE id = :id",
       )
-      const swimmers = await ( options.club ? getClubSwimmers.all( { clubId: options.club } ) : getSwimmers.all() )
+      const swimmers = await ( options.club ? getClubSwimmers.all( { clubId: options.club, activeDays } ) : getSwimmers.all( { activeDays } ) )
       if ( !swimmers.length ) {
         console.log( "No swimmers found, exiting" )
         process.exit( 0 )
@@ -1041,6 +1056,7 @@ const updateMeetsResults = async ( options: MeetsResultsOptions ) => {
     .option( "-c, --county <county...>", "only fetch results for the specified counties" )
     .option( "-C, --club <club...>", "only fetch results for the specified clubs" )
     .option( "-l, --lookback <days>", "days to look back before the last update, to catch meets added to the results site late", String( DEFAULT_RESULTS_LOOKBACK_DAYS ) )
+    .option( "-a, --active-days <days>", "only consider swimmers on accounts of users who logged in within this many days (0 for all swimmers)", String( DEFAULT_ACTIVE_USER_DAYS ) )
     .option( "-s, --smart", "automatically determine which regions and counties to fetch from the swimmers currently in the database" )
     .addOption( new Option( "-m, --mode <mode>", "fetching strategy versus caching" ).choices( [ "force", "lazy" ] ).default( "lazy" ) )
     .action( async ( options: MeetsResultsOptions ) => {
@@ -1049,7 +1065,7 @@ const updateMeetsResults = async ( options: MeetsResultsOptions ) => {
           if ( options.region?.length || options.county?.length ) {
             throw new Error( "--smart can't be combined with --region or --county" )
           }
-          const smartAreas = await getSmartAreas()
+          const smartAreas = await getSmartAreas( Number( options.activeDays ?? DEFAULT_ACTIVE_USER_DAYS ) )
           options.region = smartAreas.region
           options.county = smartAreas.county
           console.log( `Smart mode: fetching regions [${smartAreas.region.join( ", " )}] and counties [${smartAreas.county.join( ", " )}]` )
