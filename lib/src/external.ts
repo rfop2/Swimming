@@ -9,6 +9,7 @@ import { geocodeLocation } from "./geo.js"
 import { Timer } from "./timer.js"
 import { nordFetch } from "./nord-fetch.js"
 import { getFetchMethod } from "./fetch-method.js"
+import { HttpStatusError } from "./errors.js"
 
 export const BASE_URL = "https://www.swimmingresults.org"
 
@@ -411,7 +412,7 @@ export const fetchPage = async ( pageInfo: PageInfo, cacheTime: number = DEFAULT
     }
 
     if ( response.status < 200 || response.status >= 300 ) {
-      throw new Error( `Request failed: ${response.status} (${response.statusText})` )
+      throw new HttpStatusError( response.status, response.statusText, pageInfo.url.toString() )
     }
     const content = await response.text()
     await saveCachedPage( contentFile, content )
@@ -426,6 +427,7 @@ export const fetchPage = async ( pageInfo: PageInfo, cacheTime: number = DEFAULT
     return { age: 0, content }
   } catch ( error ) {
     console.error( `\nFailed to fetch ${pageInfo.url}`, error )
+    if ( error instanceof HttpStatusError ) throw error
     const message = error instanceof Error ? error.message : String( error )
     throw new Error( `${message} for ${pageInfo.url}`, { cause: error } )
   }
@@ -512,8 +514,13 @@ export const fetchPages = async ( pages: Map<string,PageInfo>, cacheTime: number
             const jobStatus = await response.json()
             if ( jobStatus.status === "finished" ) {
               process.stdout.write( " - finished" )
+              if ( jobStatus.response.statusCode === 404 ) {
+                console.warn( ` - 404, skipping '${jobStatus.url}'` )
+                jobs.delete( jobStatus.url )
+                continue
+              }
               if ( jobStatus.response.statusCode < 200 || jobStatus.response.statusCode >= 300 ) {
-                throw new Error( `Request failed for '${jobStatus.url}': ${jobStatus.response.statusCode} (${jobStatus.response.statusText})` )
+                throw new HttpStatusError( jobStatus.response.statusCode, jobStatus.response.statusText, jobStatus.url )
               }
               responses.set( jobStatus.url, { age: 0, content: jobStatus.response.body } )
               const contentFile = CACHE_DIR + "/" + pages.get( job.url )?.label
@@ -540,8 +547,16 @@ export const fetchPages = async ( pages: Map<string,PageInfo>, cacheTime: number
       const timer = new Timer()
       timer.start()
       for ( const [ url, page ] of pages ) {
-        const response = await fetchPage( page, cacheTime )
-        responses.set( url, { age: 0, content: response.content } )
+        try {
+          const response = await fetchPage( page, cacheTime )
+          responses.set( url, { age: 0, content: response.content } )
+        } catch ( error ) {
+          if ( error instanceof HttpStatusError && error.status === 404 ) {
+            console.warn( `404, skipping '${url}'` )
+            continue
+          }
+          throw error
+        }
       }
       console.log( `Pages fetched in ${timer.elapsedSeconds().toFixed( 2 )}  seconds` )
       timer.stop()

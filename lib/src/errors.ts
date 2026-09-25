@@ -12,3 +12,13 @@ export const formatErrorForStorage = ( error: unknown, maxLength = 4000 ): strin
   }
   return text.length > maxLength ? `${text.slice( 0, maxLength - 1 )}…` : text
 }
+
+export class HttpStatusError extends Error {
+  readonly status: number
+
+  constructor( status: number, statusText: string | undefined, url: string ) {
+    super( `Request failed: ${status}${statusText ? ` (${statusText})` : ""} for ${url}` )
+    this.name = "HttpStatusError"
+    this.status = status
+  }
+}
