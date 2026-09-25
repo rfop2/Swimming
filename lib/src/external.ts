@@ -9,7 +9,7 @@ import { geocodeLocation } from "./geo.js"
 import { Timer } from "./timer.js"
 import { nordFetch } from "./nord-fetch.js"
 import { getFetchMethod } from "./fetch-method.js"
-import { HttpStatusError } from "./errors.js"
+import { FetchError, HttpStatusError } from "./errors.js"
 
 export const BASE_URL = "https://www.swimmingresults.org"
 
@@ -431,9 +431,9 @@ export const fetchPage = async ( pageInfo: PageInfo, cacheTime: number = DEFAULT
     return { age: 0, content }
   } catch ( error ) {
     console.error( `\nFailed to fetch ${pageInfo.url}`, error )
-    if ( error instanceof HttpStatusError ) throw error
+    if ( error instanceof FetchError ) throw error
     const message = error instanceof Error ? error.message : String( error )
-    throw new Error( `${message} for ${pageInfo.url}`, { cause: error } )
+    throw new FetchError( `${message} for ${pageInfo.url}`, { cause: error } )
   }
 }
 
@@ -504,7 +504,7 @@ export const fetchPages = async ( pages: Map<string,PageInfo>, cacheTime: number
         process.stdout.write( ` - ${timer.elapsedSeconds().toFixed( 2 )}\n` )
 
         if ( response.status < 200 || response.status >= 300 ) {
-          throw new Error( `Request failed: ${response.status} (${response.statusText})` )
+          throw new HttpStatusError( response.status, response.statusText, scraperUrl )
         }
         const pageStatuses: PageStatus[] = await response.json()
         const jobs = new Map<string,PageStatus>( pageStatuses.map( ps => [ ps.url, ps ] ) )
@@ -543,7 +543,7 @@ export const fetchPages = async ( pages: Map<string,PageInfo>, cacheTime: number
         timer.stop()
       } catch ( error ) {
         console.error( `\nFailed to fetch ${fetchPages.size} urls`, error )
-        throw error
+        throw error instanceof FetchError ? error : new FetchError( error instanceof Error ? error.message : String( error ), { cause: error } )
       }
     }
   } else {
@@ -597,7 +597,7 @@ export const fetchPageBrowser = async ( pageInfo: PageInfo, cacheTime: number = 
   } catch ( error ) {
     console.error( `\nFailed to fetch ${pageInfo.url}`, error )
     const message = error instanceof Error ? error.message : String( error )
-    throw new Error( `${message} for ${pageInfo.url}`, { cause: error } )
+    throw new FetchError( `${message} for ${pageInfo.url}`, { cause: error } )
   }
 }
 

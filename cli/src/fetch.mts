@@ -53,6 +53,7 @@ import {
   setGeocodeFetch,
   getFetchMethod,
   formatErrorForStorage,
+  FetchError,
   takeSkippedPages,
   addNotification,
   REGIONS,
@@ -75,6 +76,9 @@ import type {
 import { Command, Option } from "commander"
 import { addClubSwimmers } from "./lib.js"
 import type { User } from "lucia"
+
+// Delay before each successive retry of a task that failed while fetching pages
+const TASK_RETRY_DELAYS_MINUTES = [ 15, 60, 240 ]
 
 const insertIndividualSql =
   `INSERT INTO Individual (
@@ -1087,7 +1091,7 @@ const updateMeetsResults = async ( options: MeetsResultsOptions ) => {
       }
       const getTasks = prepareStatement<{ limit: number },Task>(
         pool,
-        "SELECT * FROM Tasks WHERE taskStatus = 'pending' LIMIT :limit"
+        "SELECT * FROM Tasks WHERE taskStatus = 'pending' AND ( runAfter IS NULL OR runAfter <= NOW() ) LIMIT :limit"
       )
       const taskStart = prepareStatement(
         pool,
@@ -1096,6 +1100,10 @@ const updateMeetsResults = async ( options: MeetsResultsOptions ) => {
       const taskComplete = prepareStatement(
         pool,
         "UPDATE Tasks SET endTime = NOW(), taskStatus = 'complete', taskResult = :taskResult WHERE taskId = :taskId",
+      )
+      const taskRetry = prepareStatement<{ taskId: number, taskResult: string, delayMinutes: number }>(
+        pool,
+        "UPDATE Tasks SET taskStatus = 'pending', endTime = NULL, retryCount = retryCount + 1, runAfter = DATE_ADD( NOW(), INTERVAL :delayMinutes MINUTE ), taskResult = :taskResult WHERE taskId = :taskId",
       )
       const completeTask = async ( task: Task ) => {
         const skipped = takeSkippedPages()
@@ -1214,6 +1222,17 @@ const updateMeetsResults = async ( options: MeetsResultsOptions ) => {
           }
         } catch ( e ) {
           console.error( "Unable to execute task", e )
+          const retryCount = task.retryCount ?? 0
+          if ( e instanceof FetchError && retryCount < TASK_RETRY_DELAYS_MINUTES.length ) {
+            const delayMinutes = TASK_RETRY_DELAYS_MINUTES[retryCount]
+            console.log( `Fetch failed, retry ${retryCount + 1}/${TASK_RETRY_DELAYS_MINUTES.length} scheduled in ${delayMinutes} minutes` )
+            await taskRetry.run( {
+              taskId: task.taskId,
+              delayMinutes,
+              taskResult: `Retry ${retryCount + 1}/${TASK_RETRY_DELAYS_MINUTES.length} in ${delayMinutes} min after: ${formatErrorForStorage( e )}`,
+            } )
+            continue
+          }
           const errorMessage = e instanceof Error ? e.message : String( e )
           await addNotification( pool, systemUser.id, task.creatorId ?? "", "error", `Task: ${task.taskDescription} was not able to be run: ${errorMessage}`.slice( 0, 255 ) )
           task.taskResult = formatErrorForStorage( e )
