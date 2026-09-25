@@ -2,13 +2,47 @@
   {
     "isoDate": "2026-09-25",
     "niceDate": "25 September 2026",
-    "diff": "16.11.0..",
-    "href": "https://bitbucket.org/swimracing/swimming/compare/16.11.1..16.11.0",
+    "diff": "16.11.1..",
+    "href": "https://bitbucket.org/swimracing/swimming/compare/16.11.2..16.11.1",
     "major": false,
     "minor": false,
     "tag": null,
+    "title": "16.11.2",
+    "date": "2026-09-25T16:42:25.724Z",
+    "summary": null,
+    "commits": [
+      {
+        "hash": "1d38504571f82ffb70f9a863754d3c96af6d2083",
+        "shorthash": "1d38504",
+        "author": "Philip Coombes",
+        "email": "phil@web2wire.com",
+        "date": "2026-09-25T16:39:28.000Z",
+        "niceDate": "25 September 2026",
+        "subject": "Fix constraint issues with deleting users.",
+        "message": "Fix constraint issues with deleting users.",
+        "fixes": null,
+        "href": "https://bitbucket.org/swimracing/swimming/commits/1d38504571f82ffb70f9a863754d3c96af6d2083",
+        "breaking": false,
+        "files": 2,
+        "insertions": 11,
+        "deletions": 1,
+        "merge": null
+      }
+    ],
+    "merges": [],
+    "fixes": []
+  },
+  {
+    "isoDate": "2026-09-25",
+    "niceDate": "25 September 2026",
+    "diff": "16.11.0..16.11.1",
+    "href": "https://bitbucket.org/swimracing/swimming/compare/16.11.1..16.11.0",
+    "major": false,
+    "minor": false,
+    "tag": "16.11.1",
+    "date": "2026-09-25",
     "title": "16.11.1",
-    "date": "2026-09-25T15:54:07.118Z",
+    "version": "16.11.1",
     "summary": null,
     "commits": [
       {
@@ -2112,94 +2146,6 @@
       }
     ],
     "merges": [],
-    "fixes": []
-  },
-  {
-    "isoDate": "2026-08-07",
-    "niceDate": "7 August 2026",
-    "diff": "15.10.0..15.11.0",
-    "href": "https://bitbucket.org/swimracing/swimming/compare/15.11.0..15.10.0",
-    "major": false,
-    "minor": true,
-    "tag": "15.11.0",
-    "date": "2026-08-07",
-    "title": "15.11.0",
-    "version": "15.11.0",
-    "summary": null,
-    "commits": [
-      {
-        "hash": "00e9d3bf1d55e5486840f451681a5e8244b7030c",
-        "shorthash": "00e9d3b",
-        "author": "rodrigo ferreira",
-        "email": "rf.oliveirapaula@gmail.com",
-        "date": "2026-08-07T17:43:52.000Z",
-        "niceDate": "7 August 2026",
-        "subject": "test(import): add real document coverage",
-        "message": "test(import): add real document coverage",
-        "fixes": null,
-        "href": "https://bitbucket.org/swimracing/swimming/commits/00e9d3bf1d55e5486840f451681a5e8244b7030c",
-        "breaking": false,
-        "files": 71,
-        "insertions": 4194,
-        "deletions": 593,
-        "merge": null
-      },
-      {
-        "hash": "a6ad1572c23a2bf68ec5dc4f62a500f47b074eb0",
-        "shorthash": "a6ad157",
-        "author": "rodrigo ferreira",
-        "email": "rf.oliveirapaula@gmail.com",
-        "date": "2026-08-07T17:35:49.000Z",
-        "niceDate": "7 August 2026",
-        "subject": "refactor(import): split parsers by layout",
-        "message": "refactor(import): split parsers by layout",
-        "fixes": null,
-        "href": "https://bitbucket.org/swimracing/swimming/commits/a6ad1572c23a2bf68ec5dc4f62a500f47b074eb0",
-        "breaking": false,
-        "files": 29,
-        "insertions": 2604,
-        "deletions": 2020,
-        "merge": null
-      },
-      {
-        "hash": "2e37d2ae46aff18b5694f143380795fdc55a900f",
-        "shorthash": "2e37d2a",
-        "author": "rodrigo ferreira",
-        "email": "rf.oliveirapaula@gmail.com",
-        "date": "2026-08-07T17:41:44.000Z",
-        "niceDate": "7 August 2026",
-        "subject": "feat(import): add assisted import workflow",
-        "message": "feat(import): add assisted import workflow",
-        "fixes": null,
-        "href": "https://bitbucket.org/swimracing/swimming/commits/2e37d2ae46aff18b5694f143380795fdc55a900f",
-        "breaking": false,
-        "files": 14,
-        "insertions": 1411,
-        "deletions": 314,
-        "merge": null
-      }
-    ],
-    "merges": [
-      {
-        "id": "43",
-        "message": "Add 2027 qualifying-time import layouts and improve the import workflow",
-        "href": "https://bitbucket.org/swimracing/swimming/pull-requests/43",
-        "author": "Rodrigo Ferreira",
-        "commit": {
-          "hash": "8c55e776920c6795e1fc4b552eed8a94ef0ae355",
-          "shorthash": "8c55e77",
-          "author": "Rodrigo Ferreira",
-          "email": "rf.oliveirapaula@gmail.com",
-          "date": "2026-08-07T17:48:07.000Z",
-          "niceDate": "7 August 2026",
-          "subject": "Merged in imports-2027 (pull request #43)",
-          "message": "Merged in imports-2027 (pull request #43)\n\nAdd 2027 qualifying-time import layouts and improve the import workflow",
-          "fixes": null,
-          "href": "https://bitbucket.org/swimracing/swimming/commits/8c55e776920c6795e1fc4b552eed8a94ef0ae355",
-          "breaking": false
-        }
-      }
-    ],
     "fixes": []
   }
 ]
