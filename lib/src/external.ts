@@ -358,6 +358,10 @@ const saveCachedPage = async ( contentFile: string, content: string ) => {
   }
 }
 
+const skippedPages: string[] = []
+
+export const takeSkippedPages = () => skippedPages.splice( 0 )
+
 const MIN_FETCH_INTERVAL = Number( process.env.MIN_FETCH_INTERVAL ?? 0 )
 const MAX_FETCH_INTERVAL = Number( process.env.MAX_FETCH_INTERVAL ?? 0 )
 
@@ -516,6 +520,7 @@ export const fetchPages = async ( pages: Map<string,PageInfo>, cacheTime: number
               process.stdout.write( " - finished" )
               if ( jobStatus.response.statusCode === 404 ) {
                 console.warn( ` - 404, skipping '${jobStatus.url}'` )
+                skippedPages.push( jobStatus.url )
                 jobs.delete( jobStatus.url )
                 continue
               }
@@ -553,6 +558,7 @@ export const fetchPages = async ( pages: Map<string,PageInfo>, cacheTime: number
         } catch ( error ) {
           if ( error instanceof HttpStatusError && error.status === 404 ) {
             console.warn( `404, skipping '${url}'` )
+            skippedPages.push( url )
             continue
           }
           throw error

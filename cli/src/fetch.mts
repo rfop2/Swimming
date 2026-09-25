@@ -53,6 +53,7 @@ import {
   setGeocodeFetch,
   getFetchMethod,
   formatErrorForStorage,
+  takeSkippedPages,
   addNotification,
   REGIONS,
   REGION_LICENCE_PREFIXES,
@@ -1094,8 +1095,13 @@ const updateMeetsResults = async ( options: MeetsResultsOptions ) => {
       )
       const taskComplete = prepareStatement(
         pool,
-        "UPDATE Tasks SET endTime = NOW(), taskStatus = 'complete' WHERE taskId = :taskId",
+        "UPDATE Tasks SET endTime = NOW(), taskStatus = 'complete', taskResult = :taskResult WHERE taskId = :taskId",
       )
+      const completeTask = async ( task: Task ) => {
+        const skipped = takeSkippedPages()
+        task.taskResult = skipped.length ? `Skipped ${skipped.length} page(s) not found (404): ${skipped.join( ", " )}` : ""
+        await taskComplete.run( task )
+      }
       const taskUpdateError = prepareStatement(
         pool,
         "UPDATE Tasks SET endTime = NOW(), taskStatus = 'error', taskResult = :taskResult WHERE taskId = :taskId",
@@ -1115,6 +1121,7 @@ const updateMeetsResults = async ( options: MeetsResultsOptions ) => {
       const tasks = await getTasks.all( { limit: options.count } )
       for ( const task of tasks ) {
         console.log( `Processing task ${task.taskId}` )
+        takeSkippedPages()
         try {
           switch ( task.taskType ) {
             case "update" : {
@@ -1134,7 +1141,7 @@ const updateMeetsResults = async ( options: MeetsResultsOptions ) => {
                   await taskStart.run( task )
                   await updateSwimmerData( swimmer, taskOptions.updateType, taskOptions.force ?? false )
                   await addNotification( pool, systemUser.id, task.creatorId ?? "", "success", `Task: ${task.taskDescription} has completed` )
-                  await taskComplete.run( task )
+                  await completeTask( task )
                   break
                 }
                 case "club" : {
@@ -1158,7 +1165,7 @@ const updateMeetsResults = async ( options: MeetsResultsOptions ) => {
                     await updateSwimmerData( swimmer, taskOptions.updateType, taskOptions.force ?? false )
                   }
                   await addNotification( pool, systemUser.id, task.creatorId ?? "", "success", `Task: ${task.taskDescription} has completed` )
-                  await taskComplete.run( task )
+                  await completeTask( task )
                   break
                 }
                 default : {
@@ -1190,7 +1197,7 @@ const updateMeetsResults = async ( options: MeetsResultsOptions ) => {
                   }
                   await taskStart.run( task )
                   await addClubSwimmers( user, club )
-                  await taskComplete.run( task )
+                  await completeTask( task )
                   break
                 }
                 default : {
