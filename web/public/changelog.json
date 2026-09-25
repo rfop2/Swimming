@@ -2,13 +2,47 @@
   {
     "isoDate": "2026-09-25",
     "niceDate": "25 September 2026",
-    "diff": "16.10.0..",
-    "href": "https://bitbucket.org/swimracing/swimming/compare/16.11.0..16.10.0",
+    "diff": "16.11.0..",
+    "href": "https://bitbucket.org/swimracing/swimming/compare/16.11.1..16.11.0",
     "major": false,
     "minor": false,
     "tag": null,
+    "title": "16.11.1",
+    "date": "2026-09-25T15:54:07.118Z",
+    "summary": null,
+    "commits": [
+      {
+        "hash": "68ab25febfeb7f108b01c4a3ef68fc3eb1a990d3",
+        "shorthash": "68ab25f",
+        "author": "Philip Coombes",
+        "email": "phil@web2wire.com",
+        "date": "2026-09-25T15:53:54.000Z",
+        "niceDate": "25 September 2026",
+        "subject": "Only output the fetch method if fetching is actually going to happen.",
+        "message": "Only output the fetch method if fetching is actually going to happen.",
+        "fixes": null,
+        "href": "https://bitbucket.org/swimracing/swimming/commits/68ab25febfeb7f108b01c4a3ef68fc3eb1a990d3",
+        "breaking": false,
+        "files": 3,
+        "insertions": 19,
+        "deletions": 13,
+        "merge": null
+      }
+    ],
+    "merges": [],
+    "fixes": []
+  },
+  {
+    "isoDate": "2026-09-25",
+    "niceDate": "25 September 2026",
+    "diff": "16.10.0..16.11.0",
+    "href": "https://bitbucket.org/swimracing/swimming/compare/16.11.0..16.10.0",
+    "major": false,
+    "minor": true,
+    "tag": "16.11.0",
+    "date": "2026-09-25",
     "title": "16.11.0",
-    "date": "2026-09-25T15:21:10.032Z",
+    "version": "16.11.0",
     "summary": null,
     "commits": [
       {
@@ -2166,40 +2200,6 @@
         }
       }
     ],
-    "fixes": []
-  },
-  {
-    "isoDate": "2026-07-30",
-    "niceDate": "30 July 2026",
-    "diff": "15.9.1..15.10.0",
-    "href": "https://bitbucket.org/swimracing/swimming/compare/15.10.0..15.9.1",
-    "major": false,
-    "minor": true,
-    "tag": "15.10.0",
-    "date": "2026-07-30",
-    "title": "15.10.0",
-    "version": "15.10.0",
-    "summary": null,
-    "commits": [
-      {
-        "hash": "9c45177672f1bc61c9b20bc97221024fc2271b7c",
-        "shorthash": "9c45177",
-        "author": "Philip Coombes",
-        "email": "phil@web2wire.com",
-        "date": "2026-07-30T11:20:30.000Z",
-        "niceDate": "30 July 2026",
-        "subject": "Tweaks to navbar page urls",
-        "message": "Tweaks to navbar page urls",
-        "fixes": null,
-        "href": "https://bitbucket.org/swimracing/swimming/commits/9c45177672f1bc61c9b20bc97221024fc2271b7c",
-        "breaking": false,
-        "files": 2,
-        "insertions": 9,
-        "deletions": 9,
-        "merge": null
-      }
-    ],
-    "merges": [],
     "fixes": []
   }
 ]
