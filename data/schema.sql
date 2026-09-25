@@ -685,7 +685,7 @@ CREATE TABLE `Session` (
   `user_id` varchar(16) NOT NULL,
   PRIMARY KEY (`id`),
   KEY `user_id` (`user_id`),
-  CONSTRAINT `Session_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `User` (`id`)
+  CONSTRAINT `fk_Session_user` FOREIGN KEY (`user_id`) REFERENCES `User` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -1652,6 +1652,8 @@ CREATE TABLE `Tasks` (
   `targetId` varchar(16) DEFAULT NULL,
   `taskStatus` enum('pending','progress','complete','cancelled','error') NOT NULL DEFAULT 'pending',
   `taskSchedule` varchar(32) DEFAULT NULL,
+  `runAfter` timestamp NULL DEFAULT NULL,
+  `retryCount` tinyint(3) unsigned NOT NULL DEFAULT 0,
   `taskResult` text DEFAULT NULL,
   `startTime` timestamp NULL DEFAULT NULL,
   `endTime` timestamp NULL DEFAULT NULL,
