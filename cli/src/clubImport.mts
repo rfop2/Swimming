@@ -23,7 +23,7 @@ import { getPool, prepareStatement, setupNordFetch, getFetchMethod } from "lib"
     throw new Error ( `Invalid user '${username}'` )
   }
 
-  if ( getFetchMethod() === "nordvpn" ) {
+  if ( getFetchMethod( { quiet: true } ) === "nordvpn" ) {
     await setupNordFetch( {
       server: process.env.NORDVPN_SC_SERVER ?? "nl.socks.nordhold.net",
       username: process.env.NORDVPN_SC_USERNAME!,
