@@ -37,7 +37,7 @@ CREATE TABLE `ClubMeets` (
   `clubId` varchar(16) NOT NULL,
   `meetId` varchar(8) NOT NULL,
   PRIMARY KEY (`clubId`,`meetId`) USING BTREE,
-  KEY `idx_meetId` (`meetId`) USING BTREE,
+  UNIQUE KEY `idx_meetId` (`meetId`) USING BTREE,
   CONSTRAINT `ClubMeets_ibfk_1` FOREIGN KEY (`clubId`) REFERENCES `Clubs` (`clubId`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `ClubMeets_ibfk_2` FOREIGN KEY (`meetId`) REFERENCES `Meets` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
@@ -181,6 +181,48 @@ CREATE TABLE `Logs` (
   `logText` varchar(255) NOT NULL,
   `logTime` timestamp NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`logId`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `MeetSwimmerEvents`
+--
+
+DROP TABLE IF EXISTS `MeetSwimmerEvents`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `MeetSwimmerEvents` (
+  `meetId` varchar(8) NOT NULL,
+  `swimmerId` varchar(8) NOT NULL,
+  `stroke` varchar(32) NOT NULL,
+  `distance` varchar(8) NOT NULL,
+  `created` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
+  PRIMARY KEY (`meetId`,`swimmerId`,`stroke`,`distance`) USING BTREE,
+  KEY `swimmerId` (`swimmerId`),
+  CONSTRAINT `MeetSwimmerEvents_ibfk_1` FOREIGN KEY (`meetId`) REFERENCES `Meets` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `MeetSwimmerEvents_ibfk_2` FOREIGN KEY (`swimmerId`) REFERENCES `Swimmers` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `MeetSwimmerEvents_ibfk_3` FOREIGN KEY (`meetId`, `swimmerId`) REFERENCES `MeetSwimmers` (`meetId`, `swimmerId`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `MeetSwimmers`
+--
+
+DROP TABLE IF EXISTS `MeetSwimmers`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `MeetSwimmers` (
+  `meetId` varchar(8) NOT NULL,
+  `swimmerId` varchar(8) NOT NULL,
+  `events` varchar(255) NOT NULL DEFAULT '',
+  `created` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
+  PRIMARY KEY (`meetId`,`swimmerId`) USING BTREE,
+  KEY `swimmerId` (`swimmerId`),
+  CONSTRAINT `MeetSwimmers_ibfk_1` FOREIGN KEY (`meetId`) REFERENCES `Meets` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `MeetSwimmers_ibfk_2` FOREIGN KEY (`swimmerId`) REFERENCES `Swimmers` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -341,6 +383,103 @@ CREATE TABLE `Pools` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Table structure for table `QualifyingImportPeriodChanges`
+--
+
+DROP TABLE IF EXISTS `QualifyingImportPeriodChanges`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `QualifyingImportPeriodChanges` (
+  `importId` bigint(20) unsigned NOT NULL,
+  `operation` enum('insert','update') NOT NULL,
+  `year` int(11) NOT NULL,
+  `scope` varchar(16) NOT NULL,
+  `area` varchar(32) NOT NULL,
+  `type` varchar(16) NOT NULL,
+  `previousQualifyingStart` date DEFAULT NULL,
+  `previousQualifyingEnd` date DEFAULT NULL,
+  `previousLastRaceDate` date DEFAULT NULL,
+  `importedQualifyingStart` date DEFAULT NULL,
+  `importedQualifyingEnd` date DEFAULT NULL,
+  `importedLastRaceDate` date DEFAULT NULL,
+  PRIMARY KEY (`importId`),
+  CONSTRAINT `fk_QualifyingImportPeriodChanges_importId` FOREIGN KEY (`importId`) REFERENCES `QualifyingImports` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `QualifyingImportTimeChanges`
+--
+
+DROP TABLE IF EXISTS `QualifyingImportTimeChanges`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `QualifyingImportTimeChanges` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `importId` bigint(20) unsigned NOT NULL,
+  `operation` enum('insert','update') NOT NULL,
+  `year` int(11) NOT NULL,
+  `course` varchar(8) NOT NULL,
+  `stroke` varchar(32) NOT NULL,
+  `distance` varchar(8) NOT NULL,
+  `scope` varchar(16) NOT NULL,
+  `area` varchar(32) NOT NULL,
+  `type` varchar(16) NOT NULL,
+  `gender` varchar(16) NOT NULL,
+  `age` varchar(8) NOT NULL,
+  `previousTimeString` varchar(16) DEFAULT NULL,
+  `previousTime` decimal(8,2) DEFAULT NULL,
+  `importedTimeString` varchar(16) NOT NULL,
+  `importedTime` decimal(8,2) NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_QualifyingImportTimeChanges_importId` (`importId`),
+  CONSTRAINT `fk_QualifyingImportTimeChanges_importId` FOREIGN KEY (`importId`) REFERENCES `QualifyingImports` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `QualifyingImports`
+--
+
+DROP TABLE IF EXISTS `QualifyingImports`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `QualifyingImports` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `filename` varchar(255) NOT NULL,
+  `layoutId` varchar(32) DEFAULT NULL,
+  `layoutName` varchar(128) DEFAULT NULL,
+  `year` int(11) NOT NULL,
+  `scope` varchar(16) NOT NULL,
+  `area` varchar(32) NOT NULL,
+  `type` varchar(16) NOT NULL,
+  `course` varchar(8) NOT NULL,
+  `qualifyingStart` date DEFAULT NULL,
+  `qualifyingEnd` date DEFAULT NULL,
+  `lastRaceDate` date DEFAULT NULL,
+  `importedBy` varchar(16) DEFAULT NULL,
+  `importedByName` varchar(96) NOT NULL,
+  `status` enum('pending','completed','failed','rolled_back') NOT NULL DEFAULT 'pending',
+  `totalCount` int(10) unsigned NOT NULL DEFAULT 0,
+  `insertedCount` int(10) unsigned NOT NULL DEFAULT 0,
+  `updatedCount` int(10) unsigned NOT NULL DEFAULT 0,
+  `errorMessage` text DEFAULT NULL,
+  `created` timestamp NOT NULL DEFAULT current_timestamp(),
+  `completedAt` datetime DEFAULT NULL,
+  `rolledBackAt` datetime DEFAULT NULL,
+  `rolledBackBy` varchar(16) DEFAULT NULL,
+  `rolledBackByName` varchar(96) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_QualifyingImports_created` (`created`),
+  KEY `idx_QualifyingImports_year_area` (`year`,`scope`,`area`),
+  KEY `idx_QualifyingImports_importedBy` (`importedBy`),
+  KEY `fk_QualifyingImports_rolledBackBy` (`rolledBackBy`),
+  CONSTRAINT `fk_QualifyingImports_importedBy` FOREIGN KEY (`importedBy`) REFERENCES `User` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_QualifyingImports_rolledBackBy` FOREIGN KEY (`rolledBackBy`) REFERENCES `User` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
 -- Table structure for table `QualifyingPeriods`
 --
 
@@ -354,12 +493,52 @@ CREATE TABLE `QualifyingPeriods` (
   `type` enum('general','summer','winter') NOT NULL DEFAULT 'general',
   `qualifyingStart` date DEFAULT NULL,
   `qualifyingEnd` date DEFAULT NULL,
-  `eligibilityStart` date DEFAULT NULL,
-  `eligibilityEnd` date DEFAULT NULL,
+  `lastRaceDate` date DEFAULT NULL COMMENT 'Last date a race can be held to count for eligibility',
   `notes` varchar(255) DEFAULT NULL,
   `created` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
   PRIMARY KEY (`year`,`scope`,`area`,`type`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `QualifyingPeriodsStaging`
+--
+
+DROP TABLE IF EXISTS `QualifyingPeriodsStaging`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `QualifyingPeriodsStaging` (
+  `source` varchar(32) NOT NULL COMMENT 'swimming-times | swimturn',
+  `year` int(11) NOT NULL COMMENT 'requested season year (--year)',
+  `scope` enum('regional','county') NOT NULL,
+  `area` varchar(32) NOT NULL,
+  `type` enum('general','summer','winter') NOT NULL DEFAULT 'general',
+  `qualifyingStart` date DEFAULT NULL,
+  `qualifyingEnd` date DEFAULT NULL,
+  `lastRaceDate` date DEFAULT NULL COMMENT 'Last date a race can be held to count for eligibility — only set when the source explicitly lists championship dates',
+  `notes` varchar(255) DEFAULT NULL,
+  `sourceUrl` varchar(512) DEFAULT NULL,
+  `fetchedAt` timestamp NOT NULL DEFAULT current_timestamp() COMMENT 'explicitly set every run, not ON UPDATE, so unchanged rows still record last checked time',
+  PRIMARY KEY (`source`,`year`,`scope`,`area`,`type`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `QualifyingReports`
+--
+
+DROP TABLE IF EXISTS `QualifyingReports`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `QualifyingReports` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `year` int(11) NOT NULL,
+  `sources` varchar(64) NOT NULL COMMENT 'comma-separated list of sources included, e.g. swimming-times,swimturn',
+  `html` longtext NOT NULL,
+  `generatedAt` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `idx_generatedAt` (`generatedAt`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -386,6 +565,33 @@ CREATE TABLE `QualifyingTimes` (
   `updated` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
   PRIMARY KEY (`year`,`course`,`stroke`,`distance`,`scope`,`area`,`type`,`gender`,`age`) USING BTREE,
   UNIQUE KEY `idx_qualifying` (`year`,`age`,`gender`,`course`,`stroke`,`distance`,`scope`,`area`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `QualifyingTimesStaging`
+--
+
+DROP TABLE IF EXISTS `QualifyingTimesStaging`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `QualifyingTimesStaging` (
+  `source` varchar(32) NOT NULL COMMENT 'swimming-times | swimturn',
+  `year` int(11) NOT NULL COMMENT 'requested season year (--year)',
+  `course` varchar(8) NOT NULL,
+  `stroke` varchar(32) NOT NULL,
+  `distance` varchar(8) NOT NULL,
+  `scope` varchar(16) NOT NULL,
+  `area` varchar(16) NOT NULL,
+  `type` enum('general','summer','winter') NOT NULL DEFAULT 'general',
+  `gender` varchar(16) NOT NULL,
+  `age` varchar(8) NOT NULL,
+  `timeString` varchar(16) NOT NULL,
+  `time` decimal(8,2) NOT NULL DEFAULT 0.00,
+  `sourceYear` int(11) DEFAULT NULL COMMENT 'season year actually found on the source (e.g. swimturn version prefix), when it differs from `year`',
+  `sourceUrl` varchar(512) DEFAULT NULL,
+  `fetchedAt` timestamp NOT NULL DEFAULT current_timestamp() COMMENT 'explicitly set every run, not ON UPDATE, so unchanged rows still record last checked time',
+  PRIMARY KEY (`source`,`year`,`course`,`stroke`,`distance`,`scope`,`area`,`type`,`gender`,`age`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -453,6 +659,20 @@ CREATE TABLE `Results` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Table structure for table `SchemaMigrations`
+--
+
+DROP TABLE IF EXISTS `SchemaMigrations`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `SchemaMigrations` (
+  `name` varchar(255) NOT NULL,
+  `runAt` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
 -- Table structure for table `Session`
 --
 
@@ -485,6 +705,28 @@ CREATE TABLE `SessionTracking` (
   PRIMARY KEY (`sessionId`,`sessionAction`),
   KEY `SessionTracking_ibfk_1` (`userId`),
   CONSTRAINT `SessionTracking_ibfk_1` FOREIGN KEY (`userId`) REFERENCES `User` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `ShareLinks`
+--
+
+DROP TABLE IF EXISTS `ShareLinks`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `ShareLinks` (
+  `token` varchar(64) NOT NULL,
+  `swimmerId` varchar(8) NOT NULL,
+  `createdBy` varchar(16) NOT NULL,
+  `createdAt` timestamp NOT NULL DEFAULT current_timestamp(),
+  `expiresAt` datetime NOT NULL,
+  `revokedAt` datetime DEFAULT NULL,
+  PRIMARY KEY (`token`),
+  KEY `idx_ShareLinks_swimmerId` (`swimmerId`),
+  KEY `idx_ShareLinks_createdBy` (`createdBy`),
+  CONSTRAINT `fk_ShareLinks_Swimmers` FOREIGN KEY (`swimmerId`) REFERENCES `Swimmers` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_ShareLinks_User` FOREIGN KEY (`createdBy`) REFERENCES `User` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -1227,6 +1469,88 @@ CREATE TABLE `SpeedChart-individual_medley-200m-male-lc` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Table structure for table `SpeedChartTimes`
+--
+
+DROP TABLE IF EXISTS `SpeedChartTimes`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `SpeedChartTimes` (
+  `course` varchar(8) NOT NULL,
+  `stroke` varchar(32) NOT NULL,
+  `distance` varchar(8) NOT NULL,
+  `scope` varchar(16) NOT NULL,
+  `gender` varchar(16) NOT NULL,
+  `duration` decimal(8,2) NOT NULL DEFAULT 0.00,
+  `stage` varchar(16) NOT NULL,
+  `time` decimal(8,2) NOT NULL,
+  `created` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
+  PRIMARY KEY (`course`,`stroke`,`distance`,`scope`,`gender`,`duration`,`stage`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `SpeedCharts`
+--
+
+DROP TABLE IF EXISTS `SpeedCharts`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `SpeedCharts` (
+  `course` varchar(8) NOT NULL,
+  `stroke` varchar(32) NOT NULL,
+  `distance` varchar(8) NOT NULL,
+  `scope` varchar(16) NOT NULL,
+  `gender` varchar(16) NOT NULL,
+  `duration` decimal(8,2) NOT NULL DEFAULT 0.00,
+  `created` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
+  PRIMARY KEY (`course`,`stroke`,`distance`,`scope`,`gender`,`duration`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `SpeedCharts50m`
+--
+
+DROP TABLE IF EXISTS `SpeedCharts50m`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `SpeedCharts50m` (
+  `course` varchar(8) NOT NULL,
+  `stroke` varchar(32) NOT NULL,
+  `distance` varchar(8) NOT NULL,
+  `scope` varchar(16) NOT NULL,
+  `gender` varchar(16) NOT NULL,
+  `duration` decimal(8,2) NOT NULL DEFAULT 0.00,
+  `created` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
+  PRIMARY KEY (`course`,`stroke`,`distance`,`scope`,`gender`,`duration`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `SubscriptionTiers`
+--
+
+DROP TABLE IF EXISTS `SubscriptionTiers`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `SubscriptionTiers` (
+  `id` varchar(32) NOT NULL,
+  `name` varchar(64) NOT NULL,
+  `description` varchar(255) NOT NULL DEFAULT '',
+  `amount` int(11) NOT NULL DEFAULT 0,
+  `currency` char(3) NOT NULL DEFAULT 'GBP',
+  `featured` tinyint(1) NOT NULL DEFAULT 0,
+  `sortOrder` int(11) NOT NULL DEFAULT 0,
+  `active` tinyint(1) NOT NULL DEFAULT 1,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
 -- Table structure for table `Swimmers`
 --
 
@@ -1249,6 +1573,50 @@ CREATE TABLE `Swimmers` (
   `lastUpdateType` varchar(16) DEFAULT NULL,
   `created` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `SwimmingClubs`
+--
+
+DROP TABLE IF EXISTS `SwimmingClubs`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `SwimmingClubs` (
+  `id` int(10) unsigned NOT NULL COMMENT 'swimming.org clubfinder ID',
+  `name` varchar(128) NOT NULL,
+  `street` varchar(128) DEFAULT NULL,
+  `town` varchar(64) DEFAULT NULL,
+  `county` varchar(64) DEFAULT NULL,
+  `country` varchar(32) DEFAULT NULL,
+  `postcode` varchar(10) DEFAULT NULL,
+  `lat` decimal(9,6) DEFAULT NULL,
+  `lon` decimal(9,6) DEFAULT NULL,
+  `url` varchar(255) DEFAULT NULL,
+  `primaryPoolId` int(10) unsigned DEFAULT NULL COMMENT 'swimming.org poolfinder ID of the club primary pool',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `SwimmingPools`
+--
+
+DROP TABLE IF EXISTS `SwimmingPools`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `SwimmingPools` (
+  `id` int(10) unsigned NOT NULL COMMENT 'swimming.org poolfinder ID',
+  `name` varchar(128) NOT NULL,
+  `street` varchar(128) DEFAULT NULL,
+  `town` varchar(64) DEFAULT NULL,
+  `country` varchar(32) DEFAULT NULL,
+  `postcode` varchar(10) DEFAULT NULL,
+  `lat` decimal(9,6) DEFAULT NULL,
+  `lon` decimal(9,6) DEFAULT NULL,
+  `url` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -1284,7 +1652,7 @@ CREATE TABLE `Tasks` (
   `targetId` varchar(16) DEFAULT NULL,
   `taskStatus` enum('pending','progress','complete','cancelled','error') NOT NULL DEFAULT 'pending',
   `taskSchedule` varchar(32) DEFAULT NULL,
-  `taskResult` varchar(240) DEFAULT NULL,
+  `taskResult` text DEFAULT NULL,
   `startTime` timestamp NULL DEFAULT NULL,
   `endTime` timestamp NULL DEFAULT NULL,
   `created` timestamp NOT NULL DEFAULT current_timestamp(),
@@ -1306,21 +1674,19 @@ DROP TABLE IF EXISTS `User`;
 CREATE TABLE `User` (
   `id` varchar(16) NOT NULL,
   `username` varchar(64) NOT NULL,
-  `password_hash` text NOT NULL,
+  `password_hash` text DEFAULT NULL,
   `firstName` varchar(32) NOT NULL,
   `lastName` varchar(32) NOT NULL,
   `phone` varchar(32) NOT NULL DEFAULT '',
   `location` varchar(128) NOT NULL,
   `locationId` int(10) unsigned DEFAULT NULL,
-  `type` varchar(16) NOT NULL,
-  `admin` tinyint(4) NOT NULL DEFAULT 0,
+  `role` enum('system','admin','user') NOT NULL DEFAULT 'user',
+  `attributes` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`attributes`)),
   `status` enum('pending','active','inactive','disabled') DEFAULT 'active',
   `created` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
   PRIMARY KEY (`id`),
-  UNIQUE KEY `username` (`username`),
-  KEY `type` (`type`),
-  CONSTRAINT `User_ibfk_1` FOREIGN KEY (`type`) REFERENCES `UserTypes` (`type`) ON UPDATE CASCADE
+  UNIQUE KEY `username` (`username`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -1363,6 +1729,34 @@ CREATE TABLE `UserMeets` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Table structure for table `UserSubscription`
+--
+
+DROP TABLE IF EXISTS `UserSubscription`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `UserSubscription` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `userId` varchar(255) NOT NULL,
+  `gcCustomerId` varchar(64) DEFAULT NULL,
+  `gcBillingRequestId` varchar(64) DEFAULT NULL,
+  `gcMandateId` varchar(64) DEFAULT NULL,
+  `gcSubscriptionId` varchar(64) DEFAULT NULL,
+  `tier` varchar(32) NOT NULL DEFAULT 'free',
+  `status` enum('pending','active','cancelled','failed') DEFAULT 'pending',
+  `currentPeriodEnd` datetime DEFAULT NULL,
+  `source` enum('gocardless','manual') NOT NULL DEFAULT 'gocardless',
+  `createdAt` timestamp NULL DEFAULT current_timestamp(),
+  `updatedAt` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `userId` (`userId`),
+  KEY `fk_usersub_tier` (`tier`),
+  CONSTRAINT `fk_usersub_tier` FOREIGN KEY (`tier`) REFERENCES `SubscriptionTiers` (`id`),
+  CONSTRAINT `fk_usersub_user` FOREIGN KEY (`userId`) REFERENCES `User` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
 -- Table structure for table `UserSwimmers`
 --
 
@@ -1372,6 +1766,7 @@ DROP TABLE IF EXISTS `UserSwimmers`;
 CREATE TABLE `UserSwimmers` (
   `userId` varchar(16) NOT NULL,
   `swimmerId` varchar(8) NOT NULL,
+  `xsquad` varchar(32) NOT NULL,
   `created` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
   PRIMARY KEY (`userId`,`swimmerId`),
@@ -1382,17 +1777,336 @@ CREATE TABLE `UserSwimmers` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Table structure for table `UserTypes`
+-- Table structure for table `VideoTimerMarkers`
 --
 
-DROP TABLE IF EXISTS `UserTypes`;
+DROP TABLE IF EXISTS `VideoTimerMarkers`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `UserTypes` (
-  `type` varchar(8) NOT NULL,
-  `seq` int(11) NOT NULL,
-  PRIMARY KEY (`type`),
-  UNIQUE KEY `seq` (`seq`)
+CREATE TABLE `VideoTimerMarkers` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `sessionId` varchar(36) NOT NULL,
+  `seq` int(10) unsigned NOT NULL,
+  `type` enum('surfacing','split') NOT NULL,
+  `code` varchar(32) NOT NULL,
+  `label` varchar(64) NOT NULL,
+  `lengthIndex` smallint(5) unsigned DEFAULT NULL,
+  `turnIndex` smallint(5) unsigned DEFAULT NULL,
+  `tMs` int(10) unsigned NOT NULL,
+  `created` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uniq_session_seq` (`sessionId`,`seq`),
+  KEY `idx_session_time` (`sessionId`,`tMs`),
+  KEY `idx_session_type` (`sessionId`,`type`),
+  KEY `idx_session_code` (`sessionId`,`code`),
+  KEY `idx_session_length` (`sessionId`,`lengthIndex`),
+  KEY `idx_session_turn` (`sessionId`,`turnIndex`),
+  CONSTRAINT `fk_VideoTimerMarkers_Session` FOREIGN KEY (`sessionId`) REFERENCES `VideoTimerSessions` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `VideoTimerSessionAnalysis`
+--
+
+DROP TABLE IF EXISTS `VideoTimerSessionAnalysis`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `VideoTimerSessionAnalysis` (
+  `sessionId` varchar(36) NOT NULL,
+  `breakoutStartM` decimal(5,2) DEFAULT NULL,
+  `created` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
+  PRIMARY KEY (`sessionId`),
+  CONSTRAINT `fk_VideoTimerSessionAnalysis_Session` FOREIGN KEY (`sessionId`) REFERENCES `VideoTimerSessions` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `VideoTimerSessionBreathCounts`
+--
+
+DROP TABLE IF EXISTS `VideoTimerSessionBreathCounts`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `VideoTimerSessionBreathCounts` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `sessionId` varchar(36) NOT NULL,
+  `lengthIndex` smallint(5) unsigned NOT NULL,
+  `fromM` decimal(6,2) NOT NULL,
+  `toM` decimal(6,2) NOT NULL,
+  `count` smallint(5) unsigned DEFAULT NULL,
+  `created` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uniq_session_length` (`sessionId`,`lengthIndex`),
+  KEY `idx_session_from_to` (`sessionId`,`fromM`,`toM`),
+  CONSTRAINT `fk_VideoTimerSessionBreathCounts_Session` FOREIGN KEY (`sessionId`) REFERENCES `VideoTimerSessions` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `VideoTimerSessionBreathMarkers`
+--
+
+DROP TABLE IF EXISTS `VideoTimerSessionBreathMarkers`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `VideoTimerSessionBreathMarkers` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `sessionId` varchar(36) NOT NULL,
+  `seq` int(10) unsigned NOT NULL,
+  `lengthIndex` smallint(5) unsigned NOT NULL,
+  `fromM` decimal(6,2) NOT NULL,
+  `toM` decimal(6,2) NOT NULL,
+  `tMs` int(10) unsigned NOT NULL,
+  `created` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uniq_session_seq` (`sessionId`,`seq`),
+  KEY `idx_session_time` (`sessionId`,`tMs`),
+  KEY `idx_session_length` (`sessionId`,`lengthIndex`),
+  CONSTRAINT `fk_VideoTimerSessionBreathMarkers_Session` FOREIGN KEY (`sessionId`) REFERENCES `VideoTimerSessions` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `VideoTimerSessionStrokeCounts`
+--
+
+DROP TABLE IF EXISTS `VideoTimerSessionStrokeCounts`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `VideoTimerSessionStrokeCounts` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `sessionId` varchar(36) NOT NULL,
+  `lengthIndex` smallint(5) unsigned NOT NULL,
+  `fromM` decimal(6,2) NOT NULL,
+  `toM` decimal(6,2) NOT NULL,
+  `count` smallint(5) unsigned DEFAULT NULL,
+  `created` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uniq_session_length` (`sessionId`,`lengthIndex`),
+  KEY `idx_session_from_to` (`sessionId`,`fromM`,`toM`),
+  CONSTRAINT `fk_VideoTimerSessionStrokeCounts_Session` FOREIGN KEY (`sessionId`) REFERENCES `VideoTimerSessions` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `VideoTimerSessionStrokeMarkers`
+--
+
+DROP TABLE IF EXISTS `VideoTimerSessionStrokeMarkers`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `VideoTimerSessionStrokeMarkers` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `sessionId` varchar(36) NOT NULL,
+  `seq` int(10) unsigned NOT NULL,
+  `lengthIndex` smallint(5) unsigned NOT NULL,
+  `fromM` decimal(6,2) NOT NULL,
+  `toM` decimal(6,2) NOT NULL,
+  `tMs` int(10) unsigned NOT NULL,
+  `created` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uniq_session_seq` (`sessionId`,`seq`),
+  KEY `idx_session_time` (`sessionId`,`tMs`),
+  KEY `idx_session_length` (`sessionId`,`lengthIndex`),
+  CONSTRAINT `fk_VideoTimerSessionStrokeMarkers_Session` FOREIGN KEY (`sessionId`) REFERENCES `VideoTimerSessions` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `VideoTimerSessionTurns`
+--
+
+DROP TABLE IF EXISTS `VideoTimerSessionTurns`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `VideoTimerSessionTurns` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `sessionId` varchar(36) NOT NULL,
+  `turnIndex` smallint(5) unsigned NOT NULL,
+  `breakoutM` decimal(5,2) DEFAULT NULL,
+  `created` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uniq_session_turn` (`sessionId`,`turnIndex`),
+  CONSTRAINT `fk_VideoTimerSessionTurns_Session` FOREIGN KEY (`sessionId`) REFERENCES `VideoTimerSessions` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `VideoTimerSessions`
+--
+
+DROP TABLE IF EXISTS `VideoTimerSessions`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `VideoTimerSessions` (
+  `id` varchar(36) NOT NULL,
+  `userId` varchar(16) NOT NULL,
+  `swimmerId` varchar(8) DEFAULT NULL,
+  `videoId` varchar(36) NOT NULL,
+  `course` varchar(8) NOT NULL,
+  `stroke` varchar(32) NOT NULL,
+  `distance` varchar(8) NOT NULL,
+  `poolLengthM` tinyint(3) unsigned NOT NULL,
+  `lengthCount` smallint(5) unsigned NOT NULL,
+  `turnCount` smallint(5) unsigned NOT NULL,
+  `officialFinishMs` int(10) unsigned DEFAULT NULL,
+  `startOffsetMs` int(10) unsigned DEFAULT NULL,
+  `notes` text DEFAULT NULL,
+  `created` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
+  `resultSwimmer` varchar(8) DEFAULT NULL,
+  `resultCourse` varchar(8) DEFAULT NULL,
+  `resultStroke` varchar(32) DEFAULT NULL,
+  `resultDistance` varchar(8) DEFAULT NULL,
+  `resultSeq` int(11) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `ux_vts_user_result` (`userId`,`resultSwimmer`,`resultCourse`,`resultStroke`,`resultDistance`,`resultSeq`),
+  KEY `idx_userId` (`userId`),
+  KEY `idx_swimmerId` (`swimmerId`),
+  KEY `idx_videoId` (`videoId`),
+  KEY `idx_result` (`resultSwimmer`,`resultCourse`,`resultStroke`,`resultDistance`,`resultSeq`),
+  CONSTRAINT `fk_VideoTimerSessions_Result` FOREIGN KEY (`resultSwimmer`, `resultCourse`, `resultStroke`, `resultDistance`, `resultSeq`) REFERENCES `Results` (`swimmer`, `course`, `stroke`, `distance`, `seq`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_VideoTimerSessions_Swimmers` FOREIGN KEY (`swimmerId`) REFERENCES `Swimmers` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_VideoTimerSessions_User` FOREIGN KEY (`userId`) REFERENCES `User` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_VideoTimerSessions_Video` FOREIGN KEY (`videoId`) REFERENCES `VideoTimerVideos` (`id`) ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `VideoTimerVideoCompressionStatuses`
+--
+
+DROP TABLE IF EXISTS `VideoTimerVideoCompressionStatuses`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `VideoTimerVideoCompressionStatuses` (
+  `id` tinyint(3) unsigned NOT NULL,
+  `code` varchar(32) NOT NULL,
+  `name` varchar(64) NOT NULL,
+  `description` varchar(255) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_vtvcs_code` (`code`),
+  UNIQUE KEY `uq_vtvcs_name` (`name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `VideoTimerVideos`
+--
+
+DROP TABLE IF EXISTS `VideoTimerVideos`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `VideoTimerVideos` (
+  `id` varchar(36) NOT NULL,
+  `userId` varchar(16) NOT NULL,
+  `playbackUrl` varchar(255) NOT NULL,
+  `uploadKey` varchar(255) DEFAULT NULL,
+  `originalPlaybackUrl` text DEFAULT NULL,
+  `originalUploadKey` varchar(255) DEFAULT NULL,
+  `originalName` varchar(255) NOT NULL,
+  `mimeType` varchar(64) NOT NULL,
+  `size` bigint(20) unsigned NOT NULL,
+  `originalSize` bigint(20) unsigned DEFAULT NULL,
+  `compressedPlaybackUrl` text DEFAULT NULL,
+  `compressedUploadKey` varchar(255) DEFAULT NULL,
+  `compressedSize` bigint(20) unsigned DEFAULT NULL,
+  `compressionStatusId` tinyint(3) unsigned NOT NULL DEFAULT 1,
+  `compressionError` text DEFAULT NULL,
+  `compressionQueuedAt` datetime DEFAULT NULL,
+  `compressionStartedAt` datetime DEFAULT NULL,
+  `compressionCompletedAt` datetime DEFAULT NULL,
+  `durationMs` int(10) unsigned DEFAULT NULL,
+  `created` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `idx_userId` (`userId`),
+  KEY `idx_vtv_compression_status_id` (`compressionStatusId`),
+  CONSTRAINT `fk_VideoTimerVideos_User` FOREIGN KEY (`userId`) REFERENCES `User` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_vtv_compression_status_id` FOREIGN KEY (`compressionStatusId`) REFERENCES `VideoTimerVideoCompressionStatuses` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `_Migrations`
+--
+
+DROP TABLE IF EXISTS `_Migrations`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `_Migrations` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `filename` varchar(255) NOT NULL,
+  `appliedAt` timestamp NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `filename` (`filename`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `lcm_50_free_splits`
+--
+
+DROP TABLE IF EXISTS `lcm_50_free_splits`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `lcm_50_free_splits` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `gender` enum('M','F') NOT NULL,
+  `event` varchar(64) NOT NULL,
+  `target_time` decimal(5,2) NOT NULL,
+  `split_15m` decimal(5,2) NOT NULL,
+  `split_20m` decimal(5,2) NOT NULL,
+  `split_25m` decimal(5,2) NOT NULL,
+  `split_30m` decimal(5,2) NOT NULL,
+  `split_35m` decimal(5,2) NOT NULL,
+  `split_40m` decimal(5,2) NOT NULL,
+  `split_45m` decimal(5,2) NOT NULL,
+  `split_50m` decimal(5,2) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `reference_profile`
+--
+
+DROP TABLE IF EXISTS `reference_profile`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `reference_profile` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `gender` enum('M','F','U') NOT NULL DEFAULT 'U',
+  `distance_m` smallint(5) unsigned NOT NULL,
+  `course` enum('LCM','SCM','SCY') NOT NULL,
+  `stroke` enum('Freestyle','Backstroke','Breaststroke','Butterfly','IM') NOT NULL,
+  `target_time_s` decimal(6,2) NOT NULL,
+  `source` varchar(128) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_profile` (`gender`,`distance_m`,`course`,`stroke`,`target_time_s`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `reference_split`
+--
+
+DROP TABLE IF EXISTS `reference_split`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `reference_split` (
+  `profile_id` bigint(20) unsigned NOT NULL,
+  `split_distance_m` smallint(5) unsigned NOT NULL,
+  `split_time_s` decimal(6,2) NOT NULL,
+  PRIMARY KEY (`profile_id`,`split_distance_m`),
+  CONSTRAINT `fk_refsplit_profile` FOREIGN KEY (`profile_id`) REFERENCES `reference_profile` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 

@@ -270,6 +270,8 @@ export interface Task {
   targetType: string
   targetId?: string
   taskSchedule?: string
+  runAfter?: string | null
+  retryCount?: number
   taskStatus?: string
   taskResult?: string
   startTime?: string | null
