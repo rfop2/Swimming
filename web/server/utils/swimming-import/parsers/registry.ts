@@ -23,6 +23,8 @@ import { parseSwimmingPdfLayout22 } from "./pdf/layout22"
 import { parseSwimmingPdfLayout23 } from "./pdf/layout23"
 import { parseSwimmingPdfLayout25 } from "./pdf/layout25"
 import { parseSwimmingPdfLayout28 } from "./pdf/layout28"
+import { parseSwimmingPdfLayout29 } from "./pdf/layout29"
+import { parseSwimmingPdfLayout31 } from "./pdf/layout31"
 import { parseSwimmingPdfLayout32 } from "./pdf/layout32"
 import { parseSwimmingPdfLayout33 } from "./pdf/layout33"
 import { parseSwimmingPdfLayout34 } from "./pdf/layout34"
@@ -54,6 +56,8 @@ export const pdfParserRegistry = {
   layout23: parseSwimmingPdfLayout23,
   layout25: parseSwimmingPdfLayout25,
   layout28: parseSwimmingPdfLayout28,
+  layout29: parseSwimmingPdfLayout29,
+  layout31: parseSwimmingPdfLayout31,
   layout32: parseSwimmingPdfLayout32,
   layout33: parseSwimmingPdfLayout33,
   layout34: parseSwimmingPdfLayout34,

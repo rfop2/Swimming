@@ -259,6 +259,66 @@ describe( "detectImportLayout", () => {
     } )
   } )
 
+  it( "detects the Cornwall 2027 PDF and applies its confirmed import dates", () => {
+    const result = detectImportLayout(
+      "Cornwall County Champs 2027 Qualifying and Consideration Times V2.1_30.08.2026 Times must have been achieved since 01/03/ 2026",
+      "Cornwall-County-Champs-2027-QTs_V2.1_30082026.pdf",
+      "pdf"
+    )
+
+    expect( result ).toMatchObject( {
+      suggestedLayoutId: "layout29",
+      suggestedLayoutName: "Cornwall County 2027",
+      confidence: "high",
+      detectedYear: 2027,
+      dates: {
+        qualifyingStart: "2026-03-01",
+        qualifyingEnd: "2027-01-16",
+        lastRaceDate: null,
+      },
+    } )
+  } )
+
+  it( "detects the Devon workbook and applies both-course import metadata", () => {
+    const result = detectImportLayout(
+      "DEVON COUNTY ASA 2027 CONSIDERATION TIMES Open / Male 2027 Times Female 2027 Times Entry times to have been achieved since 1st March 2026 Entries close 16th December 2026",
+      "2027-Devon-Championship-Qualifying-Times-V1.xlsx",
+      "xlsx"
+    )
+
+    expect( result ).toMatchObject( {
+      suggestedLayoutId: "layout30",
+      suggestedLayoutName: "Devon County 2027",
+      confidence: "high",
+      detectedYear: 2027,
+      dates: {
+        qualifyingStart: "2026-03-01",
+        qualifyingEnd: "2026-12-16",
+        lastRaceDate: null,
+      },
+    } )
+  } )
+
+  it( "detects the Cheshire PDF and applies its confirmed import dates", () => {
+    const result = detectImportLayout(
+      "Cheshire County W.P. & S.A. Swimming Championships 2027 CONSIDERATION Times Times to have been achieved since 1st January 2026 at Licensed Meets",
+      "Cheshire County 2027 Consideration Times.pdf",
+      "pdf"
+    )
+
+    expect( result ).toMatchObject( {
+      suggestedLayoutId: "layout31",
+      suggestedLayoutName: "Cheshire County 2027",
+      confidence: "high",
+      detectedYear: 2027,
+      dates: {
+        qualifyingStart: "2026-01-01",
+        qualifyingEnd: "2026-12-09",
+        lastRaceDate: null,
+      },
+    } )
+  } )
+
   it( "detects the East Region PDF and applies its qualifying period", () => {
     const result = detectImportLayout(
       "Swim England East Region Long Course Championships 2026 Qualifying Times Short Course Times Women Men/Open The closing date for all events is Tuesday 14 April 2026. Qualifying period is 1 January 2025 to the entry closing date",
