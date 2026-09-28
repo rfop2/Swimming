@@ -177,6 +177,18 @@ export interface SwimmingPool {
   poolWhatThreeWords: string
 }
 
+export interface PoolRecord extends SwimmingPool {
+  poolId: number
+}
+
+export interface MeetMeta {
+  meetId: string
+  meetPack: string | null
+  meetInfo: string | null
+  poolId: number | null
+  clubId: string | null
+}
+
 export interface Meet {
   id: string
   code: string
