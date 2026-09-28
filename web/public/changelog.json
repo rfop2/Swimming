@@ -2,13 +2,132 @@
   {
     "isoDate": "2026-09-28",
     "niceDate": "28 September 2026",
-    "diff": "16.11.3..",
-    "href": "https://bitbucket.org/swimracing/swimming/compare/16.12.0..16.11.3",
+    "diff": "16.12.0..",
+    "href": "https://bitbucket.org/swimracing/swimming/compare/16.13.0..16.12.0",
     "major": false,
     "minor": false,
     "tag": null,
+    "title": "16.13.0",
+    "date": "2026-09-28T14:28:19.470Z",
+    "summary": null,
+    "commits": [
+      {
+        "hash": "e049c151269c183fd430c142ae5aaee4b2f81da2",
+        "shorthash": "e049c15",
+        "author": "rodrigo ferreira",
+        "email": "rf.oliveirapaula@gmail.com",
+        "date": "2026-09-28T14:24:02.000Z",
+        "niceDate": "28 September 2026",
+        "subject": "chore(git): merge main into import batch",
+        "message": "chore(git): merge main into import batch",
+        "fixes": null,
+        "href": "https://bitbucket.org/swimracing/swimming/commits/e049c151269c183fd430c142ae5aaee4b2f81da2",
+        "breaking": false,
+        "merge": null
+      },
+      {
+        "hash": "cde286a9b8972ec03115a781bc3707272253a59e",
+        "shorthash": "cde286a",
+        "author": "rodrigo ferreira",
+        "email": "rf.oliveirapaula@gmail.com",
+        "date": "2026-09-23T14:34:32.000Z",
+        "niceDate": "23 September 2026",
+        "subject": "feat(import): add Essex 2027 layout",
+        "message": "feat(import): add Essex 2027 layout",
+        "fixes": null,
+        "href": "https://bitbucket.org/swimracing/swimming/commits/cde286a9b8972ec03115a781bc3707272253a59e",
+        "breaking": false,
+        "files": 14,
+        "insertions": 509,
+        "deletions": 1,
+        "merge": null
+      },
+      {
+        "hash": "315d00664b0d6f5d6f93148120cdccb82efd56c2",
+        "shorthash": "315d006",
+        "author": "rodrigo ferreira",
+        "email": "rf.oliveirapaula@gmail.com",
+        "date": "2026-09-23T16:56:46.000Z",
+        "niceDate": "23 September 2026",
+        "subject": "feat(import): add London Winter 2026 layout",
+        "message": "feat(import): add London Winter 2026 layout",
+        "fixes": null,
+        "href": "https://bitbucket.org/swimracing/swimming/commits/315d00664b0d6f5d6f93148120cdccb82efd56c2",
+        "breaking": false,
+        "files": 14,
+        "insertions": 494,
+        "deletions": 0,
+        "merge": null
+      },
+      {
+        "hash": "4e070953e2b247c19120125a4368cb0265e79ac1",
+        "shorthash": "4e07095",
+        "author": "rodrigo ferreira",
+        "email": "rf.oliveirapaula@gmail.com",
+        "date": "2026-09-23T13:55:02.000Z",
+        "niceDate": "23 September 2026",
+        "subject": "feat(import): add East Region 2026 layout",
+        "message": "feat(import): add East Region 2026 layout",
+        "fixes": null,
+        "href": "https://bitbucket.org/swimracing/swimming/commits/4e070953e2b247c19120125a4368cb0265e79ac1",
+        "breaking": false,
+        "files": 14,
+        "insertions": 489,
+        "deletions": 1,
+        "merge": null
+      },
+      {
+        "hash": "2715957f8380a1b40d3f119141b07213dfbfd0b7",
+        "shorthash": "2715957",
+        "author": "Philip Coombes",
+        "email": "phil@web2wire.com",
+        "date": "2026-09-28T08:25:05.000Z",
+        "niceDate": "28 September 2026",
+        "subject": "Added note to remind to click Save after deleting swimmers.",
+        "message": "Added note to remind to click Save after deleting swimmers.",
+        "fixes": null,
+        "href": "https://bitbucket.org/swimracing/swimming/commits/2715957f8380a1b40d3f119141b07213dfbfd0b7",
+        "breaking": false,
+        "files": 1,
+        "insertions": 2,
+        "deletions": 2,
+        "merge": null
+      }
+    ],
+    "merges": [
+      {
+        "id": "55",
+        "message": "Codex/imports 2026 regions batch 1",
+        "href": "https://bitbucket.org/swimracing/swimming/pull-requests/55",
+        "author": "Rodrigo Ferreira",
+        "commit": {
+          "hash": "63311de55e0eb2625e137cf3aecbaf4f1dcf6ebd",
+          "shorthash": "63311de",
+          "author": "Rodrigo Ferreira",
+          "email": "rf.oliveirapaula@gmail.com",
+          "date": "2026-09-28T14:24:50.000Z",
+          "niceDate": "28 September 2026",
+          "subject": "Merged in codex/imports-2026-regions-batch-1 (pull request #55)",
+          "message": "Merged in codex/imports-2026-regions-batch-1 (pull request #55)\n\nCodex/imports 2026 regions batch 1",
+          "fixes": null,
+          "href": "https://bitbucket.org/swimracing/swimming/commits/63311de55e0eb2625e137cf3aecbaf4f1dcf6ebd",
+          "breaking": false
+        }
+      }
+    ],
+    "fixes": []
+  },
+  {
+    "isoDate": "2026-09-28",
+    "niceDate": "28 September 2026",
+    "diff": "16.11.3..16.12.0",
+    "href": "https://bitbucket.org/swimracing/swimming/compare/16.12.0..16.11.3",
+    "major": false,
+    "minor": true,
+    "tag": "16.12.0",
+    "date": "2026-09-28",
     "title": "16.12.0",
-    "date": "2026-09-28T08:17:15.696Z",
+    "version": "16.12.0",
     "summary": null,
     "commits": [
       {
@@ -1940,57 +2059,6 @@
         }
       }
     ],
-    "fixes": []
-  },
-  {
-    "isoDate": "2026-08-19",
-    "niceDate": "19 August 2026",
-    "diff": "15.13.0..15.14.0",
-    "href": "https://bitbucket.org/swimracing/swimming/compare/15.14.0..15.13.0",
-    "major": false,
-    "minor": true,
-    "tag": "15.14.0",
-    "date": "2026-08-19",
-    "title": "15.14.0",
-    "version": "15.14.0",
-    "summary": null,
-    "commits": [
-      {
-        "hash": "669eca263e9f9dbea0e099b094fdcc963553335d",
-        "shorthash": "669eca2",
-        "author": "Philip Coombes",
-        "email": "phil@web2wire.com",
-        "date": "2026-08-19T16:53:46.000Z",
-        "niceDate": "19 August 2026",
-        "subject": "Optimise qualifying api fetching. Fix bug on times page with ignoring end date.",
-        "message": "Optimise qualifying api fetching. Fix bug on times page with ignoring end date.",
-        "fixes": null,
-        "href": "https://bitbucket.org/swimracing/swimming/commits/669eca263e9f9dbea0e099b094fdcc963553335d",
-        "breaking": false,
-        "files": 3,
-        "insertions": 125,
-        "deletions": 208,
-        "merge": null
-      },
-      {
-        "hash": "4a730a9f99b25247a0925ce783e9317eb583522a",
-        "shorthash": "4a730a9",
-        "author": "Philip Coombes",
-        "email": "phil@web2wire.com",
-        "date": "2026-08-19T16:53:46.000Z",
-        "niceDate": "19 August 2026",
-        "subject": "Fix issue with non-reactive query to limit fetching result.",
-        "message": "Fix issue with non-reactive query to limit fetching result.",
-        "fixes": null,
-        "href": "https://bitbucket.org/swimracing/swimming/commits/4a730a9f99b25247a0925ce783e9317eb583522a",
-        "breaking": false,
-        "files": 1,
-        "insertions": 12,
-        "deletions": 8,
-        "merge": null
-      }
-    ],
-    "merges": [],
     "fixes": []
   }
 ]

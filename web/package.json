@@ -1,6 +1,6 @@
 {
   "name": "swimming-app",
-  "version": "16.12.0",
+  "version": "16.13.0",
   "description": "Swimming performance and qualification monitoring",
   "private": true,
   "type": "module",
@@ -66,6 +66,15 @@
     "test:layout31": "npm run test:layout31:parser && npm run test:layout31:db",
     "test:layout31:parser": "vitest --run tests/swimming-import/pdf/layout31.real-document.test.ts",
     "test:layout31:db": "npm run test:layout7:db && playwright test --config playwright.layout31.config.ts",
+    "test:layout32": "npm run test:layout32:parser && npm run test:layout32:db",
+    "test:layout32:parser": "vitest --run tests/swimming-import/pdf/layout32.real-document.test.ts",
+    "test:layout32:db": "npm run test:layout7:db && playwright test --config playwright.layout32.config.ts",
+    "test:layout33": "npm run test:layout33:parser && npm run test:layout33:db",
+    "test:layout33:parser": "vitest --run tests/swimming-import/pdf/layout33.real-document.test.ts",
+    "test:layout33:db": "npm run test:layout7:db && playwright test --config playwright.layout33.config.ts",
+    "test:layout34": "npm run test:layout34:parser && npm run test:layout34:db",
+    "test:layout34:parser": "vitest --run tests/swimming-import/pdf/layout34.real-document.test.ts",
+    "test:layout34:db": "npm run test:layout7:db && playwright test --config playwright.layout34.config.ts",
     "migrate": "tsx server/db/migrate.ts"
   },
   "dependencies": {
