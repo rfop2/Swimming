@@ -349,6 +349,44 @@
     deleting.value = null
   }
 
+  // Multi-select of swimmers for bulk deletion, keyed by field array key (new swimmers may not have an id yet)
+  const selectedKeys = ref<Set<string | number>>( new Set() )
+  const bulkDeleting = ref( false )
+
+  const selectedCount = computed( () => selectedKeys.value.size )
+  const allSelected = computed( () => userSwimmers.value.length > 0 && selectedCount.value === userSwimmers.value.length )
+  const someSelected = computed( () => selectedCount.value > 0 && !allSelected.value )
+
+  const toggleSelected = ( key: string | number ) => {
+    const keys = new Set( selectedKeys.value )
+    if ( keys.has( key ) ) keys.delete( key )
+    else keys.add( key )
+    selectedKeys.value = keys
+  }
+
+  const toggleAllSelected = () => {
+    selectedKeys.value = allSelected.value ? new Set() : new Set( userSwimmers.value.map( s => s.key ) )
+  }
+
+  // Drop selections for swimmers no longer in the list (e.g. after a reset or save)
+  watch( () => userSwimmers.value.map( s => s.key ), ( keys ) => {
+    const current = new Set( keys )
+    const pruned = [ ...selectedKeys.value ].filter( k => current.has( k ) )
+    if ( pruned.length !== selectedKeys.value.size )
+      selectedKeys.value = new Set( pruned )
+  } )
+
+  const deleteSelectedSwimmers = () => {
+    // Remove from the highest index down so earlier indexes stay valid
+    const indexes = userSwimmers.value
+      .map( ( s, index ) => ( selectedKeys.value.has( s.key ) ? index : -1 ) )
+      .filter( index => index >= 0 )
+      .sort( ( a, b ) => b - a )
+    indexes.forEach( index => removeSwimmer( index ) )
+    selectedKeys.value = new Set()
+    bulkDeleting.value = false
+  }
+
   const swimmerClub = ref<UISelection | undefined>()
 
   const squads = computed( () => Array.from( userSwimmers.value.reduce( ( sq, s ) => {
@@ -653,6 +691,20 @@
           </div>
           <div class="mt-4 sm:mt-0 sm:ml-8 sm:flex-none">
             <button
+              type="button"
+              :disabled="!selectedCount || editing !== null"
+              class="inline-flex items-center gap-x-1.5 rounded-md bg-red-600 disabled:bg-gray-300 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600"
+              @click="bulkDeleting = true"
+            >
+              <TrashIcon
+                class="-ml-0.5 size-5"
+                aria-hidden="true"
+              />
+              Delete selected{{ selectedCount ? ` (${selectedCount})` : "" }}
+            </button>
+          </div>
+          <div class="mt-4 sm:mt-0 sm:ml-8 sm:flex-none">
+            <button
               v-if="userClubId && userClubOwner"
               type="button"
               class="inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
@@ -687,7 +739,21 @@
                   <tr>
                     <th
                       scope="col"
-                      class="py-3.5 pr-1 pl-2 text-left text-sm font-semibold text-gray-900 sm:pl-0"
+                      class="py-3.5 pr-1 pl-2 text-left sm:pl-0"
+                    >
+                      <input
+                        type="checkbox"
+                        class="size-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
+                        :checked="allSelected"
+                        :indeterminate="someSelected"
+                        :disabled="!userSwimmers.length"
+                        aria-label="Select all swimmers"
+                        @change="toggleAllSelected"
+                      >
+                    </th>
+                    <th
+                      scope="col"
+                      class="px-1 py-3.5 text-left text-sm font-semibold text-gray-900"
                     >
                       Id
                     </th>
@@ -759,7 +825,16 @@
                     :key="swimmer.value.id"
                     :class="`active-${swimmer.value.active}`"
                   >
-                    <td class="py-1 pr-1 pl-2 text-sm font-medium whitespace-nowrap text-gray-900 sm:pl-0">
+                    <td class="py-1 pr-1 pl-2 sm:pl-0">
+                      <input
+                        type="checkbox"
+                        class="size-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
+                        :checked="selectedKeys.has( swimmer.key )"
+                        :aria-label="`Select ${swimmer.value.fullName ?? swimmer.value.id}`"
+                        @change="toggleSelected( swimmer.key )"
+                      >
+                    </td>
+                    <td class="px-1 py-1 text-sm font-medium whitespace-nowrap text-gray-900">
                       {{ swimmer.value.id }}
                     </td>
                     <td class="px-1 py-2 text-sm whitespace-nowrap text-gray-500">
@@ -877,13 +952,13 @@
         type="button"
         class="text-sm/6 font-semibold text-gray-900 disabled:text-gray-300"
         :disabled="!meta.dirty"
-        @click="() => { resetForm(); editing = null; deleting = null; submitErrors.length = 0 }"
+        @click="() => { resetForm(); editing = null; deleting = null; bulkDeleting = false; selectedKeys = new Set(); submitErrors.length = 0 }"
       >
         Reset
       </button>
       <button
         type="submit"
-        :disabled="editing !== null || deleting !== null || !meta.dirty || !isFormValid"
+        :disabled="editing !== null || deleting !== null || bulkDeleting || !meta.dirty || !isFormValid"
         class="rounded-md bg-indigo-600 disabled:bg-gray-300 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
       >
         {{ isNewUser ? "Register" : "Save" }}
@@ -895,13 +970,13 @@
         type="button"
         class="text-sm/6 font-semibold text-gray-900 disabled:text-gray-300"
         :disabled="!meta.dirty"
-        @click="() => { resetForm(); editing = null; deleting = null; submitErrors.length = 0 }"
+        @click="() => { resetForm(); editing = null; deleting = null; bulkDeleting = false; selectedKeys = new Set(); submitErrors.length = 0 }"
       >
         Reset
       </button>
       <button
         type="submit"
-        :disabled="editing !== null || deleting !== null || !meta.dirty || !isFormValid"
+        :disabled="editing !== null || deleting !== null || bulkDeleting || !meta.dirty || !isFormValid"
         class="rounded-md bg-indigo-600 disabled:bg-gray-300 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
       >
         {{ isNewUser ? "Register" : "Save" }}
@@ -916,6 +991,15 @@
     confirm-label="Delete"
     :action="deleteSwimmer"
     :cancel-action="() => { deleting = null }"
+  />
+
+  <UI-Confirm
+    v-if="bulkDeleting"
+    title="Delete swimmers"
+    :text="`Are you sure you want to delete ${selectedCount} selected swimmer${selectedCount === 1 ? '' : 's'} from ${editingSelf ? 'your' : 'the user\'s'} account?`"
+    confirm-label="Delete"
+    :action="deleteSelectedSwimmers"
+    :cancel-action="() => { bulkDeleting = false }"
   />
 
   <SwimmerFinder
