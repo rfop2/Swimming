@@ -318,4 +318,64 @@ describe( "detectImportLayout", () => {
       },
     } )
   } )
+
+  it( "detects the East Region PDF and applies its qualifying period", () => {
+    const result = detectImportLayout(
+      "Swim England East Region Long Course Championships 2026 Qualifying Times Short Course Times Women Men/Open The closing date for all events is Tuesday 14 April 2026. Qualifying period is 1 January 2025 to the entry closing date",
+      "East Region.pdf",
+      "pdf"
+    )
+
+    expect( result ).toMatchObject( {
+      suggestedLayoutId: "layout32",
+      suggestedLayoutName: "East Region Championships 2026",
+      confidence: "high",
+      detectedYear: 2026,
+      dates: {
+        qualifyingStart: "2025-01-01",
+        qualifyingEnd: "2026-04-14",
+        lastRaceDate: null,
+      },
+    } )
+  } )
+
+  it( "detects the Essex PDF and converts its exclusive date boundaries", () => {
+    const result = detectImportLayout(
+      "2026 SWIM ENGLAND ESSEX COUNTY AGE GROUP CHAMPIONSHIPS Age at 31/12/2027 SHORT COURSE CONSIDERATION TIMES Times must be achieved after 19/12/25 and before the closing date 19/12/26",
+      "Essex QT Times 2027.pdf",
+      "pdf"
+    )
+
+    expect( result ).toMatchObject( {
+      suggestedLayoutId: "layout33",
+      suggestedLayoutName: "Essex County 2027",
+      confidence: "high",
+      detectedYear: 2027,
+      dates: {
+        qualifyingStart: "2025-12-20",
+        qualifyingEnd: "2026-12-18",
+        lastRaceDate: null,
+      },
+    } )
+  } )
+
+  it( "detects the London Winter PDF and applies its confirmed import dates", () => {
+    const result = detectImportLayout(
+      "SE LONDON WINTER CHAMPIONSHIPS 2026 QUALIFYING AND CONSIDERATION TIMES LONG COURSE SHORT COURSE",
+      "London Winter 26 champs QT and CT v0.1.pdf",
+      "pdf"
+    )
+
+    expect( result ).toMatchObject( {
+      suggestedLayoutId: "layout34",
+      suggestedLayoutName: "London Winter Regional 2026",
+      confidence: "high",
+      detectedYear: 2026,
+      dates: {
+        qualifyingStart: "2025-10-22",
+        qualifyingEnd: "2026-10-21",
+        lastRaceDate: null,
+      },
+    } )
+  } )
 } )

@@ -37,6 +37,9 @@ const detectionRules: Record<string, DetectionRule[]> = {
   layout29: [ { pattern: /cornwall county champs 2027/, weight: 0.65 }, { pattern: /qualifying and consideration times/, weight: 0.2 }, { pattern: /v2\.1_30\.08\.2026/, weight: 0.1 }, { pattern: /cornwall-county-champs-2027-qts_v2\.1_30082026\.pdf/, weight: 0.05 } ],
   layout30: [ { pattern: /devon county asa 2027 consideration times/, weight: 0.7 }, { pattern: /open\s*\/\s*male 2027 times/, weight: 0.1 }, { pattern: /female 2027 times/, weight: 0.1 }, { pattern: /2027-devon-championship-qualifying-times-v1\.xlsx/, weight: 0.1 } ],
   layout31: [ { pattern: /cheshire county w\.p\.\s*&\s*s\.a\. swimming championships 2027/, weight: 0.7 }, { pattern: /consideration times/, weight: 0.15 }, { pattern: /times to have been achieved since 1st january 2026/, weight: 0.1 }, { pattern: /cheshire county 2027 consideration times\.pdf/, weight: 0.05 } ],
+  layout32: [ { pattern: /swim england east region long course championships 2026/, weight: 0.7 }, { pattern: /short course times women men\/open/, weight: 0.15 }, { pattern: /qualifying period is 1 january 2025 to the entry closing date/, weight: 0.1 }, { pattern: /east region\.pdf/, weight: 0.05 } ],
+  layout33: [ { pattern: /swim england essex county age group championships/, weight: 0.7 }, { pattern: /short course consideration times/, weight: 0.2 }, { pattern: /essex qt times 2027\.pdf/, weight: 0.1 } ],
+  layout34: [ { pattern: /se london winter championships 2026/, weight: 0.75 }, { pattern: /qualifying and consideration times/, weight: 0.15 }, { pattern: /london winter 26 champs qt and ct v0\.1\.pdf/, weight: 0.1 } ],
 }
 
 const monthNumbers: Record<string, string> = {
@@ -101,6 +104,23 @@ function extractAchievedBetweenRange( source: string ) {
   }
 }
 
+function shiftNumericDate( day: string, month: string, year: string, days: number ) {
+  const fullYear = year.length === 2 ? `20${year}` : year
+  const value = new Date( Date.UTC( Number( fullYear ), Number( month ) - 1, Number( day ) ) )
+  value.setUTCDate( value.getUTCDate() + days )
+  return value.toISOString().slice( 0, 10 )
+}
+
+function extractExclusiveAchievementRange( source: string ) {
+  const match = /times? must be achieved after\s+(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})\s+and before(?: the)? closing date\s+(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})/i.exec( source )
+  if ( !match ) return null
+
+  return {
+    start: shiftNumericDate( match[1], match[2], match[3], 1 ),
+    end: shiftNumericDate( match[4], match[5], match[6], -1 ),
+  }
+}
+
 function extractQualifyingWindow( source: string ) {
   const match = /qualifying window\s*:\s*(\d{1,2})(?:st|nd|rd|th)?\s+(january|february|march|april|may|june|july|august|september|october|november|december)\s*[-â€“â€”]\s*(\d{1,2})(?:st|nd|rd|th)?\s+(january|february|march|april|may|june|july|august|september|october|november|december)\s+(20\d{2})/i.exec( source )
   if ( !match ) return null
@@ -112,7 +132,7 @@ function extractQualifyingWindow( source: string ) {
 
 export function detectImportLayout( text: string, fileName: string, fileType: ImportLayoutFileType ): ImportLayoutDetection {
   const source = normalize( `${fileName} ${text}` )
-  const achievementRange = extractAchievementRange( source ) ?? extractSwumBetweenRange( source ) ?? extractAchievedBetweenRange( source ) ?? extractQualifyingWindow( source )
+  const achievementRange = extractExclusiveAchievementRange( source ) ?? extractAchievementRange( source ) ?? extractSwumBetweenRange( source ) ?? extractAchievedBetweenRange( source ) ?? extractQualifyingWindow( source )
   const detectedYearMatch = source.match( /\b(20(?:2\d|3\d))\b/ )
   const sourceDetectedYear = detectedYearMatch ? Number( detectedYearMatch[1] ) : null
 
@@ -155,7 +175,7 @@ export function detectImportLayout( text: string, fileName: string, fileType: Im
     detectedYear,
     dates: {
       qualifyingStart: achievementRange?.start ?? extractDateAfter( source, [ /times?.{0,35}(?:swum|achieved).{0,40}(?:since|from)/i, /qualifying start(?: date)?/i ] ) ?? suggestedLayout?.defaultDates?.qualifyingStart ?? null,
-      qualifyingEnd: achievementRange?.end ?? extractDateAfter( source, [ /qualifying end(?: date)?/i, /qualifying period.{0,20}(?:ends?|until|to)/i, /times?.{0,35}(?:achieved|swum).{0,20}(?:by|until)/i ] ) ?? suggestedLayout?.defaultDates?.qualifyingEnd ?? null,
+      qualifyingEnd: achievementRange?.end ?? extractDateAfter( source, [ /closing date(?: for all events)?(?: is)?/i, /qualifying end(?: date)?/i, /qualifying period.{0,20}(?:ends?|until|to)/i, /times?.{0,35}(?:achieved|swum).{0,20}(?:by|until)/i ] ) ?? suggestedLayout?.defaultDates?.qualifyingEnd ?? null,
       lastRaceDate: extractDateAfter( source, [ /last race date/i, /final competition date/i ] ) ?? suggestedLayout?.defaultDates?.lastRaceDate ?? null,
     },
   }
