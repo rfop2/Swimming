@@ -860,6 +860,10 @@ const getMeetSwimmers = async ( meetResults: MeetResults, year: string, options:
 const DEFAULT_RESULTS_LOOKBACK_DAYS = 7
 const DEFAULT_ACTIVE_USER_DAYS = 60
 
+// Update type queued for swimmers found in meet results. Temporarily "results"
+// only; set back to "rankings" to also refresh rankings and performance.
+const MEET_RESULTS_UPDATE_TYPE: SwimmerUpdateType = "results"
+
 // Restricts Swimmers to those on the account of a user who has logged in within
 // :activeDays days; an :activeDays of 0 disables the restriction.
 const ACTIVE_SWIMMERS_SQL = `( :activeDays = 0 OR Swimmers.id IN (
@@ -978,8 +982,8 @@ const updateMeetsResults = async ( options: MeetsResultsOptions ) => {
       const result = await addTask.run( {
         userId: systemUser.id,
         taskType: "update",
-        taskOptions: JSON.stringify( { updateType: "rankings" } ),
-        taskDescription: `Triggered rankings update of swimmer ${swimmerId} from meet results`,
+        taskOptions: JSON.stringify( { updateType: MEET_RESULTS_UPDATE_TYPE } ),
+        taskDescription: `Triggered ${MEET_RESULTS_UPDATE_TYPE} update of swimmer ${swimmerId} from meet results`,
         targetType: "swimmer",
         targetId: swimmerId,
         activeDays: Number( options.activeDays ?? DEFAULT_ACTIVE_USER_DAYS ),
@@ -990,7 +994,7 @@ const updateMeetsResults = async ( options: MeetsResultsOptions ) => {
       }
     }
     if ( swimmersToUpdate ) {
-      console.log( `Queued ranking updates for ${swimmersToUpdate} swimmers` )
+      console.log( `Queued ${MEET_RESULTS_UPDATE_TYPE} updates for ${swimmersToUpdate} swimmers` )
     }
     const updateLastResultsUpdate = prepareStatement<{value: string}>( conn, "INSERT INTO System VALUES( 'lastResultsUpdate', :value ) ON DUPLICATE KEY UPDATE value = :value" )
     await updateLastResultsUpdate.run( { value: today } )
