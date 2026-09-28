@@ -2,13 +2,64 @@
   {
     "isoDate": "2026-09-28",
     "niceDate": "28 September 2026",
-    "diff": "16.11.2..",
-    "href": "https://bitbucket.org/swimracing/swimming/compare/16.11.3..16.11.2",
+    "diff": "16.11.3..",
+    "href": "https://bitbucket.org/swimracing/swimming/compare/16.12.0..16.11.3",
     "major": false,
     "minor": false,
     "tag": null,
+    "title": "16.12.0",
+    "date": "2026-09-28T08:17:15.696Z",
+    "summary": null,
+    "commits": [
+      {
+        "hash": "ebb0d916213bb4a128fbbd66079fae8beee1b0cb",
+        "shorthash": "ebb0d91",
+        "author": "Philip Coombes",
+        "email": "phil@web2wire.com",
+        "date": "2026-09-28T08:15:46.000Z",
+        "niceDate": "28 September 2026",
+        "subject": "Added facility to delete multiple (or all) swimmers from an account.",
+        "message": "Added facility to delete multiple (or all) swimmers from an account.",
+        "fixes": null,
+        "href": "https://bitbucket.org/swimracing/swimming/commits/ebb0d916213bb4a128fbbd66079fae8beee1b0cb",
+        "breaking": false,
+        "files": 1,
+        "insertions": 90,
+        "deletions": 6,
+        "merge": null
+      },
+      {
+        "hash": "61b3c8044ad7e25fdc053d326eaf3ce52688d48d",
+        "shorthash": "61b3c80",
+        "author": "Philip Coombes",
+        "email": "phil@web2wire.com",
+        "date": "2026-09-28T08:16:56.000Z",
+        "niceDate": "28 September 2026",
+        "subject": "Tweak button layout issue",
+        "message": "Tweak button layout issue",
+        "fixes": null,
+        "href": "https://bitbucket.org/swimracing/swimming/commits/61b3c8044ad7e25fdc053d326eaf3ce52688d48d",
+        "breaking": false,
+        "files": 1,
+        "insertions": 4,
+        "deletions": 2,
+        "merge": null
+      }
+    ],
+    "merges": [],
+    "fixes": []
+  },
+  {
+    "isoDate": "2026-09-28",
+    "niceDate": "28 September 2026",
+    "diff": "16.11.2..16.11.3",
+    "href": "https://bitbucket.org/swimracing/swimming/compare/16.11.3..16.11.2",
+    "major": false,
+    "minor": false,
+    "tag": "16.11.3",
+    "date": "2026-09-28",
     "title": "16.11.3",
-    "date": "2026-09-28T08:09:35.057Z",
+    "version": "16.11.3",
     "summary": null,
     "commits": [
       {
@@ -1940,42 +1991,6 @@
       }
     ],
     "merges": [],
-    "fixes": []
-  },
-  {
-    "isoDate": "2026-08-18",
-    "niceDate": "18 August 2026",
-    "diff": "15.12.0..15.13.0",
-    "href": "https://bitbucket.org/swimracing/swimming/compare/15.13.0..15.12.0",
-    "major": false,
-    "minor": true,
-    "tag": "15.13.0",
-    "date": "2026-08-18",
-    "title": "15.13.0",
-    "version": "15.13.0",
-    "summary": null,
-    "commits": [],
-    "merges": [
-      {
-        "id": "45",
-        "message": "Lacanshire 2027",
-        "href": "https://bitbucket.org/swimracing/swimming/pull-requests/45",
-        "author": "Rodrigo Ferreira",
-        "commit": {
-          "hash": "0dddaab257dbb48ed82557e26a12e8b35e13057b",
-          "shorthash": "0dddaab",
-          "author": "Rodrigo Ferreira",
-          "email": "rf.oliveirapaula@gmail.com",
-          "date": "2026-08-18T13:17:38.000Z",
-          "niceDate": "18 August 2026",
-          "subject": "Merged in Lancashire-2027 (pull request #45)",
-          "message": "Merged in Lancashire-2027 (pull request #45)\n\nLacanshire 2027",
-          "fixes": null,
-          "href": "https://bitbucket.org/swimracing/swimming/commits/0dddaab257dbb48ed82557e26a12e8b35e13057b",
-          "breaking": false
-        }
-      }
-    ],
     "fixes": []
   }
 ]
