@@ -703,9 +703,11 @@
               Delete selected{{ selectedCount ? ` (${selectedCount})` : "" }}
             </button>
           </div>
-          <div class="mt-4 sm:mt-0 sm:ml-8 sm:flex-none">
+          <div
+            v-if="userClubId && userClubOwner"
+            class="mt-4 sm:mt-0 sm:ml-8 sm:flex-none"
+          >
             <button
-              v-if="userClubId && userClubOwner"
               type="button"
               class="inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
               @click="addClubSwimmers"
