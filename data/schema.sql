@@ -27,6 +27,24 @@ CREATE DATABASE /*!32312 IF NOT EXISTS*/ `swimming` /*!40100 DEFAULT CHARACTER S
 USE `swimming`;
 
 --
+-- Table structure for table `ClubMeetReleases`
+--
+
+DROP TABLE IF EXISTS `ClubMeetReleases`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `ClubMeetReleases` (
+  `clubId` varchar(8) NOT NULL,
+  `meetId` varchar(8) NOT NULL,
+  `created` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`clubId`,`meetId`),
+  KEY `meetId` (`meetId`),
+  CONSTRAINT `ClubMeetReleases_ibfk_1` FOREIGN KEY (`clubId`) REFERENCES `Clubs` (`clubId`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `ClubMeetReleases_ibfk_2` FOREIGN KEY (`meetId`) REFERENCES `Meets` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
 -- Table structure for table `ClubMeets`
 --
 

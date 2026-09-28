@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { PencilSquareIcon } from "@heroicons/vue/24/outline"
+  import { PencilSquareIcon, PlusCircleIcon, XCircleIcon } from "@heroicons/vue/24/outline"
   import type { FetchError } from "ofetch"
   import type { InternalApi } from "nitropack"
   import { Temporal } from "temporal-polyfill"
@@ -151,6 +151,70 @@
   const cancelEdit = () => {
     editingMeet.value = null
   }
+
+  // --- Claiming meets the club matcher missed ---
+  type UnclaimedMeet = InternalApi["/api/clubs/:id/unclaimed-meets"]["get"][number]
+
+  const showClaim = ref( false )
+  const claimMeetId = ref<string | undefined>()
+  const claimOptions = ref<UISelection[]>( [] )
+  const searchUnclaimed = async ( query: string ): Promise<UISelection[]> => {
+    if ( !query || !clubId.value ) return claimOptions.value
+    const res = await $fetch<UnclaimedMeet[]>( `/api/clubs/${clubId.value}/unclaimed-meets?search=${encodeURIComponent( query )}` )
+    const found = res.map( m => ( { label: `${formatDate( m.date )} – ${m.name} (${m.location})`, value: m.id } ) )
+    const selected = claimOptions.value.find( o => o.value === claimMeetId.value )
+    claimOptions.value = selected && !found.some( o => o.value === selected.value ) ? [ selected, ...found ] : found
+    return found
+  }
+
+  const openClaim = () => {
+    claimMeetId.value = undefined
+    claimOptions.value = []
+    showClaim.value = true
+  }
+
+  const claimSuccess = ref( false )
+
+  // --- Releasing meets wrongly linked to the club ---
+  const releasingMeet = ref<ClubAdminMeet | null>( null )
+  const releaseSuccess = ref( false )
+
+  const releaseMeet = async () => {
+    const meet = releasingMeet.value
+    releasingMeet.value = null
+    if ( !meet ) return
+    saving.value = true
+    try {
+      await $fetch( `/api/meets/${meet.id}/claim`, { method: "DELETE" } )
+      releaseSuccess.value = true
+    } catch ( error ) {
+      console.error( "Error", error )
+      const fetchError = error as FetchError
+      saveErrorText.value = fetchError.data?.message ?? fetchError.message ?? "Unable to release meet."
+      saveError.value = true
+    } finally {
+      saving.value = false
+      await refresh()
+    }
+  }
+
+  const claimMeet = async () => {
+    const meetId = claimMeetId.value
+    if ( !meetId || !clubId.value ) return
+    saving.value = true
+    try {
+      await $fetch( `/api/meets/${meetId}/claim`, { method: "POST", body: { clubId: clubId.value } } )
+      claimSuccess.value = true
+    } catch ( error ) {
+      console.error( "Error", error )
+      const fetchError = error as FetchError
+      saveErrorText.value = fetchError.data?.message ?? fetchError.message ?? "Unable to claim meet."
+      saveError.value = true
+    } finally {
+      saving.value = false
+      await refresh()
+    }
+  }
 </script>
 
 <template>
@@ -177,6 +241,27 @@
         </div>
       </template>
 
+      <div
+        v-if="clubId"
+        class="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+      >
+        <p class="text-sm text-gray-700">
+          Meets are matched to clubs automatically by name. If one of your club's meets is missing, you can claim it.
+        </p>
+        <button
+          type="button"
+          :disabled="saving"
+          class="inline-flex shrink-0 items-center gap-x-1.5 rounded-md bg-indigo-600 disabled:bg-gray-300 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+          @click="openClaim"
+        >
+          <PlusCircleIcon
+            class="-ml-0.5 size-5"
+            aria-hidden="true"
+          />
+          Claim meet
+        </button>
+      </div>
+
       <div class="mt-8 flow-root">
         <p
           v-if="!clubId"
@@ -188,7 +273,7 @@
           v-else-if="!pending && !meets.length"
           class="text-sm text-gray-500"
         >
-          There are no upcoming meets for this club.
+          There are no upcoming meets for this club. Use 'Claim meet' to add any that are missing.
         </p>
         <div
           v-else
@@ -258,18 +343,33 @@
                     <span v-else>—</span>
                   </td>
                   <td class="py-2 pr-2 pl-1 text-right text-sm font-medium whitespace-nowrap sm:pr-0">
-                    <button
-                      type="button"
-                      :disabled="saving"
-                      class="inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 disabled:bg-gray-300 px-2 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                      @click="() => editMeet( meet )"
-                    >
-                      <PencilSquareIcon
-                        class="size-5"
-                        aria-hidden="true"
-                      />
-                      <span class="sr-only">Edit, {{ meet.name }}</span>
-                    </button>
+                    <div class="flex gap-2 justify-end">
+                      <button
+                        type="button"
+                        :disabled="saving"
+                        class="inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 disabled:bg-gray-300 px-2 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                        @click="() => editMeet( meet )"
+                      >
+                        <PencilSquareIcon
+                          class="size-5"
+                          aria-hidden="true"
+                        />
+                        <span class="sr-only">Edit, {{ meet.name }}</span>
+                      </button>
+                      <button
+                        type="button"
+                        :disabled="saving"
+                        :title="`Release from ${clubName ?? 'club'}`"
+                        class="inline-flex items-center gap-x-1.5 rounded-md bg-red-600 disabled:bg-gray-300 px-2 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600"
+                        @click="() => { releasingMeet = meet }"
+                      >
+                        <XCircleIcon
+                          class="size-5"
+                          aria-hidden="true"
+                        />
+                        <span class="sr-only">Release, {{ meet.name }}</span>
+                      </button>
+                    </div>
                   </td>
                 </tr>
               </tbody>
@@ -366,6 +466,49 @@
       </div>
     </UI-Dialog>
 
+    <UI-Dialog
+      v-model="showClaim"
+      title="Claim Meet"
+      confirm-label="Claim"
+      :confirm-enabled="() => !!claimMeetId"
+      :action="claimMeet"
+    >
+      <div class="px-3 py-5 sm:p-4">
+        <p class="text-sm text-gray-700">
+          Search for an upcoming meet hosted by {{ clubName ?? "your club" }}. Only meets not already linked to a club are shown.
+        </p>
+        <div class="mt-4">
+          <UI-Combobox
+            id="claim-meet"
+            v-model="claimMeetId"
+            label="Meet"
+            placeholder="Type meet name or location"
+            :options="claimOptions"
+            :fetch-options="searchUnclaimed"
+          />
+        </div>
+      </div>
+    </UI-Dialog>
+
+    <UI-Confirm
+      v-if="releasingMeet"
+      title="Release meet"
+      :text="`Release '${releasingMeet.name}' from ${clubName ?? 'your club'}? Its pool, information and meet pack will be deleted, and it won't be linked to your club automatically again. You can claim it back later.`"
+      confirm-label="Release"
+      :action="releaseMeet"
+      :cancel-action="() => { releasingMeet = null }"
+    />
+
+    <UI-SuccessNotification
+      v-model="releaseSuccess"
+      title="Meet released!"
+      :text="`The meet has been removed from ${clubName ?? 'your club'}.`"
+    />
+    <UI-SuccessNotification
+      v-model="claimSuccess"
+      title="Meet claimed!"
+      :text="`The meet has been added to ${clubName ?? 'your club'}.`"
+    />
     <UI-SuccessNotification
       v-model="saveSuccess"
       title="Successfully saved!"
