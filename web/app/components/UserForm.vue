@@ -989,7 +989,7 @@
   <UI-Confirm
     v-if="deleting !== null"
     title="Delete swimmer"
-    :text="`Are you sure you want to delete swimmer '${userSwimmers[deleting!]!.value.fullName}' from your account?`"
+    :text="`Are you sure you want to delete swimmer '${userSwimmers[deleting!]!.value.fullName}' from your account? The deletion won't take effect until you click Save.`"
     confirm-label="Delete"
     :action="deleteSwimmer"
     :cancel-action="() => { deleting = null }"
@@ -998,7 +998,7 @@
   <UI-Confirm
     v-if="bulkDeleting"
     title="Delete swimmers"
-    :text="`Are you sure you want to delete ${selectedCount} selected swimmer${selectedCount === 1 ? '' : 's'} from ${editingSelf ? 'your' : 'the user\'s'} account?`"
+    :text="`Are you sure you want to delete ${selectedCount} selected swimmer${selectedCount === 1 ? '' : 's'} from ${editingSelf ? 'your' : 'the user\'s'} account? The deletion won't take effect until you click Save.`"
     confirm-label="Delete"
     :action="deleteSelectedSwimmers"
     :cancel-action="() => { bulkDeleting = false }"
