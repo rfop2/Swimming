@@ -860,9 +860,18 @@ const getMeetSwimmers = async ( meetResults: MeetResults, year: string, options:
 const DEFAULT_RESULTS_LOOKBACK_DAYS = 7
 const DEFAULT_ACTIVE_USER_DAYS = 60
 
-// Update type queued for swimmers found in meet results. Temporarily "results"
-// only; set back to "rankings" to also refresh rankings and performance.
-const MEET_RESULTS_UPDATE_TYPE: SwimmerUpdateType = "results"
+// Update type queued for swimmers found in meet results. Overridable via env
+// (MEET_RESULTS_UPDATE_TYPE) so it can be changed without a rebuild/redeploy;
+// defaults to the normal "rankings" (also refreshes rankings and performance).
+const MEET_RESULTS_UPDATE_TYPES: SwimmerUpdateType[] = [ "individual", "results", "rankings" ]
+const MEET_RESULTS_UPDATE_TYPE: SwimmerUpdateType = ( () => {
+  const envValue = process.env.MEET_RESULTS_UPDATE_TYPE
+  if ( !envValue ) return "rankings"
+  if ( !MEET_RESULTS_UPDATE_TYPES.includes( envValue as SwimmerUpdateType ) ) {
+    throw new Error( `Invalid MEET_RESULTS_UPDATE_TYPE '${envValue}', expected one of ${MEET_RESULTS_UPDATE_TYPES.join( ", " )}` )
+  }
+  return envValue as SwimmerUpdateType
+} )()
 
 // Restricts Swimmers to those on the account of a user who has logged in within
 // :activeDays days; an :activeDays of 0 disables the restriction.
