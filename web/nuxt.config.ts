@@ -44,8 +44,16 @@ export default defineNuxtConfig( {
         release: { name: pkg.version }
       }
     ],
-    "@nuxt/fonts"
+    "@nuxt/fonts",
+    "nuxt-gtag"
   ],
+
+  gtag: {
+    // gtag.js is only loaded once the user accepts analytics cookies (see useAnalyticsConsent).
+    // The tag ID is set at runtime via NUXT_PUBLIC_GTAG_ID; if unset, analytics is off.
+    initMode: "manual",
+    id: process.env.NUXT_PUBLIC_GTAG_ID ?? "",
+  },
 
   app: {
     head: {

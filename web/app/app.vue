@@ -30,4 +30,5 @@
   <NuxtLayout>
     <NuxtPage />
   </NuxtLayout>
+  <CookieConsent />
 </template>
