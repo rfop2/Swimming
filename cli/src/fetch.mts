@@ -291,7 +291,8 @@ ON DUPLICATE KEY UPDATE
   email      = :email
 ;`
 
-const updateMeetClub = "REPLACE INTO ClubMeets ( clubId, meetId ) VALUES ( :clubId, :meetId )"
+// IGNORE so a meet already claimed by a club admin is never reassigned
+const updateMeetClub = "INSERT IGNORE INTO ClubMeets ( clubId, meetId ) VALUES ( :clubId, :meetId )"
 
 const checkIndividual = async ( swimmer: Swimmer ) => {
   console.log( `Checking recent individual data for swimmer '${swimmer.fullName}'` )
@@ -682,6 +683,13 @@ const updateMeets = async ( force: boolean ) => {
   const meetsMap = new Map<ClubMeet["id"],ClubMeet>( meets.map( m => ( [ m.id, m ] ) ) )
   const fetchedMeets = new Set<Meet["id"]>()
 
+  // Clubs whose admins have released a meet mustn't be matched to it again
+  const selectReleases = prepareStatement<Record<string, never>,{ clubId: string, meetId: string }>( pool, "SELECT clubId, meetId FROM ClubMeetReleases" )
+  const releasedClubs = new Map<Meet["id"],Set<Club["clubId"]>>()
+  for ( const { clubId, meetId } of await selectReleases.all() ) {
+    releasedClubs.set( meetId, ( releasedClubs.get( meetId ) ?? new Set() ).add( clubId ) )
+  }
+
   const region = "P"
 
   let pageNo = 1
@@ -746,8 +754,10 @@ const updateMeets = async ( force: boolean ) => {
         }
       }
 
-      if ( dbMeet && !dbMeet.clubId ) {
-        const clubMatch = resolveClubMatch( meet as Meet, clubs )
+      // Match new meets straight away as well as existing unlinked ones
+      if ( !dbMeet?.clubId ) {
+        const released = releasedClubs.get( meet.id )
+        const clubMatch = resolveClubMatch( meet as Meet, released ? clubs.filter( c => !released.has( c.clubId ) ) : clubs )
         if ( clubMatch.status === "unique" ) {
           clubId = clubMatch.club.clubId
           console.warn( `Assigned meet '${meet.name} to club '${clubMatch.club.clubName}'` )

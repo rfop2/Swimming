@@ -5,6 +5,8 @@
 
   const user = useAuthenticatedUser()
   const { canAccess } = useSubscription()
+  const { userClubs } = useUserClubs()
+  const isClubAdmin = computed( () => user.value.role === "admin" || userClubs.value.some( c => c.clubOwner ) )
 
   // ──────────────────────────────────────────────────────────────
   // Type guards
@@ -121,6 +123,7 @@
       { name: "Meets", href: "/competition/meets" },
       { name: "Race Times", href: "/competition/times", condition: () => canAccess( "trainingTimes" ) },
       { name: "Race Results", href: "/competition/races" },
+      { name: "Club Meets", href: "/club/meets", condition: () => isClubAdmin.value },
     ] },
     { name: "Video", children: [
       // { name: "Timer", href: "/competition/timer" },
