@@ -1,7 +1,7 @@
 <script setup lang="ts">
   import type { InternalApi } from "nitropack"
   import { FetchError } from "ofetch"
-  import type { Swimmer, ExtQualifyingPeriod, QualifyingRow } from "lib"
+  import type { Swimmer } from "lib"
 
   definePageMeta( {
     layout: "share",
@@ -12,6 +12,7 @@
 
   type RelativeApiResponse = InternalApi["/api/relative/:id"]["get"]
   type PersonalApiResponse = InternalApi["/api/personal/:id"]["get"]
+  type QualificationsApiResponse = InternalApi["/api/share/:token/qualifications"]["get"]
 
   const { data: swimmer, error: swimmerError } = await useAsyncData(
     `share-swimmer-${token}`,
@@ -44,21 +45,16 @@
     }
   )
 
-  // Pre-populate useQualifying state so it doesn't attempt auth-protected fetches
-  const { data: qualifying } = await useAsyncData(
-    `share-qualifying-${token}`,
-    () => $fetch<{ periods: ExtQualifyingPeriod[], times: QualifyingRow[] }>( `/api/share/${token}/qualifying` )
+  const { data: qualifications } = await useAsyncData(
+    `share-qualifications-${token}`,
+    () => {
+      if ( !swimmer.value ) return Promise.resolve( { periods: [] } as QualificationsApiResponse )
+      return $fetch<QualificationsApiResponse>( `/api/share/${token}/qualifications` ).catch( ( error ) => {
+        if ( error instanceof FetchError && error.status === 404 ) return { periods: [] } as QualificationsApiResponse
+        throw error
+      } )
+    }
   )
-  if ( qualifying.value ) {
-    const qualifyingPeriods = useState<ExtQualifyingPeriod[]>( "qualifyingPeriods", () => [] )
-    const qualifyingTimes = useState<QualifyingRow[]>( "qualifyingTimes", () => [] )
-    const loadedPeriods = useState( "periodsLoaded", () => false )
-    const loadedTimes = useState( "timesLoaded", () => false )
-    qualifyingPeriods.value = qualifying.value.periods
-    qualifyingTimes.value = qualifying.value.times
-    loadedPeriods.value = true
-    loadedTimes.value = true
-  }
 
   useHead( {
     title: swimmer.value ? `${swimmer.value.firstName} ${swimmer.value.lastName} – Performance` : "Performance",
@@ -67,35 +63,66 @@
 
 <template>
   <template v-if="swimmer">
-        <div class="sm:flex sm:items-center mb-4">
-          <div class="sm:flex-auto">
-            <h1 class="text-base font-semibold leading-6 text-gray-900">
-              {{ swimmer.firstName }} {{ swimmer.lastName }} – Performance
-            </h1>
-            <p class="mt-2 text-sm text-gray-700">
-              Performance in events relative to the event leader if appearing in top 100 rankings in the last 12 months.
-            </p>
-          </div>
-        </div>
+    <div class="sm:flex sm:items-center mb-4">
+      <div class="sm:flex-auto">
+        <h1 class="text-base font-semibold leading-6 text-gray-900">
+          {{ swimmer.firstName }} {{ swimmer.lastName }} – Personal Bests
+        </h1>
+        <p class="mt-2 text-sm text-gray-700">
+          All-time personal best times, with rankings where the swimmer appears in the top 100 over approximately the last 12 months.
+        </p>
+      </div>
+    </div>
 
-        <div class="pb-4 border-b border-gray-200 mb-4">
-          <div class="mt-2 bg-white shadow sm:rounded-lg">
-            <p class="p-4 text-sm text-gray-700">
-              Key &ndash; Personal best times and how they apply to current or previous qualifying periods. Qualifying times that have been achieved are <span class="px-2 mr-1 qualified" /> highlighted.
-              Swim times that are close to the qualifying time have time differences shown <span class="px-2 mr-1 qualify-prox-5" /> if within 5%, and <span class="px-2 mr-1 qualify-prox-10" /> if within 10%.
-              Event ranking is in the <span class="px-2 mr-1 rank-10" /> top 10, <span class="px-2 mr-1 rank-20" /> top 20, <span class="px-2 mr-1 rank-50" /> top 50. Swim times in <span class="time-pb">purple</span> are personal bests. Qualification times in <span class="italic">italics</span> mean qualification is closed.
-            </p>
-          </div>
-        </div>
+    <div class="pb-4 border-b border-gray-200 mb-4">
+      <div class="mt-2 bg-white shadow sm:rounded-lg">
+        <p class="p-4 text-sm text-gray-700">
+          Key &ndash; Personal bests are shown in <span class="time-pb">purple</span>, with dates fading as they get older.
+          Ranked times are the swimmer's best in the rankings period (approximately the last 12 months) and are shown in purple if they are also the personal best.
+          Event ranking is in the <span class="px-2 mr-1 rank-10" /> top 10, <span class="px-2 mr-1 rank-20" /> top 20, <span class="px-2 mr-1 rank-50" /> top 50.
+          Lead is the event leader's time and Diff. is the gap to it.
+        </p>
+      </div>
+    </div>
 
-        <div class="mt-4 flow-root overflow-x-auto">
-          <PerformanceTable
-            :swimmer="swimmer"
-            :relative-records="relativeRecords ?? []"
-            :personal-records="personalRecords ?? []"
-            :show-links="false"
-          />
-        </div>
+    <div class="mt-4 flow-root overflow-x-auto">
+      <PersonalBestsTable
+        :swimmer="swimmer"
+        :relative-records="relativeRecords ?? []"
+        :personal-records="personalRecords ?? []"
+        :show-links="false"
+      />
+    </div>
+
+    <div class="sm:flex sm:items-center mt-10 mb-4">
+      <div class="sm:flex-auto">
+        <h2 class="text-base font-semibold leading-6 text-gray-900">
+          {{ swimmer.firstName }} {{ swimmer.lastName }} – Qualifications
+        </h2>
+        <p class="mt-2 text-sm text-gray-700">
+          The swimmer's best time in each event within the current county and regional qualifying periods, compared against the qualifying standard for their age.
+        </p>
+      </div>
+    </div>
+
+    <div class="pb-4 border-b border-gray-200 mb-4">
+      <div class="mt-2 bg-white shadow sm:rounded-lg">
+        <p class="p-4 text-sm text-gray-700">
+          Key &ndash; Times are the best swum within each qualifying window, so may differ between county and regional. Qualifying times that have been achieved are <span class="px-2 mr-1 qualified" /> highlighted.
+          Times close to the qualifying time have differences shown <span class="px-2 mr-1 qualify-prox-5" /> if within 5%, and <span class="px-2 mr-1 qualify-prox-10" /> if within 10%.
+          Times in <span class="italic">italics</span> are from a qualifying window that has closed but whose competition has not yet taken place.
+          Qualifying times marked * have been converted from the other course's standard.
+        </p>
+      </div>
+    </div>
+
+    <div class="mt-4 flow-root overflow-x-auto">
+      <QualificationsTable
+        :swimmer="swimmer"
+        :qualifications="qualifications ?? { periods: [] }"
+        :show-links="false"
+      />
+    </div>
   </template>
 </template>
 

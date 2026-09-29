@@ -77,11 +77,7 @@ export default defineEventHandler( async ( event ) => {
 
   const today = Temporal.Now.plainDateISO()
 
-  const getQualifyingAge = ( year: number ) => {
-    const age = getSwimmerAge( swimmer )
-    const yearAge = age + ( year - today.year )
-    return yearAge > 18 ? "Open" : String( yearAge )
-  }
+  const swimmerAge = getSwimmerAge( swimmer )
 
   const result: { period: ExtQualifyingPeriod, times: QualifyingRow[] }[] = periods
     .map( period => {
@@ -107,7 +103,7 @@ export default defineEventHandler( async ( event ) => {
           return false
         if ( time.type !== period.type )
           return false
-        if ( time.age !== getQualifyingAge( time.year ) )
+        if ( !qualifyingAgeMatches( time.age, swimmerAge + ( time.year - today.year ) ) )
           return false
         return true
       } )
