@@ -192,6 +192,12 @@
     return `${minutes}:${seconds}.${millis}`
   }
 
+  const formatStartOffset = ( ms: number | null | undefined ) => {
+    if ( ms === null || ms === undefined || !Number.isFinite( ms ) ) return "—"
+    if ( ms < 0 ) return `${formatVideoMs( Math.abs( ms ) )} before video`
+    return formatVideoMs( ms )
+  }
+
   const formatNumber = ( value: number | null | undefined, digits = 2 ) => {
     if ( value === null || value === undefined || !Number.isFinite( value ) ) return "—"
     return value.toFixed( digits )
@@ -1034,7 +1040,7 @@
 
                     <div class="flex items-start justify-between gap-4">
                       <div class="text-gray-500">Start offset</div>
-                      <div class="text-right text-gray-900 font-medium">{{ formatVideoMs(session.startOffsetMs) }}</div>
+                      <div class="text-right text-gray-900 font-medium">{{ formatStartOffset(session.startOffsetMs) }}</div>
                     </div>
 
                     <div class="flex items-start justify-between gap-4">

@@ -116,6 +116,11 @@ const asUnsignedIntOrNull = ( v: unknown ) => {
   return asUnsignedInt( v )
 }
 
+const asSignedIntOrNull = ( v: unknown ) => {
+  if ( v === null || v === undefined || v === "" ) return null
+  return asInt( v )
+}
+
 const asPositiveIntOrNull = ( v: unknown ) => {
   const n = asUnsignedIntOrNull( v )
   if ( n === null || n <= 0 ) return null
@@ -182,7 +187,7 @@ export default defineEventHandler( async ( event ) => {
   const swimmerId = body?.swimmerId ? asNonEmptyString( body.swimmerId ) : null
   const notes = typeof body?.notes === "string" ? body.notes : null
   let officialFinishMs = asUnsignedIntOrNull( body?.officialFinishMs )
-  let startOffsetMs = asUnsignedIntOrNull( body?.startOffsetMs )
+  let startOffsetMs = asSignedIntOrNull( body?.startOffsetMs )
 
   const resultSwimmer = body?.resultSwimmer ? asNonEmptyString( body.resultSwimmer ) : null
   const resultCourse = body?.resultCourse ? asNonEmptyString( body.resultCourse ) : null
@@ -425,18 +430,22 @@ export default defineEventHandler( async ( event ) => {
 
     officialFinishMs = Math.round( linkedResultSeconds * 1000 )
 
-    if ( finishMarkerTime !== null ) {
-      const canonicalStartOffsetMs = finishMarkerTime - officialFinishMs
-      if ( canonicalStartOffsetMs < 0 ) {
-        throw createError( { status: 400, message: "Selected result time is longer than the available race video" } )
-      }
-      startOffsetMs = canonicalStartOffsetMs
-    }
   }
 
   if ( officialFinishMs === null ) {
     throw createError( { status: 400, message: "Official finish time is required" } )
   }
+
+  if ( finishMarkerTime === null ) {
+    throw createError( { status: 400, message: "Finish marker is required" } )
+  }
+
+  if ( durationMs !== null && finishMarkerTime > durationMs ) {
+    throw createError( { status: 400, message: "Finish marker must be inside the video" } )
+  }
+
+  startOffsetMs = finishMarkerTime - officialFinishMs
+
   const savedSplitMarkerKeys = new Set(
     markers
       .filter( marker => marker.type === "split" && marker.code !== "finish_time" )
