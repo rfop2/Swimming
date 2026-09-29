@@ -50,6 +50,15 @@ interface ResultSwim {
 
 const courses: CourseType[] = [ "lc", "sc" ]
 
+// When false, a period whose qualifying window has ended but has no lastRaceDate
+// is hidden. When true, it is shown as "closed" until a newer period of the same
+// scope/type starts.
+export const SHOW_ENDED_PERIODS_WITHOUT_LAST_RACE_DATE = false
+
+// When false, a period with no qualifyingEnd is hidden. When true, it is treated
+// as open indefinitely until a newer period of the same scope/type starts.
+export const SHOW_PERIODS_WITHOUT_END_DATE = false
+
 // Whether a qualifying time's age group ("12", "17+", "10-11", "Open") covers
 // a swimmer of the given competition age.
 export const qualifyingAgeMatches = ( age: string, swimmerAge: number ) => {
@@ -131,8 +140,12 @@ export const getSwimmerQualifications = async ( swimmer: Swimmer, today = Tempor
   const selected = new Map<string, { period: QualificationPeriod, times: QualifyingRow[] }>()
   for ( const status of [ "closed", "open" ] as const ) {
     for ( const row of periodRows ) {
+      if ( !row.qualifyingEnd && !SHOW_PERIODS_WITHOUT_END_DATE ) continue
+
       const ended = !!row.qualifyingEnd && Temporal.PlainDate.compare( today, row.qualifyingEnd ) > 0
-      const lastRaceDatePassed = !row.lastRaceDate || Temporal.PlainDate.compare( today, row.lastRaceDate ) > 0
+      const lastRaceDatePassed = row.lastRaceDate
+        ? Temporal.PlainDate.compare( today, row.lastRaceDate ) > 0
+        : !SHOW_ENDED_PERIODS_WITHOUT_LAST_RACE_DATE
       const rowStatus = !ended ? "open" : ( !lastRaceDatePassed ? "closed" : undefined )
       if ( rowStatus !== status ) continue
 
