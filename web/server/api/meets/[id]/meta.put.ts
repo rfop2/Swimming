@@ -1,8 +1,8 @@
 import { unlink } from "node:fs/promises"
 import { basename, join } from "node:path"
-import { getPool, prepareStatement, type MeetMeta } from "lib"
+import { courseTypes, getPool, prepareStatement, STROKE_DISTANCE, type CourseType, type MeetMeta } from "lib"
 
-type MetaBody = Partial<Pick<MeetMeta, "meetInfo" | "poolId" | "meetPack">>
+type MetaBody = Partial<Pick<MeetMeta, "meetInfo" | "poolId" | "meetPack" | "course" | "events">>
 
 export default defineEventHandler( async ( event ) => {
   const meetId = getRouterParam( event, "id" )
@@ -23,6 +23,20 @@ export default defineEventHandler( async ( event ) => {
       status: 400,
     } )
   }
+  const course = body.course ?? null
+  if ( course !== null && !courseTypes.includes( course as CourseType ) ) {
+    throw createError( {
+      message: "Invalid course",
+      status: 400,
+    } )
+  }
+  const events = body.events ?? []
+  if ( !Array.isArray( events ) || events.some( e => typeof e !== "string" || !( e in STROKE_DISTANCE ) ) ) {
+    throw createError( {
+      message: "Invalid events",
+      status: 400,
+    } )
+  }
 
   const pool = await getPool()
   const selectMeta = prepareStatement<{ meetId: string }, Pick<MeetMeta, "meetPack">>(
@@ -34,17 +48,28 @@ export default defineEventHandler( async ( event ) => {
   const removePack = !!existingPack && body.meetPack === null
 
   try {
-    const upsertMeta = prepareStatement<{ meetId: string, meetInfo: string | null, poolId: number | null, clubId: string, meetPack: string | null }>(
+    const upsertMeta = prepareStatement<{ meetId: string, meetInfo: string | null, poolId: number | null, course: string | null, events: string | null, clubId: string, meetPack: string | null }>(
       pool,
-      `INSERT INTO MeetsMeta (meetId, meetInfo, poolId, clubId, meetPack)
-        VALUES (:meetId, :meetInfo, :poolId, :clubId, :meetPack)
+      `INSERT INTO MeetsMeta (meetId, meetInfo, poolId, course, events, clubId, meetPack)
+        VALUES (:meetId, :meetInfo, :poolId, :course, :events, :clubId, :meetPack)
         ON DUPLICATE KEY UPDATE
           meetInfo = VALUES(meetInfo),
           poolId = VALUES(poolId),
+          course = VALUES(course),
+          events = VALUES(events),
           clubId = VALUES(clubId),
           meetPack = VALUES(meetPack)`
     )
-    await upsertMeta.run( { meetId, meetInfo, poolId, clubId, meetPack: removePack ? null : existingPack } )
+    await upsertMeta.run( {
+      meetId,
+      meetInfo,
+      poolId,
+      course,
+      // Stored in STROKE_DISTANCE order so the JSON is stable regardless of click order
+      events: events.length ? JSON.stringify( Object.keys( STROKE_DISTANCE ).filter( k => events.includes( k ) ) ) : null,
+      clubId,
+      meetPack: removePack ? null : existingPack,
+    } )
   } catch ( error ) {
     console.error( error )
     throw createError( {

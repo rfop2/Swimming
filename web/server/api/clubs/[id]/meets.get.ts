@@ -1,9 +1,10 @@
 import { getPool, prepareStatement, type Meet, type MeetMeta } from "lib"
 
-export interface ClubAdminMeet extends Omit<Meet, "link" | "latitude" | "longitude" | "tagged">, Omit<MeetMeta, "meetId" | "clubId"> {
+export interface ClubAdminMeet extends Omit<Meet, "link" | "latitude" | "longitude" | "tagged">, Omit<MeetMeta, "meetId" | "clubId" | "course" | "events"> {
   poolName: string | null
   poolTown: string | null
   poolPostCode: string | null
+  events: string[]
 }
 
 export default defineEventHandler( async ( event ) => {
@@ -17,13 +18,16 @@ export default defineEventHandler( async ( event ) => {
   await requireClubOwner( event, clubId )
 
   // Upcoming includes meets that are still in progress
-  const selectRecords = prepareStatement<{ clubId: string }, ClubAdminMeet>(
+  // The admin's course (if set) replaces the listed one, hence after Meets.*
+  const selectRecords = prepareStatement<{ clubId: string }, Omit<ClubAdminMeet, "events"> & { events: unknown }>(
     await getPool(),
     `SELECT
       Meets.*,
+      COALESCE(MeetsMeta.course, Meets.course) AS course,
       MeetsMeta.meetPack,
       MeetsMeta.meetInfo,
       MeetsMeta.poolId,
+      MeetsMeta.events,
       Pools.poolName,
       Pools.poolTown,
       Pools.poolPostCode
@@ -39,5 +43,6 @@ export default defineEventHandler( async ( event ) => {
       Meets.date, Meets.name
     ;`
   )
-  return await selectRecords.all( { clubId } )
+  const meets = await selectRecords.all( { clubId } )
+  return meets.map( ( meet ): ClubAdminMeet => ( { ...meet, events: parseMeetEvents( meet.events ) } ) )
 } )

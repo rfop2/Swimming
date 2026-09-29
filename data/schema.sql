@@ -284,6 +284,8 @@ CREATE TABLE `MeetsMeta` (
   `meetPack` varchar(255) DEFAULT NULL,
   `meetInfo` text DEFAULT NULL,
   `poolId` int(10) unsigned DEFAULT NULL,
+  `course` varchar(8) DEFAULT NULL,
+  `events` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`events`)),
   `clubId` varchar(8) DEFAULT NULL,
   PRIMARY KEY (`meetId`),
   KEY `fk_MeetPools_Pools_2` (`poolId`),

@@ -186,6 +186,9 @@ export interface MeetMeta {
   meetPack: string | null
   meetInfo: string | null
   poolId: number | null
+  course: CourseType | null
+  // STROKE_DISTANCE keys of the events taking place at the meet
+  events: string[] | null
   clubId: string | null
 }
 

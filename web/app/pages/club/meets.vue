@@ -3,7 +3,7 @@
   import type { FetchError } from "ofetch"
   import type { InternalApi } from "nitropack"
   import { Temporal } from "temporal-polyfill"
-  import type { Club, PoolRecord } from "lib"
+  import { COURSES, distanceTypes, strokes, type Club, type CourseType, type PoolRecord } from "lib"
   import StandardPage from "~/components/StandardPage.vue"
 
   definePageMeta( {
@@ -72,6 +72,24 @@
   const showEditor = ref( false )
   const editPoolId = ref<number | undefined>()
   const editMeetInfo = ref( "" )
+  const editCourse = ref<CourseType>( "sc" )
+  const editEvents = ref<Set<string>>( new Set() )
+
+  // Events matrix: strokes down, distances across, with a checkbox only for the valid
+  // combinations in STROKE_DISTANCE (lib's strokes groups them by stroke in display order)
+  const eventStrokes = Object.entries( strokes ).map( ( [ stroke, data ] ) => ( { stroke, label: data.label, distances: data.distances } ) )
+  const eventDistances = distanceTypes.filter( d => eventStrokes.some( s => s.distances.includes( d ) ) )
+  const eventKey = ( stroke: string, distance: string ) => `${stroke}__${distance}`.toUpperCase()
+  const strokeEventKeys = ( stroke: typeof eventStrokes[number] ) => stroke.distances.map( d => eventKey( stroke.stroke, d ) )
+  const distanceEventKeys = ( distance: string ) => eventStrokes.filter( s => s.distances.includes( distance ) ).map( s => eventKey( s.stroke, distance ) )
+
+  const toggleEvents = ( keys: string[] ) => {
+    const events = new Set( editEvents.value )
+    // Select them all, unless they already are, in which case clear them
+    const allSelected = keys.every( k => events.has( k ) )
+    keys.forEach( k => allSelected ? events.delete( k ) : events.add( k ) )
+    editEvents.value = events
+  }
   const editRemovePack = ref( false )
   const editPackFile = ref<File | null>( null )
   const packInput = ref<HTMLInputElement | null>( null )
@@ -92,6 +110,8 @@
     editingMeet.value = meet
     editPoolId.value = meet.poolId ?? undefined
     editMeetInfo.value = meet.meetInfo ?? ""
+    editCourse.value = meet.course
+    editEvents.value = new Set( meet.events )
     editRemovePack.value = false
     editPackFile.value = null
     poolOptions.value = meet.poolId && meet.poolName
@@ -132,6 +152,8 @@
         body: {
           poolId: editPoolId.value ?? null,
           meetInfo: editMeetInfo.value,
+          course: editCourse.value,
+          events: [ ...editEvents.value ],
           ...( editRemovePack.value && !editPackFile.value ? { meetPack: null } : {} ),
         },
       } )
@@ -299,6 +321,9 @@
                     Pool
                   </th>
                   <th scope="col" class="px-1 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    Events
+                  </th>
+                  <th scope="col" class="px-1 py-3.5 text-left text-sm font-semibold text-gray-900">
                     Info
                   </th>
                   <th scope="col" class="px-1 py-3.5 text-left text-sm font-semibold text-gray-900">
@@ -321,13 +346,16 @@
                     {{ meet.name }}
                   </td>
                   <td class="px-1 py-2 text-sm whitespace-nowrap text-gray-500">
-                    {{ meet.course }}
+                    {{ COURSES[meet.course] ?? meet.course }}
                   </td>
                   <td class="px-1 py-2 text-sm whitespace-nowrap text-gray-500">
                     {{ meet.level }}
                   </td>
                   <td class="px-1 py-2 text-sm text-gray-500">
                     {{ meet.poolName ? poolLabel( { poolName: meet.poolName, poolTown: meet.poolTown ?? "" } ) : "—" }}
+                  </td>
+                  <td class="px-1 py-2 text-sm whitespace-nowrap text-gray-500">
+                    {{ meet.events.length || "—" }}
                   </td>
                   <td class="px-1 py-2 text-sm whitespace-nowrap text-gray-500">
                     {{ meet.meetInfo ? "✓" : "—" }}
@@ -402,6 +430,90 @@
             :options="poolOptions"
             :fetch-options="searchPools"
           />
+          <fieldset>
+            <legend class="block text-sm/6 font-medium text-gray-900">
+              Course
+            </legend>
+            <div class="mt-1 flex gap-x-6">
+              <label
+                v-for="( label, course ) in COURSES"
+                :key="course"
+                class="flex items-center gap-x-2 text-sm text-gray-900"
+              >
+                <input
+                  v-model="editCourse"
+                  type="radio"
+                  name="meet-course"
+                  :value="course"
+                  class="size-4 border-gray-300 text-indigo-600 focus:ring-indigo-600"
+                >
+                {{ label }} course
+              </label>
+            </div>
+          </fieldset>
+          <fieldset>
+            <legend class="block text-sm/6 font-medium text-gray-900">
+              Events
+              <span class="font-normal text-gray-500">({{ editEvents.size }} selected &ndash; click a stroke or distance to toggle all its events)</span>
+            </legend>
+            <div class="mt-1 overflow-x-auto">
+              <table class="min-w-full text-sm">
+                <thead>
+                  <tr>
+                    <th scope="col" class="py-1 pr-2 text-left font-normal text-gray-500">
+                      <span class="sr-only">Stroke</span>
+                    </th>
+                    <th
+                      v-for="distance in eventDistances"
+                      :key="distance"
+                      scope="col"
+                      class="px-1 py-1 text-center font-semibold text-gray-900"
+                    >
+                      <button
+                        type="button"
+                        class="hover:text-indigo-600"
+                        :title="`Toggle all ${distance} events`"
+                        @click="toggleEvents( distanceEventKeys( distance ) )"
+                      >
+                        {{ distance }}
+                      </button>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                  <tr
+                    v-for="stroke in eventStrokes"
+                    :key="stroke.stroke"
+                  >
+                    <th scope="row" class="py-1.5 pr-2 text-left font-semibold whitespace-nowrap text-gray-900">
+                      <button
+                        type="button"
+                        class="text-left hover:text-indigo-600"
+                        :title="`Toggle all ${stroke.label} events`"
+                        @click="toggleEvents( strokeEventKeys( stroke ) )"
+                      >
+                        {{ stroke.label }}
+                      </button>
+                    </th>
+                    <td
+                      v-for="distance in eventDistances"
+                      :key="distance"
+                      class="px-1 py-1.5 text-center"
+                    >
+                      <input
+                        v-if="stroke.distances.includes( distance )"
+                        type="checkbox"
+                        class="size-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
+                        :checked="editEvents.has( eventKey( stroke.stroke, distance ) )"
+                        :aria-label="`${distance} ${stroke.label}`"
+                        @change="toggleEvents( [ eventKey( stroke.stroke, distance ) ] )"
+                      >
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </fieldset>
           <UI-Input
             id="meet-info"
             v-model="editMeetInfo"
