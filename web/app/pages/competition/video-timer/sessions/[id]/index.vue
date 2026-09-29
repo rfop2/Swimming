@@ -47,6 +47,7 @@
   type SessionDetail = {
     id: string
     createdAt: string
+    status: "draft" | "completed"
     notes: string | null
     startOffsetMs: number | null
     resultDate: string | null
@@ -572,7 +573,7 @@
           <div class="min-w-0">
             <div class="text-lg font-semibold text-gray-900">Video Timer Session</div>
             <div class="text-xs text-gray-500 mt-1">
-              Review saved video, markers and analysis.
+              {{ session?.status === "draft" ? "This session is still in progress." : "Review saved video, markers and analysis." }}
             </div>
           </div>
 
@@ -589,7 +590,7 @@
               class="h-10 px-4 rounded-md bg-blue-600 text-white flex items-center"
               :to="`/competition/video-timer/sessions/${session.id}/edit`"
             >
-              Edit session
+              {{ session.status === "draft" ? "Continue draft" : "Edit session" }}
             </NuxtLink>
 
             <Menu v-if="session" as="div" class="relative">
@@ -607,29 +608,31 @@
                 leave-to-class="transform scale-95 opacity-0"
               >
                 <MenuItems class="absolute right-0 z-20 mt-2 w-52 origin-top-right rounded-xl border border-gray-200 bg-white p-1 shadow-lg focus:outline-none">
-                  <MenuItem v-slot="{ active }">
-                    <NuxtLink
-                      :to="`/competition/video-timer/sessions/${session.id}/report`"
-                      target="_blank"
-                      class="flex w-full items-center rounded-lg px-3 py-2 text-sm"
-                      :class="active ? 'bg-gray-100 text-gray-900' : 'text-gray-700'"
-                    >
-                      Open report
-                    </NuxtLink>
-                  </MenuItem>
+                  <template v-if="session.status === 'completed'">
+                    <MenuItem v-slot="{ active }">
+                      <NuxtLink
+                        :to="`/competition/video-timer/sessions/${session.id}/report`"
+                        target="_blank"
+                        class="flex w-full items-center rounded-lg px-3 py-2 text-sm"
+                        :class="active ? 'bg-gray-100 text-gray-900' : 'text-gray-700'"
+                      >
+                        Open report
+                      </NuxtLink>
+                    </MenuItem>
 
-                  <MenuItem v-slot="{ active }">
-                    <NuxtLink
-                      :to="`/competition/video-timer/sessions/${session.id}/report?print=1`"
-                      target="_blank"
-                      class="flex w-full items-center rounded-lg px-3 py-2 text-sm"
-                      :class="active ? 'bg-gray-100 text-gray-900' : 'text-gray-700'"
-                    >
-                      Export PDF
-                    </NuxtLink>
-                  </MenuItem>
+                    <MenuItem v-slot="{ active }">
+                      <NuxtLink
+                        :to="`/competition/video-timer/sessions/${session.id}/report?print=1`"
+                        target="_blank"
+                        class="flex w-full items-center rounded-lg px-3 py-2 text-sm"
+                        :class="active ? 'bg-gray-100 text-gray-900' : 'text-gray-700'"
+                      >
+                        Export PDF
+                      </NuxtLink>
+                    </MenuItem>
 
-                  <div class="my-1 border-t border-gray-200" />
+                    <div class="my-1 border-t border-gray-200" />
+                  </template>
 
                   <MenuItem v-slot="{ active }">
                     <button

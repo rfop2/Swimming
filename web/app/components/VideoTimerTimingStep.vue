@@ -45,6 +45,7 @@
     resultLink: { type: Object as PropType<Record<string, string | null>>, required: true },
     draft: { type: Object as PropType<VideoTimerDraft>, required: true },
     mode: { type: String as PropType<"create" | "edit">, required: false, default: "create" },
+    saveStatus: { type: String as PropType<"idle" | "saving" | "saved" | "error">, required: false, default: undefined },
   } )
 
   const emit = defineEmits<{
@@ -1189,9 +1190,19 @@
         <div class="w-full max-w-7xl">
           <div class="flex items-center justify-between gap-3">
             <div class="text-sm font-semibold text-gray-800">Timing mode</div>
-            <button class="h-10 px-4 rounded-md bg-gray-200 text-gray-900" type="button" @click="onBack">
-              Back
-            </button>
+            <div class="flex items-center gap-3">
+              <div
+                v-if="props.saveStatus"
+                class="text-xs font-medium"
+                :class="props.saveStatus === 'error' ? 'text-red-600' : props.saveStatus === 'saved' ? 'text-green-700' : 'text-gray-500'"
+              >
+                {{ props.saveStatus === "saving" ? "Saving…" : props.saveStatus === "saved" ? "Saved" : props.saveStatus === "error" ? "Could not save" : "" }}
+              </div>
+
+              <button class="h-10 px-4 rounded-md bg-gray-200 text-gray-900" type="button" @click="onBack">
+                Back
+              </button>
+            </div>
           </div>
 
           <div class="mt-4 grid grid-cols-1 xl:grid-cols-[minmax(0,1.15fr)_minmax(440px,0.85fr)] gap-4 items-start">
@@ -1374,6 +1385,7 @@
                     <div class="flex items-center gap-1"><span class="inline-block h-3 w-3 rounded bg-violet-600" /> Stroke</div>
                     <div v-if="supportsBreathMarkers" class="flex items-center gap-1"><span class="inline-block h-3 w-3 rounded bg-amber-500" /> Breath</div>
                   </div>
+
                 </div>
               </div>
             </div>

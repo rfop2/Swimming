@@ -42,6 +42,7 @@
     draft: VideoTimerDraft
     sessionId?: string | null
     saveMode?: "create" | "update"
+    completingDraft?: boolean
   }>()
 
   const emit = defineEmits<{
@@ -470,7 +471,11 @@
       } )
 
       savedId.value = res.id
-      emit( "saved", { sessionId: res.id } )
+      if ( isUpdate ) {
+        emit( "saved", { sessionId: res.id } )
+      } else {
+        await navigateTo( `/competition/video-timer/sessions/${res.id}` )
+      }
     } catch ( e: unknown ) {
       errorMsg.value = getErrorMessage( e )
     } finally {
@@ -479,6 +484,7 @@
   }
 
   const primaryButtonLabel = computed( () => {
+    if ( props.completingDraft ) return saving.value ? "Completing…" : "Complete session"
     if ( saving.value ) return props.saveMode === "update" ? "Updating…" : "Saving…"
     return props.saveMode === "update" ? "Update session" : "Save session"
   } )
