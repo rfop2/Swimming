@@ -18,6 +18,8 @@ export default defineEventHandler( async ( event ) => {
     await getPool(),
     `SELECT
       Meets.*,
+      -- A club admin's course (if set) replaces the listed one, hence after Meets.*
+      COALESCE(MeetsMeta.course, Meets.course) AS course,
       Locations.latitude,
       Locations.longitude,
       MeetsMeta.meetPack,

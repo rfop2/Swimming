@@ -175,14 +175,32 @@
     tagged: taggings[0].value,
   }, "reactive" )
 
+  // The combobox only shows labels for values in its options, so keep the selected
+  // (possibly persisted) club in there, otherwise an active club filter looks blank
+  const clubOptions = ref<UISelection[]>( [] )
   const searchClubs = async ( query: string ) => {
     if ( !query ) return [ { label: "All Clubs", value: "" } ]
     const res = await $fetch<Club[]>( `/api/clubs/search?search=${encodeURIComponent( query )}` )
-    return res.map( ( u: Club ) => ( {
+    const found = res.map( ( u: Club ) => ( {
       label: u.clubName,
       value: u.clubId,
     } ) )
+    const selected = clubOptions.value.find( o => o.value === selections.club )
+    clubOptions.value = selected && !found.some( o => o.value === selected.value ) ? [ selected, ...found ] : found
+    return found
   }
+
+  onMounted( async () => {
+    if ( selections.club ) {
+      try {
+        const club = await $fetch<Club>( `/api/clubs/${encodeURIComponent( selections.club )}` )
+        if ( club ) clubOptions.value = [ { label: club.clubName, value: club.clubId } ]
+        else selections.club = ""
+      } catch {
+        selections.club = ""
+      }
+    }
+  } )
 
   const distanceCalendar = ( distance: number | null ) => {
     if ( !distance )
@@ -225,7 +243,8 @@
     const filteredEvents = calendarEvents.filter( event => {
       if ( selections.course && selections.course !== event.meet.course )
         return false
-      if ( selections.level.length === 0 || !selections.level.includes( event.meet.level as ( typeof selections.level )[number] ) )
+      // No levels selected shows as "All Levels"
+      if ( selections.level.length && !selections.level.includes( event.meet.level as ( typeof selections.level )[number] ) )
         return false
       if ( selections.distance && event.meet.distance && selections.distance < event.meet.distance )
         return false
@@ -367,6 +386,7 @@
           v-model="selections.club"
           label="Club"
           placeholder="Type club name"
+          :options="clubOptions"
           :fetch-options="searchClubs"
         />
       </div>
