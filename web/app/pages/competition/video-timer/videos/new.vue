@@ -14,6 +14,7 @@
   const preservedQuery = computed( () => ( { ...route.query } ) )
 
   const selectedFile = ref<File | null>( null )
+  const notes = ref( "" )
   const isUploading = ref( false )
   const uploadError = ref( "" )
   const uploadedVideoId = ref( "" )
@@ -48,6 +49,7 @@
     try {
       const formData = new FormData()
       formData.append( "source", "library" )
+      formData.append( "notes", notes.value )
       formData.append( "video", selectedFile.value )
 
       const result = await $fetch<{ id: string }>( "/api/competition/video", {
@@ -123,6 +125,21 @@
                     <div class="mt-1 text-gray-900">{{ selectedFileSize }}</div>
                   </div>
                 </div>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2" for="video-notes">
+                  Notes <span class="font-normal text-gray-500">(optional)</span>
+                </label>
+                <textarea
+                  id="video-notes"
+                  v-model="notes"
+                  maxlength="2000"
+                  rows="4"
+                  class="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900"
+                  placeholder="Event name, course, race details, or anything that will help identify this video"
+                />
+                <div class="mt-1 text-right text-xs text-gray-500">{{ notes.length }}/2000</div>
               </div>
 
               <div

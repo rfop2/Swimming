@@ -2026,6 +2026,7 @@ CREATE TABLE `VideoTimerVideos` (
   `compressionStartedAt` datetime DEFAULT NULL,
   `compressionCompletedAt` datetime DEFAULT NULL,
   `durationMs` int(10) unsigned DEFAULT NULL,
+  `notes` text DEFAULT NULL,
   `created` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
   PRIMARY KEY (`id`),

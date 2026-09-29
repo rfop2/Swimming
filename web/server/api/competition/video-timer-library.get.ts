@@ -11,6 +11,7 @@ type Row = {
   mimeType: string
   size: number
   durationMs: number | null
+  notes: string | null
   compressionStatusId: number | null
   compressionStatusCode: string | null
   compressionStatusName: string | null
@@ -47,6 +48,7 @@ export default defineEventHandler( async ( event ) => {
         v.mimeType as mimeType,
         v.size as size,
         v.durationMs as durationMs,
+        v.notes as notes,
         v.compressionStatusId as compressionStatusId,
         cs.code as compressionStatusCode,
         cs.name as compressionStatusName
@@ -81,6 +83,7 @@ export default defineEventHandler( async ( event ) => {
         mimeType: row.mimeType,
         size: Number( row.size ) || 0,
         durationMs: row.durationMs === null ? null : Number( row.durationMs ),
+        notes: row.notes || null,
         sessionId: null,
         compressionStatusId: row.compressionStatusId === null ? null : Number( row.compressionStatusId ),
         compressionStatusCode: row.compressionStatusCode || null,

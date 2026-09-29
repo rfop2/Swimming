@@ -28,6 +28,7 @@
     stroke?: string | null
     distance?: string | null
     notes?: string | null
+    sessionNotes?: string | null
     meetName?: string | null
     meetDate?: string | null
     officialFinishMs?: number | null
@@ -142,6 +143,47 @@
 
   const deleting = ref( false )
   const deleteError = ref( "" )
+  const videoNotes = ref( "" )
+  const savingNotes = ref( false )
+  const notesSaveError = ref( "" )
+  const notesSaved = ref( false )
+
+  watch(
+    () => data.value?.notes,
+    notes => {
+      videoNotes.value = notes ?? ""
+    },
+    { immediate: true }
+  )
+
+  const saveNotes = async () => {
+    if ( !data.value?.id || savingNotes.value ) return
+
+    notesSaveError.value = ""
+    notesSaved.value = false
+    savingNotes.value = true
+
+    try {
+      const result = await $fetch<{ notes: string | null }>(
+        `/api/competition/video-timer-library/${data.value.id}`,
+        {
+          method: "PUT",
+          body: { notes: videoNotes.value },
+        }
+      )
+
+      data.value = { ...data.value, notes: result.notes }
+      videoNotes.value = result.notes ?? ""
+      notesSaved.value = true
+    } catch ( err: unknown ) {
+      notesSaveError.value =
+        ( err as { data?: { statusMessage?: string; message?: string } } )?.data?.statusMessage
+        || ( err as { data?: { statusMessage?: string; message?: string } } )?.data?.message
+        || "Failed to save notes."
+    } finally {
+      savingNotes.value = false
+    }
+  }
 
   const deleteVideo = async () => {
     if ( !data.value?.id || deleting.value ) return
@@ -362,9 +404,36 @@
               </div>
 
               <div class="rounded-lg border border-gray-200 p-4">
-                <div class="text-xs font-medium uppercase tracking-wide text-gray-500">Notes</div>
+                <div class="text-xs font-medium uppercase tracking-wide text-gray-500">Video notes</div>
+                <textarea
+                  v-model="videoNotes"
+                  maxlength="2000"
+                  rows="5"
+                  class="mt-3 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900"
+                  placeholder="Event name, course, race details, or anything that will help identify this video"
+                  @input="notesSaved = false"
+                />
+                <div class="mt-2 flex items-center justify-between gap-3">
+                  <div class="text-xs">
+                    <span v-if="notesSaveError" class="text-red-600">{{ notesSaveError }}</span>
+                    <span v-else-if="notesSaved" class="text-green-700">Notes saved.</span>
+                    <span v-else class="text-gray-500">{{ videoNotes.length }}/2000</span>
+                  </div>
+                  <button
+                    type="button"
+                    class="h-9 rounded-md bg-gray-900 px-4 text-sm text-white disabled:bg-gray-400"
+                    :disabled="savingNotes"
+                    @click="saveNotes"
+                  >
+                    {{ savingNotes ? "Saving…" : "Save notes" }}
+                  </button>
+                </div>
+              </div>
+
+              <div v-if="data.sessionNotes" class="rounded-lg border border-gray-200 p-4">
+                <div class="text-xs font-medium uppercase tracking-wide text-gray-500">Session notes</div>
                 <div class="mt-3 text-gray-800 whitespace-pre-wrap break-words">
-                  {{ data.notes || "—" }}
+                  {{ data.sessionNotes }}
                 </div>
               </div>
             </div>

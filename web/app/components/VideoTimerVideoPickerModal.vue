@@ -7,6 +7,7 @@
     size: number
     durationMs?: number | null
     playbackUrl: string
+    notes?: string | null
     sessionId?: string | null
     swimmerId?: string | null
     swimmerName?: string | null
@@ -45,6 +46,7 @@
 
     return items.filter( video =>
       String( video.originalName ?? "" ).toLowerCase().includes( term )
+      || String( video.notes ?? "" ).toLowerCase().includes( term )
     )
   } )
 
@@ -133,7 +135,7 @@
             v-model="search"
             type="text"
             class="h-10 w-full rounded-md border border-gray-300 px-3 text-sm"
-            placeholder="Search by file name"
+            placeholder="Search by file name or notes"
           >
         </div>
 
@@ -175,6 +177,10 @@
                     Uploaded at: {{ formatDate(video.createdAt) }}
                     <span> • {{ formatDuration(video.durationMs) }}</span>
                     <span> • {{ formatBytes(video.size) }}</span>
+                  </div>
+
+                  <div v-if="video.notes" class="mt-2 text-sm text-gray-700 whitespace-pre-wrap break-words">
+                    {{ video.notes }}
                   </div>
 
                 </div>
