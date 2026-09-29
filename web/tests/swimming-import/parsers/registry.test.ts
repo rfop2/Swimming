@@ -33,6 +33,9 @@ describe( "PDF parser registry", () => {
       "layout28",
       "layout29",
       "layout31",
+      "layout32",
+      "layout33",
+      "layout34",
     ] )
   } )
 
