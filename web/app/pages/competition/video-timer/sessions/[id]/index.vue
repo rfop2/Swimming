@@ -1,18 +1,16 @@
 <script setup lang="ts">
-  import { Line, Scatter } from "vue-chartjs"
+  import { Line } from "vue-chartjs"
   import {
     Chart as ChartJS,
     CategoryScale,
     LinearScale,
     PointElement,
     LineElement,
-    ScatterController,
     Title,
     Tooltip,
     Legend,
     type ChartData,
     type ChartOptions,
-    type Plugin,
     type TooltipItem,
   } from "chart.js"
   import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/vue"
@@ -84,66 +82,14 @@
   }
 
   type TabKey = "analysis" | "video" | "markers"
-  type BreathTakenChartPoint = { x: number; y: number }
-  type CountLabelPoint = BreathTakenChartPoint & { count: number }
-
-  const breathCountLabelDatasetLabel = "Breath count label"
-  const strokeCountLabelDatasetLabel = "Stroke count label"
-  const countLabelDatasetLabels = new Set( [ breathCountLabelDatasetLabel, strokeCountLabelDatasetLabel ] )
   const strokesWithoutBreathData = new Set( [ "backstroke", "breaststroke" ] )
   const normalizeStroke = ( stroke: string ) => stroke.toLowerCase().replace( /[\s_-]+/g, "" )
-
-  const isCountLabelPoint = ( value: unknown ): value is CountLabelPoint => {
-    if ( typeof value !== "object" || value === null ) return false
-    const point = value as Record<string, unknown>
-    return isFiniteNumber( point.x ) && isFiniteNumber( point.y ) && isFiniteNumber( point.count )
-  }
-
-  const countEndLabelPlugin: Plugin<"scatter"> = {
-    id: "countEndLabel",
-    afterDatasetsDraw( chart ) {
-      const breathPoints = ( chart.data.datasets.find( dataset => dataset.label === breathCountLabelDatasetLabel )?.data ?? [] ).filter( isCountLabelPoint )
-      const strokePoints = ( chart.data.datasets.find( dataset => dataset.label === strokeCountLabelDatasetLabel )?.data ?? [] ).filter( isCountLabelPoint )
-
-      if ( !breathPoints.length && !strokePoints.length ) return
-
-      const { ctx, chartArea, scales } = chart
-      const yScale = scales.y
-
-      if ( !yScale ) return
-
-      ctx.save()
-      ctx.textAlign = "left"
-      ctx.textBaseline = "middle"
-
-      strokePoints.forEach( point => {
-        const y = yScale.getPixelForValue( point.y )
-        if ( y < chartArea.top || y > chartArea.bottom ) return
-        const hasBreathCount = breathPoints.some( breathPoint => breathPoint.y === point.y )
-        ctx.fillStyle = "#7c3aed"
-        ctx.font = "700 15px sans-serif"
-        ctx.fillText( `S ${point.count}`, chartArea.right + 8, y - ( hasBreathCount ? 7 : 0 ) )
-      } )
-
-      breathPoints.forEach( point => {
-        const y = yScale.getPixelForValue( point.y )
-        if ( y < chartArea.top || y > chartArea.bottom ) return
-        const hasStrokeCount = strokePoints.some( strokePoint => strokePoint.y === point.y )
-        ctx.fillStyle = "#0891b2"
-        ctx.font = "600 11px sans-serif"
-        ctx.fillText( `B ${point.count}`, chartArea.right + 8, y + ( hasStrokeCount ? 8 : 0 ) )
-      } )
-
-      ctx.restore()
-    },
-  }
 
   ChartJS.register(
     CategoryScale,
     LinearScale,
     PointElement,
     LineElement,
-    ScatterController,
     Title,
     Tooltip,
     Legend
@@ -181,9 +127,6 @@
   const supportsBreathData = computed( () =>
     !strokesWithoutBreathData.has( normalizeStroke( session.value?.selections.stroke ?? "" ) )
   )
-  const strokeAndBreathChartTitle = computed( () =>
-    supportsBreathData.value ? "Strokes and breaths by length" : "Strokes by length"
-  )
   const computedAnalysis = computed( () => {
     const current = session.value
     if ( !current ) return null
@@ -201,8 +144,6 @@
       turns: current.turns,
     } )
   } )
-
-  const swimLengthCount = computed( () => computedAnalysis.value?.swimFree.rows.length ?? 0 )
 
   const dateFormatter = new Intl.DateTimeFormat( "en-GB", {
     timeZone: "Europe/London",
@@ -505,197 +446,6 @@
       ( dataset.data ?? [] ).some( value => isFiniteNumber( value ) )
     )
   )
-
-  const markerTime = ( code: string, turnIndex: number | null = null ) =>
-    session.value?.markers.find( marker =>
-      marker.code === code &&
-      ( turnIndex === null ? true : marker.turnIndex === turnIndex )
-    )?.tMs ?? null
-
-  const breathTakenRows = computed( () =>
-    ( session.value?.breathMarkers ?? [] )
-      .map( marker => {
-        const startMs =
-          marker.lengthIndex === 1
-            ? session.value?.startOffsetMs ?? null
-            : markerTime( "hit_pad", marker.lengthIndex - 1 )
-
-        const endMs =
-          marker.lengthIndex < ( computedAnalysis.value?.swimFree.rows.length ?? 0 )
-            ? markerTime( "hit_pad", marker.lengthIndex )
-            : markerTime( "finish_time" ) ?? markerTime( "finish" )
-
-        return {
-          ...marker,
-          startMs,
-          endMs,
-          timeIntoLengthMs: startMs !== null ? Math.max( 0, marker.tMs - startMs ) : null,
-          label: `${marker.fromM} - ${marker.toM} m`,
-        }
-      } )
-      .filter( row => row.timeIntoLengthMs !== null )
-  )
-
-  const strokeTakenRows = computed( () =>
-    ( session.value?.strokeMarkers ?? [] )
-      .map( marker => {
-        const startMs =
-          marker.lengthIndex === 1
-            ? session.value?.startOffsetMs ?? null
-            : markerTime( "hit_pad", marker.lengthIndex - 1 )
-
-        const endMs =
-          marker.lengthIndex < ( computedAnalysis.value?.swimFree.rows.length ?? 0 )
-            ? markerTime( "hit_pad", marker.lengthIndex )
-            : markerTime( "finish_time" ) ?? markerTime( "finish" )
-
-        return {
-          ...marker,
-          startMs,
-          endMs,
-          timeIntoLengthMs: startMs !== null ? Math.max( 0, marker.tMs - startMs ) : null,
-          label: `${marker.fromM} - ${marker.toM} m`,
-        }
-      } )
-      .filter( row => row.timeIntoLengthMs !== null )
-  )
-
-  const hasBreathTakenChartData = computed( () =>
-    strokeTakenRows.value.length > 0
-    || ( computedAnalysis.value?.swimFree.rows ?? [] ).some( row => isFiniteNumber( row.count ) )
-    || ( supportsBreathData.value && (
-      breathTakenRows.value.length > 0
-      || ( computedAnalysis.value?.swimFree.rows ?? [] ).some( row => isFiniteNumber( row.breathCount ) )
-    ) )
-  )
-
-  const strokeCountLabelPoints = computed<CountLabelPoint[]>( () =>
-    ( computedAnalysis.value?.swimFree.rows ?? [] )
-      .filter( row => isFiniteNumber( row.count ) )
-      .map( row => ( {
-        x: 0,
-        y: row.lengthIndex,
-        count: row.count,
-      } ) )
-  )
-
-  const breathCountLabelPoints = computed<CountLabelPoint[]>( () =>
-    supportsBreathData.value
-      ? ( computedAnalysis.value?.swimFree.rows ?? [] )
-        .filter( row => isFiniteNumber( row.breathCount ) )
-        .map( row => ( {
-          x: 0,
-          y: row.lengthIndex,
-          count: row.breathCount,
-        } ) )
-      : []
-  )
-
-  const breathTakenChartData = computed<ChartData<"scatter", BreathTakenChartPoint[], unknown>>( () => ( {
-    datasets: [
-      ...( supportsBreathData.value ? [ {
-        label: "Breath taken",
-        data: breathTakenRows.value.map( row => ( {
-          x: row.timeIntoLengthMs ?? 0,
-          y: row.lengthIndex,
-        } ) ),
-        borderColor: "#f59e0b",
-        backgroundColor: "#f59e0b",
-        pointRadius: 5,
-        pointHoverRadius: 7,
-      } ] : [] ),
-      {
-        label: "Stroke taken",
-        data: strokeTakenRows.value.map( row => ( {
-          x: row.timeIntoLengthMs ?? 0,
-          y: row.lengthIndex,
-        } ) ),
-        borderColor: "#7c3aed",
-        backgroundColor: "#7c3aed",
-        pointRadius: 4,
-        pointHoverRadius: 6,
-      },
-      {
-        label: strokeCountLabelDatasetLabel,
-        data: strokeCountLabelPoints.value,
-        borderColor: "transparent",
-        backgroundColor: "transparent",
-        pointRadius: 0,
-        pointHoverRadius: 0,
-        pointHitRadius: 0,
-      },
-      ...( supportsBreathData.value ? [ {
-        label: breathCountLabelDatasetLabel,
-        data: breathCountLabelPoints.value,
-        borderColor: "transparent",
-        backgroundColor: "transparent",
-        pointRadius: 0,
-        pointHoverRadius: 0,
-        pointHitRadius: 0,
-      } ] : [] ),
-    ],
-  } ) )
-
-  const breathTakenChartOptions = computed<ChartOptions<"scatter">>( () => ( {
-    responsive: true,
-    maintainAspectRatio: false,
-    layout: {
-      padding: {
-        right: 58,
-      },
-    },
-    plugins: {
-      legend: {
-        display: true,
-        position: "bottom",
-        labels: {
-          filter: item => !countLabelDatasetLabels.has( item.text ),
-        },
-      },
-      tooltip: {
-        filter: context => !countLabelDatasetLabels.has( context.dataset.label ?? "" ),
-        callbacks: {
-          label: ( context: TooltipItem<"scatter"> ) => {
-            const isStroke = context.dataset.label === "Stroke taken"
-            const row = isStroke ? strokeTakenRows.value[context.dataIndex] : breathTakenRows.value[context.dataIndex]
-            if ( !row ) return isStroke ? "Stroke" : "Breath"
-            const label = isStroke ? "Stroke" : "Breath"
-            return `${label} ${row.label}: ${formatRaceMs( row.timeIntoLengthMs )} into length (${formatRaceMs( raceMsFromVideoMs( row.tMs ) )} race time)`
-          },
-        },
-      },
-    },
-    scales: {
-      x: {
-        type: "linear",
-        title: {
-          display: true,
-          text: "Time into length",
-        },
-        ticks: {
-          callback: value => formatRaceMs( Number( value ) ),
-        },
-      },
-      y: {
-        type: "linear",
-        min: 0.5,
-        max: Math.max( 1, swimLengthCount.value ) + 0.5,
-        title: {
-          display: true,
-          text: "Length",
-        },
-        ticks: {
-          precision: 0,
-          stepSize: 1,
-          callback: value => {
-            const length = Number( value )
-            if ( !Number.isInteger( length ) || length < 1 || length > swimLengthCount.value ) return ""
-            return `Length ${length}`
-          },
-        },
-      },
-    },
-  } ) )
 
   const lapTimeChartOptions = computed<ChartOptions<"line">>( () => ( {
     responsive: true,
@@ -1219,21 +969,15 @@
                 </div>
 
                 <div class="rounded-xl border border-gray-200 bg-white p-4">
-                  <div class="text-sm font-semibold text-gray-900">{{ strokeAndBreathChartTitle }}</div>
+                  <div class="text-sm font-semibold text-gray-900">Stroke tempo by length</div>
 
                   <div class="mt-4">
                     <ClientOnly>
-                      <div v-if="hasBreathTakenChartData" class="h-[320px]">
-                        <Scatter
-                          :data="breathTakenChartData"
-                          :options="breathTakenChartOptions"
-                          :plugins="[countEndLabelPlugin]"
-                        />
-                      </div>
-
-                      <div v-else class="text-sm text-gray-500">
-                        {{ supportsBreathData ? "No stroke or breath marker data available." : "No stroke marker data available." }}
-                      </div>
+                      <VideoTimerStrokeIntervalChart
+                        :stroke-markers="session.strokeMarkers ?? []"
+                        :breath-markers="session.breathMarkers ?? []"
+                        :show-breaths="supportsBreathData"
+                      />
                     </ClientOnly>
                   </div>
                 </div>
