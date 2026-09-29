@@ -9,6 +9,19 @@
   "css.lint.unknownAtRules": "ignore",
   "scss.lint.unknownAtRules": "ignore",
 
+  // Don't watch or search generated/bulky folders (reduces file watcher memory and CPU)
+  "files.watcherExclude": {
+    "**/node_modules/**": true,
+    "**/.nuxt/**": true,
+    "**/.output/**": true,
+    "**/backups/**": true
+  },
+  "search.exclude": {
+    "**/.nuxt": true,
+    "**/.output": true,
+    "**/backups": true
+  },
+
   // Disable VSCode's built-in formatter or Prettier from interfering
   "editor.formatOnSave": false,
 
