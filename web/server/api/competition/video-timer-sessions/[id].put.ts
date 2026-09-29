@@ -69,6 +69,11 @@ const asUnsignedIntOrNull = ( v: unknown ) => {
   return n
 }
 
+const asSignedIntOrNull = ( v: unknown ) => {
+  if ( v === null || v === undefined || v === "" ) return null
+  return asInt( v )
+}
+
 const asPositiveIntOrNull = ( v: unknown ) => {
   const n = asUnsignedIntOrNull( v )
   if ( n === null || n <= 0 ) return null
@@ -130,7 +135,7 @@ export default defineEventHandler( async ( event ) => {
 
   const swimmerId = body?.swimmerId ? asNonEmptyString( body.swimmerId ) : null
   const notes = typeof body?.notes === "string" ? body.notes : null
-  const startOffsetMs = asUnsignedIntOrNull( body?.startOffsetMs )
+  const startOffsetMs = asSignedIntOrNull( body?.startOffsetMs )
 
   const resultSwimmer = body?.resultSwimmer ? asNonEmptyString( body.resultSwimmer ) : null
   const resultCourse = body?.resultCourse ? asNonEmptyString( body.resultCourse ) : null
@@ -262,6 +267,16 @@ export default defineEventHandler( async ( event ) => {
 
   const sortedStrokeCounts = [ ...strokeCounts ].sort( ( a, b ) => a.lengthIndex - b.lengthIndex )
   const finishMarkerTime = findMarkerTime( markers, "finish_time" ) ?? findMarkerTime( markers, "finish" )
+
+  if ( startOffsetMs === null || finishMarkerTime === null ) {
+    throw createError( { status: 400, message: "Finish and race start are required before completing the session" } )
+  }
+
+  const officialFinishMs = finishMarkerTime - startOffsetMs
+  if ( officialFinishMs <= 0 ) {
+    throw createError( { status: 400, message: "Invalid official finish time" } )
+  }
+
   const savedSplitMarkerKeys = new Set(
     markers
       .filter( marker => marker.type === "split" && marker.code !== "finish_time" )
@@ -361,7 +376,10 @@ export default defineEventHandler( async ( event ) => {
         poolLengthM = :poolLengthM,
         lengthCount = :lengthCount,
         turnCount = :turnCount,
+        officialFinishMs = :officialFinishMs,
         startOffsetMs = :startOffsetMs,
+        status = 'completed',
+        draftData = NULL,
         notes = :notes,
         resultSwimmer = :resultSwimmer,
         resultCourse = :resultCourse,
@@ -383,6 +401,7 @@ export default defineEventHandler( async ( event ) => {
       poolLengthM,
       lengthCount,
       turnCount,
+      officialFinishMs,
       startOffsetMs,
       notes,
       resultSwimmer,

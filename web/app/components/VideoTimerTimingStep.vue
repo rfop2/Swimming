@@ -45,6 +45,7 @@
     resultLink: { type: Object as PropType<Record<string, string | null>>, required: true },
     draft: { type: Object as PropType<VideoTimerDraft>, required: true },
     mode: { type: String as PropType<"create" | "edit">, required: false, default: "create" },
+    saveStatus: { type: String as PropType<"idle" | "saving" | "saved" | "error">, required: false, default: undefined },
   } )
 
   const emit = defineEmits<{
@@ -476,11 +477,15 @@
 
   const finishVideoMs = computed( () => props.draft.finishVideoMs )
   const startOffsetMs = computed( () => props.draft.startOffsetMs )
+  const missingRaceStartMs = computed( () =>
+    startOffsetMs.value !== null && startOffsetMs.value < 0
+      ? Math.abs( startOffsetMs.value )
+      : null
+  )
 
   const hasFinishMarked = computed( () =>
     finishVideoMs.value !== null &&
-    startOffsetMs.value !== null &&
-    startOffsetMs.value >= 0
+    startOffsetMs.value !== null
   )
 
   watch( officialFinishText, () => {
@@ -640,15 +645,15 @@
       }
     }
 
-    const startOffset = finishMs - officialFinishMs.value
-
-    if ( startOffset < 0 ) {
+    if ( finishMs < 0 || ( durationMs.value > 0 && finishMs > durationMs.value ) ) {
       return {
         ok: false as const,
-        message: "Calculated race start falls before the beginning of the video. Move the finish position later in the video or check the official finish time.",
+        message: "The finish marker must be inside the video.",
         startOffset: null,
       }
     }
+
+    const startOffset = finishMs - officialFinishMs.value
 
     return {
       ok: true as const,
@@ -1080,7 +1085,6 @@
   const canStop = computed( () =>
     ( props.mode === "edit" || isReady.value ) &&
     props.draft.startOffsetMs !== null &&
-    props.draft.startOffsetMs >= 0 &&
     props.draft.finishVideoMs !== null &&
     allMarkersPlaced.value &&
     strokeCountsComplete.value
@@ -1186,9 +1190,19 @@
         <div class="w-full max-w-7xl">
           <div class="flex items-center justify-between gap-3">
             <div class="text-sm font-semibold text-gray-800">Timing mode</div>
-            <button class="h-10 px-4 rounded-md bg-gray-200 text-gray-900" type="button" @click="onBack">
-              Back
-            </button>
+            <div class="flex items-center gap-3">
+              <div
+                v-if="props.saveStatus"
+                class="text-xs font-medium"
+                :class="props.saveStatus === 'error' ? 'text-red-600' : props.saveStatus === 'saved' ? 'text-green-700' : 'text-gray-500'"
+              >
+                {{ props.saveStatus === "saving" ? "Saving…" : props.saveStatus === "saved" ? "Saved" : props.saveStatus === "error" ? "Could not save" : "" }}
+              </div>
+
+              <button class="h-10 px-4 rounded-md bg-gray-200 text-gray-900" type="button" @click="onBack">
+                Back
+              </button>
+            </div>
           </div>
 
           <div class="mt-4 grid grid-cols-1 xl:grid-cols-[minmax(0,1.15fr)_minmax(440px,0.85fr)] gap-4 items-start">
@@ -1371,6 +1385,7 @@
                     <div class="flex items-center gap-1"><span class="inline-block h-3 w-3 rounded bg-violet-600" /> Stroke</div>
                     <div v-if="supportsBreathMarkers" class="flex items-center gap-1"><span class="inline-block h-3 w-3 rounded bg-amber-500" /> Breath</div>
                   </div>
+
                 </div>
               </div>
             </div>
@@ -1499,6 +1514,13 @@
                     <div class="flex items-center gap-1"><span class="inline-block h-3 w-3 rounded bg-blue-600" /> Split</div>
                     <div class="flex items-center gap-1"><span class="inline-block h-3 w-3 rounded bg-violet-600" /> Stroke</div>
                     <div v-if="supportsBreathMarkers" class="flex items-center gap-1"><span class="inline-block h-3 w-3 rounded bg-amber-500" /> Breath</div>
+                  </div>
+
+                  <div
+                    v-if="missingRaceStartMs !== null"
+                    class="mt-3 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900"
+                  >
+                    The race started {{ formatVideoMsPrecise(missingRaceStartMs) }} before this video. Marker times include the missing beginning of the race.
                   </div>
                 </div>
 

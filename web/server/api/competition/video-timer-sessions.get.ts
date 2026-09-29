@@ -9,6 +9,8 @@ type Row = {
   stroke: string
   distance: string
   notes: string | null
+  status: "draft" | "completed"
+  draftData: string | Record<string, unknown> | null
   originalName: string
   markersCount: number
   swimmerId: string | null
@@ -36,6 +38,8 @@ export default defineEventHandler( async ( event ) => {
         s.stroke as stroke,
         s.distance as distance,
         s.notes as notes,
+        s.status as status,
+        s.draftData as draftData,
         s.swimmerId as swimmerId,
         sw.fullName as swimmerName,
         r.date as resultDate,
@@ -66,20 +70,41 @@ export default defineEventHandler( async ( event ) => {
 
     const rows = ( await stmt.all( { userId } ) ) as Row[]
 
-    return rows.map( r => ( {
-      id: r.id,
-      createdAt: r.created,
-      swimmerId: r.swimmerId ?? null,
-      swimmerName: r.swimmerName ?? null,
-      course: r.course ?? null,
-      stroke: r.stroke ?? null,
-      distance: r.distance ?? null,
-      notes: r.notes,
-      markersCount: Number( r.markersCount ) || 0,
-      videoOriginalName: r.originalName ?? null,
-      resultName: r.resultName ?? null,
-      resultDate: r.resultDate ?? null,
-    } ) )
+    return rows.map( r => {
+      let draft: Record<string, unknown> | null = null
+      try {
+        draft = typeof r.draftData === "string" ? JSON.parse( r.draftData ) as Record<string, unknown> : r.draftData
+      } catch {
+        draft = null
+      }
+
+      const finishVideoMs = typeof draft?.finishVideoMs === "number" ? draft.finishVideoMs : null
+      const surfaceSlots = Array.isArray( draft?.surfaceSlots ) ? draft.surfaceSlots : []
+      const splitSlots = Array.isArray( draft?.splitSlots ) ? draft.splitSlots : []
+      const plannedSlots = [ ...surfaceSlots, ...splitSlots ] as Array<{ videoMs?: unknown }>
+      const placedMarkers = plannedSlots.filter( slot => typeof slot?.videoMs === "number" ).length
+
+      return {
+        id: r.id,
+        createdAt: r.created,
+        status: r.status,
+        finishMarked: finishVideoMs !== null,
+        markerProgress: {
+          placed: placedMarkers,
+          total: plannedSlots.length,
+        },
+        swimmerId: r.swimmerId ?? null,
+        swimmerName: r.swimmerName ?? null,
+        course: r.course ?? null,
+        stroke: r.stroke ?? null,
+        distance: r.distance ?? null,
+        notes: r.notes,
+        markersCount: Number( r.markersCount ) || 0,
+        videoOriginalName: r.originalName ?? null,
+        resultName: r.resultName ?? null,
+        resultDate: r.resultDate ?? null,
+      }
+    } )
   } catch ( error ) {
     if ( isMySql2Error( error ) ) {
       throw createError( { status: 500, message: `Database error: ${error.sqlMessage}` } )

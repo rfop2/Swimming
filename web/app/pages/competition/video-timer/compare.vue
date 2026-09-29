@@ -35,6 +35,7 @@
   type SessionListItem = {
     id: string
     createdAt: string
+    status: "draft" | "completed"
     swimmerId?: string | null
     swimmerName?: string | null
     course?: string | null
@@ -149,7 +150,7 @@
     ].join( "::" )
 
   const sortedSessions = computed( () =>
-    [ ...( sessions.value ?? [] ) ].sort( ( a, b ) => {
+    [ ...( sessions.value ?? [] ) ].filter( session => session.status === "completed" ).sort( ( a, b ) => {
       const aTime = new Date( a.resultDate || a.createdAt ).getTime()
       const bTime = new Date( b.resultDate || b.createdAt ).getTime()
       return bTime - aTime
