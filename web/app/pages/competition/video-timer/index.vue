@@ -103,6 +103,8 @@
 
   const step = ref<Step>( "setup" )
   const draft = ref<VideoTimerDraft>( createEmptyDraft() )
+  const creatingDraft = ref( false )
+  const draftCreateError = ref<string | null>( null )
 
   const canProceed = computed( () =>
     uploadReady.value &&
@@ -112,11 +114,48 @@
     !!resultOfficialFinishTime.value.trim()
   )
 
-  const onContinue = () => {
-    draft.value.markers = []
+  const onContinue = async () => {
     if ( !canProceed.value ) return
     if ( mode.value === "uploading" || isHydratingLibraryVideo.value ) return
-    step.value = "timing"
+    if ( !uploadedVideo.value?.id || creatingDraft.value ) return
+
+    creatingDraft.value = true
+    draftCreateError.value = null
+
+    try {
+      const officialSeconds = timeToSeconds( resultOfficialFinishTime.value )
+      const created = await $fetch<{ id: string; status: "draft" | "completed" }>( "/api/competition/video-timer-drafts", {
+        method: "POST",
+        body: {
+          videoId: uploadedVideo.value.id,
+          selections,
+          swimmerId: swimmer.value?.id ?? null,
+          notes: notes.value,
+          officialFinishMs: Number.isFinite( officialSeconds ) ? Math.round( officialSeconds * 1000 ) : null,
+          resultSwimmer: resultSwimmer.value,
+          resultCourse: resultCourse.value,
+          resultStroke: resultStroke.value,
+          resultDistance: resultDistance.value,
+          resultSeq: resultSeq.value,
+        },
+      } )
+
+      await navigateTo(
+        created.status === "draft"
+          ? `/competition/video-timer/sessions/${created.id}/edit`
+          : `/competition/video-timer/sessions/${created.id}`
+      )
+    } catch ( error: unknown ) {
+      const data = error && typeof error === "object" && "data" in error
+        ? ( error as { data?: { message?: unknown; statusMessage?: unknown } } ).data
+        : null
+      const message = data?.message ?? data?.statusMessage
+      draftCreateError.value = typeof message === "string" && message.trim()
+        ? message
+        : "Unable to create the draft session."
+    } finally {
+      creatingDraft.value = false
+    }
   }
 
   const onBackFromTiming = () => {
@@ -132,10 +171,8 @@
     step.value = "review"
   }
 
-  const onSavedSession = () => {
-    step.value = "setup"
-    void resetVideo()
-    draft.value = createEmptyDraft()
+  const onSavedSession = async ( { sessionId }: { sessionId: string } ) => {
+    await navigateTo( `/competition/video-timer/sessions/${sessionId}` )
   }
 
   const { swimmer } = useSwimmer()
@@ -841,19 +878,25 @@
       </div>
 
       <div class="border-t bg-white px-6 py-4">
-        <div class="w-full max-w-5xl mx-auto flex gap-3">
-          <button
-            class="flex-1 h-12 rounded-md bg-green-600 text-white disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
-            :disabled="!canProceed || mode === 'uploading' || isHydratingLibraryVideo"
-            type="button"
-            @click="onContinue"
-          >
-            {{ continueLabel }}
-          </button>
+        <div class="w-full max-w-5xl mx-auto">
+          <div v-if="draftCreateError" class="mb-3 text-sm text-red-600">
+            {{ draftCreateError }}
+          </div>
 
-          <button class="h-12 px-4 rounded-md bg-gray-200 text-gray-900" type="button" @click="resetVideo">
-            Reset
-          </button>
+          <div class="flex gap-3">
+            <button
+              class="flex-1 h-12 rounded-md bg-green-600 text-white disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
+              :disabled="!canProceed || mode === 'uploading' || isHydratingLibraryVideo || creatingDraft"
+              type="button"
+              @click="onContinue"
+            >
+              {{ creatingDraft ? "Creating draft…" : continueLabel }}
+            </button>
+
+            <button class="h-12 px-4 rounded-md bg-gray-200 text-gray-900" type="button" @click="resetVideo">
+              Reset
+            </button>
+          </div>
         </div>
       </div>
     </template>

@@ -1,0 +1,2 @@
+ALTER TABLE VideoTimerVideos
+  ADD COLUMN IF NOT EXISTS notes TEXT NULL AFTER durationMs;

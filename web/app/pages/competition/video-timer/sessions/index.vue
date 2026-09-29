@@ -13,6 +13,9 @@
   type SessionListItem = {
     id: string
     createdAt: string
+    status: "draft" | "completed"
+    finishMarked?: boolean
+    markerProgress?: { placed: number; total: number }
     swimmerId?: string | null
     swimmerName?: string | null
     course?: string | null
@@ -80,6 +83,14 @@
   }
 
   const toLabel = ( value: string ) => value.charAt( 0 ).toUpperCase() + value.slice( 1 )
+
+  const sessionStatusLabel = ( session: SessionListItem ) => {
+    if ( session.status === "completed" ) return "Complete"
+    if ( !session.finishMarked ) return "Draft — finish not marked"
+    const progress = session.markerProgress
+    if ( progress?.total ) return `Draft — ${progress.placed} of ${progress.total} markers`
+    return "Draft"
+  }
 
   const strokeOptions = computed<FilterOption[]>( () => {
     const values = Array.from(
@@ -231,12 +242,19 @@
               v-for="s in filteredSessions"
               :key="s.id"
               class="group block p-4 hover:bg-gray-50 transition-colors"
-              :to="`/competition/video-timer/sessions/${s.id}`"
+              :to="s.status === 'draft' ? `/competition/video-timer/sessions/${s.id}/edit` : `/competition/video-timer/sessions/${s.id}`"
             >
               <div class="flex items-center justify-between gap-4">
                 <div class="min-w-0">
                   <div class="text-xs font-medium text-gray-500">
                     Result date: {{ formatResultDate(s.resultDate) }}
+                  </div>
+
+                  <div
+                    class="mt-1 inline-flex rounded-full px-2 py-0.5 text-xs font-semibold"
+                    :class="s.status === 'draft' ? 'bg-amber-100 text-amber-800' : 'bg-green-100 text-green-800'"
+                  >
+                    {{ sessionStatusLabel(s) }}
                   </div>
 
                   <div v-if="s.resultName" class="mt-1 text-base font-medium text-gray-900 truncate">
@@ -255,7 +273,7 @@
                 </div>
 
                 <div class="shrink-0 text-sm font-medium text-gray-500 group-hover:text-gray-900 transition-colors">
-                  Open →
+                  {{ s.status === "draft" ? "Continue" : "Open" }} →
                 </div>
               </div>
             </NuxtLink>

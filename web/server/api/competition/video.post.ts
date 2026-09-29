@@ -69,6 +69,7 @@ export default defineEventHandler( async ( event ) => {
   const id = randomUUID()
 
   let source: UploadSource = "session"
+  let notes: string | null = null
 
   const result = await new Promise<UploadResult>( ( resolve, reject ) => {
     const bb = Busboy( {
@@ -97,6 +98,10 @@ export default defineEventHandler( async ( event ) => {
     bb.on( "field", ( field, value ) => {
       if ( field === "source" && ( value === "session" || value === "library" ) ) {
         source = value
+      }
+
+      if ( field === "notes" ) {
+        notes = value.trim().slice( 0, 2000 ) || null
       }
     } )
 
@@ -193,6 +198,7 @@ export default defineEventHandler( async ( event ) => {
         size,
         originalSize,
         durationMs,
+        notes,
         compressionStatusId,
         compressionQueuedAt
       )
@@ -208,6 +214,7 @@ export default defineEventHandler( async ( event ) => {
         :size,
         :originalSize,
         :durationMs,
+        :notes,
         :compressionStatusId,
         :compressionQueuedAt
       )
@@ -231,6 +238,7 @@ export default defineEventHandler( async ( event ) => {
       size: result.size,
       originalSize: result.size,
       durationMs: result.durationMs,
+      notes,
       compressionStatusId,
       compressionQueuedAt: source === "library" ? new Date() : null,
     } )

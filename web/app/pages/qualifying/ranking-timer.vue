@@ -121,45 +121,16 @@
     { watch: [ rankingQuery ] }
   )
 
-  interface AlignedRankingRow {
-    key: string
-    position: number
-    showPosition: boolean
-    positionRowspan: number
-    male?: RankingRow
-    female?: RankingRow
-  }
+  const rowsForGender = ( gender: GenderType ) => ( ranking.value ?? [] )
+    .filter( row => row.gender === gender )
+    .sort( ( a, b ) => a.position - b.position || a.time - b.time || areaName( a ).localeCompare( areaName( b ) ) )
 
-  const alignedRanking = computed<AlignedRankingRow[]>( () => {
-    const maleByPosition = new Map<number, RankingRow[]>()
-    const femaleByPosition = new Map<number, RankingRow[]>()
+  const rankingBlocks = computed( () => [
+    { key: "male", title: "Boys/Open", rows: rowsForGender( "male" ) },
+    { key: "female", title: "Girls", rows: rowsForGender( "female" ) },
+  ] )
 
-    for ( const row of ranking.value ?? [] ) {
-      const rowsByPosition = row.gender === "male" ? maleByPosition : femaleByPosition
-      const rows = rowsByPosition.get( row.position ) ?? []
-      rows.push( row )
-      rowsByPosition.set( row.position, rows )
-    }
-
-    const positions = unique( [ ...maleByPosition.keys(), ...femaleByPosition.keys() ] ).sort( ( a, b ) => a - b )
-
-    return positions.flatMap( position => {
-      const maleRows = maleByPosition.get( position ) ?? []
-      const femaleRows = femaleByPosition.get( position ) ?? []
-      const positionRowspan = Math.max( maleRows.length, femaleRows.length )
-
-      return Array.from( { length: positionRowspan }, ( _, index ) => ( {
-        key: `${position}:${index}`,
-        position,
-        showPosition: index === 0,
-        positionRowspan,
-        male: maleRows[index],
-        female: femaleRows[index],
-      } ) )
-    } )
-  } )
-
-  const rankCount = computed( () => unique( alignedRanking.value.map( row => row.position ) ).length )
+  const rankCount = computed( () => unique( ( ranking.value ?? [] ).map( row => row.position ) ).length )
   const hasConvertedTimes = computed( () => ( ranking.value ?? [] ).some( row => row.converted ) )
 
   const areaName = ( row: Pick<RankingRow, "scope" | "area"> ) => row.scope === "county"
@@ -201,57 +172,62 @@
       Qualification rankings could not be loaded. Please try again.
     </div>
 
-    <div v-else-if="alignedRanking.length">
-      <div class="mb-3 flex items-center gap-2">
+    <div v-else-if="ranking?.length">
+      <div class="mb-3 flex flex-wrap items-center gap-2">
         <TrophyIcon class="h-5 w-5 text-amber-500" aria-hidden="true" />
         <h2 class="text-base font-semibold text-gray-900">Qualification rankings</h2>
         <span class="text-sm text-gray-500">{{ rankCount }} ranks</span>
-        <span v-if="hasConvertedTimes" class="ml-auto text-xs italic text-gray-500">Italic times are converted</span>
+        <span v-if="hasConvertedTimes" class="w-full text-xs italic text-gray-500 sm:ml-auto sm:w-auto">Italic times are converted</span>
       </div>
 
-      <div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-        <div class="overflow-x-auto">
-          <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
+      <div class="grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
+        <section
+          v-for="block in rankingBlocks"
+          :key="block.key"
+          class="min-w-0 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm"
+        >
+          <h3 class="border-b border-gray-200 bg-gray-50 px-3 py-3 text-center text-xs font-semibold uppercase tracking-wide text-gray-700 sm:px-4">
+            {{ block.title }}
+          </h3>
+
+          <table class="w-full table-fixed">
+            <caption class="sr-only">{{ block.title }} qualification rankings</caption>
+            <colgroup>
+              <col class="w-14 sm:w-16">
+              <col>
+              <col class="w-20 sm:w-24">
+            </colgroup>
+            <thead class="border-b border-gray-200 bg-gray-50">
               <tr>
-                <th rowspan="2" class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-gray-600">Rank</th>
-                <th colspan="2" class="border-l border-gray-200 px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-gray-600">Boys/Open</th>
-                <th colspan="2" class="border-l border-gray-200 px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-gray-600">Girls</th>
-              </tr>
-              <tr class="border-t border-gray-200">
-                <th class="border-l border-gray-200 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">County / Region</th>
-                <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-600">Time</th>
-                <th class="border-l border-gray-200 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">County / Region</th>
-                <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-600">Time</th>
+                <th class="px-2 py-3 text-center text-[11px] font-semibold uppercase tracking-wide text-gray-600 sm:px-4 sm:text-xs">Rank</th>
+                <th class="px-2 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-600 sm:px-4 sm:text-xs">County / Region</th>
+                <th class="px-2 py-3 text-right text-[11px] font-semibold uppercase tracking-wide text-gray-600 sm:px-4 sm:text-xs">Time</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-gray-100 bg-white">
-              <tr v-for="row in alignedRanking" :key="row.key">
-                <td v-if="row.showPosition" :rowspan="row.positionRowspan" class="whitespace-nowrap px-4 py-3 text-center align-middle text-sm font-semibold text-gray-900">
+            <tbody class="divide-y divide-gray-100">
+              <tr v-for="( row, index ) in block.rows" :key="`${block.key}:${row.position}:${row.area}:${index}`">
+                <td class="px-2 py-3 text-center align-middle text-xs font-semibold text-gray-900 sm:px-4 sm:text-sm">
                   #{{ row.position }}
                 </td>
-                <td class="whitespace-nowrap border-l border-gray-200 px-4 py-3 text-sm font-medium text-gray-900">
-                  {{ row.male ? areaName( row.male ) : '—' }}
+                <td class="break-words px-2 py-3 text-xs font-medium text-gray-900 sm:px-4 sm:text-sm">
+                  {{ areaName( row ) }}
                 </td>
-                <td class="whitespace-nowrap px-4 py-3 text-right font-mono text-sm font-semibold" :class="row.position === 1 && row.male ? 'bg-amber-50/60 text-emerald-700' : 'text-gray-900'">
-                  <UI-Tooltip v-if="row.male?.converted" :text="`Converted from ${courseName( row.male.sourceCourse )}`" position="top">
-                    <span class="italic underline decoration-dotted underline-offset-4">{{ secondsToTime( row.male.time ) }}</span>
+                <td
+                  class="whitespace-nowrap px-2 py-3 text-right align-middle font-mono text-xs font-semibold sm:px-4 sm:text-sm"
+                  :class="row.position === 1 ? 'bg-amber-50/60 text-emerald-700' : 'text-gray-900'"
+                >
+                  <UI-Tooltip v-if="row.converted" :text="`Converted from ${courseName( row.sourceCourse )}`" position="top">
+                    <span class="italic underline decoration-dotted underline-offset-4">{{ secondsToTime( row.time ) }}</span>
                   </UI-Tooltip>
-                  <template v-else>{{ row.male ? secondsToTime( row.male.time ) : '—' }}</template>
+                  <template v-else>{{ secondsToTime( row.time ) }}</template>
                 </td>
-                <td class="whitespace-nowrap border-l border-gray-200 px-4 py-3 text-sm font-medium text-gray-900">
-                  {{ row.female ? areaName( row.female ) : '—' }}
-                </td>
-                <td class="whitespace-nowrap px-4 py-3 text-right font-mono text-sm font-semibold" :class="row.position === 1 && row.female ? 'bg-amber-50/60 text-emerald-700' : 'text-gray-900'">
-                  <UI-Tooltip v-if="row.female?.converted" :text="`Converted from ${courseName( row.female.sourceCourse )}`" position="top">
-                    <span class="italic underline decoration-dotted underline-offset-4">{{ secondsToTime( row.female.time ) }}</span>
-                  </UI-Tooltip>
-                  <template v-else>{{ row.female ? secondsToTime( row.female.time ) : '—' }}</template>
-                </td>
+              </tr>
+              <tr v-if="!block.rows.length">
+                <td colspan="3" class="px-4 py-8 text-center text-sm text-gray-500">No qualification times</td>
               </tr>
             </tbody>
           </table>
-        </div>
+        </section>
       </div>
     </div>
 

@@ -17,6 +17,9 @@ type SessionRow = {
   course: string
   stroke: string
   distance: string
+  status: "draft" | "completed"
+  draftData: string | Record<string, unknown> | null
+  officialFinishMs: number | null
   startOffsetMs: number | null
   resultSwimmer: string | null
   resultCourse: string | null
@@ -109,6 +112,9 @@ export default defineEventHandler( async ( event ) => {
         s.course as course,
         s.stroke as stroke,
         s.distance as distance,
+        s.status as status,
+        s.draftData as draftData,
+        s.officialFinishMs as officialFinishMs,
         s.startOffsetMs as startOffsetMs,
         s.resultSwimmer as resultSwimmer,
         s.resultCourse as resultCourse,
@@ -324,10 +330,24 @@ export default defineEventHandler( async ( event ) => {
       turns,
     } )
 
+    let savedDraft: Record<string, unknown> | null = null
+    if ( row.draftData ) {
+      try {
+        savedDraft = typeof row.draftData === "string"
+          ? JSON.parse( row.draftData ) as Record<string, unknown>
+          : row.draftData
+      } catch {
+        savedDraft = null
+      }
+    }
+
     return {
       id: row.id,
       createdAt: row.created,
+      status: row.status,
+      draft: savedDraft,
       notes: row.notes,
+      officialFinishMs: row.officialFinishMs === null ? null : Number( row.officialFinishMs ),
       startOffsetMs: row.startOffsetMs ?? null,
       resultDate: row.resultDate ?? null,
       resultName: row.resultName ?? null,

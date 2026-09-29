@@ -17,7 +17,8 @@ type Row = {
   course: string | null
   stroke: string | null
   distance: string | null
-  notes: string | null
+  videoNotes: string | null
+  sessionNotes: string | null
   resultDate: string | null
   resultMeetName: string | null
   officialFinishMs: number | null
@@ -62,13 +63,14 @@ export default defineEventHandler( async ( event ) => {
         v.mimeType as mimeType,
         v.size as size,
         v.durationMs as durationMs,
+        v.notes as videoNotes,
         s.id as sessionId,
         s.swimmerId as swimmerId,
         sw.fullName as swimmerName,
         s.course as course,
         s.stroke as stroke,
         s.distance as distance,
-        s.notes as notes,
+        s.notes as sessionNotes,
         r.date as resultDate,
         r.meet as resultMeetName,
         s.officialFinishMs as officialFinishMs,
@@ -133,7 +135,8 @@ export default defineEventHandler( async ( event ) => {
       course: row.course || null,
       stroke: row.stroke || null,
       distance: row.distance || null,
-      notes: row.notes || null,
+      notes: row.videoNotes || null,
+      sessionNotes: row.sessionNotes || null,
       meetName: row.resultMeetName || null,
       meetDate: row.resultDate || null,
       officialFinishMs: row.officialFinishMs === null ? null : Number( row.officialFinishMs ),

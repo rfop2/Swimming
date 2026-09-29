@@ -19,6 +19,7 @@
     size: number
     durationMs?: number | null
     playbackUrl: string
+    notes?: string | null
     sessionId?: string | null
     compressionStatusId?: number | null
     compressionStatusCode?: string | null
@@ -114,6 +115,7 @@
       const term = search.value.trim().toLowerCase()
       items = items.filter( v =>
         String( v.originalName ?? "" ).toLowerCase().includes( term )
+        || String( v.notes ?? "" ).toLowerCase().includes( term )
       )
     }
 
@@ -153,12 +155,12 @@
         <div class="mt-4 rounded-xl border border-gray-200 bg-white p-4">
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 items-end">
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">File name</label>
+              <label class="block text-sm font-medium text-gray-700 mb-1">File name or notes</label>
               <input
                 v-model="search"
                 type="text"
                 class="h-10 w-full rounded-md border border-gray-300 px-3 text-sm"
-                placeholder="Search by file name"
+                placeholder="Search by file name or notes"
               >
             </div>
           </div>
@@ -206,9 +208,12 @@
               <div class="flex items-start justify-between gap-4">
                 <div class="min-w-0">
                   <div class="flex items-center gap-2 flex-wrap">
-                    <div class="text-sm font-semibold text-gray-900 truncate">
+                    <NuxtLink
+                      class="text-sm font-semibold text-blue-700 hover:underline truncate"
+                      :to="`/competition/video-timer/videos/${video.id}`"
+                    >
                       {{ video.originalName }}
-                    </div>
+                    </NuxtLink>
 
                     <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-green-100 text-green-700">
                       Available
@@ -226,6 +231,10 @@
                     Uploaded at: {{ formatDate(video.createdAt) }}
                     <span> • {{ formatDuration(video.durationMs) }}</span>
                     <span> • {{ formatBytes(video.size) }}</span>
+                  </div>
+
+                  <div v-if="video.notes" class="mt-2 text-sm text-gray-700 whitespace-pre-wrap break-words">
+                    {{ video.notes }}
                   </div>
                 </div>
 

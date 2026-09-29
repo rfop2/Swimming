@@ -113,6 +113,7 @@ export default defineEventHandler( async event => {
       ) mk
         ON mk.sessionId = s.id
       WHERE s.userId = :userId
+        AND s.status = 'completed'
         AND COALESCE(s.swimmerId, s.resultSwimmer) = :swimmerId
         AND s.course = :course
         AND s.distance = :distance
