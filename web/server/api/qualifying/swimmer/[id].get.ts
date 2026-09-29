@@ -80,16 +80,19 @@ export default defineEventHandler( async ( event ) => {
   const swimmerAge = getSwimmerAge( swimmer )
 
   const result: { period: ExtQualifyingPeriod, times: QualifyingRow[] }[] = periods
+    .filter( period => period.qualifyingEnd || SHOW_PERIODS_WITHOUT_END_DATE )
     .map( period => {
       const qualifyingStarted = !!( period.qualifyingStart && Temporal.PlainDate.compare( period.qualifyingStart, today ) <= 0 )
       const qualifyingEnded = !!( period.qualifyingEnd && Temporal.PlainDate.compare( today, period.qualifyingEnd ) > 0 )
-      const lastRaceDatePassed = !!( period.lastRaceDate && Temporal.PlainDate.compare( today, period.lastRaceDate ) > 0 )
+      const lastRaceDatePassed = period.lastRaceDate
+        ? Temporal.PlainDate.compare( today, period.lastRaceDate ) > 0
+        : !SHOW_ENDED_PERIODS_WITHOUT_LAST_RACE_DATE
       return {
         ...period,
         qualifyingStarted,
         qualifyingEnded,
         qualifyingActive: qualifyingStarted && !qualifyingEnded,
-        eligibilityActive: qualifyingEnded && !!period.lastRaceDate && !lastRaceDatePassed,
+        eligibilityActive: qualifyingEnded && !lastRaceDatePassed,
       }
     } )
     .map( period => ( {
