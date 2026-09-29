@@ -1,14 +1,65 @@
 [
   {
-    "isoDate": "2026-09-28",
-    "niceDate": "28 September 2026",
-    "diff": "16.12.0..",
-    "href": "https://bitbucket.org/swimracing/swimming/compare/16.13.0..16.12.0",
+    "isoDate": "2026-09-29",
+    "niceDate": "29 September 2026",
+    "diff": "16.13.0..",
+    "href": "https://bitbucket.org/swimracing/swimming/compare/16.14.0..16.13.0",
     "major": false,
     "minor": false,
     "tag": null,
+    "title": "16.14.0",
+    "date": "2026-09-29T10:09:11.773Z",
+    "summary": null,
+    "commits": [
+      {
+        "hash": "e673db0bca80012983797a83034726a132b6cd29",
+        "shorthash": "e673db0",
+        "author": "Philip Coombes",
+        "email": "phil@web2wire.com",
+        "date": "2026-09-29T10:05:51.000Z",
+        "niceDate": "29 September 2026",
+        "subject": "Added Google tag support",
+        "message": "Added Google tag support",
+        "fixes": null,
+        "href": "https://bitbucket.org/swimracing/swimming/commits/e673db0bca80012983797a83034726a132b6cd29",
+        "breaking": false,
+        "files": 7,
+        "insertions": 625,
+        "deletions": 4,
+        "merge": null
+      },
+      {
+        "hash": "db6a626bf0cd45693fd34dc577397c35a5579c27",
+        "shorthash": "db6a626",
+        "author": "Philip Coombes",
+        "email": "phil@web2wire.com",
+        "date": "2026-09-29T10:07:47.000Z",
+        "niceDate": "29 September 2026",
+        "subject": "Updated VSCode settings to reduce dev resource usage.",
+        "message": "Updated VSCode settings to reduce dev resource usage.",
+        "fixes": null,
+        "href": "https://bitbucket.org/swimracing/swimming/commits/db6a626bf0cd45693fd34dc577397c35a5579c27",
+        "breaking": false,
+        "files": 1,
+        "insertions": 13,
+        "deletions": 0,
+        "merge": null
+      }
+    ],
+    "merges": [],
+    "fixes": []
+  },
+  {
+    "isoDate": "2026-09-28",
+    "niceDate": "28 September 2026",
+    "diff": "16.12.0..16.13.0",
+    "href": "https://bitbucket.org/swimracing/swimming/compare/16.13.0..16.12.0",
+    "major": false,
+    "minor": true,
+    "tag": "16.13.0",
+    "date": "2026-09-28",
     "title": "16.13.0",
-    "date": "2026-09-28T14:28:19.470Z",
+    "version": "16.13.0",
     "summary": null,
     "commits": [
       {
@@ -2019,42 +2070,6 @@
           "message": "Merged in adjust-ranking/official-time- (pull request #47)\n\nAdjust ranking/official time",
           "fixes": null,
           "href": "https://bitbucket.org/swimracing/swimming/commits/c11325254b995e1a69e586cb432f01848f4d07a7",
-          "breaking": false
-        }
-      }
-    ],
-    "fixes": []
-  },
-  {
-    "isoDate": "2026-08-24",
-    "niceDate": "24 August 2026",
-    "diff": "15.14.0..15.15.0",
-    "href": "https://bitbucket.org/swimracing/swimming/compare/15.15.0..15.14.0",
-    "major": false,
-    "minor": true,
-    "tag": "15.15.0",
-    "date": "2026-08-24",
-    "title": "15.15.0",
-    "version": "15.15.0",
-    "summary": null,
-    "commits": [],
-    "merges": [
-      {
-        "id": "46",
-        "message": "ranking times",
-        "href": "https://bitbucket.org/swimracing/swimming/pull-requests/46",
-        "author": "Rodrigo Ferreira",
-        "commit": {
-          "hash": "51ba63b22ab2de43e9e3cf714ef9bf908f1d183e",
-          "shorthash": "51ba63b",
-          "author": "Rodrigo Ferreira",
-          "email": "rf.oliveirapaula@gmail.com",
-          "date": "2026-08-24T16:56:40.000Z",
-          "niceDate": "24 August 2026",
-          "subject": "Merged in ranking-times (pull request #46)",
-          "message": "Merged in ranking-times (pull request #46)\n\nranking times",
-          "fixes": null,
-          "href": "https://bitbucket.org/swimracing/swimming/commits/51ba63b22ab2de43e9e3cf714ef9bf908f1d183e",
           "breaking": false
         }
       }
